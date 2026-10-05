@@ -10,6 +10,8 @@ import {
     findPersonByPnfl,
 } from '@/lib/persons-api';
 import { createSchoolMembership } from '@/lib/school-memberships-api';
+import { ResidenceFields } from '@/components/persons/ResidenceFields';
+import type { ResidenceValue } from '@/components/persons/ResidenceFields';
 import { PersonPhoto } from '@/components/persons/PersonPhoto';
 import { uploadPersonPhoto } from '@/lib/person-photos-api';
 
@@ -71,6 +73,11 @@ export function CreateMemberForm({
     const [nationality, setNationality] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
+    const [residence, setResidence] = useState<ResidenceValue>({
+        regionId: null,
+        districtId: null,
+        mahallaId: null,
+    });
     const [endDate, setEndDate] = useState('');
     const [schoolId, setSchoolId] = useState(
         initialSchoolId ? String(initialSchoolId) : '',
@@ -262,6 +269,7 @@ export function CreateMemberForm({
                     nationality: normalizedNationality || null,
                     phoneNumber: normalizedPhone || null,
                     address: normalizedAddress || null,
+                    mahallaId: residence.mahallaId,
                 });
 
                 if (!mounted.current) return;
@@ -615,6 +623,11 @@ export function CreateMemberForm({
                                 setNationality('');
                                 setPhoneNumber('');
                                 setAddress('');
+                                setResidence({
+                                    regionId: null,
+                                    districtId: null,
+                                    mahallaId: null,
+                                });
                                 setEndDate('');
                                 setError('');
                                 setNotice('');
@@ -766,6 +779,14 @@ export function CreateMemberForm({
                                 </p>
                             </div>
 
+                            <div className="md:col-span-2">
+                                <ResidenceFields
+                                    value={residence}
+                                    onChange={setResidence}
+                                    disabled={busy}
+                                />
+                            </div>
+
                             <div className="space-y-2 md:col-span-2">
                                 <label
                                     htmlFor={`${id}-address`}
@@ -778,7 +799,7 @@ export function CreateMemberForm({
                                     id={`${id}-address`}
                                     value={address}
                                     onChange={(event) => setAddress(event.target.value)}
-                                    placeholder="Viloyat, tuman/shahar, mahalla, ko‘cha va uy"
+                                    placeholder="Ko‘cha va uy raqami"
                                     autoComplete="street-address"
                                     maxLength={500}
                                     rows={3}

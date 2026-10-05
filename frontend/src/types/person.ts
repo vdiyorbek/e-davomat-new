@@ -1,6 +1,25 @@
 import type { Profile } from "@/types/auth";
 
-export type Person = Profile["person"];
+export interface PersonMahalla {
+  id: number;
+  name: string;
+  districtId: number;
+  district: {
+    id: number;
+    name: string;
+    regionId: number;
+    region: {
+      id: number;
+      name: string;
+    };
+  };
+}
+
+// The detail endpoint includes residence relations; list/create responses may omit them.
+export type Person = Profile["person"] & {
+  mahallaId?: number | null;
+  mahalla?: PersonMahalla | null;
+};
 
 export interface PersonsPage {
   data: Person[];
@@ -19,6 +38,7 @@ export interface CreatePersonInput {
   nationality?: string | null;
   birthDate?: string | null;
   address?: string | null;
+  mahallaId?: number | null;
   phoneNumber?: string | null;
 }
 
