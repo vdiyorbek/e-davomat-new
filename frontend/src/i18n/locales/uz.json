@@ -1,0 +1,137 @@
+{
+  "common": {
+    "back": "Orqaga",
+    "signOut": "Chiqish",
+    "signingOut": "Chiqilmoqda…",
+    "skipToContent": "Asosiy mazmunga o‘tish",
+    "language": "Til",
+    "theme": "Mavzu",
+    "unexpected": "Kutilmagan xatolik yuz berdi.",
+    "signOutFailed": "Chiqish amalga oshmadi. Qayta urinib ko‘ring.",
+    "today": "Bugun"
+  },
+  "brand": {
+    "name": "E-davomat",
+    "tagline": "Raqamli nazorat tizimi",
+    "vendor": "Orlan MCHJ",
+    "platform": "Orlan MCHJ · E-Davomat platformasi"
+  },
+  "theme": {
+    "light": "Yorug‘",
+    "dark": "Qorong‘i",
+    "system": "Tizim"
+  },
+  "nav": {
+    "main": "Asosiy menyu",
+    "openMenu": "Asosiy menyuni ochish",
+    "menuHint": "Kabinet bo‘limlaridan birini tanlang.",
+    "profile": "Shaxsiy ma’lumotlar",
+    "mySchools": "Mening maktablarim",
+    "schools": "Maktablar",
+    "students": "O‘quvchilar",
+    "teachers": "O‘qituvchilar",
+    "forbidden": "Kirish cheklangan",
+    "cabinet": "Shaxsiy kabinet",
+    "breadcrumb": "E-Davomat / Kabinet",
+    "sidebarNote": "Ma’lumotlaringiz va maktablaringiz bir joyda.",
+    "terminals": "Terminallar",
+    "attendance": "Davomat",
+    "groupPersonal": "Shaxsiy",
+    "groupManage": "Boshqaruv"
+  },
+  "roles": {
+    "USER": "Shaxsiy kabinet",
+    "SUPER_ADMIN": "Bosh administrator",
+    "REGION_ADMIN": "Viloyat administratori",
+    "DISTRICT_ADMIN": "Tuman administratori",
+    "SCHOOL_ADMIN": "Maktab administratori"
+  },
+  "auth": {
+    "heroTitle": "Bugun kim darsda?",
+    "heroText": "O‘quvchi va o‘qituvchilarning kelish va ketish ma’lumotlarini bir joyda kuzating.",
+    "title": "Tizimga kirish",
+    "subtitle": "Davom etish uchun login va parolingizni kiriting.",
+    "login": "Login",
+    "loginPlaceholder": "Loginingiz",
+    "password": "Parol",
+    "passwordPlaceholder": "Parolingiz",
+    "show": "Ko‘rsat",
+    "hide": "Yashir",
+    "showPassword": "Parolni ko‘rsatish",
+    "hidePassword": "Parolni yashirish",
+    "submit": "Kabinetga kirish",
+    "checking": "Tekshirilmoqda…",
+    "help": "Kirishda muammo bormi? Hisob ochish yoki parolni tiklash uchun",
+    "helpAdmin": "administratorga murojaat qiling."
+  },
+  "preview": {
+    "title": "101-guruh · Haftalik davomat",
+    "sample": "Namuna",
+    "caption": "Namuna ma’lumotlari asosidagi haftalik davomat",
+    "student": "O‘quvchi",
+    "days": [
+      "Du",
+      "Se",
+      "Ch",
+      "Pa",
+      "Ju",
+      "Sh"
+    ],
+    "present": "Keldi",
+    "late": "Kechikdi",
+    "absent": "Kelmadi",
+    "empty": "Ma’lumot yo‘q"
+  },
+  "errors": {
+    "403": {
+      "title": "Kirishga ruxsat yo‘q",
+      "text": "Hisobingiz ushbu sahifadan foydalanish huquqiga ega emas. Kerak bo‘lsa, administratorga murojaat qiling."
+    },
+    "404": {
+      "title": "Sahifa topilmadi",
+      "text": "Siz izlagan sahifa mavjud emas yoki boshqa manzilga ko‘chirilgan bo‘lishi mumkin."
+    },
+    "toCabinet": "Kabinetga qaytish",
+    "toProfile": "Shaxsiy kabinetga qaytish"
+  },
+  "attendance": {
+    "title": "Davomat",
+    "subtitle": "Hisoblangan birinchi kirish va oxirgi chiqish. Vaqtlar Toshkent vaqti bo‘yicha.",
+    "date": "Sana",
+    "school": "Maktab",
+    "allSchools": "Barcha ruxsat berilgan maktablar",
+    "selectedSchool": "Tanlangan maktab: {{id}}",
+    "schoolsLoading": "Maktablar yuklanmoqda…",
+    "pnfl": "PNFL",
+    "pnflPlaceholder": "Ixtiyoriy, 14 ta raqam",
+    "pnflTitle": "PNFL 14 ta raqamdan iborat bo‘lishi kerak",
+    "retrySchools": "Maktablarni qayta yuklash",
+    "show": "Ko‘rsatish",
+    "loading": "Davomat yuklanmoqda…",
+    "loadFailed": "Davomatni olib bo‘lmadi.",
+    "retry": "Qayta urinish",
+    "empty": "Tanlangan filtrlar bo‘yicha hisoblangan davomat yozuvlari topilmadi.",
+    "firstPage": "Birinchi sahifaga",
+    "total": "Jami: {{count}} ta davomat yozuvi",
+    "refresh": "Yangilash",
+    "pageOf": "{{page}} / {{total}} sahifa",
+    "prev": "Oldingi",
+    "next": "Keyingi",
+    "invalidUrl": "URL’dagi sana, maktab, PNFL yoki sahifa noto‘g‘ri.",
+    "clearFilters": "Filtrlarni tozalash",
+    "firstIn": "Birinchi kirish",
+    "lastOut": "Oxirgi chiqish",
+    "notRecorded": "Qayd etilmagan",
+    "badTime": "Vaqt noto‘g‘ri",
+    "noPhoto": "Rasm mavjud emas",
+    "noEvent": "Event mavjud emas",
+    "photoPending": "Rasm yuklanishi kutilmoqda",
+    "photoFailed": "Rasmni yuklashda xatolik",
+    "noPerson": "Shaxs ma’lumotlari kiritilmagan",
+    "status": {
+      "inside": "Maktabda",
+      "left": "Chiqib ketgan",
+      "none": "Qayd yo‘q"
+    }
+  }
+}

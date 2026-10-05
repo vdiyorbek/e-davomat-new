@@ -1,0 +1,35 @@
+# Paketlar
+node_modules/
+
+# Build va tekshiruv natijalari
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Muhit sozlamalari va maxfiy ma’lumotlar
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Yuklangan rasmlar va hujjatlar
+uploads/
+upload/
+
+# Loglar
+*.log
+
+# Arxivlar va baza nusxalari
+*.zip
+*.rar
+*.tar
+*.gz
+*.sql
+
+# Operatsion tizim
+.DS_Store
+Thumbs.db
+
+api.test

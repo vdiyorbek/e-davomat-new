@@ -1,0 +1,137 @@
+{
+  "common": {
+    "back": "Go back",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "skipToContent": "Skip to main content",
+    "language": "Language",
+    "theme": "Theme",
+    "unexpected": "An unexpected error occurred.",
+    "signOutFailed": "Could not sign out. Please try again.",
+    "today": "Today"
+  },
+  "brand": {
+    "name": "E-davomat",
+    "tagline": "Digital attendance system",
+    "vendor": "Orlan LLC",
+    "platform": "Orlan LLC · E-Davomat platform"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "nav": {
+    "main": "Main menu",
+    "openMenu": "Open main menu",
+    "menuHint": "Choose one of the cabinet sections.",
+    "profile": "Personal details",
+    "mySchools": "My schools",
+    "schools": "Schools",
+    "students": "Students",
+    "teachers": "Teachers",
+    "forbidden": "Access restricted",
+    "cabinet": "Personal cabinet",
+    "breadcrumb": "E-Davomat / Cabinet",
+    "sidebarNote": "Your details and schools in one place.",
+    "terminals": "Terminals",
+    "attendance": "Attendance",
+    "groupPersonal": "Personal",
+    "groupManage": "Management"
+  },
+  "roles": {
+    "USER": "Personal cabinet",
+    "SUPER_ADMIN": "Super administrator",
+    "REGION_ADMIN": "Region administrator",
+    "DISTRICT_ADMIN": "District administrator",
+    "SCHOOL_ADMIN": "School administrator"
+  },
+  "auth": {
+    "heroTitle": "Who’s in class today?",
+    "heroText": "Track student and teacher arrivals and departures in one place.",
+    "title": "Sign in",
+    "subtitle": "Enter your username and password to continue.",
+    "login": "Username",
+    "loginPlaceholder": "Your username",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "show": "Show",
+    "hide": "Hide",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submit": "Sign in to cabinet",
+    "checking": "Checking…",
+    "help": "Trouble signing in? To create an account or reset your password,",
+    "helpAdmin": "contact your administrator."
+  },
+  "preview": {
+    "title": "Group 101 · Weekly attendance",
+    "sample": "Sample",
+    "caption": "Weekly attendance based on sample data",
+    "student": "Student",
+    "days": [
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa"
+    ],
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent",
+    "empty": "No data"
+  },
+  "errors": {
+    "403": {
+      "title": "Access denied",
+      "text": "Your account is not allowed to view this page. Contact your administrator if you need access."
+    },
+    "404": {
+      "title": "Page not found",
+      "text": "The page you’re looking for doesn’t exist or may have been moved."
+    },
+    "toCabinet": "Back to cabinet",
+    "toProfile": "Back to personal cabinet"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "subtitle": "Calculated first entry and last exit. Times are in Tashkent time.",
+    "date": "Date",
+    "school": "School",
+    "allSchools": "All permitted schools",
+    "selectedSchool": "Selected school: {{id}}",
+    "schoolsLoading": "Loading schools…",
+    "pnfl": "PNFL",
+    "pnflPlaceholder": "Optional, 14 digits",
+    "pnflTitle": "PNFL must be 14 digits",
+    "retrySchools": "Reload schools",
+    "show": "Show",
+    "loading": "Loading attendance…",
+    "loadFailed": "Could not load attendance.",
+    "retry": "Try again",
+    "empty": "No attendance records found for the selected filters.",
+    "firstPage": "Go to first page",
+    "total": "Total: {{count}} attendance records",
+    "refresh": "Refresh",
+    "pageOf": "Page {{page}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next",
+    "invalidUrl": "The date, school, PNFL or page in the URL is invalid.",
+    "clearFilters": "Clear filters",
+    "firstIn": "First entry",
+    "lastOut": "Last exit",
+    "notRecorded": "Not recorded",
+    "badTime": "Invalid time",
+    "noPhoto": "No photo available",
+    "noEvent": "No event",
+    "photoPending": "Photo upload pending",
+    "photoFailed": "Photo upload failed",
+    "noPerson": "No person details",
+    "status": {
+      "inside": "In school",
+      "left": "Left",
+      "none": "No record"
+    }
+  }
+}
