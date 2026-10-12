@@ -1,7 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, ShieldCheck } from 'lucide-react';
-
+import {
+    UsersFilters,
+    type UsersFilterValues,
+} from '@/components/users/UsersFilters';
 import {
     UserAccessForm,
     type AccessUser,
@@ -15,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { EditUserForm } from '@/components/users/EditUserForm';
 import type { EditableUser } from '@/components/users/EditUserForm';
 import { authorizedGet } from '@/lib/auth-session';
+import { UserStatusAction } from '@/components/users/UserStatusAction';
 interface UserItem {
     id: number;
     login: string;
@@ -40,12 +44,53 @@ export function UsersPage() {
     const [notice, setNotice] = useState('');
 
     const { session } = useAuth();
-
+    const isSuperAdmin =
+        session?.profile.role === 'SUPER_ADMIN';
     const [accessUser, setAccessUser] =
         useState<AccessUser | null>(null);
 
     const [accessLoading, setAccessLoading] = useState(false);
     const [accessError, setAccessError] = useState('');
+
+    const [filters, setFilters] = useState<UsersFilterValues>({
+        search: '',
+        role: '',
+        isActive: '',
+        regionId: '',
+        districtId: '',
+        schoolId: '',
+    });
+
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(20);
+
+    // Ҳар бир ҳарф учун серверга сўров юбормаслик.
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setDebouncedSearch(filters.search.trim());
+        }, 350);
+
+        return () => window.clearTimeout(timer);
+    }, [filters.search]);
+
+    function updateFilters(next: UsersFilterValues) {
+        setFilters(next);
+        setPage(1);
+    }
+
+    function resetFilters() {
+        setFilters({
+            search: '',
+            role: '',
+            isActive: '',
+            regionId: '',
+            districtId: '',
+            schoolId: '',
+        });
+        setPage(1);
+    }
 
     const canManageAccess = [
         'SUPER_ADMIN',
@@ -77,8 +122,38 @@ export function UsersPage() {
         useState<EditableUser | null>(null);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState('');
+
+    const params = new URLSearchParams();
+
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+
+    if (debouncedSearch) {
+        params.set('search', debouncedSearch);
+    }
+
+    if (filters.role) {
+        params.set('role', filters.role);
+    }
+
+    if (filters.isActive) {
+        params.set('isActive', filters.isActive);
+    }
+
+    if (filters.regionId) {
+        params.set('regionId', filters.regionId);
+    }
+
+    if (filters.districtId) {
+        params.set('districtId', filters.districtId);
+    }
+
+    if (filters.schoolId) {
+        params.set('schoolId', filters.schoolId);
+    }
+
     const query = useApiQuery<UsersResponse>(
-        '/users?page=1&limit=20',
+        `/users?${params.toString()}`,
     );
 
     function handleCreated() {
@@ -124,6 +199,11 @@ export function UsersPage() {
                     <Plus className="mr-2 size-4" />
                     Foydalanuvchi qo‘shish
                 </Button>
+                <UsersFilters
+                    value={filters}
+                    onChange={updateFilters}
+                    onReset={resetFilters}
+                />
             </div>
 
             {notice && (
@@ -269,6 +349,17 @@ export function UsersPage() {
                                                     Рол ва ваколат
                                                 </Button>
                                             )}
+                                        {isSuperAdmin && session && (
+                                            <UserStatusAction
+                                                key={`${user.id}-${user.isActive}`}
+                                                user={user}
+                                                currentUserId={session.profile.id}
+                                                onUpdated={(message) => {
+                                                    setNotice(message);
+                                                    query.retry();
+                                                }}
+                                            />
+                                        )}
 
                                     </td>
                                 </tr>
@@ -285,6 +376,58 @@ export function UsersPage() {
                             )}
                         </tbody>
                     </table>
+
+                    {!query.loading && !query.error && query.data && (
+                        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-4">
+                            <div className="text-sm text-muted-foreground">
+                                Жами: <strong>{query.data.total}</strong> та фойдаланувчи
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3">
+                                <label htmlFor="users-page-size" className="text-sm">
+                                    Саҳифада:
+                                </label>
+
+                                <select
+                                    id="users-page-size"
+                                    className="rounded-lg border bg-background px-3 py-2 text-sm"
+                                    value={limit}
+                                    onChange={(e) => {
+                                        setLimit(Number(e.target.value));
+                                        setPage(1);
+                                    }}
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={page <= 1}
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                >
+                                    Олдинги
+                                </Button>
+
+                                <span className="text-sm tabular-nums">
+                                    {query.data.page} / {Math.max(1, query.data.totalPages)}
+                                </span>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={page >= query.data.totalPages}
+                                    onClick={() => setPage((p) => p + 1)}
+                                >
+                                    Кейинги
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             )}
         </div>
