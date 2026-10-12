@@ -7,6 +7,7 @@ import { PersonPhoto } from '@/components/persons/PersonPhoto';
 import { useAuth } from '@/hooks/useAuth';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ChangePersonPhoto } from '@/components/persons/ChangePersonPhoto';
+import { PersonSchools } from '@/components/persons/PersonSchools';
 
 import type { Person } from '@/types/person';
 
@@ -84,6 +85,18 @@ function PersonDetails({ personId }: { personId: number }) {
         },
         { label: 'Millati', value: person.nationality },
         { label: 'Telefon raqami', value: person.phoneNumber },
+        {
+            label: 'Yashash viloyati',
+            value: person.mahalla?.district.region.name ?? null,
+        },
+        {
+            label: 'Yashash tumani / shahri',
+            value: person.mahalla?.district.name ?? null,
+        },
+        {
+            label: 'Mahalla',
+            value: person.mahalla?.name ?? null,
+        },
         { label: 'Yashash manzili', value: person.address },
     ];
 
@@ -213,6 +226,13 @@ function PersonDetails({ personId }: { personId: number }) {
                         </dl>
                     )}
                 </div>
+            </section>
+            <section className="rounded-2xl border bg-card p-5 sm:p-6">
+                <PersonSchools
+                    key={person.id}
+                    personId={person.id}
+                    allowClassChange
+                />
             </section>
         </div>
     );

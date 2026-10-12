@@ -1,4 +1,4 @@
-import { Building2, GraduationCap, UserRound, Users, BookOpen, ScanFace, ClipboardCheck } from 'lucide-react';
+import { Building2, GraduationCap, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { useAuth } from '@/hooks/useAuth';
 import { ADMIN_ROLES } from '@/lib/roles';
 import { cn } from '@/lib/utils';
+import type { NavLinkRenderProps } from 'react-router';
 
 interface SidebarProps {
     mobile?: boolean;
@@ -29,12 +30,13 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
     ];
     const manage: MenuLink[] = ADMIN_ROLES.includes(session.profile.role)
         ? [
-              { to: '/attendance', label: t('nav.attendance'), icon: ClipboardCheck },
-              { to: '/schools', label: t('nav.schools'), icon: Building2 },
-              { to: '/students', label: t('nav.students'), icon: Users },
-              { to: '/teachers', label: t('nav.teachers'), icon: BookOpen },
-              { to: '/terminals', label: t('nav.terminals'), icon: ScanFace },
-          ]
+            { to: '/attendance', label: t('nav.attendance'), icon: ClipboardCheck },
+            { to: '/schools', label: t('nav.schools'), icon: Building2 },
+            { to: '/students', label: t('nav.students'), icon: Users },
+            { to: '/teachers', label: t('nav.teachers'), icon: BookOpen },
+            { to: '/terminals', label: t('nav.terminals'), icon: ScanFace },
+            { to: '/classes', label: t('nav.classes'), icon: School },
+        ]
         : [];
 
     const wide = mobile ? '' : 'sr-only lg:not-sr-only';
@@ -53,7 +55,7 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
                         end
                         title={text}
                         onClick={onNavigate}
-                        className={({ isActive }) =>
+                        className={({ isActive }: NavLinkRenderProps) =>
                             cn(
                                 'group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
@@ -64,7 +66,7 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
                             )
                         }
                     >
-                        {({ isActive }) => (
+                        {({ isActive }: NavLinkRenderProps) => (
                             <>
                                 {isActive && (
                                     <span aria-hidden="true" className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-warning" />

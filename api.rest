@@ -1,0 +1,84 @@
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+
+{
+    "login": "vdiyorbek",
+    "password":"123456789012345"
+}
+### super.admin
+### 123456789012345
+
+### kabinet
+GET http://localhost:3000/api/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzkwNjY5NTU4LCJleHAiOjE3OTA2NzA0NTgsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.vVSy0Q6Q7Oqt3Je5HUuQ44D_31HfWUmpuCvKvtVAMOU
+
+
+### umumiy shaxslar ro'yxati
+GET http://localhost:3000/api/persons
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzkwNjcwNzM1LCJleHAiOjE3OTA2NzE2MzUsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.ww7TPb3xvJr8U5HPdUzXwvAP81Kmodj59nSxMpfWLpY
+
+### tokensiz
+GET http://localhost:3000/api/persons
+
+### tokensiz
+GET http://localhost:3000/api/persons
+
+### akkaunt yaratish
+POST http://localhost:3000/api/persons
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzkwNjcwNzM1LCJleHAiOjE3OTA2NzE2MzUsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.ww7TPb3xvJr8U5HPdUzXwvAP81Kmodj59nSxMpfWLpY
+Content-Type: application/json
+
+{
+    "pnfl": "15161415161718",
+    "firstName":"Diyorbek",
+    "lastName":"Vokhidov"
+}
+
+###Kabinet hisobini yaratish
+POST http://localhost:3000/api/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzkwNjcwNzM1LCJleHAiOjE3OTA2NzE2MzUsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.ww7TPb3xvJr8U5HPdUzXwvAP81Kmodj59nSxMpfWLpY
+Content-Type: application/json
+
+{
+  "personId": 3,
+  "login": "vdiyorbek",
+  "password": "123456789012345"
+}
+
+###
+PATCH http://localhost:3000/api/users/4/access
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzkwNjcxNzA2LCJleHAiOjE3OTA2NzI2MDYsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.Ls-AdLtA60BMbjjkJgZcxFaPAeVdV6FeBjjmyUJLTHs
+Content-Type: application/json
+
+{
+  "role": "SCHOOL_ADMIN",
+  "schoolId": 1
+}
+
+### Faqat biriktirilgan maktab qaytishi kerak
+GET http://localhost:3000/api/schools
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzkwNjczNDQzLCJleHAiOjE3OTA2NzQzNDMsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.O0p7snU0A7i42G_d7o7A8iYLGjGmnBZT4_KL_u9eUu0
+
+###
+GET http://localhost:3000/api/school-memberships
+
+### O‘z maktabidagi bog‘lanishlar
+GET http://localhost:3000/api/school-memberships
+Authorization: Bearer MAKTAB_ADMIN_TOKENI
+
+### O‘z maktabidagi o‘quvchi bog‘lanishlari
+GET http://localhost:3000/api/school-memberships?type=STUDENT&page=1&limit=20
+Authorization: Bearer MAKTAB_ADMIN_TOKENI
+
+### O‘z maktabidagi o‘qituvchi bog‘lanishlari
+GET http://localhost:3000/api/school-memberships?type=TEACHER
+Authorization: Bearer MAKTAB_ADMIN_TOKENI
+
+###
+GET http://localhost:3000/api/school-memberships?schoolId=2
+Authorization: Bearer MAKTAB_ADMIN_TOKENI
+
+###
+GET http://localhost:3000/api/persons/4
+Authorization: Bearer MAKTAB_ADMIN_TOKENI

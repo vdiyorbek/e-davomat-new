@@ -37,7 +37,8 @@
     "terminals": "Terminallar",
     "attendance": "Davomat",
     "groupPersonal": "Shaxsiy",
-    "groupManage": "Boshqaruv"
+    "groupManage": "Boshqaruv",
+    "classes": "Sinflar"
   },
   "roles": {
     "USER": "Shaxsiy kabinet",
@@ -69,14 +70,7 @@
     "sample": "Namuna",
     "caption": "Namuna ma’lumotlari asosidagi haftalik davomat",
     "student": "O‘quvchi",
-    "days": [
-      "Du",
-      "Se",
-      "Ch",
-      "Pa",
-      "Ju",
-      "Sh"
-    ],
+    "days": ["Du", "Se", "Ch", "Pa", "Ju", "Sh"],
     "present": "Keldi",
     "late": "Kechikdi",
     "absent": "Kelmadi",

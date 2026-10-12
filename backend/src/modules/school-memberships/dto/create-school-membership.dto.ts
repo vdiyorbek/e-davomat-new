@@ -43,4 +43,10 @@ export class CreateSchoolMembershipDto {
     { message: 'endDate haqiqiy sana bo‘lishi kerak' },
   )
   endDate?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(4294967295)
+  classId?: number | null;
 }

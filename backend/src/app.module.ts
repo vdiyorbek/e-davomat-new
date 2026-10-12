@@ -18,6 +18,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TerminalSyncModule } from './modules/terminal-sync/terminal-sync.module';
 import { AttendancePhotoSyncModule } from './modules/attendance-photo-sync/attendance-photo-sync.module';
 import { MahallasModule } from './modules/mahallas/mahallas.module';
+import { ClassesModule } from './modules/classes/classes.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { MahallasModule } from './modules/mahallas/mahallas.module';
     TerminalSyncModule,
     AttendancePhotoSyncModule,
     MahallasModule,
+    ClassesModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

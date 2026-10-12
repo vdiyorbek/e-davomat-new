@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Person } from '../persons/person.entity';
 import { School } from '../schools/school.entity';
+import { SchoolClass } from '../classes/school-class.entity';
 
 export enum MembershipType {
   STUDENT = 'STUDENT',
@@ -61,6 +62,23 @@ export class SchoolMembership {
     foreignKeyConstraintName: 'FK_memberships_school',
   })
   school!: School;
+
+  @Column({
+    type: 'int',
+    unsigned: true,
+    nullable: true,
+  })
+  classId!: number | null;
+
+  @ManyToOne(() => SchoolClass, {
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({
+    name: 'classId',
+    foreignKeyConstraintName: 'FK_memberships_class',
+  })
+  schoolClass!: SchoolClass | null;
 
   @Column({
     type: 'enum',

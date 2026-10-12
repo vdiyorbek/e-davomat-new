@@ -20,3 +20,30 @@ export function endSchoolMembership(
     { endDate },
   );
 }
+
+export function changeMembershipClass(
+  membershipId: number,
+  input: {
+    classId: number;
+    startDate: string;
+  },
+): Promise<CreatedSchoolMembership> {
+  return authorizedPost<CreatedSchoolMembership>(
+    `/school-memberships/${membershipId}/change-class`,
+    input,
+  );
+}
+
+export function transferSchoolMembership(
+  membershipId: number,
+  input: {
+    schoolId: number;
+    classId: number;
+    startDate: string;
+  },
+): Promise<CreatedSchoolMembership> {
+  return authorizedPost<CreatedSchoolMembership>(
+    `/school-memberships/${membershipId}/transfer-school`,
+    input,
+  );
+}

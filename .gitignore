@@ -33,3 +33,9 @@ upload/
 Thumbs.db
 
 api.test
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/

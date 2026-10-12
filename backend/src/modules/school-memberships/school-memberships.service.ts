@@ -9,13 +9,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
 import { Person } from '../persons/person.entity';
 import { School } from '../schools/school.entity';
-import { SchoolMembership } from './school-membership.entity';
 import { CreateSchoolMembershipDto } from './dto/create-school-membership.dto';
 import { GetSchoolMembershipsQueryDto } from './dto/get-school-memberships-query.dto';
 import { UserRole } from '../users/enums/user-role.enum';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { EndSchoolMembershipDto } from './dto/end-school-membership.dto';
 import { MembershipStatus } from './enums/membership-status.enum';
+import { SchoolClass } from '../classes/school-class.entity';
+import { MembershipType, SchoolMembership } from './school-membership.entity';
+import { ChangeMembershipClassDto } from './dto/change-membership-class.dto';
+import { TransferSchoolMembershipDto } from './dto/transfer-school-membership.dto';
 
 export interface SchoolMembershipsPage {
   data: SchoolMembership[];
@@ -76,6 +79,26 @@ export class SchoolMembershipsService {
           if (!school) {
             throw new NotFoundException('Maktab topilmadi');
           }
+          const classId = dto.classId ?? null;
+
+          if (classId !== null) {
+            if (dto.type !== MembershipType.STUDENT) {
+              throw new BadRequestException(
+                'Sinf faqat o‘quvchiga biriktiriladi',
+              );
+            }
+
+            const schoolClass = await manager.findOneBy(SchoolClass, {
+              id: classId,
+              schoolId: school.id,
+            });
+
+            if (!schoolClass) {
+              throw new BadRequestException(
+                'Tanlangan sinf mavjud emas yoki ushbu maktabga tegishli emas',
+              );
+            }
+          }
 
           const repository = manager.getRepository(SchoolMembership);
 
@@ -112,6 +135,7 @@ export class SchoolMembershipsService {
           const membership = repository.create({
             personId: dto.personId,
             schoolId: dto.schoolId,
+            classId,
             type: dto.type,
             startDate: dto.startDate,
             endDate,
@@ -153,6 +177,7 @@ export class SchoolMembershipsService {
     const builder = this.membershipsRepository
       .createQueryBuilder('membership')
       .leftJoinAndSelect('membership.person', 'person')
+      .leftJoinAndSelect('membership.schoolClass', 'schoolClass')
       .innerJoinAndSelect('membership.school', 'school')
       .innerJoinAndSelect('school.district', 'district')
       .innerJoinAndSelect('district.region', 'region');
@@ -355,5 +380,376 @@ export class SchoolMembershipsService {
 
       return repository.save(membership);
     });
+  }
+
+  async changeClass(
+    membershipId: number,
+    dto: ChangeMembershipClassDto,
+    user: AuthenticatedUser,
+  ): Promise<SchoolMembership> {
+    try {
+      return await this.dataSource.transaction(
+        'READ COMMITTED',
+        async (manager) => {
+          const repository = manager.getRepository(SchoolMembership);
+
+          const initial = await repository.findOneBy({
+            id: membershipId,
+          });
+
+          if (!initial) {
+            throw new NotFoundException('Biriktirish topilmadi');
+          }
+
+          const sourceSchool = await manager.findOne(School, {
+            where: { id: initial.schoolId },
+            relations: {
+              district: true,
+            },
+          });
+
+          if (!sourceSchool) {
+            throw new NotFoundException('Maktab topilmadi');
+          }
+
+          switch (user.role) {
+            case UserRole.SUPER_ADMIN:
+              break;
+
+            case UserRole.REGION_ADMIN:
+              if (
+                !user.regionId ||
+                sourceSchool.district.regionId !== user.regionId
+              ) {
+                throw new ForbiddenException(
+                  'Faqat o‘z viloyatingizdagi o‘quvchini ko‘chira olasiz',
+                );
+              }
+              break;
+
+            case UserRole.DISTRICT_ADMIN:
+              if (
+                !user.districtId ||
+                sourceSchool.districtId !== user.districtId
+              ) {
+                throw new ForbiddenException(
+                  'Faqat o‘z tumaningizdagi o‘quvchini ko‘chira olasiz',
+                );
+              }
+              break;
+
+            case UserRole.SCHOOL_ADMIN:
+              if (!user.schoolId || sourceSchool.id !== user.schoolId) {
+                throw new ForbiddenException(
+                  'Faqat o‘z maktabingizdagi o‘quvchini ko‘chira olasiz',
+                );
+              }
+              break;
+
+            default:
+              throw new ForbiddenException(
+                'O‘quvchini ko‘chirishga ruxsat berilmagan',
+              );
+          }
+
+          // Yaratish oqimidagi kabi avval shaxsni qulflaymiz.
+          const person = await manager.findOne(Person, {
+            where: { id: initial.personId },
+            lock: { mode: 'pessimistic_write' },
+          });
+
+          if (!person) {
+            throw new NotFoundException('Shaxs topilmadi yoki arxivlangan');
+          }
+
+          const current = await repository.findOne({
+            where: {
+              id: membershipId,
+              personId: person.id,
+            },
+            lock: { mode: 'pessimistic_write' },
+          });
+
+          if (!current) {
+            throw new NotFoundException('Biriktirish topilmadi');
+          }
+
+          if (current.type !== MembershipType.STUDENT) {
+            throw new BadRequestException(
+              'Sinfni almashtirish faqat o‘quvchi uchun mumkin',
+            );
+          }
+
+          if (current.endDate !== null) {
+            throw new ConflictException(
+              'Bu biriktirishga tugash sanasi qo‘yilgan',
+            );
+          }
+
+          if (dto.startDate <= current.startDate) {
+            throw new BadRequestException(
+              'O‘tish sanasi eski biriktirish boshlanishidan keyin bo‘lsin',
+            );
+          }
+
+          if (current.classId === dto.classId) {
+            throw new BadRequestException(
+              'O‘quvchi allaqachon ushbu sinfga biriktirilgan',
+            );
+          }
+
+          const targetClass = await manager.findOneBy(SchoolClass, {
+            id: dto.classId,
+            schoolId: current.schoolId,
+          });
+
+          if (!targetClass) {
+            throw new BadRequestException(
+              'Yangi sinf mavjud emas yoki shu maktabga tegishli emas',
+            );
+          }
+
+          // Yangi davr boshqa biriktirish bilan ustma-ust kelmasin.
+          const overlapping = await repository
+            .createQueryBuilder('membership')
+            .where('membership.personId = :personId', {
+              personId: current.personId,
+            })
+            .andWhere('membership.schoolId = :schoolId', {
+              schoolId: current.schoolId,
+            })
+            .andWhere('membership.type = :type', {
+              type: MembershipType.STUDENT,
+            })
+            .andWhere('membership.id <> :membershipId', {
+              membershipId: current.id,
+            })
+            .andWhere(
+              '(membership.endDate IS NULL OR membership.endDate > :startDate)',
+              { startDate: dto.startDate },
+            )
+            .getOne();
+
+          if (overlapping) {
+            throw new ConflictException(
+              'Yangi davr shu maktabdagi boshqa biriktirish bilan ustma-ust kelmoqda',
+            );
+          }
+
+          current.endDate = dto.startDate;
+          await repository.save(current);
+
+          const next = repository.create({
+            personId: current.personId,
+            schoolId: current.schoolId,
+            classId: targetClass.id,
+            type: MembershipType.STUDENT,
+            startDate: dto.startDate,
+            endDate: null,
+          });
+
+          return await repository.save(next);
+        },
+      );
+    } catch (error: unknown) {
+      if (error instanceof QueryFailedError) {
+        const driverError = error.driverError as {
+          code?: string;
+        };
+
+        if (driverError.code === 'ER_DUP_ENTRY') {
+          throw new ConflictException(
+            'Ushbu sana uchun biriktirish allaqachon mavjud',
+          );
+        }
+
+        if (driverError.code === 'ER_NO_REFERENCED_ROW_2') {
+          throw new ConflictException(
+            'Bog‘langan ma’lumot o‘zgargan. Ro‘yxatni yangilab qayta urinib ko‘ring',
+          );
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async transferSchool(
+    membershipId: number,
+    dto: TransferSchoolMembershipDto,
+    user: AuthenticatedUser,
+  ): Promise<SchoolMembership> {
+    if (
+      user.role !== UserRole.SUPER_ADMIN &&
+      user.role !== UserRole.REGION_ADMIN &&
+      user.role !== UserRole.DISTRICT_ADMIN
+    ) {
+      throw new ForbiddenException(
+        'Boshqa maktabga ko‘chirishga ruxsat berilmagan',
+      );
+    }
+
+    try {
+      return await this.dataSource.transaction(
+        'READ COMMITTED',
+        async (manager) => {
+          const repository = manager.getRepository(SchoolMembership);
+
+          const initial = await repository.findOneBy({
+            id: membershipId,
+          });
+
+          if (!initial) {
+            throw new NotFoundException('Biriktirish topilmadi');
+          }
+
+          const person = await manager.findOne(Person, {
+            where: { id: initial.personId },
+            lock: { mode: 'pessimistic_write' },
+          });
+
+          if (!person) {
+            throw new NotFoundException('Shaxs topilmadi yoki arxivlangan');
+          }
+
+          const current = await repository.findOne({
+            where: {
+              id: membershipId,
+              personId: person.id,
+            },
+            lock: { mode: 'pessimistic_write' },
+          });
+
+          if (!current) {
+            throw new NotFoundException('Biriktirish topilmadi');
+          }
+
+          const sourceSchool = await manager.findOne(School, {
+            where: { id: current.schoolId },
+            relations: { district: true },
+          });
+
+          const targetSchool = await manager.findOne(School, {
+            where: { id: dto.schoolId },
+            relations: { district: true },
+          });
+
+          if (!sourceSchool || !targetSchool) {
+            throw new NotFoundException('Eski yoki yangi maktab topilmadi');
+          }
+
+          // Ikkala maktab ham administrator hududida bo‘lishi kerak.
+          for (const school of [sourceSchool, targetSchool]) {
+            if (
+              user.role === UserRole.REGION_ADMIN &&
+              (!user.regionId || school.district.regionId !== user.regionId)
+            ) {
+              throw new ForbiddenException(
+                'Faqat o‘z viloyatingizdagi maktablar orasida ko‘chira olasiz',
+              );
+            }
+
+            if (
+              user.role === UserRole.DISTRICT_ADMIN &&
+              (!user.districtId || school.districtId !== user.districtId)
+            ) {
+              throw new ForbiddenException(
+                'Faqat o‘z tumaningizdagi maktablar orasida ko‘chira olasiz',
+              );
+            }
+          }
+
+          if (current.type !== MembershipType.STUDENT) {
+            throw new BadRequestException('Ushbu amal faqat o‘quvchilar uchun');
+          }
+
+          if (current.endDate !== null) {
+            throw new ConflictException(
+              'Bu biriktirishga tugash sanasi qo‘yilgan',
+            );
+          }
+
+          if (sourceSchool.id === targetSchool.id) {
+            throw new BadRequestException(
+              'Boshqa maktabni tanlang. Shu maktab ichida sinfni almashtirishdan foydalaning',
+            );
+          }
+
+          if (dto.startDate <= current.startDate) {
+            throw new BadRequestException(
+              'Ko‘chirish sanasi eski biriktirish boshlanishidan keyin bo‘lsin',
+            );
+          }
+
+          const targetClass = await manager.findOneBy(SchoolClass, {
+            id: dto.classId,
+            schoolId: targetSchool.id,
+          });
+
+          if (!targetClass) {
+            throw new BadRequestException(
+              'Tanlangan sinf mavjud emas yoki yangi maktabga tegishli emas',
+            );
+          }
+
+          const overlapping = await repository
+            .createQueryBuilder('membership')
+            .where('membership.personId = :personId', {
+              personId: person.id,
+            })
+            .andWhere('membership.schoolId = :schoolId', {
+              schoolId: targetSchool.id,
+            })
+            .andWhere('membership.type = :type', {
+              type: MembershipType.STUDENT,
+            })
+            .andWhere(
+              '(membership.endDate IS NULL OR membership.endDate > :startDate)',
+              { startDate: dto.startDate },
+            )
+            .getOne();
+
+          if (overlapping) {
+            throw new ConflictException(
+              'O‘quvchining yangi maktabda shu davr bilan ustma-ust keladigan biriktirishi bor',
+            );
+          }
+
+          current.endDate = dto.startDate;
+          await repository.save(current);
+
+          const next = repository.create({
+            personId: person.id,
+            schoolId: targetSchool.id,
+            classId: targetClass.id,
+            type: MembershipType.STUDENT,
+            startDate: dto.startDate,
+            endDate: null,
+          });
+
+          return await repository.save(next);
+        },
+      );
+    } catch (error: unknown) {
+      if (error instanceof QueryFailedError) {
+        const driverError = error.driverError as {
+          code?: string;
+        };
+
+        if (driverError.code === 'ER_DUP_ENTRY') {
+          throw new ConflictException(
+            'Ushbu sana uchun biriktirish allaqachon mavjud',
+          );
+        }
+
+        if (driverError.code === 'ER_NO_REFERENCED_ROW_2') {
+          throw new ConflictException(
+            'Bog‘langan ma’lumot o‘zgargan. Ro‘yxatni yangilab qayta urinib ko‘ring',
+          );
+        }
+      }
+
+      throw error;
+    }
   }
 }

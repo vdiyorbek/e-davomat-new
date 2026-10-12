@@ -4,6 +4,8 @@ import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updatePerson } from '@/lib/persons-api';
+import { ResidenceFields } from './ResidenceFields';
+import type { ResidenceValue } from './ResidenceFields';
 
 import type {
     Person,
@@ -58,7 +60,11 @@ export function EditPersonForm({
         person.phoneNumber ?? '',
     );
     const [address, setAddress] = useState(person.address ?? '');
-
+    const [residence, setResidence] = useState<ResidenceValue>({
+        regionId: person.mahalla?.district.regionId ?? null,
+        districtId: person.mahalla?.districtId ?? null,
+        mahallaId: person.mahallaId ?? null,
+    });
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
@@ -78,6 +84,7 @@ export function EditPersonForm({
             nationality: nationality.trim() || null,
             phoneNumber: phoneNumber.trim() || null,
             address: address.trim() || null,
+            mahallaId: residence.mahallaId,
         } satisfies UpdatePersonInput;
 
         if (!values.firstName || !values.lastName) {
@@ -118,6 +125,10 @@ export function EditPersonForm({
 
         if (values.address !== person.address) {
             changes.address = values.address;
+        }
+
+        if (values.mahallaId !== (person.mahallaId ?? null)) {
+            changes.mahallaId = values.mahallaId;
         }
 
         if (Object.keys(changes).length === 0) {
@@ -271,7 +282,13 @@ export function EditPersonForm({
                             title="Masalan: +998901234567"
                         />
                     </div>
-
+                    <div className="md:col-span-2">
+                        <ResidenceFields
+                            value={residence}
+                            onChange={setResidence}
+                            disabled={busy}
+                        />
+                    </div>
                     <div className="space-y-2 md:col-span-2">
                         <label
                             htmlFor={`${formId}-address`}

@@ -16,6 +16,9 @@ import { uploadPersonPhoto } from '@/lib/person-photos-api';
 import type { Person } from '@/types/person';
 import type { School } from '@/types/school';
 import type { SchoolMembership } from '@/types/school-membership';
+import { ResidenceFields } from '../persons/ResidenceFields';
+import type { ResidenceValue } from '../persons/ResidenceFields';
+import { PersonSchools } from '@/components/persons/PersonSchools';
 
 interface CreateMemberFormProps {
     type: SchoolMembership['type'];
@@ -46,6 +49,7 @@ function personName(person: Person): string {
     ].filter(Boolean).join(' ');
 }
 
+
 export function CreateMemberForm({
     type,
     initialSchoolId,
@@ -71,6 +75,12 @@ export function CreateMemberForm({
     const [nationality, setNationality] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
+    const [residence, setResidence] = useState<ResidenceValue>({
+        regionId: null,
+        districtId: null,
+        mahallaId: null,
+    });
+
     const [endDate, setEndDate] = useState('');
     const [schoolId, setSchoolId] = useState(
         initialSchoolId ? String(initialSchoolId) : '',
@@ -262,6 +272,7 @@ export function CreateMemberForm({
                     nationality: normalizedNationality || null,
                     phoneNumber: normalizedPhone || null,
                     address: normalizedAddress || null,
+                    mahallaId: residence.mahallaId,
                 });
 
                 if (!mounted.current) return;
@@ -588,7 +599,12 @@ export function CreateMemberForm({
                                         </div>
                                     ))}
                                 </dl>
-
+                                <div className="mt-4">
+                                    <PersonSchools
+                                        key={person.id}
+                                        personId={person.id}
+                                    />
+                                </div>
                                 <p className="mt-4 text-xs leading-5 text-muted-foreground">
                                     Mavjud shaxsning ma’lumotlari ko‘rsatilmoqda.
                                     Maktabga biriktirish ushbu ma’lumotlarni o‘zgartirmaydi.
@@ -615,6 +631,11 @@ export function CreateMemberForm({
                                 setNationality('');
                                 setPhoneNumber('');
                                 setAddress('');
+                                setResidence({
+                                    regionId: null,
+                                    districtId: null,
+                                    mahallaId: null,
+                                });
                                 setEndDate('');
                                 setError('');
                                 setNotice('');
@@ -765,7 +786,13 @@ export function CreateMemberForm({
                                     + belgisi va raqamlar, bo‘sh joylarsiz.
                                 </p>
                             </div>
-
+                            <div className="md:col-span-2">
+                                <ResidenceFields
+                                    value={residence}
+                                    onChange={setResidence}
+                                    disabled={busy}
+                                />
+                            </div>
                             <div className="space-y-2 md:col-span-2">
                                 <label
                                     htmlFor={`${id}-address`}
@@ -778,7 +805,7 @@ export function CreateMemberForm({
                                     id={`${id}-address`}
                                     value={address}
                                     onChange={(event) => setAddress(event.target.value)}
-                                    placeholder="Viloyat, tuman/shahar, mahalla, ko‘cha va uy"
+                                    placeholder="Ko‘cha va uy raqami"
                                     autoComplete="street-address"
                                     maxLength={500}
                                     rows={3}

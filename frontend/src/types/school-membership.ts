@@ -13,6 +13,13 @@ export interface SchoolMembership {
     "id" | "pnfl" | "firstName" | "lastName" | "middleName"
   > | null;
   school: School;
+  classId?: number | null;
+  schoolClass?: {
+    id: number;
+    schoolId: number;
+    academicYear: string;
+    name: string;
+  } | null;
 }
 
 export interface SchoolMembershipsPage {
@@ -29,6 +36,7 @@ export interface CreateSchoolMembershipInput {
   type: SchoolMembership["type"];
   startDate: string;
   endDate?: string | null;
+  classId?: number | null;
 }
 
 export type CreatedSchoolMembership = Omit<

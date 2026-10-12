@@ -1,6 +1,22 @@
 import type { Profile } from "@/types/auth";
 
-export type Person = Profile["person"];
+export type Person = Profile["person"] & {
+  mahallaId?: number | null;
+  mahalla?: {
+    id: number;
+    name: string;
+    districtId: number;
+    district: {
+      id: number;
+      name: string;
+      regionId: number;
+      region: {
+        id: number;
+        name: string;
+      };
+    };
+  } | null;
+};
 
 export interface PersonsPage {
   data: Person[];
@@ -20,6 +36,7 @@ export interface CreatePersonInput {
   birthDate?: string | null;
   address?: string | null;
   phoneNumber?: string | null;
+  mahallaId?: number | null;
 }
 
 export type UpdatePersonInput = Partial<Omit<CreatePersonInput, "pnfl">>;

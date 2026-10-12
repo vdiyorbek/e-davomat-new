@@ -37,7 +37,8 @@
     "terminals": "Terminals",
     "attendance": "Attendance",
     "groupPersonal": "Personal",
-    "groupManage": "Management"
+    "groupManage": "Management",
+    "classes": "Classes"
   },
   "roles": {
     "USER": "Personal cabinet",
@@ -69,14 +70,7 @@
     "sample": "Sample",
     "caption": "Weekly attendance based on sample data",
     "student": "Student",
-    "days": [
-      "Mo",
-      "Tu",
-      "We",
-      "Th",
-      "Fr",
-      "Sa"
-    ],
+    "days": ["Mo", "Tu", "We", "Th", "Fr", "Sa"],
     "present": "Present",
     "late": "Late",
     "absent": "Absent",

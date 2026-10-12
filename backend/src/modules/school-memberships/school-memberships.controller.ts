@@ -19,6 +19,8 @@ import type { SchoolMembershipsPage } from './school-memberships.service';
 import { CreateSchoolMembershipDto } from './dto/create-school-membership.dto';
 import { GetSchoolMembershipsQueryDto } from './dto/get-school-memberships-query.dto';
 import { EndSchoolMembershipDto } from './dto/end-school-membership.dto';
+import { ChangeMembershipClassDto } from './dto/change-membership-class.dto';
+import { TransferSchoolMembershipDto } from './dto/transfer-school-membership.dto';
 
 @Controller('school-memberships')
 @Roles(UserRole.SUPER_ADMIN)
@@ -57,5 +59,42 @@ export class SchoolMembershipsController {
     @Body() dto: EndSchoolMembershipDto,
   ): Promise<SchoolMembership> {
     return this.membershipsService.endMembership(id, dto);
+  }
+
+  @Post(':id/change-class')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  changeClass(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ChangeMembershipClassDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SchoolMembership> {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.membershipsService.changeClass(id, dto, user);
+  }
+
+  @Post(':id/transfer-school')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.REGION_ADMIN, UserRole.DISTRICT_ADMIN)
+  transferSchool(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: TransferSchoolMembershipDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SchoolMembership> {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.membershipsService.transferSchool(id, dto, user);
   }
 }
