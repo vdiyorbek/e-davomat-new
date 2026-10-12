@@ -130,3 +130,7 @@ Content-Type: application/json
   "role": "DISTRICT_ADMIN",
   "districtId": 1
 }
+
+###
+GET http://localhost:3000/api/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0Iiwic2lkIjoiMTdhZmI4MWMtM2FiNS00ZjI4LWI4ZWEtOGQ1ZDY4MDJjMzkxIiwiaWF0IjoxNzkxNzg3NTY2LCJleHAiOjE3OTE3ODg0NjYsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.31UK3N8XVrqCDhLwh4fvYwmZgTUgzBoATHUMaDKxhz0
