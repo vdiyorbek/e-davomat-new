@@ -86,3 +86,47 @@ Authorization: Bearer MAKTAB_ADMIN_TOKENI
 ###
 GET http://localhost:3000/api/users?page=1&limit=20
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiMjVkYjI0ZmItMTY0ZC00N2JlLThhMjgtMGIxZGM1ZGI4N2ZlIiwiaWF0IjoxNzkxNzgyMzI0LCJleHAiOjE3OTE3ODMyMjQsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.FxN1Z_JOt0PXPWiK6xVgvbZprl2TPVCBdt-A-xHInJc
+
+
+###
+PATCH http://localhost:3000/api/users/4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiMjVkYjI0ZmItMTY0ZC00N2JlLThhMjgtMGIxZGM1ZGI4N2ZlIiwiaWF0IjoxNzkxNzg1NjA4LCJleHAiOjE3OTE3ODY1MDgsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.o3eWU_SXPtnHCvPd0L_wc2276u5vtL5_l96QxONtoYI
+Content-Type: application/json
+
+{
+  "login": "test.admin"
+}
+
+###
+DELETE http://localhost:3000/api/users/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiMjVkYjI0ZmItMTY0ZC00N2JlLThhMjgtMGIxZGM1ZGI4N2ZlIiwiaWF0IjoxNzkxNzg1NjA4LCJleHAiOjE3OTE3ODY1MDgsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.o3eWU_SXPtnHCvPd0L_wc2276u5vtL5_l96QxONtoYI
+
+###
+PATCH http://localhost:3000/api/users/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiMjVkYjI0ZmItMTY0ZC00N2JlLThhMjgtMGIxZGM1ZGI4N2ZlIiwiaWF0IjoxNzkxNzg1NjA4LCJleHAiOjE3OTE3ODY1MDgsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.o3eWU_SXPtnHCvPd0L_wc2276u5vtL5_l96QxONtoYI
+Content-Type: application/json
+
+{
+  "isActive":true
+}
+
+###
+POST http://localhost:3000/api/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiMjVkYjI0ZmItMTY0ZC00N2JlLThhMjgtMGIxZGM1ZGI4N2ZlIiwiaWF0IjoxNzkxNzg1NjA4LCJleHAiOjE3OTE3ODY1MDgsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.o3eWU_SXPtnHCvPd0L_wc2276u5vtL5_l96QxONtoYI
+Content-Type: application/json
+
+{
+  "personId":5,
+  "login":"test.user1",
+  "password":"d_vohidov@1999"
+}
+
+###
+PATCH http://localhost:3000/api/users/2/access
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiYzc2ZWFhYmQtZGIyMS00ZWRjLWIyYTItODY0OWU5NzUxZmY2IiwiaWF0IjoxNzkxNzg2ODI2LCJleHAiOjE3OTE3ODc3MjYsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.MmNUk1ASVc7CT1cr1qv69BYz3xKIxWTLBzKhMJsiP2Y
+Content-Type: application/json
+
+{
+  "role": "DISTRICT_ADMIN",
+  "districtId": 1
+}

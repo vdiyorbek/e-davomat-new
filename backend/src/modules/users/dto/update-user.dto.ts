@@ -1,34 +1,29 @@
+import { Transform } from 'class-transformer';
 import {
-  IsEnum,
+  IsBoolean,
   IsOptional,
   IsString,
-  IsUUID,
-  MinLength,
-  IsBoolean,
+  Length,
+  Matches,
 } from 'class-validator';
-import { UserRole } from '../enums/user-role.enum';
 
 export class UpdateUserDto {
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
+  @IsString()
+  @Matches(/^[a-z0-9._]{3,50}$/, {
+    message: "Login 3-50 belgidan iborat bo'lishi kerak",
+  })
+  login?: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(6, { message: "Parol kamida 6 ta belgidan iborat bo'lishi kerak" })
+  @Length(12, 128, {
+    message: "Parol uzunligi 12-128 belgi bo'lishi kerak",
+  })
   password?: string;
-
-  @IsOptional()
-  @IsUUID()
-  regionId?: string | null;
-
-  @IsOptional()
-  @IsUUID()
-  districtId?: string | null;
-
-  @IsOptional()
-  @IsUUID()
-  schoolId?: string | null;
 
   @IsOptional()
   @IsBoolean()
