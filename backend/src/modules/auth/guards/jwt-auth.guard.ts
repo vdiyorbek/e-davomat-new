@@ -92,7 +92,6 @@ export class JwtAuthGuard implements CanActivate {
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId })
       .andWhere('user.isActive = :active', { active: true })
-      .andWhere('person.deletedAt IS NULL')
       .getOne();
 
     if (!user) {
