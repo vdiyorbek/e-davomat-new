@@ -20,6 +20,7 @@ import { UpdateUserAccessDto } from './dto/update-user-access.dto';
 import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { AuthSession } from '../auth/auth-session.entity';
 import { SchoolMembership } from '../school-memberships/school-membership.entity';
+import { SelectQueryBuilder } from 'typeorm/browser';
 
 @Injectable()
 export class UsersService {
@@ -465,6 +466,114 @@ export class UsersService {
     });
   }
 
+  private applyReadScope(
+    query: SelectQueryBuilder<User>,
+    currentUser: AuthenticatedUser,
+  ): void {
+    if (currentUser.role === UserRole.SUPER_ADMIN) {
+      return;
+    }
+
+    const membership = query
+      .subQuery()
+      .select('1')
+      .from(SchoolMembership, 'sm')
+      .innerJoin('sm.school', 'ms')
+      .innerJoin('ms.district', 'md')
+      .where('sm.personId = user.personId')
+      .andWhere('sm.startDate <= CURRENT_DATE()')
+      .andWhere('(sm.endDate IS NULL OR sm.endDate >= CURRENT_DATE())');
+
+    switch (currentUser.role) {
+      case UserRole.REGION_ADMIN:
+        if (!currentUser.regionId) {
+          throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
+        }
+
+        membership.andWhere('md.regionId = :scopeRegionId', {
+          scopeRegionId: currentUser.regionId,
+        });
+
+        query.andWhere(
+          new Brackets((qb) => {
+            qb.where('user.regionId = :scopeRegionId')
+              .orWhere('district.regionId = :scopeRegionId')
+              .orWhere('schoolDistrict.regionId = :scopeRegionId')
+              .orWhere(
+                `(
+                user.role = :ordinaryRole
+                AND EXISTS ${membership.getQuery()}
+              )`,
+              );
+          }),
+          {
+            scopeRegionId: currentUser.regionId,
+            ordinaryRole: UserRole.USER,
+          },
+        );
+        break;
+
+      case UserRole.DISTRICT_ADMIN:
+        if (!currentUser.districtId) {
+          throw new ForbiddenException('Hisobga tuman biriktirilmagan');
+        }
+
+        membership.andWhere('ms.districtId = :scopeDistrictId', {
+          scopeDistrictId: currentUser.districtId,
+        });
+
+        query.andWhere(
+          new Brackets((qb) => {
+            qb.where('user.districtId = :scopeDistrictId')
+              .orWhere('school.districtId = :scopeDistrictId')
+              .orWhere(
+                `(
+                user.role = :ordinaryRole
+                AND EXISTS ${membership.getQuery()}
+              )`,
+              );
+          }),
+          {
+            scopeDistrictId: currentUser.districtId,
+            ordinaryRole: UserRole.USER,
+          },
+        );
+        break;
+
+      case UserRole.SCHOOL_ADMIN:
+        if (!currentUser.schoolId) {
+          throw new ForbiddenException('Hisobga maktab biriktirilmagan');
+        }
+
+        membership.andWhere('sm.schoolId = :scopeSchoolId', {
+          scopeSchoolId: currentUser.schoolId,
+        });
+
+        query.andWhere(
+          new Brackets((qb) => {
+            qb.where('user.schoolId = :scopeSchoolId').orWhere(
+              `(
+                user.role = :ordinaryRole
+                AND EXISTS ${membership.getQuery()}
+              )`,
+            );
+          }),
+          {
+            scopeSchoolId: currentUser.schoolId,
+            ordinaryRole: UserRole.USER,
+          },
+        );
+        break;
+
+      default:
+        throw new ForbiddenException(
+          'Foydalanuvchilarni ko‘rishga ruxsat yo‘q',
+        );
+    }
+
+    query.setParameters(membership.getParameters());
+  }
+
   async findAll(filters: GetUsersQueryDto, currentUser: AuthenticatedUser) {
     const {
       page,
@@ -489,55 +598,7 @@ export class UsersService {
       .leftJoinAndSelect('schoolDistrict.region', 'schoolRegion')
       .andWhere('person.deletedAt IS NULL');
 
-    switch (currentUser.role) {
-      case UserRole.SUPER_ADMIN:
-        break;
-
-      case UserRole.REGION_ADMIN:
-        if (!currentUser.regionId) {
-          throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
-        }
-
-        query.andWhere(
-          new Brackets((qb) => {
-            qb.where('user.regionId = :scopeRegionId')
-              .orWhere('district.regionId = :scopeRegionId')
-              .orWhere('schoolDistrict.regionId = :scopeRegionId');
-          }),
-          { scopeRegionId: currentUser.regionId },
-        );
-        break;
-
-      case UserRole.DISTRICT_ADMIN:
-        if (!currentUser.districtId) {
-          throw new ForbiddenException('Hisobga tuman biriktirilmagan');
-        }
-
-        query.andWhere(
-          new Brackets((qb) => {
-            qb.where('user.districtId = :scopeDistrictId').orWhere(
-              'school.districtId = :scopeDistrictId',
-            );
-          }),
-          { scopeDistrictId: currentUser.districtId },
-        );
-        break;
-
-      case UserRole.SCHOOL_ADMIN:
-        if (!currentUser.schoolId) {
-          throw new ForbiddenException('Hisobga maktab biriktirilmagan');
-        }
-
-        query.andWhere('user.schoolId = :scopeSchoolId', {
-          scopeSchoolId: currentUser.schoolId,
-        });
-        break;
-
-      default:
-        throw new ForbiddenException(
-          'Foydalanuvchilar ro‘yxatini ko‘rishga ruxsat yo‘q',
-        );
-    }
+    this.applyReadScope(query, currentUser);
 
     if (regionId !== undefined) {
       query.andWhere(
@@ -683,53 +744,7 @@ export class UsersService {
       .where('user.id = :id', { id })
       .andWhere('person.deletedAt IS NULL');
 
-    switch (currentUser.role) {
-      case UserRole.SUPER_ADMIN:
-        break;
-
-      case UserRole.REGION_ADMIN:
-        if (!currentUser.regionId) {
-          throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
-        }
-
-        query.andWhere(
-          new Brackets((qb) => {
-            qb.where('user.regionId = :regionId')
-              .orWhere('district.regionId = :regionId')
-              .orWhere('schoolDistrict.regionId = :regionId');
-          }),
-          { regionId: currentUser.regionId },
-        );
-        break;
-
-      case UserRole.DISTRICT_ADMIN:
-        if (!currentUser.districtId) {
-          throw new ForbiddenException('Hisobga tuman biriktirilmagan');
-        }
-
-        query.andWhere(
-          new Brackets((qb) => {
-            qb.where('user.districtId = :districtId').orWhere(
-              'school.districtId = :districtId',
-            );
-          }),
-          { districtId: currentUser.districtId },
-        );
-        break;
-
-      case UserRole.SCHOOL_ADMIN:
-        if (!currentUser.schoolId) {
-          throw new ForbiddenException('Hisobga maktab biriktirilmagan');
-        }
-
-        query.andWhere('user.schoolId = :schoolId', {
-          schoolId: currentUser.schoolId,
-        });
-        break;
-
-      default:
-        throw new ForbiddenException('Foydalanuvchini ko‘rishga ruxsat yo‘q');
-    }
+    this.applyReadScope(query, currentUser);
 
     const user = await query.getOne();
 
