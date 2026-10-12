@@ -82,3 +82,7 @@ Authorization: Bearer MAKTAB_ADMIN_TOKENI
 ###
 GET http://localhost:3000/api/persons/4
 Authorization: Bearer MAKTAB_ADMIN_TOKENI
+
+###
+GET http://localhost:3000/api/users?page=1&limit=20
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwic2lkIjoiMjVkYjI0ZmItMTY0ZC00N2JlLThhMjgtMGIxZGM1ZGI4N2ZlIiwiaWF0IjoxNzkxNzgyMzI0LCJleHAiOjE3OTE3ODMyMjQsImF1ZCI6ImRhdm9tYXQtY2FiaW5ldCIsImlzcyI6ImRhdm9tYXQtYXBpIn0.FxN1Z_JOt0PXPWiK6xVgvbZprl2TPVCBdt-A-xHInJc
