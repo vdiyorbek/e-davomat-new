@@ -76,9 +76,10 @@ export class AuthService implements OnModuleInit {
         user: {
           id: user.id,
           login: user.login,
-          personId: user.personId,
           firstName: user.firstName,
           lastName: user.lastName,
+          middleName: user.middleName,
+          role: user.role,
         },
       },
     };
@@ -146,10 +147,8 @@ export class AuthService implements OnModuleInit {
       const user = await manager
         .getRepository(User)
         .createQueryBuilder('user')
-        .innerJoinAndSelect('user.person', 'person')
         .where('user.id = :id', { id: session.userId })
         .andWhere('user.isActive = :active', { active: true })
-        .andWhere('person.deletedAt IS NULL')
         .getOne();
 
       if (!user) {

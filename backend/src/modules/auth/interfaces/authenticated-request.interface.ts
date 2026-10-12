@@ -1,5 +1,4 @@
 import type { Request } from 'express';
-import { Person } from 'src/modules/persons/person.entity';
 import type { UserRole } from 'src/modules/users/enums/user-role.enum';
 
 export interface AuthenticatedUser {
@@ -8,9 +7,6 @@ export interface AuthenticatedUser {
   firstName: string | null;
   lastName: string | null;
   middleName: string | null;
-
-  personId: number;
-  person: Person;
   role: UserRole;
   regionId: number | null;
   districtId: number | null;

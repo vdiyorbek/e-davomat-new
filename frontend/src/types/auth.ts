@@ -12,30 +12,23 @@ export interface LoginResponse {
   user: {
     id: number;
     login: string;
-    personId: number;
-    firstName: string;
-    lastName: string;
+    firstName: string | null;
+    lastName: string | null;
+    middleName: string | null;
+    role: UserRole;
   };
 }
 
 export interface Profile {
   id: number;
   login: string;
+  firstName: string | null;
+  lastName: string | null;
+  middleName: string | null;
   role: UserRole;
-  personId: number;
-  person: {
-    id: number;
-    pnfl: string;
-    firstName: string;
-    lastName: string;
-    middleName: string | null;
-    gender: "MALE" | "FEMALE" | null;
-    nationality: string | null;
-    birthDate: string | null;
-    address: string | null;
-    phoneNumber: string | null;
-    photoUrl: string | null;
-  };
+  regionId: number | null;
+  districtId: number | null;
+  schoolId: number | null;
 }
 
 export interface Session {

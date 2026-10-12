@@ -90,7 +90,6 @@ export class JwtAuthGuard implements CanActivate {
 
     const user = await this.usersRepository
       .createQueryBuilder('user')
-      .innerJoinAndSelect('user.person', 'person')
       .where('user.id = :userId', { userId })
       .andWhere('user.isActive = :active', { active: true })
       .andWhere('person.deletedAt IS NULL')
@@ -103,14 +102,9 @@ export class JwtAuthGuard implements CanActivate {
     request.authUser = {
       id: user.id,
       login: user.login,
-
       firstName: user.firstName,
       lastName: user.lastName,
       middleName: user.middleName,
-
-      personId: user.personId,
-      person: user.person,
-
       role: user.role,
       regionId: user.regionId,
       districtId: user.districtId,

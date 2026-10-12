@@ -5,7 +5,6 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { ProfilePage } from '@/pages/cabinet/ProfilePage';
-import { MySchoolsPage } from '@/pages/cabinet/MySchoolsPage';
 import { SchoolsPage } from '@/pages/schools/SchoolsPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -33,7 +32,6 @@ export const router = createBrowserRouter([
                 children: [
                     { path: '/', element: <Navigate to="/me" replace /> },
                     { path: '/me', element: <ProfilePage /> },
-                    { path: '/me/schools', element: <MySchoolsPage /> },
                     { path: '/forbidden', element: <ForbiddenPage /> },
                     {
                         element: <RequireRole roles={ADMIN_ROLES} />,

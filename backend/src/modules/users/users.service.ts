@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { Brackets, DataSource, QueryFailedError } from 'typeorm';
 import { hashPassword } from 'src/common/security/password';
-import { Person } from '../persons/person.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
@@ -19,7 +18,6 @@ import { School } from '../schools/school.entity';
 import { UpdateUserAccessDto } from './dto/update-user-access.dto';
 import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { AuthSession } from '../auth/auth-session.entity';
-import { SchoolMembership } from '../school-memberships/school-membership.entity';
 import { SelectQueryBuilder } from 'typeorm/browser';
 
 @Injectable()
@@ -31,118 +29,98 @@ export class UsersService {
       throw new ForbiddenException('Foydalanuvchi yaratishga ruxsat yo‘q');
     }
 
-    // Parol tranzaksiyadan tashqarida xeshlanadi.
+    const firstName = dto.firstName.trim();
+    const lastName = dto.lastName.trim();
+    const middleName = dto.middleName?.trim() || null;
+
+    if (
+      firstName.length < 2 ||
+      lastName.length < 2 ||
+      firstName.length > 100 ||
+      lastName.length > 100
+    ) {
+      throw new BadRequestException('Ism va familiyani to‘g‘ri kiriting');
+    }
+
+    // Administrator yaratgan oddiy USER ham uning
+    // boshqaruv hududiga biriktiriladi.
+    const scope = {
+      regionId: null as number | null,
+      districtId: null as number | null,
+      schoolId: null as number | null,
+    };
+
+    switch (currentUser.role) {
+      case UserRole.SUPER_ADMIN:
+        break;
+
+      case UserRole.REGION_ADMIN:
+        if (!currentUser.regionId) {
+          throw new ForbiddenException(
+            'Administratorga viloyat biriktirilmagan',
+          );
+        }
+        scope.regionId = currentUser.regionId;
+        break;
+
+      case UserRole.DISTRICT_ADMIN:
+        if (!currentUser.districtId) {
+          throw new ForbiddenException('Administratorga tuman biriktirilmagan');
+        }
+        scope.districtId = currentUser.districtId;
+        break;
+
+      case UserRole.SCHOOL_ADMIN:
+        if (!currentUser.schoolId) {
+          throw new ForbiddenException(
+            'Administratorga maktab biriktirilmagan',
+          );
+        }
+        scope.schoolId = currentUser.schoolId;
+        break;
+
+      default:
+        throw new ForbiddenException('Foydalanuvchi yaratishga ruxsat yo‘q');
+    }
+
     const passwordHash = await hashPassword(dto.password);
 
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const person = await manager.findOne(Person, {
-          where: { id: dto.personId },
-          lock: { mode: 'pessimistic_write' },
-        });
-
-        if (!person) {
-          throw new NotFoundException('Shaxs topilmadi yoki arxivlangan');
-        }
-
-        // Hududiy administrator faqat o‘z vakolatidagi
-        // maktabga faol biriktirilgan shaxsga hisob yaratadi.
-        if (currentUser.role !== UserRole.SUPER_ADMIN) {
-          const membershipQuery = manager
-            .createQueryBuilder(SchoolMembership, 'membership')
-            .innerJoin('membership.school', 'school')
-            .innerJoin('school.district', 'district')
-            .where('membership.personId = :personId', {
-              personId: person.id,
-            })
-            .andWhere('membership.startDate <= CURRENT_DATE()')
-            .andWhere(
-              '(membership.endDate IS NULL OR membership.endDate >= CURRENT_DATE())',
-            );
-
-          switch (currentUser.role) {
-            case UserRole.REGION_ADMIN:
-              if (!currentUser.regionId) {
-                throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
-              }
-
-              membershipQuery.andWhere('district.regionId = :regionId', {
-                regionId: currentUser.regionId,
-              });
-              break;
-
-            case UserRole.DISTRICT_ADMIN:
-              if (!currentUser.districtId) {
-                throw new ForbiddenException('Hisobga tuman biriktirilmagan');
-              }
-
-              membershipQuery.andWhere('school.districtId = :districtId', {
-                districtId: currentUser.districtId,
-              });
-              break;
-
-            case UserRole.SCHOOL_ADMIN:
-              if (!currentUser.schoolId) {
-                throw new ForbiddenException('Hisobga maktab biriktirilmagan');
-              }
-
-              membershipQuery.andWhere('membership.schoolId = :schoolId', {
-                schoolId: currentUser.schoolId,
-              });
-              break;
-
-            default:
-              throw new ForbiddenException(
-                'Foydalanuvchi yaratishga ruxsat yo‘q',
-              );
-          }
-
-          const membership = await membershipQuery.getOne();
-
-          if (!membership) {
-            throw new ForbiddenException(
-              'Shaxs sizning hududingizdagi faol maktab a’zosi emas',
-            );
-          }
-        }
-
-        const existingAccount = await manager.findOneBy(User, {
-          personId: person.id,
-        });
-
-        if (existingAccount) {
-          throw new ConflictException(
-            'Bu shaxsning foydalanuvchi hisobi mavjud',
-          );
-        }
-
-        const loginOwner = await manager.findOneBy(User, {
+        const existing = await manager.findOneBy(User, {
           login: dto.login,
         });
 
-        if (loginOwner) {
+        if (existing) {
           throw new ConflictException('Ushbu login band');
         }
 
         const user = manager.create(User, {
-          personId: person.id,
+          firstName,
+          lastName,
+          middleName,
           login: dto.login,
           passwordHash,
-          isActive: true,
           role: UserRole.USER,
-          regionId: null,
-          districtId: null,
-          schoolId: null,
+          isActive: true,
+          ...scope,
         });
 
         const saved = await manager.save(User, user);
 
         return {
           id: saved.id,
-          personId: saved.personId,
+          firstName: saved.firstName,
+          lastName: saved.lastName,
+          middleName: saved.middleName,
           login: saved.login,
           role: saved.role,
           isActive: saved.isActive,
+          scope: {
+            regionId: saved.regionId,
+            districtId: saved.districtId,
+            schoolId: saved.schoolId,
+          },
           createdAt: saved.createdAt,
         };
       });
@@ -153,9 +131,7 @@ export class UsersService {
         };
 
         if (driverError.code === 'ER_DUP_ENTRY') {
-          throw new ConflictException(
-            'Login band yoki shaxsning foydalanuvchi hisobi mavjud',
-          );
+          throw new ConflictException('Ushbu login band');
         }
       }
 
@@ -176,50 +152,37 @@ export class UsersService {
       [UserRole.SUPER_ADMIN]: 4,
     };
 
-    if (
-      currentUser.role !== UserRole.SUPER_ADMIN &&
-      currentUser.role !== UserRole.REGION_ADMIN &&
-      currentUser.role !== UserRole.DISTRICT_ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Rol va hududiy vakolatlarni o‘zgartirishga ruxsat yo‘q',
-      );
+    if (ranks[currentUser.role] < 2) {
+      throw new ForbiddenException('Vakolatlarni o‘zgartirishga ruxsat yo‘q');
     }
 
-    if (id === currentUser.id) {
-      throw new ForbiddenException('O‘z vakolatingizni o‘zgartira olmaysiz');
-    }
-
-    if (ranks[dto.role] >= ranks[currentUser.role]) {
-      throw new ForbiddenException(
-        'O‘zingizga teng yoki yuqori rolni bera olmaysiz',
-      );
+    if (id === currentUser.id || ranks[dto.role] >= ranks[currentUser.role]) {
+      throw new ForbiddenException('Ushbu vakolatni berishga ruxsat yo‘q');
     }
 
     const regionId = dto.regionId ?? null;
     const districtId = dto.districtId ?? null;
     const schoolId = dto.schoolId ?? null;
 
+    const selectedCount =
+      Number(regionId !== null) +
+      Number(districtId !== null) +
+      Number(schoolId !== null);
+
     const validScope =
-      (dto.role === UserRole.USER &&
-        regionId === null &&
-        districtId === null &&
-        schoolId === null) ||
+      (dto.role === UserRole.USER && selectedCount <= 1) ||
       (dto.role === UserRole.REGION_ADMIN &&
         regionId !== null &&
-        districtId === null &&
-        schoolId === null) ||
+        selectedCount === 1) ||
       (dto.role === UserRole.DISTRICT_ADMIN &&
-        regionId === null &&
         districtId !== null &&
-        schoolId === null) ||
+        selectedCount === 1) ||
       (dto.role === UserRole.SCHOOL_ADMIN &&
-        regionId === null &&
-        districtId === null &&
-        schoolId !== null);
+        schoolId !== null &&
+        selectedCount === 1);
 
     if (!validScope) {
-      throw new BadRequestException('Tanlangan rolga mos hududni yuboring');
+      throw new BadRequestException('Rolga mos hududni tanlang');
     }
 
     return this.dataSource.transaction(async (manager) => {
@@ -232,76 +195,19 @@ export class UsersService {
         throw new NotFoundException('Foydalanuvchi topilmadi');
       }
 
-      if (!user.isActive) {
-        throw new BadRequestException(
-          'Bloklangan akkauntning vakolatini o‘zgartirib bo‘lmaydi',
-        );
-      }
-
-      if (
-        user.role === UserRole.SUPER_ADMIN ||
-        ranks[user.role] >= ranks[currentUser.role]
-      ) {
+      if (!user.isActive || ranks[user.role] >= ranks[currentUser.role]) {
         throw new ForbiddenException(
-          'Ushbu administrator vakolatini o‘zgartira olmaysiz',
+          'Ushbu akkaunt vakolatini o‘zgartira olmaysiz',
         );
       }
 
-      const person = await manager.findOneBy(Person, {
-        id: user.personId,
-      });
-
-      if (!person || person.deletedAt !== null) {
-        throw new NotFoundException('Shaxs topilmadi');
-      }
-
-      // Amaldagi va yangi hududlarni aniqlash
-      async function resolveLocation(
-        role: UserRole,
+      // Hududlarni haqiqiy maktab va tuman orqali aniqlaymiz.
+      async function resolveScope(
         rId: number | null,
         dId: number | null,
         sId: number | null,
       ) {
-        if (role === UserRole.REGION_ADMIN) {
-          if (!rId) {
-            throw new BadRequestException('Viloyat tanlanmagan');
-          }
-
-          const region = await manager.findOneBy(Region, {
-            id: rId,
-          });
-
-          if (!region) {
-            throw new NotFoundException('Viloyat topilmadi');
-          }
-
-          return { regionId: region.id, districtId: null };
-        }
-
-        if (role === UserRole.DISTRICT_ADMIN) {
-          if (!dId) {
-            throw new BadRequestException('Tuman tanlanmagan');
-          }
-
-          const district = await manager.findOneBy(District, {
-            id: dId,
-          });
-
-          if (!district) {
-            throw new NotFoundException('Tuman topilmadi');
-          }
-
-          return {
-            regionId: district.regionId,
-            districtId: district.id,
-          };
-        }
-
-        if (role === UserRole.SCHOOL_ADMIN) {
-          if (!sId) {
-            throw new BadRequestException('Maktab tanlanmagan');
-          }
-
+        if (sId !== null) {
           const school = await manager.findOne(School, {
             where: { id: sId },
             relations: { district: true },
@@ -317,25 +223,58 @@ export class UsersService {
           };
         }
 
-        return { regionId: null, districtId: null };
+        if (dId !== null) {
+          const district = await manager.findOneBy(District, {
+            id: dId,
+          });
+
+          if (!district) {
+            throw new NotFoundException('Tuman topilmadi');
+          }
+
+          return {
+            regionId: district.regionId,
+            districtId: district.id,
+          };
+        }
+
+        if (rId !== null) {
+          const region = await manager.findOneBy(Region, {
+            id: rId,
+          });
+
+          if (!region) {
+            throw new NotFoundException('Viloyat topilmadi');
+          }
+
+          return {
+            regionId: region.id,
+            districtId: null,
+          };
+        }
+
+        return {
+          regionId: null,
+          districtId: null,
+        };
       }
 
-      const newLocation = await resolveLocation(
-        dto.role,
-        regionId,
-        districtId,
-        schoolId,
+      const previous = await resolveScope(
+        user.regionId,
+        user.districtId,
+        user.schoolId,
       );
 
-      // Berilayotgan yangi hudud vakolat ichida bo‘lishi kerak
+      const next = await resolveScope(regionId, districtId, schoolId);
+
       if (currentUser.role === UserRole.REGION_ADMIN) {
         if (
           !currentUser.regionId ||
-          (dto.role !== UserRole.USER &&
-            newLocation.regionId !== currentUser.regionId)
+          previous.regionId !== currentUser.regionId ||
+          next.regionId !== currentUser.regionId
         ) {
           throw new ForbiddenException(
-            'Faqat o‘z viloyatingizga vakolat bera olasiz',
+            'Faqat o‘z viloyatingizdagi hisobni boshqarasiz',
           );
         }
       }
@@ -343,116 +282,40 @@ export class UsersService {
       if (currentUser.role === UserRole.DISTRICT_ADMIN) {
         if (
           !currentUser.districtId ||
-          (dto.role !== UserRole.USER &&
-            newLocation.districtId !== currentUser.districtId)
+          previous.districtId !== currentUser.districtId ||
+          next.districtId !== currentUser.districtId
         ) {
           throw new ForbiddenException(
-            'Faqat o‘z tumaningizga vakolat bera olasiz',
+            'Faqat o‘z tumaningizdagi hisobni boshqarasiz',
           );
         }
       }
 
-      // Avvalgi vakolat ham administrator hududida bo‘lishi kerak.
-      if (
-        currentUser.role !== UserRole.SUPER_ADMIN &&
-        user.role !== UserRole.USER
-      ) {
-        const oldLocation = await resolveLocation(
-          user.role,
-          user.regionId,
-          user.districtId,
-          user.schoolId,
-        );
-
-        if (
-          currentUser.role === UserRole.REGION_ADMIN &&
-          oldLocation.regionId !== currentUser.regionId
-        ) {
-          throw new ForbiddenException(
-            'Foydalanuvchining avvalgi vakolati boshqa viloyatda',
-          );
-        }
-
-        if (
-          currentUser.role === UserRole.DISTRICT_ADMIN &&
-          oldLocation.districtId !== currentUser.districtId
-        ) {
-          throw new ForbiddenException(
-            'Foydalanuvchining avvalgi vakolati boshqa tumanda',
-          );
-        }
-      }
-
-      // USER rolida hudud saqlanmagani sababli uning
-      // faol maktab a’zoligi orqali ruxsat tekshiriladi.
-      if (
-        currentUser.role !== UserRole.SUPER_ADMIN &&
-        user.role === UserRole.USER
-      ) {
-        const membershipQuery = manager
-          .createQueryBuilder(SchoolMembership, 'membership')
-          .innerJoin('membership.school', 'school')
-          .innerJoin('school.district', 'district')
-          .where('membership.personId = :personId', {
-            personId: user.personId,
-          })
-          .andWhere('membership.startDate <= CURRENT_DATE()')
-          .andWhere(
-            '(membership.endDate IS NULL OR membership.endDate >= CURRENT_DATE())',
-          );
-
-        if (currentUser.role === UserRole.REGION_ADMIN) {
-          membershipQuery.andWhere('district.regionId = :scopeRegionId', {
-            scopeRegionId: currentUser.regionId,
-          });
-        } else {
-          membershipQuery.andWhere('school.districtId = :scopeDistrictId', {
-            scopeDistrictId: currentUser.districtId,
-          });
-        }
-
-        const membership = await membershipQuery.getOne();
-
-        if (!membership) {
-          throw new ForbiddenException(
-            'Foydalanuvchi sizning hududingizdagi faol maktab a’zosi emas',
-          );
-        }
-      }
-
-      const accessChanged =
+      const changed =
         user.role !== dto.role ||
         user.regionId !== regionId ||
         user.districtId !== districtId ||
         user.schoolId !== schoolId;
 
-      if (!accessChanged) {
-        return {
-          id: user.id,
-          login: user.login,
-          role: user.role,
-          regionId: user.regionId,
-          districtId: user.districtId,
-          schoolId: user.schoolId,
-          message: 'Vakolat o‘zgarmagan',
-        };
+      if (changed) {
+        user.role = dto.role;
+        user.regionId = regionId;
+        user.districtId = districtId;
+        user.schoolId = schoolId;
+
+        await manager.save(User, user);
+
+        // Vakolat o‘zgarganida eski sessiyalar bekor qilinadi.
+        await manager
+          .createQueryBuilder()
+          .update(AuthSession)
+          .set({ revokedAt: new Date() })
+          .where('userId = :userId', {
+            userId: user.id,
+          })
+          .andWhere('revokedAt IS NULL')
+          .execute();
       }
-
-      user.role = dto.role;
-      user.regionId = regionId;
-      user.districtId = districtId;
-      user.schoolId = schoolId;
-
-      await manager.save(User, user);
-
-      // Eski JWT sessiyalari yangi vakolat bilan ishlamasin.
-      await manager
-        .createQueryBuilder()
-        .update(AuthSession)
-        .set({ revokedAt: new Date() })
-        .where('userId = :userId', { userId: user.id })
-        .andWhere('revokedAt IS NULL')
-        .execute();
 
       return {
         id: user.id,
@@ -461,7 +324,7 @@ export class UsersService {
         regionId: user.regionId,
         districtId: user.districtId,
         schoolId: user.schoolId,
-        message: 'Foydalanuvchi vakolati yangilandi',
+        message: changed ? 'Vakolat yangilandi' : 'Vakolat o‘zgarmagan',
       };
     });
   }

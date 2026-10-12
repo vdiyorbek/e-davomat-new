@@ -129,23 +129,7 @@ export class PersonPhotosService {
   }
 
   async read(personId: number, user: AuthenticatedUser): Promise<Buffer> {
-    let person: Person;
-
-    if (user.personId === personId) {
-      // Har bir foydalanuvchi o‘z rasmini ko‘ra oladi.
-      const ownPerson = await this.personsRepository.findOneBy({
-        id: personId,
-      });
-
-      if (!ownPerson) {
-        throw new NotFoundException('Shaxs topilmadi');
-      }
-
-      person = ownPerson;
-    } else {
-      // Boshqa shaxs uchun administrator doirasi tekshiriladi.
-      person = await this.personsService.findOne(personId, user);
-    }
+    const person = await this.personsService.findOne(personId, user);
 
     if (!person.photoUrl) {
       throw new NotFoundException('Profil rasmi mavjud emas');

@@ -9,7 +9,6 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { MeController } from './me.controller';
-import { MeService } from './me.service';
 import { SchoolMembership } from '../school-memberships/school-membership.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './guards/roles.guard';
@@ -63,7 +62,6 @@ import { AuthOriginGuard } from './guards/auth-origin.guard';
     ThrottlerGuard,
     JwtAuthGuard,
     RolesGuard,
-    MeService,
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
     { provide: APP_GUARD, useExisting: RolesGuard },
     AuthOriginGuard,

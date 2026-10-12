@@ -1,25 +1,28 @@
 import { Transform } from 'class-transformer';
-import { IsInt, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsOptional, IsString, Length, Matches } from 'class-validator';
 
 export class CreateUserDto {
-  @IsInt()
-  @Min(1)
-  @Max(4294967295)
-  personId!: number;
+  @IsString()
+  @Length(2, 100)
+  firstName!: string;
+
+  @IsString()
+  @Length(2, 100)
+  lastName!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  middleName?: string;
 
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsString()
-  @Matches(/^[a-z0-9._]{3,50}$/, {
-    message:
-      "Login 3-50 belgili bo'lsin: lotin harflari, raqam, nuqta yoki pastki chiziq",
-  })
+  @Matches(/^[a-z0-9._]{3,50}$/)
   login!: string;
 
   @IsString()
-  @Length(12, 128, {
-    message: "Parol uzunligi 12-128 belgi bo'lishi kerak",
-  })
+  @Length(12, 128)
   password!: string;
 }

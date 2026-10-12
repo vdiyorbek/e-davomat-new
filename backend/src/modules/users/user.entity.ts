@@ -4,19 +4,16 @@ import {
   Entity,
   Index,
   JoinColumn,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { Person } from '../persons/person.entity';
 import { UserRole } from './enums/user-role.enum';
 import { Region } from '../regions/region.entity';
 import { District } from '../districts/district.entity';
 import { School } from '../schools/school.entity';
 
 @Entity('users')
-@Index('UQ_users_person', ['personId'], { unique: true })
 @Index('UQ_users_login', ['login'], { unique: true })
 export class User {
   @PrimaryGeneratedColumn({
@@ -51,22 +48,6 @@ export class User {
     nullable: true,
   })
   middleName!: string | null;
-
-  @Column({
-    type: 'int',
-    unsigned: true,
-  })
-  personId!: number;
-
-  @OneToOne(() => Person, {
-    nullable: false,
-    onDelete: 'RESTRICT',
-  })
-  @JoinColumn({
-    name: 'personId',
-    foreignKeyConstraintName: 'FK_users_person',
-  })
-  person!: Person;
 
   @Column({
     type: 'varchar',

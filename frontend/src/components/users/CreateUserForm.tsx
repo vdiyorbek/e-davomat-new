@@ -24,7 +24,9 @@ export function CreateUserForm({
     onCreated,
     onCancel,
 }: CreateUserFormProps) {
-    const [personId, setPersonId] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [middleName, setMiddleName] = useState('');
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -43,17 +45,9 @@ export function CreateUserForm({
 
         setError('');
 
-        const id = Number(personId);
+
         const normalizedLogin = login.trim().toLowerCase();
 
-        if (
-            !Number.isInteger(id) ||
-            id < 1 ||
-            id > 4294967295
-        ) {
-            setError('Shaxsning ID raqamini to‘g‘ri kiriting.');
-            return;
-        }
 
         if (!/^[a-z0-9._]{3,50}$/.test(normalizedLogin)) {
             setError('Login 3–50 belgidan iborat bo‘lsin.');
@@ -77,10 +71,12 @@ export function CreateUserForm({
             const created = await authorizedPost<CreatedUser>(
                 '/users',
                 {
-                    personId: id,
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim(),
+                    middleName: middleName.trim() || undefined,
                     login: normalizedLogin,
                     password,
-                },
+                }
             );
 
             setPassword('');
@@ -111,31 +107,46 @@ export function CreateUserForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                    <label htmlFor="user-last-name">Familiya</label>
+                    <Input
+                        id="user-last-name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        minLength={2}
+                        maxLength={100}
+                        required
+                        disabled={busy}
+                        placeholder="Valiyev"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label htmlFor="user-first-name">Ism</label>
+                    <Input
+                        id="user-first-name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        minLength={2}
+                        maxLength={100}
+                        required
+                        disabled={busy}
+                        placeholder="Ali"
+                    />
+                </div>
+            </div>
+
             <div className="space-y-2">
-                <label
-                    htmlFor="user-person-id"
-                    className="text-sm font-medium"
-                >
-                    Shaxs ID raqami
-                </label>
-
+                <label htmlFor="user-middle-name">Otasining ismi</label>
                 <Input
-                    id="user-person-id"
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={personId}
-                    onChange={(event) =>
-                        setPersonId(event.target.value)
-                    }
-                    placeholder="Masalan: 5"
-                    required
+                    id="user-middle-name"
+                    value={middleName}
+                    onChange={(e) => setMiddleName(e.target.value)}
+                    maxLength={100}
                     disabled={busy}
+                    placeholder="Karimovich"
                 />
-
-                <p className="text-xs text-muted-foreground">
-                    Tizimda avval ro‘yxatdan o‘tgan shaxsning ID raqami.
-                </p>
             </div>
 
             <div className="space-y-2">
