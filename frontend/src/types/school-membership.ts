@@ -1,4 +1,4 @@
-import type { Profile } from "./auth";
+import type { Person } from "./person";
 import type { School } from "./school";
 
 export interface SchoolMembership {
@@ -9,9 +9,9 @@ export interface SchoolMembership {
   startDate: string;
   endDate: string | null;
   person: Pick<
-    Profile["person"],
-    "id" | "pnfl" | "firstName" | "lastName" | "middleName"
-  > | null;
+  Person,
+  "id" | "pnfl" | "firstName" | "lastName" | "middleName"
+> | null;
   school: School;
   classId?: number | null;
   schoolClass?: {

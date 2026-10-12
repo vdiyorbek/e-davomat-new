@@ -17,6 +17,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
     '/teachers': 'nav.teachers',
     '/terminals': 'nav.terminals',
     '/attendance': 'nav.attendance',
+    '/users': 'nav.users',
 };
 
 export function Header() {
@@ -26,8 +27,21 @@ export function Header() {
     if (!session) return null;
 
     const { profile } = session;
-    const fullName = `${profile.person.firstName} ${profile.person.lastName}`;
-    const initials = `${profile.person.firstName.charAt(0)}${profile.person.lastName.charAt(0)}`;
+    const fullName = [
+        profile.lastName,
+        profile.firstName,
+        profile.middleName,
+    ]
+        .filter(Boolean)
+        .join(' ') || profile.login;
+
+    const initials = [
+        profile.firstName?.charAt(0),
+        profile.lastName?.charAt(0),
+    ]
+        .filter(Boolean)
+        .join('')
+        .toUpperCase() || profile.login.slice(0, 2).toUpperCase();
     const title = t(PAGE_TITLE_KEYS[pathname.replace(/\/+$/, '')] ?? 'nav.cabinet');
 
     return (

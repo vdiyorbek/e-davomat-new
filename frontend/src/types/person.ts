@@ -1,7 +1,19 @@
-import type { Profile } from "@/types/auth";
+export interface Person {
+  id: number;
+  pnfl: string;
+  firstName: string;
+  lastName: string;
+  middleName: string | null;
 
-export type Person = Profile["person"] & {
+  gender: "MALE" | "FEMALE" | null;
+  nationality: string | null;
+  birthDate: string | null;
+  address: string | null;
+  phoneNumber: string | null;
+  photoUrl: string | null;
+
   mahallaId?: number | null;
+
   mahalla?: {
     id: number;
     name: string;
@@ -16,7 +28,7 @@ export type Person = Profile["person"] & {
       };
     };
   } | null;
-};
+}
 
 export interface PersonsPage {
   data: Person[];
