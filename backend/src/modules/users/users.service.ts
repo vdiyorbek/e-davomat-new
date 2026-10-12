@@ -571,7 +571,9 @@ export class UsersService {
         .join(' '),
       role: user.role,
       isActive: user.isActive,
-
+      firstName: user.firstName,
+      lastName: user.lastName,
+      middleName: user.middleName,
       scope: {
         regionId: user.regionId,
         districtId: user.districtId,
@@ -597,6 +599,9 @@ export class UsersService {
     }
 
     if (
+      dto.firstName === undefined &&
+      dto.lastName === undefined &&
+      dto.middleName === undefined &&
       dto.login === undefined &&
       dto.password === undefined &&
       dto.isActive === undefined
@@ -645,6 +650,18 @@ export class UsersService {
         user.login = dto.login;
       }
 
+      if (dto.firstName !== undefined) {
+        user.firstName = dto.firstName;
+      }
+
+      if (dto.lastName !== undefined) {
+        user.lastName = dto.lastName;
+      }
+
+      if (dto.middleName !== undefined) {
+        user.middleName = dto.middleName;
+      }
+
       if (passwordHash !== undefined) {
         user.passwordHash = passwordHash;
       }
@@ -672,9 +689,15 @@ export class UsersService {
 
       return {
         id: saved.id,
+        firstName: saved.firstName,
+        lastName: saved.lastName,
+        middleName: saved.middleName,
         login: saved.login,
         role: saved.role,
         isActive: saved.isActive,
+        regionId: saved.regionId,
+        districtId: saved.districtId,
+        schoolId: saved.schoolId,
         updatedAt: saved.updatedAt,
       };
     });
