@@ -31,6 +31,7 @@ export class MeController {
       regionId: user.regionId,
       districtId: user.districtId,
       schoolId: user.schoolId,
+      photoUrl: user.photoUrl,
     };
   }
 }

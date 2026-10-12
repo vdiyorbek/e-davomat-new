@@ -11,6 +11,7 @@ export interface AuthenticatedUser {
   regionId: number | null;
   districtId: number | null;
   schoolId: number | null;
+  photoUrl: string | null;
 }
 
 export interface AuthenticatedRequest extends Request {

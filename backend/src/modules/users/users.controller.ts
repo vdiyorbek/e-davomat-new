@@ -10,7 +10,15 @@ import {
   UnauthorizedException,
   Req,
   Delete,
+  HttpCode,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
+  Header,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { UserPhotosService } from './user-photos.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserAccessDto } from './dto/update-user-access.dto';
@@ -23,7 +31,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Controller('users')
 @Roles(UserRole.SUPER_ADMIN)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly userPhotosService: UserPhotosService,
+  ) {}
 
   @Post()
   @Roles(
@@ -127,5 +138,73 @@ export class UsersController {
     }
 
     return this.usersService.remove(id, currentUser);
+  }
+
+  @Post(':id/photo')
+  @Roles(...Object.values(UserRole))
+  @HttpCode(200)
+  @Header('Cache-Control', 'no-store')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1,
+        fields: 0,
+        parts: 1,
+      },
+    }),
+  )
+  uploadPhoto(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.userPhotosService.upload(id, actor, file);
+  }
+
+  @Get(':id/photo')
+  @Roles(...Object.values(UserRole))
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async getPhoto(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<StreamableFile> {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    const buffer = await this.userPhotosService.read(id, actor);
+
+    return new StreamableFile(buffer, {
+      type: 'image/jpeg',
+      disposition: 'inline',
+      length: buffer.length,
+    });
+  }
+
+  @Delete(':id/photo')
+  @Roles(...Object.values(UserRole))
+  @Header('Cache-Control', 'no-store')
+  removePhoto(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.userPhotosService.remove(id, actor);
   }
 }

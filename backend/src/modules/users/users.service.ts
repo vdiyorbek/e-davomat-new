@@ -493,7 +493,7 @@ export class UsersService {
             .join(' '),
           role: user.role,
           isActive: user.isActive,
-
+          photoUrl: user.photoUrl,
           // Bevosita biriktirilgan vakolat
           scope: {
             regionId: user.regionId,
@@ -574,6 +574,7 @@ export class UsersService {
       firstName: user.firstName,
       lastName: user.lastName,
       middleName: user.middleName,
+      photoUrl: user.photoUrl,
       scope: {
         regionId: user.regionId,
         districtId: user.districtId,
