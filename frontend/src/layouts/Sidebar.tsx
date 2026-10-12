@@ -1,4 +1,4 @@
-import { Building2, GraduationCap, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School } from 'lucide-react';
+import { Building2, GraduationCap, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +36,11 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
             { to: '/teachers', label: t('nav.teachers'), icon: BookOpen },
             { to: '/terminals', label: t('nav.terminals'), icon: ScanFace },
             { to: '/classes', label: t('nav.classes'), icon: School },
+            {
+                to: '/users',
+                label: 'Foydalanuvchilar',
+                icon: UserCog,
+            },
         ]
         : [];
 
