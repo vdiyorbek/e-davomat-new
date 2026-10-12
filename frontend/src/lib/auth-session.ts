@@ -8,7 +8,7 @@ import {
   refreshAuth,
   apiPatch,
 } from "@/lib/api";
-import type { LoginResponse, Session } from "@/types/auth";
+import type { LoginResponse, Session, Profile } from "@/types/auth";
 
 interface AuthState {
   session: Session | null;
@@ -399,4 +399,33 @@ export async function authorizedPatch<T>(
   checkSession();
 
   return result;
+}
+
+export async function reloadCurrentProfile(): Promise<void> {
+  const current = state.session;
+
+  if (!current) {
+    throw new ApiError("Avval tizimga kiring.", 401);
+  }
+
+  const currentGeneration = generation;
+  const profile = await authorizedGet<Profile>("/me");
+
+  // Foydalanuvchi shu vaqt ichida akkauntdan
+  // chiqib ketgan bo‘lsa, eski ma’lumotni yozmaymiz.
+  if (
+    currentGeneration !== generation ||
+    !state.session ||
+    state.session.profile.id !== profile.id
+  ) {
+    return;
+  }
+
+  updateState({
+    ...state,
+    session: {
+      ...state.session,
+      profile,
+    },
+  });
 }
