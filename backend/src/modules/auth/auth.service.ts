@@ -77,8 +77,8 @@ export class AuthService implements OnModuleInit {
           id: user.id,
           login: user.login,
           personId: user.personId,
-          firstName: user.person.firstName,
-          lastName: user.person.lastName,
+          firstName: user.firstName,
+          lastName: user.lastName,
         },
       },
     };
@@ -88,9 +88,7 @@ export class AuthService implements OnModuleInit {
     const user = await this.usersRepository
       .createQueryBuilder('user')
       .addSelect('user.passwordHash')
-      .innerJoinAndSelect('user.person', 'person')
       .where('user.login = :login', { login: dto.login })
-      .andWhere('person.deletedAt IS NULL')
       .getOne();
 
     const passwordMatches = await verifyPassword(

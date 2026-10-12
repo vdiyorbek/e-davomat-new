@@ -470,108 +470,55 @@ export class UsersService {
     query: SelectQueryBuilder<User>,
     currentUser: AuthenticatedUser,
   ): void {
-    if (currentUser.role === UserRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = query
-      .subQuery()
-      .select('1')
-      .from(SchoolMembership, 'sm')
-      .innerJoin('sm.school', 'ms')
-      .innerJoin('ms.district', 'md')
-      .where('sm.personId = user.personId')
-      .andWhere('sm.startDate <= CURRENT_DATE()')
-      .andWhere('(sm.endDate IS NULL OR sm.endDate >= CURRENT_DATE())');
-
     switch (currentUser.role) {
+      case UserRole.SUPER_ADMIN:
+        return;
+
       case UserRole.REGION_ADMIN:
         if (!currentUser.regionId) {
           throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
         }
 
-        membership.andWhere('md.regionId = :scopeRegionId', {
-          scopeRegionId: currentUser.regionId,
-        });
-
         query.andWhere(
           new Brackets((qb) => {
             qb.where('user.regionId = :scopeRegionId')
               .orWhere('district.regionId = :scopeRegionId')
-              .orWhere('schoolDistrict.regionId = :scopeRegionId')
-              .orWhere(
-                `(
-                user.role = :ordinaryRole
-                AND EXISTS ${membership.getQuery()}
-              )`,
-              );
+              .orWhere('schoolDistrict.regionId = :scopeRegionId');
           }),
-          {
-            scopeRegionId: currentUser.regionId,
-            ordinaryRole: UserRole.USER,
-          },
+          { scopeRegionId: currentUser.regionId },
         );
-        break;
+        return;
 
       case UserRole.DISTRICT_ADMIN:
         if (!currentUser.districtId) {
           throw new ForbiddenException('Hisobga tuman biriktirilmagan');
         }
 
-        membership.andWhere('ms.districtId = :scopeDistrictId', {
-          scopeDistrictId: currentUser.districtId,
-        });
-
         query.andWhere(
           new Brackets((qb) => {
-            qb.where('user.districtId = :scopeDistrictId')
-              .orWhere('school.districtId = :scopeDistrictId')
-              .orWhere(
-                `(
-                user.role = :ordinaryRole
-                AND EXISTS ${membership.getQuery()}
-              )`,
-              );
+            qb.where('user.districtId = :scopeDistrictId').orWhere(
+              'school.districtId = :scopeDistrictId',
+            );
           }),
-          {
-            scopeDistrictId: currentUser.districtId,
-            ordinaryRole: UserRole.USER,
-          },
+          { scopeDistrictId: currentUser.districtId },
         );
-        break;
+        return;
 
       case UserRole.SCHOOL_ADMIN:
         if (!currentUser.schoolId) {
           throw new ForbiddenException('Hisobga maktab biriktirilmagan');
         }
 
-        membership.andWhere('sm.schoolId = :scopeSchoolId', {
+        query.andWhere('user.schoolId = :scopeSchoolId', {
           scopeSchoolId: currentUser.schoolId,
         });
-
-        query.andWhere(
-          new Brackets((qb) => {
-            qb.where('user.schoolId = :scopeSchoolId').orWhere(
-              `(
-                user.role = :ordinaryRole
-                AND EXISTS ${membership.getQuery()}
-              )`,
-            );
-          }),
-          {
-            scopeSchoolId: currentUser.schoolId,
-            ordinaryRole: UserRole.USER,
-          },
-        );
-        break;
+        return;
 
       default:
         throw new ForbiddenException(
           'Foydalanuvchilarni ko‘rishga ruxsat yo‘q',
         );
     }
-
-    query.setParameters(membership.getParameters());
   }
 
   async findAll(filters: GetUsersQueryDto, currentUser: AuthenticatedUser) {
@@ -589,14 +536,12 @@ export class UsersService {
     const query = this.dataSource
       .getRepository(User)
       .createQueryBuilder('user')
-      .innerJoinAndSelect('user.person', 'person')
       .leftJoinAndSelect('user.region', 'region')
       .leftJoinAndSelect('user.district', 'district')
       .leftJoinAndSelect('user.school', 'school')
       .leftJoinAndSelect('district.region', 'districtRegion')
       .leftJoinAndSelect('school.district', 'schoolDistrict')
-      .leftJoinAndSelect('schoolDistrict.region', 'schoolRegion')
-      .andWhere('person.deletedAt IS NULL');
+      .leftJoinAndSelect('schoolDistrict.region', 'schoolRegion');
 
     this.applyReadScope(query, currentUser);
 
@@ -650,9 +595,9 @@ export class UsersService {
         query.andWhere(
           new Brackets((qb) => {
             qb.where(`user.login LIKE :${param} ESCAPE '!'`)
-              .orWhere(`person.firstName LIKE :${param} ESCAPE '!'`)
-              .orWhere(`person.lastName LIKE :${param} ESCAPE '!'`)
-              .orWhere(`person.middleName LIKE :${param} ESCAPE '!'`);
+              .orWhere(`user.firstName LIKE :${param} ESCAPE '!'`)
+              .orWhere(`user.lastName LIKE :${param} ESCAPE '!'`)
+              .orWhere(`user.middleName LIKE :${param} ESCAPE '!'`);
           }),
           { [param]: `%${escaped}%` },
         );
@@ -680,12 +625,7 @@ export class UsersService {
         return {
           id: user.id,
           login: user.login,
-          personId: user.personId,
-          fullName: [
-            user.person.lastName,
-            user.person.firstName,
-            user.person.middleName,
-          ]
+          fullName: [user.lastName, user.firstName, user.middleName]
             .filter(Boolean)
             .join(' '),
           role: user.role,
@@ -734,15 +674,13 @@ export class UsersService {
     const query = this.dataSource
       .getRepository(User)
       .createQueryBuilder('user')
-      .innerJoinAndSelect('user.person', 'person')
       .leftJoinAndSelect('user.region', 'region')
       .leftJoinAndSelect('user.district', 'district')
       .leftJoinAndSelect('user.school', 'school')
       .leftJoinAndSelect('district.region', 'districtRegion')
       .leftJoinAndSelect('school.district', 'schoolDistrict')
       .leftJoinAndSelect('schoolDistrict.region', 'schoolRegion')
-      .where('user.id = :id', { id })
-      .andWhere('person.deletedAt IS NULL');
+      .where('user.id = :id', { id });
 
     this.applyReadScope(query, currentUser);
 
@@ -764,13 +702,8 @@ export class UsersService {
 
     return {
       id: user.id,
-      personId: user.personId,
       login: user.login,
-      fullName: [
-        user.person.lastName,
-        user.person.firstName,
-        user.person.middleName,
-      ]
+      fullName: [user.lastName, user.firstName, user.middleName]
         .filter(Boolean)
         .join(' '),
       role: user.role,

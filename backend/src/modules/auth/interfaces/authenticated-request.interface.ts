@@ -1,10 +1,14 @@
 import type { Request } from 'express';
-import type { Person } from 'src/modules/persons/person.entity';
+import { Person } from 'src/modules/persons/person.entity';
 import type { UserRole } from 'src/modules/users/enums/user-role.enum';
 
 export interface AuthenticatedUser {
   id: number;
   login: string;
+  firstName: string | null;
+  lastName: string | null;
+  middleName: string | null;
+
   personId: number;
   person: Person;
   role: UserRole;

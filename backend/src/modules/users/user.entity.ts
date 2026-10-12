@@ -32,6 +32,27 @@ export class User {
   login!: string;
 
   @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  firstName!: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  lastName!: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  middleName!: string | null;
+
+  @Column({
     type: 'int',
     unsigned: true,
   })
