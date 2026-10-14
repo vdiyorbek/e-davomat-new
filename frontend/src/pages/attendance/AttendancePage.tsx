@@ -115,6 +115,7 @@ function AttendanceResults({
                 <AttendanceTable
                     items={data.data}
                     startIndex={firstRow}
+                    onExcuseSaved={retry}
                 />
             ) : (
                 <div className="rounded-2xl border border-dashed bg-card p-8 text-center">

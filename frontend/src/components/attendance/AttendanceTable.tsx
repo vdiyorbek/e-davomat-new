@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { AttendanceDetailsDialog } from './AttendanceDetailsDialog';
-
+import { useAuth } from '@/hooks/useAuth';
+import { AttendanceExcuseDialog } from './AttendanceExcuseDialog';
 import type {
     AttendanceStatus,
     DailyAttendance,
@@ -12,6 +13,7 @@ import type {
 interface Props {
     items: DailyAttendance[];
     startIndex: number;
+    onExcuseSaved: () => void;
 }
 
 const STATUS_STYLE: Record<AttendanceStatus, string> = {
@@ -45,9 +47,10 @@ const LOCALES: Record<string, string> = {
 export function AttendanceTable({
     items,
     startIndex,
+    onExcuseSaved,
 }: Props) {
     const { t, i18n } = useTranslation();
-
+    const { session } = useAuth();
     const locale =
         LOCALES[i18n.resolvedLanguage ?? 'uz'] ?? 'uz-UZ';
 
@@ -106,6 +109,20 @@ export function AttendanceTable({
                                         STATUS_FALLBACK[item.attendanceStatus],
                                 },
                             );
+                            const profile = session?.profile;
+                            const canCreateExcuse =
+                                Boolean(item.person) &&
+                                item.attendanceStatus === 'absent' &&
+                                !item.firstInTime &&
+                                !item.lastOutTime &&
+                                (
+                                    profile?.role === 'SUPER_ADMIN' ||
+                                    (
+                                        profile?.role === 'SCHOOL_ADMIN' &&
+                                        profile.schoolId === item.schoolId
+                                    )
+                                );
+
 
                             return (
                                 <tr
@@ -170,8 +187,17 @@ export function AttendanceTable({
                                             : '—'}
                                     </td>
 
-                                    <td className="px-4 py-4 text-right">
-                                        <AttendanceDetailsDialog item={item} />
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <AttendanceDetailsDialog item={item} />
+
+                                            {canCreateExcuse && (
+                                                <AttendanceExcuseDialog
+                                                    item={item}
+                                                    onSaved={onExcuseSaved}
+                                                />
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             );
