@@ -13,11 +13,28 @@ type ExcuseReason =
     | 'FAMILY'
     | 'OTHER';
 
-interface Props {
-    item: DailyAttendance;
+export interface ExcuseStudentSelection {
+    personId: number;
+    schoolId: number;
+    name: string;
+    schoolName: string;
+    className: string | null;
+    defaultDate: string;
+}
+
+type Props = {
     onSaved: () => void;
     onCancel: () => void;
-}
+} & (
+        | {
+            item: DailyAttendance;
+            selection?: never;
+        }
+        | {
+            item?: never;
+            selection: ExcuseStudentSelection;
+        }
+    );
 
 interface CreatedExcuse {
     id: number;
@@ -28,6 +45,7 @@ const MAX_PDF_SIZE = 5 * 1024 * 1024;
 
 export function AttendanceExcuseForm({
     item,
+    selection,
     onSaved,
     onCancel,
 }: Props) {
@@ -35,20 +53,29 @@ export function AttendanceExcuseForm({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    const name = item.person
-        ? [
-            item.person.lastName,
-            item.person.firstName,
-            item.person.middleName,
-        ].filter(Boolean).join(' ')
-        : 'Noma’lum o‘quvchi';
+    const student: ExcuseStudentSelection | null =
+        selection ??
+        (item?.person
+            ? {
+                personId: item.person.id,
+                schoolId: item.schoolId,
+                name: [
+                    item.person.lastName,
+                    item.person.firstName,
+                    item.person.middleName,
+                ].filter(Boolean).join(' '),
+                schoolName: item.school.name,
+                className: item.className,
+                defaultDate: item.date,
+            }
+            : null);
 
     async function handleSubmit(
         event: FormEvent<HTMLFormElement>,
     ) {
         event.preventDefault();
 
-        if (saving || !item.person) return;
+        if (saving || !student) return;
 
         const form = new FormData(event.currentTarget);
 
@@ -99,8 +126,8 @@ export function AttendanceExcuseForm({
 
         const payload = new FormData();
 
-        payload.append('personId', String(item.person.id));
-        payload.append('schoolId', String(item.schoolId));
+        payload.append('personId', String(student.personId));
+        payload.append('schoolId', String(student.schoolId));
         payload.append('reason', reason as ExcuseReason);
         payload.append('startDate', startDate);
         payload.append('endDate', endDate);
@@ -144,10 +171,13 @@ export function AttendanceExcuseForm({
                 <p className="text-xs text-muted-foreground">
                     Tanlangan o‘quvchi
                 </p>
-                <p className="mt-1 font-semibold">{name}</p>
+                <p className="mt-1 font-semibold">
+                    {student?.name ?? 'Noma’lum o‘quvchi'}
+                </p>
+
                 <p className="mt-1 text-sm text-muted-foreground">
-                    {item.school.name}
-                    {item.className ? ` · ${item.className}` : ''}
+                    {student?.schoolName ?? '—'}
+                    {student?.className ? ` · ${student.className}` : ''}
                 </p>
             </div>
 
@@ -191,7 +221,7 @@ export function AttendanceExcuseForm({
                         name="startDate"
                         type="date"
                         required
-                        defaultValue={item.date}
+                        defaultValue={student?.defaultDate ?? ''}
                         disabled={saving}
                     />
                 </div>
@@ -209,7 +239,7 @@ export function AttendanceExcuseForm({
                         name="endDate"
                         type="date"
                         required
-                        defaultValue={item.date}
+                        defaultValue={student?.defaultDate ?? ''}
                         disabled={saving}
                     />
                 </div>

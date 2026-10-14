@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/common/PageHeader';
 import { AttendanceExcuseActions } from '@/components/attendance/AttendanceExcuseActions';
 import { useApiQuery } from '@/hooks/useApiQuery';
-
+import { CreateAttendanceExcuseDialog } from '@/components/attendance/CreateAttendanceExcuseDialog';
 import type { School } from '@/types/school';
 import {
     EXCUSE_REASON_LABELS,
@@ -87,16 +87,37 @@ export function AttendanceExcusesPage() {
                 eyebrow="Davomat boshqaruvi"
                 title="Sababli arizalar"
                 description="O‘quvchilarning sababli davomat arizalari va asoslovchi hujjatlari."
+
                 actions={
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={retry}
-                    >
-                        <RefreshCw className="size-4" />
-                        Yangilash
-                    </Button>
+                    <>
+                        <CreateAttendanceExcuseDialog
+                            onSaved={() => {
+                                setPage(1);
+
+                                setDraft((previous) => ({
+                                    ...previous,
+                                    status: 'ACTIVE',
+                                }));
+
+                                setFilters((previous) => ({
+                                    ...previous,
+                                    status: 'ACTIVE',
+                                }));
+                                retry();
+                            }}
+                        />
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={retry}
+                        >
+                            <RefreshCw className="size-4" />
+                            Yangilash
+                        </Button>
+                    </>
                 }
+
             />
 
             <form
