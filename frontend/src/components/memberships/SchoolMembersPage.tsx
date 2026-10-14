@@ -10,6 +10,7 @@ import type {
 import { Link, useSearchParams } from 'react-router';
 import { SchoolMembersFilters } from '@/components/memberships/SchoolMembersFilters';
 import { EndMembershipForm } from '@/components/memberships/EndMembershipForm';
+import { SchoolMemberActions } from './SchoolMemberActions';
 
 type MembershipType = 'STUDENT' | 'TEACHER'
 interface SchoolMembersPageProps {
@@ -61,6 +62,12 @@ function MembersResults({
     const [endSuccess, setEndSuccess] = useState('');
 
     const canEnd = session?.profile.role === 'SUPER_ADMIN';
+    const canEdit = session?.profile.role === 'SUPER_ADMIN';
+
+    function openEnd(membership: SchoolMembership) {
+        setEndSuccess('');
+        setEndingMembership(membership);
+    }
     if (loading) {
         return (
             <p
@@ -215,6 +222,19 @@ function MembersResults({
                                 </Button>
                             )}
                         </dl>
+                        <div className="mt-4 border-t pt-4">
+                            <p className="mb-3 text-xs font-medium text-muted-foreground">
+                                Amallar
+                            </p>
+
+                            <SchoolMemberActions
+                                membership={item}
+                                canEdit={canEdit}
+                                canEnd={canEnd}
+                                endDisabled={endingMembership !== null}
+                                onEnd={openEnd}
+                            />
+                        </div>
                     </li>
 
                 ))}
@@ -228,7 +248,7 @@ function MembersResults({
                     tabIndex={0}
                     className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
-                    <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+                    <table className="w-full min-w-[1150px] table-fixed text-left text-sm">
                         <caption className="sr-only">
                             ${peopleLabel} maktablarga biriktirishlar
                         </caption>
@@ -246,7 +266,7 @@ function MembersResults({
                                     Faol bo‘lmaydigan birinchi kun
                                 </th>
                                 {canEnd && (
-                                    <th className="px-4 py-3 text-left">
+                                    <th scope="col" className="w-72 px-4 py-3 text-left">
                                         Amal
                                     </th>
                                 )}
@@ -295,22 +315,15 @@ function MembersResults({
                                     <td className="p-4">
                                         {formatDate(item.endDate)}
                                     </td>
-                                    {canEnd && (
-                                        <td className="px-4 py-3">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                disabled={endingMembership !== null}
-                                                onClick={() => {
-                                                    setEndSuccess('');
-                                                    setEndingMembership(item);
-                                                }}
-                                            >
-                                                {item.endDate ? 'Tugash sanasi' : 'Yakunlash'}
-                                            </Button>
-                                        </td>
-                                    )}
+                                    <td className="px-4 py-3">
+                                        <SchoolMemberActions
+                                            membership={item}
+                                            canEdit={canEdit}
+                                            canEnd={canEnd}
+                                            endDisabled={endingMembership !== null}
+                                            onEnd={openEnd}
+                                        />
+                                    </td>
                                 </tr>
 
                             ))}

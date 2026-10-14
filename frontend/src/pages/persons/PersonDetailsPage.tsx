@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { EditPersonForm } from '@/components/persons/EditPersonForm';
@@ -22,11 +22,13 @@ function PersonDetails({ personId }: { personId: number }) {
     const navigate = useNavigate();
     const { session } = useAuth();
     const [changingPhoto, setChangingPhoto] = useState(false);
-
+    const [searchParams] = useSearchParams();
     const { data: person, loading, error, retry } =
         useApiQuery<Person>(`/persons/${personId}`);
 
-    const [editing, setEditing] = useState(false);
+    const [editing, setEditing] = useState(
+        () => searchParams.get('edit') === '1',
+    );
     const [success, setSuccess] = useState('');
 
     const canEdit = session?.profile.role === 'SUPER_ADMIN';
