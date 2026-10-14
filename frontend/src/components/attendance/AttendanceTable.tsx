@@ -139,8 +139,8 @@ export function AttendanceTable({
                                         </div>
                                     </td>
 
-                                    <td className="px-4 py-4 text-muted-foreground">
-                                        —
+                                    <td className="px-4 py-4">
+                                        {item.className ?? '—'}
                                     </td>
 
                                     <td className="px-4 py-4 font-medium tabular-nums">
