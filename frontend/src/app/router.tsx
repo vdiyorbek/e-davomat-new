@@ -16,6 +16,7 @@ import { TerminalsPage } from '@/pages/terminals/TerminalsPage';
 import { AttendancePage } from '@/pages/attendance/AttendancePage';
 import { ClassesPage } from '@/pages/classes/ClassesPage';
 import { UsersPage } from '@/pages/users/UsersPage';
+import { AttendanceExcusesPage } from '@/pages/attendance/AttendanceExcusesPage';
 
 export const router = createBrowserRouter([
     {
@@ -53,6 +54,17 @@ export const router = createBrowserRouter([
                             },
                             { path: '/classes', element: <ClassesPage /> },
                             { path: '/users', element: <UsersPage /> },
+                            {
+                                element: (
+                                    <RequireRole roles={['SUPER_ADMIN', 'SCHOOL_ADMIN']} />
+                                ),
+                                children: [
+                                    {
+                                        path: '/attendance-excuses',
+                                        element: <AttendanceExcusesPage />,
+                                    },
+                                ],
+                            },
                         ],
                     },
                 ],
