@@ -10,6 +10,7 @@ import type {
 import { Link, useSearchParams } from 'react-router';
 import { SchoolMembersFilters } from '@/components/memberships/SchoolMembersFilters';
 import { SchoolMemberActions } from './SchoolMemberActions';
+import { EndMembershipForm } from './EndMembershipForm';
 import { ChangeClassForm } from './ChangeClassForm';
 import { TransferSchoolForm } from './TransferSchoolForm';
 type MembershipType = 'STUDENT' | 'TEACHER'
@@ -185,7 +186,18 @@ function MembersResults({
                 </p>
             )}
 
-
+            {endingMembership && canEnd && (
+                <EndMembershipForm
+                    key={endingMembership.id}
+                    membership={endingMembership}
+                    onCancel={() => setEndingMembership(null)}
+                    onSaved={() =>
+                        handleActionSaved(
+                            'Maktabga biriktirish muvaffaqiyatli yakunlandi.'
+                        )
+                    }
+                />
+            )}
             {changingClass && canChangeClass && (
                 <section className="rounded-2xl border bg-card p-5">
                     <h2 className="mb-4 text-lg font-semibold">
@@ -307,7 +319,13 @@ function MembersResults({
                     tabIndex={0}
                     className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
-                    <table className="w-full min-w-[1150px] table-fixed text-left text-sm">
+                    <table
+                        className={
+                            type === 'STUDENT'
+                                ? 'w-full min-w-[1700px] table-auto text-left text-sm'
+                                : 'w-full min-w-[1100px] table-auto text-left text-sm'
+                        }
+                    >
                         <caption className="sr-only">
                             {peopleLabel} maktablarga biriktirishlar
                         </caption>
@@ -324,7 +342,14 @@ function MembersResults({
                                 <th scope="col" className="w-40 p-4">
                                     Faol bo‘lmaydigan birinchi kun
                                 </th>
-                                <th scope="col" className="w-72 px-4 py-3 text-left">
+                                <th
+                                    scope="col"
+                                    className={
+                                        type === 'STUDENT'
+                                            ? 'min-w-[720px] whitespace-nowrap px-4 py-3 text-left'
+                                            : 'min-w-[350px] whitespace-nowrap px-4 py-3 text-left'
+                                    }
+                                >
                                     Amallar
                                 </th>
                             </tr>
@@ -372,7 +397,7 @@ function MembersResults({
                                     <td className="p-4">
                                         {formatDate(item.endDate)}
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="whitespace-nowrap px-4 py-3">
                                         <SchoolMemberActions
                                             membership={item}
                                             canEdit={canEdit}

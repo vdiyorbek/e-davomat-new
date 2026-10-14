@@ -33,7 +33,11 @@ export function DashboardLayout() {
                 </aside>
                 <div className="flex min-w-0 flex-col">
                     <Header />
-                    <main id="main-content" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-7xl flex-1 p-4 outline-none sm:p-6 lg:p-8">
+                    <main
+                        id="main-content"
+                        tabIndex={-1}
+                        className="w-full min-w-0 flex-1 p-4 outline-none sm:p-6 lg:p-8"
+                    >
                         <Outlet />
                     </main>
                     <footer className="px-4 py-5 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
