@@ -16,12 +16,18 @@ import { EventPhotoStatus } from '../attendance-events/enums/event-photo-status.
 import { TerminalDirection } from '../terminals/enums/terminal-direction.enum';
 
 import { DailyAttendance } from './daily-attendance.entity';
-import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
-import { MembershipType } from '../school-memberships/school-membership.entity';
+import {
+  MembershipType,
+  SchoolMembership,
+} from '../school-memberships/school-membership.entity';
 import {
   AttendanceExcuse,
   AttendanceExcuseStatus,
 } from '../attendance-excuses/attendance-excuse.entity';
+import {
+  AttendanceStatusFilter,
+  GetDailyAttendanceQueryDto,
+} from './dto/get-daily-attendance-query.dto';
 
 @Injectable()
 export class DailyAttendanceReadService {
@@ -80,34 +86,46 @@ export class DailyAttendanceReadService {
     return builder;
   }
 
-  async findAll(query: GetDailyAttendanceQueryDto, user: AuthenticatedUser) {
+  private filteredQuery(
+    query: GetDailyAttendanceQueryDto,
+    user: AuthenticatedUser,
+  ) {
     const builder = this.scopedQuery(user).andWhere('daily.date = :date', {
       date: query.date,
     });
 
-    builder.andWhere(
-      `EXISTS (
-    SELECT 1
-    FROM school_memberships AS sm
-    INNER JOIN persons AS p
-      ON p.id = sm.personId
-    WHERE sm.schoolId = daily.schoolId
-      AND sm.type = :studentType
-      AND p.pnfl = daily.pnfl
-      AND sm.startDate <= daily.date
-      AND (
-        sm.endDate IS NULL
-        OR sm.endDate > daily.date
-      )
-  )`,
-      {
-        studentType: MembershipType.STUDENT,
-      },
-    );
+    // O‘quvchi aynan tanlangan sanada
+    // shu maktabda o‘qiyotgan bo‘lishi kerak.
+    const studentExists = `
+    EXISTS (
+      SELECT 1
+      FROM school_memberships AS sm
+      INNER JOIN persons AS p
+        ON p.id = sm.personId
+      WHERE sm.schoolId = daily.schoolId
+        AND sm.type = :studentType
+        AND p.pnfl = daily.pnfl
+        AND p.deletedAt IS NULL
+        AND sm.startDate <= daily.date
+        AND (
+          sm.endDate IS NULL
+          OR sm.endDate > daily.date
+        )
+        ${query.classId !== undefined ? 'AND sm.classId = :filterClassId' : ''}
+    )
+  `;
 
-    if (query.schoolId !== undefined) {
-      builder.andWhere('daily.schoolId = :filterSchoolId', {
-        filterSchoolId: query.schoolId,
+    builder.andWhere(studentExists, {
+      studentType: MembershipType.STUDENT,
+    });
+
+    if (query.classId !== undefined) {
+      builder.setParameter('filterClassId', query.classId);
+    }
+
+    if (query.regionId !== undefined) {
+      builder.andWhere('daily.regionId = :filterRegionId', {
+        filterRegionId: query.regionId,
       });
     }
 
@@ -117,18 +135,98 @@ export class DailyAttendanceReadService {
       });
     }
 
-    if (query.regionId !== undefined) {
-      builder.andWhere('daily.regionId = :filterRegionId', {
-        filterRegionId: query.regionId,
+    if (query.schoolId !== undefined) {
+      builder.andWhere('daily.schoolId = :filterSchoolId', {
+        filterSchoolId: query.schoolId,
       });
     }
 
     if (query.pnfl !== undefined) {
-      builder.andWhere('daily.pnfl = :pnfl', {
-        pnfl: query.pnfl,
+      builder.andWhere('daily.pnfl = :filterPnfl', {
+        filterPnfl: query.pnfl,
       });
     }
 
+    // Ism yoki familiya orqali qidirish.
+    if (query.search) {
+      const escaped = query.search.replace(/[!%_]/g, (char) => `!${char}`);
+
+      builder.andWhere(
+        `EXISTS (
+        SELECT 1
+        FROM persons AS personSearch
+        WHERE personSearch.pnfl = daily.pnfl
+          AND personSearch.deletedAt IS NULL
+          AND (
+            personSearch.firstName
+              LIKE :search ESCAPE '!'
+            OR personSearch.lastName
+              LIKE :search ESCAPE '!'
+            OR personSearch.middleName
+              LIKE :search ESCAPE '!'
+            OR CONCAT_WS(
+              ' ',
+              personSearch.lastName,
+              personSearch.firstName,
+              personSearch.middleName
+            ) LIKE :search ESCAPE '!'
+          )
+      )`,
+        {
+          search: `%${escaped}%`,
+        },
+      );
+    }
+
+    // ACTIVE ariza mavjudligini SQL orqali tekshiramiz.
+    const excuseExists = `
+    EXISTS (
+      SELECT 1
+      FROM attendance_excuses AS excuseFilter
+      INNER JOIN persons AS excusePerson
+        ON excusePerson.id = excuseFilter.personId
+      WHERE excuseFilter.schoolId = daily.schoolId
+        AND excusePerson.pnfl = daily.pnfl
+        AND excuseFilter.status = :activeExcuseStatus
+        AND excuseFilter.startDate <= daily.date
+        AND excuseFilter.endDate >= daily.date
+    )
+  `;
+
+    // Muhim: status MySQL ichida aniqlanadi.
+    // Shuning uchun filtr paginationdan OLDIN ishlaydi.
+    if (query.attendanceStatus !== undefined) {
+      const statusExpression = `
+      CASE
+        WHEN daily.firstInTime IS NOT NULL
+          AND daily.lastOutTime IS NOT NULL
+          THEN 'left'
+
+        WHEN daily.firstInTime IS NOT NULL
+          THEN 'inside'
+
+        WHEN daily.lastOutTime IS NOT NULL
+          THEN 'anomaly'
+
+        WHEN ${excuseExists}
+          THEN 'excused'
+
+        ELSE 'absent'
+      END
+    `;
+
+      builder
+        .andWhere(`(${statusExpression}) = :filterAttendanceStatus`, {
+          filterAttendanceStatus: query.attendanceStatus,
+        })
+        .setParameter('activeExcuseStatus', AttendanceExcuseStatus.ACTIVE);
+    }
+
+    return builder;
+  }
+
+  async findAll(query: GetDailyAttendanceQueryDto, user: AuthenticatedUser) {
+    const builder = this.filteredQuery(query, user);
     const [rows, total] = await builder
       .orderBy('daily.id', 'DESC')
       .skip((query.page - 1) * query.limit)
@@ -156,9 +254,62 @@ export class DailyAttendanceReadService {
       persons.map((person) => [person.pnfl, person]),
     );
 
-    const personIds = [...new Set(persons.map((p) => p.id))];
-
     const schoolIds = [...new Set(rows.map((row) => row.schoolId))];
+
+    // Tanlangan sanadagi sinfni aniqlaymiz.
+    const membershipRows =
+      pnfls.length > 0 && schoolIds.length > 0
+        ? await this.dataSource
+            .getRepository(SchoolMembership)
+            .createQueryBuilder('membership')
+            .innerJoin('membership.person', 'person')
+            .leftJoin('membership.schoolClass', 'schoolClass')
+            .select('person.pnfl', 'pnfl')
+            .addSelect('membership.schoolId', 'schoolId')
+            .addSelect('membership.classId', 'classId')
+            .addSelect('schoolClass.name', 'className')
+            .addSelect('schoolClass.academicYear', 'academicYear')
+            .where('person.pnfl IN (:...pnfls)', { pnfls })
+            .andWhere('membership.schoolId IN (:...schoolIds)', {
+              schoolIds,
+            })
+            .andWhere('membership.type = :studentType', {
+              studentType: MembershipType.STUDENT,
+            })
+            .andWhere('membership.startDate <= :date', {
+              date: query.date,
+            })
+            .andWhere(
+              '(membership.endDate IS NULL OR membership.endDate > :date)',
+              { date: query.date },
+            )
+            .orderBy('membership.startDate', 'DESC')
+            .addOrderBy('membership.id', 'DESC')
+            .getRawMany<{
+              pnfl: string;
+              schoolId: number | string;
+              classId: number | string | null;
+              className: string | null;
+              academicYear: string | null;
+            }>()
+        : [];
+
+    const classBySchoolAndPnfl = new Map<
+      string,
+      (typeof membershipRows)[number]
+    >();
+
+    for (const membership of membershipRows) {
+      const key = `${membership.schoolId}:${membership.pnfl}`;
+
+      // Bir nechta yozuv bo‘lsa, shu kundagi
+      // eng oxirgi boshlangan biriktirish olinadi.
+      if (!classBySchoolAndPnfl.has(key)) {
+        classBySchoolAndPnfl.set(key, membership);
+      }
+    }
+
+    const personIds = [...new Set(persons.map((p) => p.id))];
 
     // Sahifadagi barcha o‘quvchilar uchun sababli
     // arizalarni bitta so‘rovda olamiz.
@@ -166,8 +317,10 @@ export class DailyAttendanceReadService {
       personIds.length > 0 && schoolIds.length > 0
         ? await this.dataSource.getRepository(AttendanceExcuse).find({
             select: {
+              id: true,
               personId: true,
               schoolId: true,
+              reason: true,
             },
             where: {
               personId: In(personIds),
@@ -181,18 +334,26 @@ export class DailyAttendanceReadService {
 
     // Bir o‘quvchi bir nechta maktabda tarixga ega
     // bo‘lishi mumkin, shuning uchun ikkala ID kerak.
-    const excusedPairs = new Set(
-      excuses.map((excuse) => `${excuse.schoolId}:${excuse.personId}`),
+    const excusesByPair = new Map(
+      excuses.map((excuse) => [
+        `${excuse.schoolId}:${excuse.personId}`,
+        excuse,
+      ]),
     );
 
     return {
       data: rows.map((row) => {
         const person = personsByPnfl.get(row.pnfl);
 
-        const hasActiveExcuse =
-          person !== undefined &&
-          excusedPairs.has(`${row.schoolId}:${person.id}`);
+        const membership = classBySchoolAndPnfl.get(
+          `${row.schoolId}:${row.pnfl}`,
+        );
 
+        const excuse = person
+          ? excusesByPair.get(`${row.schoolId}:${person.id}`)
+          : undefined;
+
+        const hasActiveExcuse = Boolean(excuse);
         const attendanceStatus =
           row.firstInTime && row.lastOutTime
             ? 'left'
@@ -256,6 +417,18 @@ export class DailyAttendanceReadService {
             id: row.region.id,
             name: row.region.name,
           },
+          classId:
+            membership?.classId != null ? Number(membership.classId) : null,
+
+          className: membership?.className ?? null,
+
+          academicYear: membership?.academicYear ?? null,
+
+          excuseId:
+            attendanceStatus === 'excused' ? (excuse?.id ?? null) : null,
+
+          excuseReason:
+            attendanceStatus === 'excused' ? (excuse?.reason ?? null) : null,
 
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,

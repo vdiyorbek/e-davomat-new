@@ -21,7 +21,12 @@ const STATUS_STYLE: Record<AttendanceStatus, string> = {
     absent: 'bg-destructive/10 text-destructive',
     anomaly: 'bg-muted text-muted-foreground',
 };
-
+const reasonLabels = {
+    ILLNESS: 'Sog‘lig‘i sababli',
+    OLYMPIAD: 'Olimpiada',
+    FAMILY: 'Oilaviy sabab',
+    OTHER: 'Boshqa',
+};
 const STATUS_FALLBACK: Record<AttendanceStatus, string> = {
     inside: 'Maktabda',
     left: 'Ketgan',
@@ -159,7 +164,10 @@ export function AttendanceTable({
                                     </td>
 
                                     <td className="px-4 py-4 text-muted-foreground">
-                                        —
+                                        {item.attendanceStatus === 'excused' &&
+                                            item.excuseReason
+                                            ? reasonLabels[item.excuseReason]
+                                            : '—'}
                                     </td>
 
                                     <td className="px-4 py-4 text-right">

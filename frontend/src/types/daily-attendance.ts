@@ -16,6 +16,12 @@ export interface DailyAttendance {
   date: string;
   pnfl: string;
   attendanceStatus: AttendanceStatus;
+  classId: number | null;
+  className: string | null;
+  academicYear: string | null;
+
+  excuseId: number | null;
+  excuseReason: "ILLNESS" | "OLYMPIAD" | "FAMILY" | "OTHER" | null;
 
   person: {
     id: number;
