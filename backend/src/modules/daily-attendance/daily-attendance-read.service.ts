@@ -24,10 +24,7 @@ import {
   AttendanceExcuse,
   AttendanceExcuseStatus,
 } from '../attendance-excuses/attendance-excuse.entity';
-import {
-  AttendanceStatusFilter,
-  GetDailyAttendanceQueryDto,
-} from './dto/get-daily-attendance-query.dto';
+import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
 
 @Injectable()
 export class DailyAttendanceReadService {
