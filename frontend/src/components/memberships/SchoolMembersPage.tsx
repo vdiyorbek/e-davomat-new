@@ -319,13 +319,7 @@ function MembersResults({
                     tabIndex={0}
                     className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
-                    <table
-                        className={
-                            type === 'STUDENT'
-                                ? 'w-full min-w-[1700px] table-auto text-left text-sm'
-                                : 'w-full min-w-[1100px] table-auto text-left text-sm'
-                        }
-                    >
+                    <table className="w-full min-w-[1100px] table-auto text-left text-sm">
                         <caption className="sr-only">
                             {peopleLabel} maktablarga biriktirishlar
                         </caption>
@@ -342,14 +336,7 @@ function MembersResults({
                                 <th scope="col" className="w-40 p-4">
                                     Faol bo‘lmaydigan birinchi kun
                                 </th>
-                                <th
-                                    scope="col"
-                                    className={
-                                        type === 'STUDENT'
-                                            ? 'min-w-[720px] whitespace-nowrap px-4 py-3 text-left'
-                                            : 'min-w-[350px] whitespace-nowrap px-4 py-3 text-left'
-                                    }
-                                >
+                                <th scope="col" className="w-[240px] whitespace-nowrap px-4 py-3 text-left">
                                     Amallar
                                 </th>
                             </tr>
