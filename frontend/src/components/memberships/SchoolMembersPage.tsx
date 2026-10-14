@@ -9,9 +9,9 @@ import type {
 } from '@/types/school-membership';
 import { Link, useSearchParams } from 'react-router';
 import { SchoolMembersFilters } from '@/components/memberships/SchoolMembersFilters';
-import { EndMembershipForm } from '@/components/memberships/EndMembershipForm';
 import { SchoolMemberActions } from './SchoolMemberActions';
-
+import { ChangeClassForm } from './ChangeClassForm';
+import { TransferSchoolForm } from './TransferSchoolForm';
 type MembershipType = 'STUDENT' | 'TEACHER'
 interface SchoolMembersPageProps {
     type: MembershipType
@@ -61,12 +61,58 @@ function MembersResults({
 
     const [endSuccess, setEndSuccess] = useState('');
 
-    const canEnd = session?.profile.role === 'SUPER_ADMIN';
-    const canEdit = session?.profile.role === 'SUPER_ADMIN';
+    const role = session?.profile.role;
+
+    const canEnd = role === 'SUPER_ADMIN';
+    const canEdit = role === 'SUPER_ADMIN';
+
+    const canChangeClass =
+        type === 'STUDENT' &&
+        ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN', 'SCHOOL_ADMIN']
+            .includes(role ?? '');
+
+    const canTransferSchool =
+        type === 'STUDENT' &&
+        ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN']
+            .includes(role ?? '');
+    const [changingClass, setChangingClass] =
+        useState<SchoolMembership | null>(null);
+
+    const [transferringSchool, setTransferringSchool] =
+        useState<SchoolMembership | null>(null);
+
+    const actionsDisabled =
+        endingMembership !== null ||
+        changingClass !== null ||
+        transferringSchool !== null;
 
     function openEnd(membership: SchoolMembership) {
         setEndSuccess('');
+        setChangingClass(null);
+        setTransferringSchool(null);
         setEndingMembership(membership);
+    }
+
+    function openChangeClass(membership: SchoolMembership) {
+        setEndSuccess('');
+        setEndingMembership(null);
+        setTransferringSchool(null);
+        setChangingClass(membership);
+    }
+
+    function openTransferSchool(membership: SchoolMembership) {
+        setEndSuccess('');
+        setEndingMembership(null);
+        setChangingClass(null);
+        setTransferringSchool(membership);
+    }
+
+    function handleActionSaved(message: string) {
+        setEndingMembership(null);
+        setChangingClass(null);
+        setTransferringSchool(null);
+        setEndSuccess(message);
+        retry();
     }
     if (loading) {
         return (
@@ -74,7 +120,7 @@ function MembersResults({
                 role="status"
                 className="rounded-xl border bg-background p-6 text-sm text-muted-foreground"
             >
-                ${peopleLabel} yuklanmoqda…
+                {peopleLabel} yuklanmoqda…
             </p>
         );
     }
@@ -139,18 +185,41 @@ function MembersResults({
                 </p>
             )}
 
-            {endingMembership && canEnd && (
-                <EndMembershipForm
-                    key={endingMembership.id}
-                    membership={endingMembership}
-                    onCancel={() => setEndingMembership(null)}
-                    onSaved={() => {
-                        setEndingMembership(null);
-                        setEndSuccess('Maktabga bog‘lanishning tugash sanasi saqlandi.');
-                        retry();
-                    }}
-                />
+
+            {changingClass && canChangeClass && (
+                <section className="rounded-2xl border bg-card p-5">
+                    <h2 className="mb-4 text-lg font-semibold">
+                        O‘quvchini boshqa sinfga o‘tkazish
+                    </h2>
+
+                    <ChangeClassForm
+                        key={changingClass.id}
+                        membership={changingClass}
+                        onCancel={() => setChangingClass(null)}
+                        onSaved={() =>
+                            handleActionSaved('O‘quvchining sinfi almashtirildi.')
+                        }
+                    />
+                </section>
             )}
+
+            {transferringSchool && canTransferSchool && (
+                <section className="rounded-2xl border bg-card p-5">
+                    <h2 className="mb-4 text-lg font-semibold">
+                        O‘quvchini boshqa maktabga ko‘chirish
+                    </h2>
+
+                    <TransferSchoolForm
+                        key={transferringSchool.id}
+                        membership={transferringSchool}
+                        onCancel={() => setTransferringSchool(null)}
+                        onSaved={() =>
+                            handleActionSaved('O‘quvchi boshqa maktabga ko‘chirildi.')
+                        }
+                    />
+                </section>
+            )}
+
             {/* Mobil ko‘rinish */}
             <ul className="grid min-w-0 list-none gap-4 md:hidden">
                 {data.data.map((item) => (
@@ -207,20 +276,6 @@ function MembersResults({
                                     {formatDate(item.endDate)}
                                 </dd>
                             </div>
-                            {canEnd && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={endingMembership !== null}
-                                    onClick={() => {
-                                        setEndSuccess('');
-                                        setEndingMembership(item);
-                                    }}
-                                >
-                                    {item.endDate ? 'Tugash sanasi' : 'Yakunlash'}
-                                </Button>
-                            )}
                         </dl>
                         <div className="mt-4 border-t pt-4">
                             <p className="mb-3 text-xs font-medium text-muted-foreground">
@@ -231,8 +286,12 @@ function MembersResults({
                                 membership={item}
                                 canEdit={canEdit}
                                 canEnd={canEnd}
-                                endDisabled={endingMembership !== null}
+                                canChangeClass={canChangeClass}
+                                canTransferSchool={canTransferSchool}
+                                actionsDisabled={actionsDisabled}
                                 onEnd={openEnd}
+                                onChangeClass={openChangeClass}
+                                onTransferSchool={openTransferSchool}
                             />
                         </div>
                     </li>
@@ -250,7 +309,7 @@ function MembersResults({
                 >
                     <table className="w-full min-w-[1150px] table-fixed text-left text-sm">
                         <caption className="sr-only">
-                            ${peopleLabel} maktablarga biriktirishlar
+                            {peopleLabel} maktablarga biriktirishlar
                         </caption>
 
                         <thead className="border-b bg-muted/50">
@@ -265,11 +324,9 @@ function MembersResults({
                                 <th scope="col" className="w-40 p-4">
                                     Faol bo‘lmaydigan birinchi kun
                                 </th>
-                                {canEnd && (
-                                    <th scope="col" className="w-72 px-4 py-3 text-left">
-                                        Amal
-                                    </th>
-                                )}
+                                <th scope="col" className="w-72 px-4 py-3 text-left">
+                                    Amallar
+                                </th>
                             </tr>
 
                         </thead>
@@ -320,8 +377,12 @@ function MembersResults({
                                             membership={item}
                                             canEdit={canEdit}
                                             canEnd={canEnd}
-                                            endDisabled={endingMembership !== null}
+                                            canChangeClass={canChangeClass}
+                                            canTransferSchool={canTransferSchool}
+                                            actionsDisabled={actionsDisabled}
                                             onEnd={openEnd}
+                                            onChangeClass={openChangeClass}
+                                            onTransferSchool={openTransferSchool}
                                         />
                                     </td>
                                 </tr>
