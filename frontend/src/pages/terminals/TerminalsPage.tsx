@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { CreateTerminalForm } from '@/components/terminals/CreateTerminalForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useApiQuery } from '@/hooks/useApiQuery';
-
+import { Plus } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
 import type { TerminalsPageResponse } from '@/types/terminal';
 import { CheckTerminalButton } from '@/components/terminals/CheckTerminalButton';
 import { StartTerminalSyncForm } from '@/components/terminals/StartTerminalSyncForm';
@@ -94,7 +95,7 @@ function TerminalsResults({
                 {data.data.map((terminal) => (
                     <article
                         key={terminal.id}
-                        className="min-w-0 space-y-4 rounded-2xl border bg-card p-5 text-card-foreground"
+                        className="min-w-0 space-y-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
                     >
                         <div className="flex items-start justify-between gap-3">
                             <h2 className="min-w-0 break-words font-semibold">
@@ -265,29 +266,26 @@ export function TerminalsPage() {
     const canCreate = session?.profile.role === 'SUPER_ADMIN';
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Terminallar
-                    </h1>
-
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Maktablardagi kirish va chiqish Face-ID terminallari.
-                    </p>
-                </div>
-
-                {canCreate && !showCreate && (
-                    <Button
-                        onClick={() => {
-                            setSuccess('');
-                            setShowCreate(true);
-                        }}
-                    >
-                        Terminal qo‘shish
-                    </Button>
-                )}
-            </div>
+        <div className="w-full min-w-0 space-y-6">
+            <PageHeader
+                eyebrow="Boshqaruv"
+                title="Terminallar"
+                description="Maktablardagi kirish va chiqish Face-ID terminallarini boshqarish."
+                actions={
+                    canCreate && !showCreate ? (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setSuccess('');
+                                setShowCreate(true);
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            Terminal qo‘shish
+                        </Button>
+                    ) : undefined
+                }
+            />
 
             {success && (
                 <p

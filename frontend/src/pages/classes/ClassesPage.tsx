@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPost } from '@/lib/auth-session';
 import type { School } from '@/types/school';
+import { PageHeader } from '@/components/common/PageHeader';
 
 interface SchoolClass {
     id: number;
@@ -98,7 +99,7 @@ function ClassesList({
             {canCreate && (
                 <form
                     onSubmit={handleCreate}
-                    className="space-y-3 rounded-xl border p-4"
+                    className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
                 >
                     <label className="block text-sm font-medium">
                         Yangi sinf nomi
@@ -202,15 +203,14 @@ export function ClassesPage() {
         to === from + 1;
 
     return (
-        <div className="mx-auto max-w-5xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold">Sinflar</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Maktab va o‘quv yili bo‘yicha sinflar.
-                </p>
-            </div>
+        <div className="w-full min-w-0 space-y-6">
+            <PageHeader
+                eyebrow="Boshqaruv"
+                title="Sinflar"
+                description="Maktab va o‘quv yili bo‘yicha sinflarni boshqarish."
+            />
 
-            <div className="grid gap-4 rounded-xl border p-4 md:grid-cols-2">
+            <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-2">
                 <label className="block text-sm font-medium">
                     Maktab
                     <select
@@ -221,7 +221,7 @@ export function ClassesPage() {
                             Boolean(schoolsQuery.error) ||
                             !schools.length
                         }
-                        className="mt-2 h-10 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
+                        className="mt-2 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm disabled:opacity-50"
                     >
                         <option value="">
                             {schoolsQuery.loading

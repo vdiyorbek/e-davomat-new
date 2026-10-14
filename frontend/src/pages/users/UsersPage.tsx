@@ -19,6 +19,7 @@ import { EditUserForm } from '@/components/users/EditUserForm';
 import type { EditableUser } from '@/components/users/EditUserForm';
 import { authorizedGet } from '@/lib/auth-session';
 import { UserStatusAction } from '@/components/users/UserStatusAction';
+import { PageHeader } from '@/components/common/PageHeader';
 interface UserItem {
     id: number;
     login: string;
@@ -182,29 +183,28 @@ export function UsersPage() {
     }
     return (
         <div className="w-full min-w-0 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold">
-                        Foydalanuvchilar
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Tizim foydalanuvchilarini boshqarish
-                    </p>
-                </div>
-
-                <Button onClick={() => {
-                    setShowCreate(true);
-                    setNotice('');
-                }}>
-                    <Plus className="mr-2 size-4" />
-                    Foydalanuvchi qo‘shish
-                </Button>
-                <UsersFilters
-                    value={filters}
-                    onChange={updateFilters}
-                    onReset={resetFilters}
-                />
-            </div>
+            <PageHeader
+                eyebrow="Boshqaruv"
+                title="Foydalanuvchilar"
+                description="Tizim foydalanuvchilarini boshqarish."
+                actions={
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            setShowCreate(true);
+                            setNotice('');
+                        }}
+                    >
+                        <Plus className="size-4" />
+                        Foydalanuvchi qo‘shish
+                    </Button>
+                }
+            />
+            <UsersFilters
+                value={filters}
+                onChange={updateFilters}
+                onReset={resetFilters}
+            />
 
             {notice && (
                 <p role="status" className="text-sm text-green-600">
