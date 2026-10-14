@@ -1,10 +1,6 @@
-import { useId } from 'react';
-import type { FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import {
     ChevronLeft,
@@ -14,13 +10,14 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useApiQuery } from '@/hooks/useApiQuery';
-
-import type { School } from '@/types/school';
 import type { DailyAttendancePageResponse } from '@/types/daily-attendance';
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { authorizedGet } from '@/lib/auth-session';
-
+import {
+    AttendanceFilters,
+    type AttendanceFilterValues,
+} from '@/components/attendance/AttendanceFilters';
 
 function todayInTashkent(): string {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -46,155 +43,6 @@ function isValidDate(value: string): boolean {
         parsed.toISOString().slice(0, 10) === value
     );
 }
-
-function AttendanceFilters({
-    date,
-    schoolId,
-    pnfl,
-    onApply,
-}: {
-    date: string;
-    schoolId: string;
-    pnfl: string;
-    onApply: (values: {
-        date: string;
-        schoolId: string;
-        pnfl: string;
-    }) => void;
-}) {
-    const { t } = useTranslation();
-    const id = useId();
-
-    const {
-        data: schools,
-        loading,
-        error,
-        retry,
-    } = useApiQuery<School[]>('/schools');
-
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        const form = new FormData(event.currentTarget);
-
-        onApply({
-            date: String(form.get('date') ?? ''),
-            schoolId: String(form.get('schoolId') ?? ''),
-            pnfl: String(form.get('pnfl') ?? '').trim(),
-        });
-    }
-
-    const selectedExists =
-        !schoolId ||
-        schools?.some((school) => String(school.id) === schoolId);
-
-    return (
-        <form
-            onSubmit={handleSubmit}
-            className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm shadow-primary/[0.04] sm:p-5"
-        >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div className="space-y-2">
-                    <label
-                        htmlFor={`${id}-date`}
-                        className="text-sm font-semibold"
-                    >
-                        {t('attendance.date')}
-                    </label>
-
-                    <Input
-                        id={`${id}-date`}
-                        name="date"
-                        type="date"
-                        required
-                        min="2000-01-01"
-                        max={todayInTashkent()}
-                        defaultValue={date}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor={`${id}-school`}
-                        className="text-sm font-semibold"
-                    >
-                        {t('attendance.school')}
-                    </label>
-
-                    <select
-                        id={`${id}-school`}
-                        name="schoolId"
-                        defaultValue={schoolId}
-                        className="h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                    >
-                        <option value="">
-                            {t('attendance.allSchools')}
-                        </option>
-
-                        {!selectedExists && (
-                            <option value={schoolId}>
-                                {t('attendance.selectedSchool', { id: schoolId })}
-                            </option>
-                        )}
-
-                        {schools?.map((school) => (
-                            <option key={school.id} value={school.id}>
-                                {school.district.name} / {school.name}
-                            </option>
-                        ))}
-                    </select>
-
-                    {loading && (
-                        <p className="text-xs text-muted-foreground">
-                            {t('attendance.schoolsLoading')}
-                        </p>
-                    )}
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor={`${id}-pnfl`}
-                        className="text-sm font-semibold"
-                    >
-                        {t('attendance.pnfl')}
-                    </label>
-
-                    <Input
-                        id={`${id}-pnfl`}
-                        name="pnfl"
-                        defaultValue={pnfl}
-                        inputMode="numeric"
-                        pattern="[0-9]{14}"
-                        maxLength={14}
-                        placeholder={t('attendance.pnflPlaceholder')}
-                        title={t('attendance.pnflTitle')}
-                    />
-                </div>
-            </div>
-
-            {error && (
-                <div className="flex flex-wrap items-center gap-3">
-                    <p role="alert" className="text-sm text-destructive">
-                        {error}
-                    </p>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={retry}
-                    >
-                        {t('attendance.retrySchools')}
-                    </Button>
-                </div>
-            )}
-
-            <Button type="submit" className="w-full sm:w-auto">
-                {t('attendance.show')}
-            </Button>
-        </form>
-    );
-}
-
 
 function AttendanceResults({
     path,
@@ -374,30 +222,62 @@ export function AttendancePage() {
     const [exporting, setExporting] = useState(false);
     const [exportError, setExportError] = useState('');
     const date = searchParams.get('date') ?? todayInTashkent();
+
+    const regionId = searchParams.get('regionId') ?? '';
+    const districtId = searchParams.get('districtId') ?? '';
     const schoolId = searchParams.get('schoolId') ?? '';
+    const classId = searchParams.get('classId') ?? '';
+
+    const attendanceStatus =
+        searchParams.get('attendanceStatus') ?? '';
+
+    const search = searchParams.get('search')?.trim() ?? '';
     const pnfl = searchParams.get('pnfl') ?? '';
+
     const pageText = searchParams.get('page') ?? '1';
     const limitText = searchParams.get('limit') ?? '20';
 
     const validLimit = ['20', '50', '100'].includes(limitText);
 
-    const validSchool =
-        !schoolId ||
-        (
-            /^[1-9]\d*$/.test(schoolId) &&
-            Number.isSafeInteger(Number(schoolId)) &&
-            Number(schoolId) <= 4294967295
-        );
-
     const validPage =
         /^[1-9]\d*$/.test(pageText) &&
         Number(pageText) <= 100000;
 
+    function validId(value: string): boolean {
+        return (
+            value === '' ||
+            (
+                /^[1-9]\d*$/.test(value) &&
+                Number.isSafeInteger(Number(value)) &&
+                Number(value) <= 4294967295
+            )
+        );
+    }
+
+    const validStatus =
+        attendanceStatus === '' ||
+        [
+            'inside',
+            'left',
+            'excused',
+            'absent',
+            'anomaly',
+        ].includes(attendanceStatus);
+
+    const validSearch =
+        search === '' ||
+        (search.length >= 2 && search.length <= 100);
+
     if (
         !isValidDate(date) ||
-        !validSchool ||
+        !validId(regionId) ||
+        !validId(districtId) ||
+        !validId(schoolId) ||
+        !validId(classId) ||
         !validPage ||
         !validLimit ||
+        !validStatus ||
+        !validSearch ||
         (pnfl !== '' && !/^\d{14}$/.test(pnfl))
     ) {
         return (
@@ -413,16 +293,32 @@ export function AttendancePage() {
         );
     }
 
+
+    const filters: AttendanceFilterValues = {
+        date,
+        regionId,
+        districtId,
+        schoolId,
+        classId,
+        attendanceStatus,
+        search,
+        pnfl,
+    };
+
     const query = new URLSearchParams({
         date,
         page: pageText,
         limit: limitText,
     });
 
-    if (schoolId) query.set('schoolId', schoolId);
-    if (pnfl) query.set('pnfl', pnfl);
+    for (const [name, value] of Object.entries(filters)) {
+        if (name !== 'date' && value !== '') {
+            query.set(name, value);
+        }
+    }
 
     const path = `/daily-attendance?${query.toString()}`;
+
 
     async function exportExcel() {
         if (exporting) return;
@@ -516,28 +412,36 @@ export function AttendancePage() {
                 </p>
             )}
 
+
             <AttendanceFilters
-                key={`${date}|${schoolId}|${pnfl}`}
-                date={date}
-                schoolId={schoolId}
-                pnfl={pnfl}
+                key={[
+                    date,
+                    regionId,
+                    districtId,
+                    schoolId,
+                    classId,
+                    attendanceStatus,
+                    search,
+                    pnfl,
+                ].join('|')}
+                values={filters}
                 onApply={(values) => {
                     const next = new URLSearchParams({
                         date: values.date,
                         page: '1',
+                        limit: limitText,
                     });
 
-                    if (values.schoolId) {
-                        next.set('schoolId', values.schoolId);
-                    }
-
-                    if (values.pnfl) {
-                        next.set('pnfl', values.pnfl);
+                    for (const [name, value] of Object.entries(values)) {
+                        if (name !== 'date' && value !== '') {
+                            next.set(name, value);
+                        }
                     }
 
                     setSearchParams(next);
                 }}
             />
+
 
             <AttendanceResults
                 key={path}
