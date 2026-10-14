@@ -1,5 +1,4 @@
 import { Transform, Type } from 'class-transformer';
-
 import {
   IsDateString,
   IsEnum,
@@ -42,28 +41,24 @@ export class GetDailyAttendanceQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(4294967295)
   regionId?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(4294967295)
   districtId?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(4294967295)
   schoolId?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(4294967295)
   classId?: number;
 
   @IsOptional()
@@ -80,8 +75,6 @@ export class GetDailyAttendanceQueryDto {
   attendanceStatus?: AttendanceStatusFilter;
 
   @IsOptional()
-  @Matches(/^\d{14}$/, {
-    message: 'PNFL 14 ta raqamdan iborat bo‘lishi kerak',
-  })
+  @Matches(/^\d{14}$/)
   pnfl?: string;
 }
