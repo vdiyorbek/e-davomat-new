@@ -389,6 +389,7 @@ export function AttendancePage() {
 
     return (
         <div className="space-y-6">
+
             <PageHeader
                 eyebrow={t('nav.groupManage')}
                 title={t('attendance.title')}
