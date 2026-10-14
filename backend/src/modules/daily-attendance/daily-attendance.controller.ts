@@ -10,8 +10,10 @@ import {
   Req,
   StreamableFile,
   UnauthorizedException,
+  Res,
 } from '@nestjs/common';
-
+import type { Response } from 'express';
+import { DailyAttendanceExportService } from './daily-attendance-export.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -28,12 +30,33 @@ export class DailyAttendanceController {
   constructor(
     private readonly dailyAttendanceService: DailyAttendanceService,
     private readonly dailyAttendanceReadService: DailyAttendanceReadService,
+    private readonly exportService: DailyAttendanceExportService,
   ) {}
 
   @Post('rebuild')
   @HttpCode(200)
   rebuild(@Body() dto: RebuildDailyAttendanceDto) {
     return this.dailyAttendanceService.rebuild(dto);
+  }
+
+  @Get('export')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  async exportExcel(
+    @Query() query: GetDailyAttendanceQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ): Promise<void> {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    await this.exportService.exportExcel(query, request.authUser, response);
   }
 
   @Get()

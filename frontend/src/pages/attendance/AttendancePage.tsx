@@ -17,6 +17,10 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 
 import type { School } from '@/types/school';
 import type { DailyAttendancePageResponse } from '@/types/daily-attendance';
+import { useState } from 'react';
+import { Download } from 'lucide-react';
+import { authorizedGet } from '@/lib/auth-session';
+
 
 function todayInTashkent(): string {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -367,7 +371,8 @@ function AttendanceResults({
 export function AttendancePage() {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
-
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState('');
     const date = searchParams.get('date') ?? todayInTashkent();
     const schoolId = searchParams.get('schoolId') ?? '';
     const pnfl = searchParams.get('pnfl') ?? '';
@@ -419,6 +424,51 @@ export function AttendancePage() {
 
     const path = `/daily-attendance?${query.toString()}`;
 
+    async function exportExcel() {
+        if (exporting) return;
+
+        setExporting(true);
+        setExportError('');
+
+        try {
+            // Jadvalga qo‘llangan faol filtrlar.
+            const exportQuery = new URLSearchParams(query);
+
+            // Pagination eksportga ta’sir qilmaydi.
+            exportQuery.delete('page');
+            exportQuery.delete('limit');
+
+            const blob = await authorizedGet<Blob>(
+                `/daily-attendance/export?${exportQuery}`,
+                undefined,
+                'blob',
+                120_000,
+            );
+
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `davomat-${date}.xlsx`;
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 30_000);
+        } catch (error: unknown) {
+            setExportError(
+                error instanceof Error
+                    ? error.message
+                    : 'Excel eksportda xatolik yuz berdi.',
+            );
+        } finally {
+            setExporting(false);
+        }
+    }
+
     function changePage(page: number) {
         const next = new URLSearchParams(searchParams);
 
@@ -446,7 +496,25 @@ export function AttendancePage() {
                 eyebrow={t('nav.groupManage')}
                 title={t('attendance.title')}
                 description={t('attendance.subtitle')}
+                actions={
+                    <Button
+                        type="button"
+                        disabled={exporting}
+                        onClick={() => void exportExcel()}
+                    >
+                        <Download className="size-4" />
+                        {exporting
+                            ? 'Excel tayyorlanmoqda...'
+                            : 'Excel yuklab olish'}
+                    </Button>
+                }
             />
+
+            {exportError && (
+                <p role="alert" className="text-sm text-destructive">
+                    {exportError}
+                </p>
+            )}
 
             <AttendanceFilters
                 key={`${date}|${schoolId}|${pnfl}`}

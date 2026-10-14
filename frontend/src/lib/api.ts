@@ -125,12 +125,14 @@ export function apiGet<T>(
   token: string,
   signal?: AbortSignal,
   responseType: "json" | "blob" = "json",
+  timeoutMs?: number,
 ): Promise<T> {
   return request<T>({
     method: "GET",
     url: path,
     signal,
     responseType,
+    timeout: timeoutMs,
     headers: {
       Authorization: `Bearer ${token}`,
     },

@@ -218,6 +218,7 @@ export async function authorizedGet<T>(
   path: string,
   signal?: AbortSignal,
   responseType: "json" | "blob" = "json",
+  timeoutMs?: number,
 ): Promise<T> {
   signal?.throwIfAborted();
 
@@ -247,7 +248,13 @@ export async function authorizedGet<T>(
   let data: T;
 
   try {
-    data = await apiGet<T>(path, current.token, signal, responseType);
+    data = await apiGet<T>(
+      path,
+      current.token,
+      signal,
+      responseType,
+      timeoutMs,
+    );
   } catch (error: unknown) {
     checkRequest();
 
@@ -261,7 +268,7 @@ export async function authorizedGet<T>(
     checkRequest();
 
     try {
-      data = await apiGet<T>(path, current.token, signal, responseType);
+      data = await apiGet<T>(path, current.token, signal, responseType, timeoutMs);
     } catch (retryError: unknown) {
       if (
         retryError instanceof ApiError &&
