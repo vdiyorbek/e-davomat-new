@@ -5,7 +5,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AttendanceCard } from '@/components/attendance/AttendanceCard';
+import { AttendanceTable } from '@/components/attendance/AttendanceTable';
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+} from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useApiQuery } from '@/hooks/useApiQuery';
 
@@ -185,14 +191,18 @@ function AttendanceFilters({
     );
 }
 
+
 function AttendanceResults({
     path,
     onPageChange,
+    onLimitChange,
 }: {
     path: string;
     onPageChange: (page: number) => void;
+    onLimitChange: (limit: number) => void;
 }) {
     const { t } = useTranslation();
+
     const { data, loading, error, retry } =
         useApiQuery<DailyAttendancePageResponse>(path);
 
@@ -206,7 +216,7 @@ function AttendanceResults({
 
     if (error || !data) {
         return (
-            <div className="space-y-3">
+            <div className="space-y-3 rounded-2xl border bg-card p-5">
                 <p role="alert" className="text-sm text-destructive">
                     {error || t('attendance.loadFailed')}
                 </p>
@@ -218,69 +228,141 @@ function AttendanceResults({
         );
     }
 
-    if (data.data.length === 0) {
-        return (
-            <div className="space-y-3 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                    {t('attendance.empty')}
-                </p>
+    const totalPages = Math.max(1, data.totalPages);
+    const currentPage = data.page;
 
-                {data.page > 1 && (
-                    <Button
-                        variant="outline"
-                        onClick={() => onPageChange(1)}
-                    >
-                        {t('attendance.firstPage')}
-                    </Button>
-                )}
-            </div>
-        );
-    }
+    const firstRow = data.data.length
+        ? (currentPage - 1) * data.limit + 1
+        : 0;
+
+    const lastRow = data.data.length
+        ? firstRow + data.data.length - 1
+        : 0;
+
+    const canPrevious = currentPage > 1;
+    const canNext = currentPage < totalPages;
 
     return (
-        <div className="space-y-4">
+        <section className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
-                    {t('attendance.total', { count: data.total })}
-                </p>
+                <div>
+                    <h2 className="text-lg font-bold">
+                        O‘quvchilar davomati
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                        Jami {data.total} ta yozuv
+                    </p>
+                </div>
 
-                <Button variant="outline" onClick={retry}>
+                <Button type="button" variant="outline" onClick={retry}>
                     {t('attendance.refresh')}
                 </Button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                {data.data.map((item) => (
-                    <AttendanceCard key={item.id} item={item} />
-                ))}
-            </div>
+            {data.data.length > 0 ? (
+                <AttendanceTable
+                    items={data.data}
+                    startIndex={firstRow}
+                />
+            ) : (
+                <div className="rounded-2xl border border-dashed bg-card p-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        {t('attendance.empty')}
+                    </p>
+                </div>
+            )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
-                    {t('attendance.pageOf', { page: data.page, total: data.totalPages })}
-                </p>
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        {firstRow}–{lastRow} / {data.total}
+                    </p>
 
-                <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                        <label
+                            htmlFor="attendance-page-limit"
+                            className="text-sm text-muted-foreground"
+                        >
+                            Sahifada:
+                        </label>
+
+                        <select
+                            id="attendance-page-limit"
+                            value={String(data.limit)}
+                            onChange={(event) =>
+                                onLimitChange(Number(event.target.value))
+                            }
+                            className="h-9 rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
                     <Button
+                        type="button"
                         variant="outline"
-                        disabled={data.page <= 1}
-                        onClick={() => onPageChange(data.page - 1)}
+                        size="sm"
+                        disabled={!canPrevious}
+                        aria-label="Birinchi sahifa"
+                        title="Birinchi sahifa"
+                        onClick={() => onPageChange(1)}
                     >
-                        {t('attendance.prev')}
+                        <ChevronsLeft className="size-4" />
                     </Button>
 
                     <Button
+                        type="button"
                         variant="outline"
-                        disabled={data.page >= data.totalPages}
-                        onClick={() => onPageChange(data.page + 1)}
+                        size="sm"
+                        disabled={!canPrevious}
+                        aria-label="Oldingi sahifa"
+                        title="Oldingi sahifa"
+                        onClick={() =>
+                            onPageChange(currentPage - 1)
+                        }
                     >
-                        {t('attendance.next')}
+                        <ChevronLeft className="size-4" />
+                    </Button>
+
+                    <span className="min-w-20 text-center text-sm font-medium tabular-nums">
+                        {currentPage} / {totalPages}
+                    </span>
+
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!canNext}
+                        aria-label="Keyingi sahifa"
+                        title="Keyingi sahifa"
+                        onClick={() =>
+                            onPageChange(currentPage + 1)
+                        }
+                    >
+                        <ChevronRight className="size-4" />
+                    </Button>
+
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!canNext}
+                        aria-label="Oxirgi sahifa"
+                        title="Oxirgi sahifa"
+                        onClick={() => onPageChange(totalPages)}
+                    >
+                        <ChevronsRight className="size-4" />
                     </Button>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
+
 
 export function AttendancePage() {
     const { t } = useTranslation();
@@ -290,6 +372,9 @@ export function AttendancePage() {
     const schoolId = searchParams.get('schoolId') ?? '';
     const pnfl = searchParams.get('pnfl') ?? '';
     const pageText = searchParams.get('page') ?? '1';
+    const limitText = searchParams.get('limit') ?? '20';
+
+    const validLimit = ['20', '50', '100'].includes(limitText);
 
     const validSchool =
         !schoolId ||
@@ -307,6 +392,7 @@ export function AttendancePage() {
         !isValidDate(date) ||
         !validSchool ||
         !validPage ||
+        !validLimit ||
         (pnfl !== '' && !/^\d{14}$/.test(pnfl))
     ) {
         return (
@@ -325,7 +411,7 @@ export function AttendancePage() {
     const query = new URLSearchParams({
         date,
         page: pageText,
-        limit: '12',
+        limit: limitText,
     });
 
     if (schoolId) query.set('schoolId', schoolId);
@@ -341,6 +427,18 @@ export function AttendancePage() {
 
         setSearchParams(next);
     }
+    function changeLimit(limit: number) {
+        if (![20, 50, 100].includes(limit)) return;
+
+        const next = new URLSearchParams(searchParams);
+
+        next.set('date', date);
+        next.set('limit', String(limit));
+        next.set('page', '1');
+
+        setSearchParams(next);
+    }
+
 
     return (
         <div className="space-y-6">
@@ -377,6 +475,7 @@ export function AttendancePage() {
                 key={path}
                 path={path}
                 onPageChange={changePage}
+                onLimitChange={changeLimit}
             />
         </div>
     );
