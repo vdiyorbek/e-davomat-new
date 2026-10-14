@@ -15,6 +15,7 @@ import { AttendanceEvent } from '../modules/attendance-events/attendance-event.e
 import { DailyAttendance } from '../modules/daily-attendance/daily-attendance.entity';
 import { Mahalla } from 'src/modules/mahallas/mahalla.entity';
 import { SchoolClass } from '../modules/classes/school-class.entity';
+import { AttendanceExcuse } from '../modules/attendance-excuses/attendance-excuse.entity';
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -54,6 +55,7 @@ export default new DataSource({
     DailyAttendance,
     Mahalla,
     SchoolClass,
+    AttendanceExcuse,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],
