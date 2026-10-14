@@ -4,10 +4,18 @@ export type AttendancePhotoStatus =
   | "MISSING"
   | "FAILED";
 
+export type AttendanceStatus =
+  | "inside"
+  | "left"
+  | "excused"
+  | "absent"
+  | "anomaly";
+
 export interface DailyAttendance {
   id: string;
   date: string;
   pnfl: string;
+  attendanceStatus: AttendanceStatus;
 
   person: {
     id: number;

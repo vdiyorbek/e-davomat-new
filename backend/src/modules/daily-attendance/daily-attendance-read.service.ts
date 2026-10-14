@@ -4,8 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 
@@ -19,6 +18,10 @@ import { TerminalDirection } from '../terminals/enums/terminal-direction.enum';
 import { DailyAttendance } from './daily-attendance.entity';
 import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
 import { MembershipType } from '../school-memberships/school-membership.entity';
+import {
+  AttendanceExcuse,
+  AttendanceExcuseStatus,
+} from '../attendance-excuses/attendance-excuse.entity';
 
 @Injectable()
 export class DailyAttendanceReadService {
@@ -153,9 +156,53 @@ export class DailyAttendanceReadService {
       persons.map((person) => [person.pnfl, person]),
     );
 
+    const personIds = [...new Set(persons.map((p) => p.id))];
+
+    const schoolIds = [...new Set(rows.map((row) => row.schoolId))];
+
+    // Sahifadagi barcha o‘quvchilar uchun sababli
+    // arizalarni bitta so‘rovda olamiz.
+    const excuses =
+      personIds.length > 0 && schoolIds.length > 0
+        ? await this.dataSource.getRepository(AttendanceExcuse).find({
+            select: {
+              personId: true,
+              schoolId: true,
+            },
+            where: {
+              personId: In(personIds),
+              schoolId: In(schoolIds),
+              status: AttendanceExcuseStatus.ACTIVE,
+              startDate: LessThanOrEqual(query.date),
+              endDate: MoreThanOrEqual(query.date),
+            },
+          })
+        : [];
+
+    // Bir o‘quvchi bir nechta maktabda tarixga ega
+    // bo‘lishi mumkin, shuning uchun ikkala ID kerak.
+    const excusedPairs = new Set(
+      excuses.map((excuse) => `${excuse.schoolId}:${excuse.personId}`),
+    );
+
     return {
       data: rows.map((row) => {
         const person = personsByPnfl.get(row.pnfl);
+
+        const hasActiveExcuse =
+          person !== undefined &&
+          excusedPairs.has(`${row.schoolId}:${person.id}`);
+
+        const attendanceStatus =
+          row.firstInTime && row.lastOutTime
+            ? 'left'
+            : row.firstInTime
+              ? 'inside'
+              : row.lastOutTime
+                ? 'anomaly'
+                : hasActiveExcuse
+                  ? 'excused'
+                  : 'absent';
 
         const firstPhotoReady =
           row.firstInEvent?.photoStatus === EventPhotoStatus.DOWNLOADED &&
@@ -169,7 +216,7 @@ export class DailyAttendanceReadService {
           id: row.id,
           date: row.date,
           pnfl: row.pnfl,
-
+          attendanceStatus,
           person: person
             ? {
                 id: person.id,

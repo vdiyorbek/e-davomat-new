@@ -105,13 +105,21 @@ export function AttendanceCard({ item }: { item: DailyAttendance }) {
         ? `${item.person.firstName.charAt(0)}${item.person.lastName.charAt(0)}`.toUpperCase()
         : '?';
 
-    const status = item.lastOutTime ? 'left' : item.firstInTime ? 'inside' : 'none';
+    const status = item.attendanceStatus;
     const statusStyle = {
         inside: 'bg-success/15 text-success',
         left: 'bg-warning/20 text-foreground',
-        none: 'bg-muted text-muted-foreground',
+        excused: 'bg-primary/10 text-primary',
+        absent: 'bg-destructive/10 text-destructive',
+        anomaly: 'bg-muted text-muted-foreground',
     }[status];
-    const stripe = { inside: 'bg-success', left: 'bg-warning', none: 'bg-border' }[status];
+    const stripe = {
+        inside: 'bg-success',
+        left: 'bg-warning',
+        excused: 'bg-primary',
+        absent: 'bg-destructive',
+        anomaly: 'bg-border',
+    }[status];
 
     const moments = [
         { key: 'in', label: t('attendance.firstIn'), icon: LogIn, time: item.firstInTime, url: item.firstInUrl, status: item.firstInPhotoStatus },

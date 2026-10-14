@@ -10,6 +10,14 @@
     "signOutFailed": "Could not sign out. Please try again.",
     "today": "Today"
   },
+  "status": {
+    "inside": "In school",
+    "left": "Left",
+    "none": "No record",
+    "excused": "Excused absence",
+    "absent": "Unexcused absence",
+    "anomaly": "Needs review"
+  },
   "brand": {
     "name": "E-davomat",
     "tagline": "Digital attendance system",

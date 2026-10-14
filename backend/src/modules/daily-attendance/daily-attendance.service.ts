@@ -4,7 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { DataSource } from 'typeorm';
+import { DataSource, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import {
+  AttendanceExcuse,
+  AttendanceExcuseStatus,
+} from '../attendance-excuses/attendance-excuse.entity';
 
 import { School } from '../schools/school.entity';
 import { District } from '../districts/district.entity';
@@ -67,6 +71,7 @@ export class DailyAttendanceService {
         .createQueryBuilder('membership')
         .innerJoin('membership.person', 'person')
         .select('person.pnfl', 'pnfl')
+        .addSelect('person.id', 'personId')
         .distinct(true)
         .where('membership.schoolId = :schoolId', {
           schoolId: school.id,
@@ -81,7 +86,7 @@ export class DailyAttendanceService {
           '(membership.endDate IS NULL OR membership.endDate > :date)',
           { date: dto.date },
         )
-        .getRawMany<{ pnfl: string }>();
+        .getRawMany<{ pnfl: string; personId: string }>();
 
       const people = new Map<string, PersonDayEvents>();
 
@@ -176,6 +181,40 @@ export class DailyAttendanceService {
         }
       }
 
+      const activeExcuses = await manager.getRepository(AttendanceExcuse).find({
+        select: {
+          personId: true,
+        },
+        where: {
+          schoolId: school.id,
+          status: AttendanceExcuseStatus.ACTIVE,
+          startDate: LessThanOrEqual(dto.date),
+          endDate: MoreThanOrEqual(dto.date),
+        },
+      });
+
+      const excusedPersonIds = new Set(
+        activeExcuses.map((excuse) => excuse.personId),
+      );
+
+      let excusedStudents = 0;
+
+      for (const student of activeStudents) {
+        const personDay = people.get(student.pnfl);
+
+        if (
+          personDay &&
+          personDay.firstIn === null &&
+          personDay.lastOut === null &&
+          excusedPersonIds.has(Number(student.personId))
+        ) {
+          excusedStudents++;
+        }
+      }
+
+      const absentStudents =
+        people.size - withFirstIn - onlyOut - excusedStudents;
+
       return {
         success: true,
         schoolId: school.id,
@@ -192,7 +231,8 @@ export class DailyAttendanceService {
           withFirstIn -
           [...people.values()].filter((day) => day.firstIn && !day.lastOut)
             .length,
-        absentStudents: people.size - withFirstIn - onlyOut,
+        excusedStudents,
+        absentStudents,
 
         withFirstIn,
         withLastOut,

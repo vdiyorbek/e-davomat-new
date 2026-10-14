@@ -10,6 +10,14 @@
     "signOutFailed": "Chiqish amalga oshmadi. Qayta urinib ko‘ring.",
     "today": "Bugun"
   },
+  "status": {
+    "inside": "Maktabda",
+    "left": "Ketgan",
+    "none": "Qayd yo‘q",
+    "excused": "Sababli",
+    "absent": "Sababsiz kelmagan",
+    "anomaly": "Tekshirish kerak"
+  },
   "brand": {
     "name": "E-davomat",
     "tagline": "Raqamli nazorat tizimi",
