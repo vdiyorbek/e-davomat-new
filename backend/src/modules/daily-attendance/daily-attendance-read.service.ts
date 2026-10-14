@@ -18,6 +18,7 @@ import { TerminalDirection } from '../terminals/enums/terminal-direction.enum';
 
 import { DailyAttendance } from './daily-attendance.entity';
 import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
+import { MembershipType } from '../school-memberships/school-membership.entity';
 
 @Injectable()
 export class DailyAttendanceReadService {
@@ -80,6 +81,26 @@ export class DailyAttendanceReadService {
     const builder = this.scopedQuery(user).andWhere('daily.date = :date', {
       date: query.date,
     });
+
+    builder.andWhere(
+      `EXISTS (
+    SELECT 1
+    FROM school_memberships AS sm
+    INNER JOIN persons AS p
+      ON p.id = sm.personId
+    WHERE sm.schoolId = daily.schoolId
+      AND sm.type = :studentType
+      AND p.pnfl = daily.pnfl
+      AND sm.startDate <= daily.date
+      AND (
+        sm.endDate IS NULL
+        OR sm.endDate > daily.date
+      )
+  )`,
+      {
+        studentType: MembershipType.STUDENT,
+      },
+    );
 
     if (query.schoolId !== undefined) {
       builder.andWhere('daily.schoolId = :filterSchoolId', {

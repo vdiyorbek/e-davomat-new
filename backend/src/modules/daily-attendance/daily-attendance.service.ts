@@ -13,6 +13,10 @@ import { TerminalDirection } from '../terminals/enums/terminal-direction.enum';
 
 import { DailyAttendance } from './daily-attendance.entity';
 import { RebuildDailyAttendanceDto } from './dto/rebuild-daily-attendance.dto';
+import {
+  MembershipType,
+  SchoolMembership,
+} from '../school-memberships/school-membership.entity';
 
 interface PersonDayEvents {
   firstIn: AttendanceEvent | null;
@@ -58,6 +62,36 @@ export class DailyAttendanceService {
         throw new NotFoundException('Maktabning tumani topilmadi');
       }
 
+      const activeStudents = await manager
+        .getRepository(SchoolMembership)
+        .createQueryBuilder('membership')
+        .innerJoin('membership.person', 'person')
+        .select('person.pnfl', 'pnfl')
+        .distinct(true)
+        .where('membership.schoolId = :schoolId', {
+          schoolId: school.id,
+        })
+        .andWhere('membership.type = :type', {
+          type: MembershipType.STUDENT,
+        })
+        .andWhere('membership.startDate <= :date', {
+          date: dto.date,
+        })
+        .andWhere(
+          '(membership.endDate IS NULL OR membership.endDate > :date)',
+          { date: dto.date },
+        )
+        .getRawMany<{ pnfl: string }>();
+
+      const people = new Map<string, PersonDayEvents>();
+
+      for (const student of activeStudents) {
+        people.set(student.pnfl, {
+          firstIn: null,
+          lastOut: null,
+        });
+      }
+
       const events = await manager
         .getRepository(AttendanceEvent)
         .createQueryBuilder('event')
@@ -74,31 +108,24 @@ export class DailyAttendanceService {
         .orderBy('event.eventAt', 'ASC')
         .addOrderBy('event.id', 'ASC')
         .getMany();
-
-      const people = new Map<string, PersonDayEvents>();
+      let ignoredEvents = 0;
 
       for (const event of events) {
-        let personDay = people.get(event.pnfl);
+        const personDay = people.get(event.pnfl);
 
         if (!personDay) {
-          personDay = {
-            firstIn: null,
-            lastOut: null,
-          };
-
-          people.set(event.pnfl, personDay);
+          ignoredEvents++;
+          continue;
         }
 
         if (
           event.direction === TerminalDirection.IN &&
           personDay.firstIn === null
         ) {
-          // Eventlar vaqt bo‘yicha o‘sish tartibida.
           personDay.firstIn = event;
         }
 
         if (event.direction === TerminalDirection.OUT) {
-          // Har yangi OUT oldingisidan kechroq yoki teng vaqtda.
           personDay.lastOut = event;
         }
       }
@@ -153,8 +180,20 @@ export class DailyAttendanceService {
         success: true,
         schoolId: school.id,
         date: dto.date,
+
         sourceEvents: events.length,
+        ignoredEvents,
+
         calculatedPersons: people.size,
+        totalStudents: people.size,
+
+        arrivedStudents: withFirstIn,
+        leftStudents:
+          withFirstIn -
+          [...people.values()].filter((day) => day.firstIn && !day.lastOut)
+            .length,
+        absentStudents: people.size - withFirstIn - onlyOut,
+
         withFirstIn,
         withLastOut,
         onlyOut,
