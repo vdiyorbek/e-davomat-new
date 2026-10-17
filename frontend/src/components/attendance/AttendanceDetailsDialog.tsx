@@ -9,9 +9,11 @@ import type { DailyAttendance } from '@/types/daily-attendance';
 
 interface Props {
     item: DailyAttendance;
+    mode?: 'students' | 'teachers';
 }
 
-export function AttendanceDetailsDialog({ item }: Props) {
+export function AttendanceDetailsDialog({ item,
+    mode = 'students', }: Props) {
     return (
         <Dialog.Root>
             <Dialog.Trigger asChild>
@@ -46,7 +48,9 @@ export function AttendanceDetailsDialog({ item }: Props) {
                     <div className="mb-5 flex items-start justify-between gap-4">
                         <div className="space-y-1">
                             <Dialog.Title className="text-xl font-bold">
-                                O‘quvchi davomati
+                                {mode === 'teachers'
+                                    ? 'O‘qituvchi davomati'
+                                    : 'O‘quvchi davomati'}
                             </Dialog.Title>
 
                             <Dialog.Description className="text-sm text-muted-foreground">

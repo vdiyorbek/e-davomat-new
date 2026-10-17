@@ -23,6 +23,7 @@ export interface AttendanceFilterValues {
 interface Props {
     values: AttendanceFilterValues;
     onApply: (values: AttendanceFilterValues) => void;
+    mode?: 'students' | 'teachers';
 }
 
 interface SchoolClassOption {
@@ -137,7 +138,11 @@ function ClassFilter({
     );
 }
 
-export function AttendanceFilters({ values, onApply }: Props) {
+export function AttendanceFilters({
+    values,
+    onApply,
+    mode = 'students',
+}: Props) {
     const { t } = useTranslation();
     const id = useId();
 
@@ -223,6 +228,7 @@ export function AttendanceFilters({ values, onApply }: Props) {
 
         onApply({
             ...draft,
+            classId: mode === 'teachers' ? '' : draft.classId,
             search: draft.search.trim(),
             pnfl: draft.pnfl.trim(),
         });
@@ -385,24 +391,32 @@ export function AttendanceFilters({ values, onApply }: Props) {
                     </select>
                 </div>
 
-                {draft.schoolId ? (
-                    <ClassFilter
-                        key={`${draft.schoolId}-${academicYearFor(draft.date)}`}
-                        id={`${id}-class`}
-                        schoolId={draft.schoolId}
-                        date={draft.date}
-                        value={draft.classId}
-                        onChange={(value) => update('classId', value)}
-                    />
-                ) : (
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold">
-                            Sinf
-                        </label>
-                        <select disabled className={selectClassName} value="">
-                            <option value="">Avval maktabni tanlang</option>
-                        </select>
-                    </div>
+                {mode !== 'teachers' && (
+                    draft.schoolId ? (
+                        <ClassFilter
+                            key={`${draft.schoolId}-${academicYearFor(draft.date)}`}
+                            id={`${id}-class`}
+                            schoolId={draft.schoolId}
+                            date={draft.date}
+                            value={draft.classId}
+                            onChange={(value) => update('classId', value)}
+                        />
+                    ) : (
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">
+                                Sinf
+                            </label>
+                            <select
+                                disabled
+                                className={selectClassName}
+                                value=""
+                            >
+                                <option value="">
+                                    Avval maktabni tanlang
+                                </option>
+                            </select>
+                        </div>
+                    )
                 )}
 
                 <div className="space-y-2">
@@ -420,7 +434,9 @@ export function AttendanceFilters({ values, onApply }: Props) {
                     >
                         <option value="">Barcha holatlar</option>
                         {(
-                            ['inside', 'left', 'excused', 'absent', 'anomaly'] as const
+                            mode === 'teachers'
+                                ? (['inside', 'left', 'absent'] as const)
+                                : (['inside', 'left', 'excused', 'absent', 'anomaly'] as const)
                         ).map((status) => (
                             <option key={status} value={status}>
                                 {t(`attendance.status.${status}`)}

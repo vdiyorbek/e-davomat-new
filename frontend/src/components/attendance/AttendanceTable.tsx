@@ -14,6 +14,7 @@ interface Props {
     items: DailyAttendance[];
     startIndex: number;
     onExcuseSaved: () => void;
+    mode?: 'students' | 'teachers';
 }
 
 const STATUS_STYLE: Record<AttendanceStatus, string> = {
@@ -48,6 +49,7 @@ export function AttendanceTable({
     items,
     startIndex,
     onExcuseSaved,
+    mode = 'students',
 }: Props) {
     const { t, i18n } = useTranslation();
     const { session } = useAuth();
@@ -79,11 +81,15 @@ export function AttendanceTable({
                             <th scope="col" className="px-4 py-4">№</th>
                             <th scope="col" className="px-4 py-4">F.I.Sh.</th>
                             <th scope="col" className="px-4 py-4">Maktab</th>
-                            <th scope="col" className="px-4 py-4">Sinf</th>
+                            {mode === 'students' && (
+                                <th scope="col" className="px-4 py-4">Sinf</th>
+                            )}
                             <th scope="col" className="px-4 py-4">Kirish</th>
                             <th scope="col" className="px-4 py-4">Chiqish</th>
                             <th scope="col" className="px-4 py-4">Holat</th>
-                            <th scope="col" className="px-4 py-4">Sabab</th>
+                            {mode === 'students' && (
+                                <th scope="col" className="px-4 py-4">Sabab</th>
+                            )}
                             <th scope="col" className="px-4 py-4 text-right">
                                 Amallar
                             </th>
@@ -110,7 +116,7 @@ export function AttendanceTable({
                                 },
                             );
                             const profile = session?.profile;
-                            const canCreateExcuse =
+                            const canCreateExcuse = mode === 'students' &&
                                 Boolean(item.person) &&
                                 item.attendanceStatus === 'absent' &&
                                 !item.firstInTime &&
@@ -156,9 +162,11 @@ export function AttendanceTable({
                                         </div>
                                     </td>
 
-                                    <td className="px-4 py-4">
-                                        {item.className ?? '—'}
-                                    </td>
+                                    {mode === 'students' && (
+                                        <td className="px-4 py-4">
+                                            {item.className ?? '—'}
+                                        </td>
+                                    )}
 
                                     <td className="px-4 py-4 font-medium tabular-nums">
                                         {formatTime(item.firstInTime)}

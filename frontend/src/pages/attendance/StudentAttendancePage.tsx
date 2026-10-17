@@ -336,7 +336,7 @@ export function StudentAttendancePage() {
             exportQuery.delete('limit');
 
             const blob = await authorizedGet<Blob>(
-                `/daily-attendance/students/export?${exportQuery}`,
+                `/daily-attendance/teachers/export?${exportQuery}`,
                 undefined,
                 'blob',
                 120_000,
