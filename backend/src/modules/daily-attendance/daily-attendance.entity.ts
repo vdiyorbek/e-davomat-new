@@ -13,11 +13,16 @@ import { School } from '../schools/school.entity';
 import { District } from '../districts/district.entity';
 import { Region } from '../regions/region.entity';
 import { AttendanceEvent } from '../attendance-events/attendance-event.entity';
+import { MembershipType } from '../school-memberships/school-membership.entity';
 
 @Entity('daily_attendance')
-@Index('UQ_daily_attendance_school_person_date', ['schoolId', 'pnfl', 'date'], {
-  unique: true,
-})
+@Index(
+  'UQ_daily_attendance_school_person_date_type',
+  ['schoolId', 'pnfl', 'date', 'membershipType'],
+  {
+    unique: true,
+  },
+)
 @Index('IDX_daily_attendance_school_date', ['schoolId', 'date'])
 @Index('IDX_daily_attendance_district_date', ['districtId', 'date'])
 @Index('IDX_daily_attendance_region_date', ['regionId', 'date'])
@@ -38,6 +43,13 @@ export class DailyAttendance {
     length: 14,
   })
   pnfl!: string;
+
+  @Column({
+    type: 'enum',
+    enum: MembershipType,
+    default: MembershipType.STUDENT,
+  })
+  membershipType!: MembershipType;
 
   @Column({
     type: 'int',
