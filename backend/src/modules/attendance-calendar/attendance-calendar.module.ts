@@ -12,6 +12,7 @@ import { AttendanceWeeklySchedule } from './attendance-weekly-schedule.entity';
 import { AttendanceCalendarController } from './attendance-calendar.controller';
 import { AttendanceCalendarService } from './attendance-calendar.service';
 import { AttendanceCalendarWriteService } from './attendance-calendar-write.service';
+import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.service';
 
 @Module({
   imports: [
@@ -25,7 +26,11 @@ import { AttendanceCalendarWriteService } from './attendance-calendar-write.serv
     ]),
   ],
   controllers: [AttendanceCalendarController],
-  providers: [AttendanceCalendarService, AttendanceCalendarWriteService],
-  exports: [AttendanceCalendarService],
+  providers: [
+    AttendanceCalendarService,
+    AttendanceCalendarWriteService,
+    AttendanceWeeklySchedulesService,
+  ],
+  exports: [AttendanceCalendarService, AttendanceWeeklySchedulesService],
 })
 export class AttendanceCalendarModule {}

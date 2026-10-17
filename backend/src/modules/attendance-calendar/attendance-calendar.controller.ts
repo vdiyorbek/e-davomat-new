@@ -16,6 +16,9 @@ import { Body, Post } from '@nestjs/common';
 
 import { AttendanceCalendarWriteService } from './attendance-calendar-write.service';
 import { CreateCalendarRuleDto } from './dto/create-calendar-rule.dto';
+import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.service';
+import { CreateWeeklyScheduleDto } from './dto/create-weekly-schedule.dto';
+import { GetWeeklySchedulesDto } from './dto/get-weekly-schedules.dto';
 
 @Controller('attendance-calendar')
 @Roles(
@@ -28,6 +31,7 @@ export class AttendanceCalendarController {
   constructor(
     private readonly calendarService: AttendanceCalendarService,
     private readonly calendarWriteService: AttendanceCalendarWriteService,
+    private readonly weeklySchedulesService: AttendanceWeeklySchedulesService,
   ) {}
 
   @Get('rules')
@@ -52,5 +56,29 @@ export class AttendanceCalendarController {
     }
 
     return this.calendarWriteService.createRule(dto, request.authUser);
+  }
+
+  @Get('weekly-schedules')
+  findWeeklySchedules(
+    @Query() query: GetWeeklySchedulesDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.weeklySchedulesService.findAll(query, request.authUser);
+  }
+
+  @Post('weekly-schedules')
+  createWeeklySchedule(
+    @Body() dto: CreateWeeklyScheduleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.weeklySchedulesService.create(dto, request.authUser);
   }
 }
