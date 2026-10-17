@@ -17,7 +17,8 @@ import { AttendancePage } from '@/pages/attendance/AttendancePage';
 import { ClassesPage } from '@/pages/classes/ClassesPage';
 import { UsersPage } from '@/pages/users/UsersPage';
 import { AttendanceExcusesPage } from '@/pages/attendance/AttendanceExcusesPage';
-
+import { StudentAttendancePage } from '@/pages/attendance/StudentAttendancePage';
+import { TeacherAttendancePage } from '@/pages/attendance/TeacherAttendancePage';
 export const router = createBrowserRouter([
     {
         element: <AuthLayout />,
@@ -51,6 +52,14 @@ export const router = createBrowserRouter([
                             {
                                 path: '/attendance',
                                 element: <AttendancePage />,
+                            },
+                            {
+                                path: '/attendance/students',
+                                element: <StudentAttendancePage />,
+                            },
+                            {
+                                path: '/attendance/teachers',
+                                element: <TeacherAttendancePage />,
                             },
                             { path: '/classes', element: <ClassesPage /> },
                             { path: '/users', element: <UsersPage /> },

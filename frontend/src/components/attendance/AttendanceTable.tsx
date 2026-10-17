@@ -188,16 +188,21 @@ export function AttendanceTable({
                                         </span>
                                     </td>
 
-                                    <td className="px-4 py-4 text-muted-foreground">
-                                        {item.attendanceStatus === 'excused' &&
-                                            item.excuseReason
-                                            ? reasonLabels[item.excuseReason]
-                                            : '—'}
-                                    </td>
+                                    {mode === 'students' && (
+                                        <td className="px-4 py-4 text-muted-foreground">
+                                            {item.attendanceStatus === 'excused' &&
+                                                item.excuseReason
+                                                ? reasonLabels[item.excuseReason]
+                                                : '—'}
+                                        </td>
+                                    )}
 
                                     <td className="px-4 py-4">
                                         <div className="flex items-center justify-end gap-2">
-                                            <AttendanceDetailsDialog item={item} />
+                                            <AttendanceDetailsDialog
+                                                item={item}
+                                                mode={mode}
+                                            />
 
                                             {canCreateExcuse && (
                                                 <AttendanceExcuseDialog

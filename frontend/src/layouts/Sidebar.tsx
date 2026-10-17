@@ -30,6 +30,16 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
     const manage: MenuLink[] = ADMIN_ROLES.includes(session.profile.role)
         ? [
             { to: '/attendance', label: t('nav.attendance'), icon: ClipboardCheck },
+            {
+                to: '/attendance/students',
+                label: 'O‘quvchilar davomati',
+                icon: ClipboardCheck,
+            },
+            {
+                to: '/attendance/teachers',
+                label: 'O‘qituvchilar davomati',
+                icon: ClipboardCheck,
+            },
             ...(
                 session.profile.role === 'SUPER_ADMIN' ||
                     session.profile.role === 'SCHOOL_ADMIN'

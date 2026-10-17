@@ -99,7 +99,7 @@ function AttendanceResults({
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold">
-                        O‘quvchilar davomati
+                        O‘qituvchilar davomati
                     </h2>
                     <p className="text-sm text-muted-foreground">
                         Jami {data.total} ta yozuv
