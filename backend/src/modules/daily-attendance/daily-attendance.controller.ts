@@ -20,7 +20,7 @@ import { UserRole } from '../users/enums/user-role.enum';
 
 import { DailyAttendanceService } from './daily-attendance.service';
 import { DailyAttendanceReadService } from './daily-attendance-read.service';
-
+import { MembershipType } from '../school-memberships/school-membership.entity';
 import { RebuildDailyAttendanceDto } from './dto/rebuild-daily-attendance.dto';
 import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
 
@@ -37,6 +37,52 @@ export class DailyAttendanceController {
   @HttpCode(200)
   rebuild(@Body() dto: RebuildDailyAttendanceDto) {
     return this.dailyAttendanceService.rebuild(dto);
+  }
+
+  @Get('students')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  findStudents(
+    @Query() query: GetDailyAttendanceQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.dailyAttendanceReadService.findAll(
+      query,
+      request.authUser,
+      MembershipType.STUDENT,
+    );
+  }
+
+  @Get('teachers')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  findTeachers(
+    @Query() query: GetDailyAttendanceQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.dailyAttendanceReadService.findAll(
+      query,
+      request.authUser,
+      MembershipType.TEACHER,
+    );
   }
 
   @Get('export')

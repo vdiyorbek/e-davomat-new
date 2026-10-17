@@ -86,37 +86,56 @@ export class DailyAttendanceReadService {
   private filteredQuery(
     query: GetDailyAttendanceQueryDto,
     user: AuthenticatedUser,
+    membershipType: MembershipType,
   ) {
     const builder = this.scopedQuery(user).andWhere('daily.date = :date', {
       date: query.date,
     });
+    builder.andWhere('daily.membershipType = :membershipType', {
+      membershipType,
+    });
 
     // O‘quvchi aynan tanlangan sanada
     // shu maktabda o‘qiyotgan bo‘lishi kerak.
-    const studentExists = `
-    EXISTS (
-      SELECT 1
-      FROM school_memberships AS sm
-      INNER JOIN persons AS p
-        ON p.id = sm.personId
-      WHERE sm.schoolId = daily.schoolId
-        AND sm.type = :studentType
-        AND p.pnfl = daily.pnfl
-        AND p.deletedAt IS NULL
-        AND sm.startDate <= daily.date
-        AND (
-          sm.endDate IS NULL
-          OR sm.endDate > daily.date
-        )
-        ${query.classId !== undefined ? 'AND sm.classId = :filterClassId' : ''}
-    )
-  `;
+    if (
+      membershipType === MembershipType.TEACHER &&
+      query.classId !== undefined
+    ) {
+      throw new BadRequestException(
+        'O‘qituvchilar davomati uchun sinf filtri mavjud emas',
+      );
+    }
+    const activeMembershipExists = `
+  EXISTS (
+    SELECT 1
+    FROM school_memberships AS sm
+    INNER JOIN persons AS p
+      ON p.id = sm.personId
+    WHERE sm.schoolId = daily.schoolId
+      AND sm.type = :membershipType
+      AND p.pnfl = daily.pnfl
+      AND p.deletedAt IS NULL
+      AND sm.startDate <= daily.date
+      AND (
+        sm.endDate IS NULL
+        OR sm.endDate > daily.date
+      )
+      ${
+        membershipType === MembershipType.STUDENT && query.classId !== undefined
+          ? 'AND sm.classId = :filterClassId'
+          : ''
+      }
+  )
+`;
 
-    builder.andWhere(studentExists, {
-      studentType: MembershipType.STUDENT,
+    builder.andWhere(activeMembershipExists, {
+      membershipType,
     });
 
-    if (query.classId !== undefined) {
+    if (
+      membershipType === MembershipType.STUDENT &&
+      query.classId !== undefined
+    ) {
       builder.setParameter('filterClassId', query.classId);
     }
 
@@ -189,41 +208,69 @@ export class DailyAttendanceReadService {
         AND excuseFilter.endDate >= daily.date
     )
   `;
+    const studentStatusExpression = `
+  CASE
+    WHEN daily.firstInTime IS NOT NULL
+      AND daily.lastOutTime IS NOT NULL
+      THEN 'left'
 
+    WHEN daily.firstInTime IS NOT NULL
+      THEN 'inside'
+
+    WHEN daily.lastOutTime IS NOT NULL
+      THEN 'anomaly'
+
+    WHEN ${excuseExists}
+      THEN 'excused'
+
+    ELSE 'absent'
+  END
+`;
+
+    const teacherStatusExpression = `
+  CASE
+    WHEN daily.firstInTime IS NOT NULL
+      AND daily.lastOutTime IS NOT NULL
+      THEN 'left'
+
+    WHEN daily.firstInTime IS NOT NULL
+      THEN 'inside'
+
+    WHEN daily.lastOutTime IS NOT NULL
+      THEN 'anomaly'
+
+    ELSE 'absent'
+  END
+`;
     // Muhim: status MySQL ichida aniqlanadi.
     // Shuning uchun filtr paginationdan OLDIN ishlaydi.
     if (query.attendanceStatus !== undefined) {
-      const statusExpression = `
-      CASE
-        WHEN daily.firstInTime IS NOT NULL
-          AND daily.lastOutTime IS NOT NULL
-          THEN 'left'
+      const statusExpression =
+        membershipType === MembershipType.STUDENT
+          ? studentStatusExpression
+          : teacherStatusExpression;
 
-        WHEN daily.firstInTime IS NOT NULL
-          THEN 'inside'
+      builder.andWhere(`(${statusExpression}) = :filterAttendanceStatus`, {
+        filterAttendanceStatus: query.attendanceStatus,
+      });
 
-        WHEN daily.lastOutTime IS NOT NULL
-          THEN 'anomaly'
-
-        WHEN ${excuseExists}
-          THEN 'excused'
-
-        ELSE 'absent'
-      END
-    `;
-
-      builder
-        .andWhere(`(${statusExpression}) = :filterAttendanceStatus`, {
-          filterAttendanceStatus: query.attendanceStatus,
-        })
-        .setParameter('activeExcuseStatus', AttendanceExcuseStatus.ACTIVE);
+      if (membershipType === MembershipType.STUDENT) {
+        builder.setParameter(
+          'activeExcuseStatus',
+          AttendanceExcuseStatus.ACTIVE,
+        );
+      }
     }
 
     return builder;
   }
 
-  async findAll(query: GetDailyAttendanceQueryDto, user: AuthenticatedUser) {
-    const builder = this.filteredQuery(query, user);
+  async findAll(
+    query: GetDailyAttendanceQueryDto,
+    user: AuthenticatedUser,
+    membershipType: MembershipType = MembershipType.STUDENT,
+  ) {
+    const builder = this.filteredQuery(query, user, membershipType);
     const [rows, total] = await builder
       .orderBy('daily.id', 'DESC')
       .skip((query.page - 1) * query.limit)
@@ -270,8 +317,8 @@ export class DailyAttendanceReadService {
             .andWhere('membership.schoolId IN (:...schoolIds)', {
               schoolIds,
             })
-            .andWhere('membership.type = :studentType', {
-              studentType: MembershipType.STUDENT,
+            .andWhere('membership.type = :membershipType', {
+              membershipType,
             })
             .andWhere('membership.startDate <= :date', {
               date: query.date,
@@ -311,7 +358,9 @@ export class DailyAttendanceReadService {
     // Sahifadagi barcha o‘quvchilar uchun sababli
     // arizalarni bitta so‘rovda olamiz.
     const excuses =
-      personIds.length > 0 && schoolIds.length > 0
+      membershipType === MembershipType.STUDENT &&
+      personIds.length > 0 &&
+      schoolIds.length > 0
         ? await this.dataSource.getRepository(AttendanceExcuse).find({
             select: {
               id: true,
@@ -358,7 +407,7 @@ export class DailyAttendanceReadService {
               ? 'inside'
               : row.lastOutTime
                 ? 'anomaly'
-                : hasActiveExcuse
+                : membershipType === MembershipType.STUDENT && hasActiveExcuse
                   ? 'excused'
                   : 'absent';
 
@@ -418,6 +467,7 @@ export class DailyAttendanceReadService {
             membership?.classId != null ? Number(membership.classId) : null,
 
           className: membership?.className ?? null,
+          membershipType: row.membershipType,
 
           academicYear: membership?.academicYear ?? null,
 
