@@ -18,6 +18,7 @@ import { MembershipType } from '../school-memberships/school-membership.entity';
 import { AttendanceWeeklySchedule } from './attendance-weekly-schedule.entity';
 import { CreateWeeklyScheduleDto } from './dto/create-weekly-schedule.dto';
 import { GetWeeklySchedulesDto } from './dto/get-weekly-schedules.dto';
+import { UpdateWeeklyScheduleDto } from './dto/update-weekly-schedule.dto';
 
 @Injectable()
 export class AttendanceWeeklySchedulesService {
@@ -238,6 +239,157 @@ export class AttendanceWeeklySchedulesService {
       });
 
       return repo.save(schedule);
+    });
+  }
+
+  async update(
+    id: number,
+    dto: UpdateWeeklyScheduleDto,
+    user: AuthenticatedUser,
+  ) {
+    const today = new Date(Date.now() + 5 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      const repo = manager.getRepository(AttendanceWeeklySchedule);
+
+      const current = await repo.findOneBy({ id });
+
+      if (!current) {
+        throw new NotFoundException('Haftalik jadval topilmadi');
+      }
+
+      // Shu maktabga yozish huquqini tekshiramiz.
+      // Maktab qatorini bloklash parallel o'zgarishlarni
+      // ketma-ket bajarishga yordam beradi.
+      await this.checkSchoolAccess(current.schoolId, user, manager, true);
+
+      const schedule = await repo.findOneBy({ id });
+
+      if (!schedule) {
+        throw new NotFoundException('Haftalik jadval topilmadi');
+      }
+
+      const newStart = dto.effectiveFrom ?? schedule.effectiveFrom;
+
+      if (newStart <= today) {
+        throw new BadRequestException(
+          'O‘tgan yoki bugungi sanadan boshlab jadvalni o‘zgartirib bo‘lmaydi',
+        );
+      }
+
+      this.validateYear(schedule.academicYear, newStart);
+
+      if (newStart < schedule.effectiveFrom) {
+        throw new BadRequestException(
+          'Yangi sana mavjud jadval boshlanishidan oldin bo‘lmasligi kerak',
+        );
+      }
+
+      if (schedule.effectiveTo !== null && newStart > schedule.effectiveTo) {
+        throw new BadRequestException(
+          'Yangi sana jadvalning amal qilish davridan tashqarida',
+        );
+      }
+
+      // Jadval hali boshlanmagan bo'lsa,
+      // boshlanish sanasini o'zgartirmasdan tahrirlaymiz.
+      if (newStart === schedule.effectiveFrom) {
+        schedule.workingDaysMask = dto.workingDaysMask;
+
+        const updated = await repo.save(schedule);
+
+        return {
+          action: 'UPDATED',
+          schedule: updated,
+        };
+      }
+
+      // Sana oralig'ining yangi qismi boshqa bir xil
+      // guruh jadvali bilan to'qnashmasligini tekshiramiz.
+      const candidates = await repo
+        .createQueryBuilder('s')
+        .where('s.schoolId = :schoolId', {
+          schoolId: schedule.schoolId,
+        })
+        .andWhere('s.id != :id', { id })
+        .andWhere('s.academicYear = :academicYear', {
+          academicYear: schedule.academicYear,
+        })
+        .andWhere('s.membershipType = :membershipType', {
+          membershipType: schedule.membershipType,
+        })
+        .andWhere('s.effectiveFrom <= :endDate', {
+          endDate: schedule.effectiveTo ?? '9999-12-31',
+        })
+        .andWhere('(s.effectiveTo IS NULL OR s.effectiveTo >= :startDate)', {
+          startDate: newStart,
+        })
+        .getMany();
+
+      const conflict = candidates.some((other) => {
+        if (schedule.membershipType === MembershipType.TEACHER) {
+          return true;
+        }
+
+        if (schedule.classId !== null || other.classId !== null) {
+          return (
+            schedule.classId !== null && schedule.classId === other.classId
+          );
+        }
+
+        return (
+          schedule.gradeFrom !== null &&
+          schedule.gradeTo !== null &&
+          other.gradeFrom !== null &&
+          other.gradeTo !== null &&
+          schedule.gradeFrom <= other.gradeTo &&
+          schedule.gradeTo >= other.gradeFrom
+        );
+      });
+
+      if (conflict) {
+        throw new ConflictException(
+          'Ushbu sana uchun boshqa haftalik jadval mavjud',
+        );
+      }
+
+      // Eski jadval yangi qoida boshlanishidan
+      // bir kun oldin tugaydi.
+      const previousDay = new Date(
+        Date.parse(`${newStart}T00:00:00Z`) - 86400000,
+      )
+        .toISOString()
+        .slice(0, 10);
+
+      const originalEnd = schedule.effectiveTo;
+
+      schedule.effectiveTo = previousDay;
+
+      await repo.save(schedule);
+
+      // Yangi tartibni alohida yozuv sifatida saqlaymiz.
+      const nextSchedule = repo.create({
+        schoolId: schedule.schoolId,
+        academicYear: schedule.academicYear,
+        membershipType: schedule.membershipType,
+        gradeFrom: schedule.gradeFrom,
+        gradeTo: schedule.gradeTo,
+        classId: schedule.classId,
+        workingDaysMask: dto.workingDaysMask,
+        effectiveFrom: newStart,
+        effectiveTo: originalEnd,
+        createdByUserId: user.id,
+      });
+
+      const saved = await repo.save(nextSchedule);
+
+      return {
+        action: 'REVISED',
+        previousSchedule: schedule,
+        newSchedule: saved,
+      };
     });
   }
 }

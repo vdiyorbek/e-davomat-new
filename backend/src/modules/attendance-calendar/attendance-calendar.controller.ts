@@ -1,6 +1,9 @@
 import {
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
+  Patch,
   Query,
   Req,
   UnauthorizedException,
@@ -19,6 +22,7 @@ import { CreateCalendarRuleDto } from './dto/create-calendar-rule.dto';
 import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.service';
 import { CreateWeeklyScheduleDto } from './dto/create-weekly-schedule.dto';
 import { GetWeeklySchedulesDto } from './dto/get-weekly-schedules.dto';
+import { UpdateWeeklyScheduleDto } from './dto/update-weekly-schedule.dto';
 
 @Controller('attendance-calendar')
 @Roles(
@@ -80,5 +84,18 @@ export class AttendanceCalendarController {
     }
 
     return this.weeklySchedulesService.create(dto, request.authUser);
+  }
+
+  @Patch('weekly-schedules/:id')
+  updateWeeklySchedule(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateWeeklyScheduleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.weeklySchedulesService.update(id, dto, request.authUser);
   }
 }
