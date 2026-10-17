@@ -123,11 +123,11 @@
     "photoFailed": "Photo upload failed",
     "noPerson": "No person details",
     "status": {
-      "inside": "In school",
+      "inside": "Arrived",
       "left": "Left",
       "none": "No record",
       "excused": "Excused absence",
-      "absent": "Unexcused absence",
+      "absent": "Absent",
       "anomaly": "Needs review"
     }
   }

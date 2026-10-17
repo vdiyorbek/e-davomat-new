@@ -123,11 +123,11 @@
     "photoFailed": "Rasmni yuklashda xatolik",
     "noPerson": "Shaxs ma’lumotlari kiritilmagan",
     "status": {
-      "inside": "Maktabda",
+      "inside": "Kelgan",
       "left": "Ketgan",
       "none": "Qayd yo‘q",
       "excused": "Sababli",
-      "absent": "Sababsiz kelmagan",
+      "absent": "Kelmagan",
       "anomaly": "Tekshirish kerak"
     }
   }
