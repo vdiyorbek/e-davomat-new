@@ -37,6 +37,7 @@ api.test
 .env.*
 !.env.example
 node_modules/
+/backend/private_uploads/
 dist/
 coverage/
 api.rest
