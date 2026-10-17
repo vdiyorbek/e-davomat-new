@@ -257,13 +257,7 @@ export function StudentAttendancePage() {
 
     const validStatus =
         attendanceStatus === '' ||
-        [
-            'inside',
-            'left',
-            'excused',
-            'absent',
-            'anomaly',
-        ].includes(attendanceStatus);
+        ['inside', 'left', 'excused', 'absent'].includes(attendanceStatus);
 
     const validSearch =
         search === '' ||

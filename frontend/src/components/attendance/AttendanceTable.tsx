@@ -31,10 +31,10 @@ const reasonLabels = {
     OTHER: 'Boshqa',
 };
 const STATUS_FALLBACK: Record<AttendanceStatus, string> = {
-    inside: 'Maktabda',
+    inside: 'Kelgan',
     left: 'Ketgan',
     excused: 'Sababli',
-    absent: 'Sababsiz kelmagan',
+    absent: 'Kelmagan',
     anomaly: 'Tekshirish kerak',
 };
 
