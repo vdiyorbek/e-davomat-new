@@ -39,6 +39,29 @@ export class DailyAttendanceController {
     return this.dailyAttendanceService.rebuild(dto);
   }
 
+  @Get('students/export')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  async exportStudentsExcel(
+    @Query() query: GetDailyAttendanceQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ): Promise<void> {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    await this.exportService.exportExcel(query, request.authUser, response, {
+      membershipType: MembershipType.STUDENT,
+      filenamePrefix: 'oquvchilar-davomat',
+    });
+  }
+
   @Get('students')
   @Header('Cache-Control', 'private, no-store')
   @Roles(

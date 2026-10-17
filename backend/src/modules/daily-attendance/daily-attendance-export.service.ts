@@ -5,14 +5,14 @@ import type { Response } from 'express';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { DailyAttendanceReadService } from './daily-attendance-read.service';
 import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
-
+import { MembershipType } from '../school-memberships/school-membership.entity';
 const BATCH_SIZE = 100;
 
 const STATUS_LABELS: Record<string, string> = {
-  inside: 'Maktabda',
+  inside: 'Kelgan',
   left: 'Ketgan',
   excused: 'Sababli',
-  absent: 'Sababsiz kelmagan',
+  absent: 'Kelmagan',
   anomaly: 'Tekshirish kerak',
 };
 
@@ -52,11 +52,18 @@ export class DailyAttendanceExportService {
     query: GetDailyAttendanceQueryDto,
     user: AuthenticatedUser,
     response: Response,
+    options: {
+      membershipType?: MembershipType;
+      filenamePrefix?: string;
+    } = {},
   ): Promise<void> {
+    const membershipType = options.membershipType ?? MembershipType.STUDENT;
+    const filenamePrefix = options.filenamePrefix ?? 'davomat';
     // Pagination foydalanuvchi tanlovidan mustaqil.
     const firstBatch = await this.readService.findAll(
       { ...query, page: 1, limit: BATCH_SIZE },
       user,
+      membershipType,
     );
 
     response.setHeader(
@@ -66,7 +73,7 @@ export class DailyAttendanceExportService {
 
     response.setHeader(
       'Content-Disposition',
-      `attachment; filename="davomat-${query.date}.xlsx"`,
+      `attachment; filename="${filenamePrefix}-${query.date}.xlsx"`,
     );
 
     response.setHeader('Cache-Control', 'private, no-store');
@@ -165,6 +172,7 @@ export class DailyAttendanceExportService {
         batch = await this.readService.findAll(
           { ...query, page, limit: BATCH_SIZE },
           user,
+          membershipType,
         );
       }
 
