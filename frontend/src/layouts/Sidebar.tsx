@@ -30,11 +30,18 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
     const manage: MenuLink[] = ADMIN_ROLES.includes(session.profile.role)
         ? [
             { to: '/attendance', label: t('nav.attendance'), icon: ClipboardCheck },
-            {
-                to: '/attendance-excuses',
-                label: 'Sababli arizalar',
-                icon: FileCheck2,
-            },
+            ...(
+                session.profile.role === 'SUPER_ADMIN' ||
+                    session.profile.role === 'SCHOOL_ADMIN'
+                    ? [
+                        {
+                            to: '/attendance-excuses',
+                            label: 'Sababli arizalar',
+                            icon: FileCheck2,
+                        },
+                    ]
+                    : []
+            ),
             { to: '/schools', label: t('nav.schools'), icon: Building2 },
             { to: '/students', label: t('nav.students'), icon: Users },
             { to: '/teachers', label: t('nav.teachers'), icon: BookOpen },
