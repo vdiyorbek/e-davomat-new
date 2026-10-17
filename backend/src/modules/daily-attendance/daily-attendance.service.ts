@@ -264,6 +264,7 @@ export class DailyAttendanceService {
           // Kirishsiz faqat chiqish qayd etilgan
           if (day.lastOut) {
             result.anomaly++;
+            result.absent++;
             continue;
           }
 

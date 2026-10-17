@@ -258,9 +258,25 @@ export class DailyAttendanceReadService {
     }
 
     if (query.attendanceStatus === AttendanceStatusFilter.INSIDE) {
-      // Kelgan: kirganlarning barchasi,
-      // keyinchalik chiqib ketganlar ham.
+      // Kelgan: chiqib ketganlar ham shu filtrga kiradi.
       builder.andWhere('daily.firstInTime IS NOT NULL');
+    } else if (query.attendanceStatus === AttendanceStatusFilter.ABSENT) {
+      // Kirish qayd etilmaganlar.
+      builder.andWhere('daily.firstInTime IS NULL');
+
+      if (membershipType === MembershipType.STUDENT) {
+        // Sababli o‘quvchilar chiqariladi.
+        // Faqat chiqish qaydi mavjud noodatiy holatlar
+        // esa tekshiruv uchun Kelmagan tarkibida qoladi.
+        builder.andWhere(
+          `(daily.lastOutTime IS NOT NULL OR NOT ${excuseExists})`,
+        );
+
+        builder.setParameter(
+          'activeExcuseStatus',
+          AttendanceExcuseStatus.ACTIVE,
+        );
+      }
     } else if (query.attendanceStatus !== undefined) {
       const statusExpression =
         membershipType === MembershipType.STUDENT
