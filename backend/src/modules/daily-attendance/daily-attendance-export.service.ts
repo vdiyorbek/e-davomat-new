@@ -59,6 +59,7 @@ export class DailyAttendanceExportService {
   ): Promise<void> {
     const membershipType = options.membershipType ?? MembershipType.STUDENT;
     const filenamePrefix = options.filenamePrefix ?? 'davomat';
+    const isTeacher = membershipType === MembershipType.TEACHER;
     // Pagination foydalanuvchi tanlovidan mustaqil.
     const firstBatch = await this.readService.findAll(
       { ...query, page: 1, limit: BATCH_SIZE },
@@ -102,12 +103,19 @@ export class DailyAttendanceExportService {
           { header: 'Viloyat', key: 'region', width: 24 },
           { header: 'Tuman', key: 'district', width: 24 },
           { header: 'Maktab', key: 'school', width: 27 },
-          { header: 'Sinf', key: 'className', width: 15 },
+
+          ...(!isTeacher
+            ? [{ header: 'Sinf', key: 'className', width: 15 }]
+            : []),
+
           { header: 'F.I.Sh.', key: 'fullName', width: 45 },
           { header: 'Kirish', key: 'firstIn', width: 18 },
           { header: 'Chiqish', key: 'lastOut', width: 18 },
           { header: 'Holat', key: 'status', width: 26 },
-          { header: 'Sabab', key: 'reason', width: 26 },
+
+          ...(!isTeacher
+            ? [{ header: 'Sabab', key: 'reason', width: 26 }]
+            : []),
         ];
 
         sheet.getRow(1).font = { bold: true };

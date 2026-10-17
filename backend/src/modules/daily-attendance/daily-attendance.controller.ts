@@ -85,6 +85,29 @@ export class DailyAttendanceController {
     );
   }
 
+  @Get('teachers/export')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  async exportTeachersExcel(
+    @Query() query: GetDailyAttendanceQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ): Promise<void> {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    await this.exportService.exportExcel(query, request.authUser, response, {
+      membershipType: MembershipType.TEACHER,
+      filenamePrefix: 'oqituvchilar-davomat',
+    });
+  }
+
   @Get('teachers')
   @Header('Cache-Control', 'private, no-store')
   @Roles(
