@@ -12,6 +12,10 @@ import { UserRole } from '../users/enums/user-role.enum';
 
 import { AttendanceCalendarService } from './attendance-calendar.service';
 import { GetCalendarRulesDto } from './dto/get-calendar-rules.dto';
+import { Body, Post } from '@nestjs/common';
+
+import { AttendanceCalendarWriteService } from './attendance-calendar-write.service';
+import { CreateCalendarRuleDto } from './dto/create-calendar-rule.dto';
 
 @Controller('attendance-calendar')
 @Roles(
@@ -21,7 +25,10 @@ import { GetCalendarRulesDto } from './dto/get-calendar-rules.dto';
   UserRole.SCHOOL_ADMIN,
 )
 export class AttendanceCalendarController {
-  constructor(private readonly calendarService: AttendanceCalendarService) {}
+  constructor(
+    private readonly calendarService: AttendanceCalendarService,
+    private readonly calendarWriteService: AttendanceCalendarWriteService,
+  ) {}
 
   @Get('rules')
   findRules(
@@ -33,5 +40,17 @@ export class AttendanceCalendarController {
     }
 
     return this.calendarService.findRules(query, request.authUser);
+  }
+
+  @Post('rules')
+  createRule(
+    @Body() dto: CreateCalendarRuleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.calendarWriteService.createRule(dto, request.authUser);
   }
 }
