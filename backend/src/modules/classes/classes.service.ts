@@ -84,6 +84,7 @@ export class ClassesService {
       schoolId: school.id,
       academicYear: dto.academicYear,
       name: dto.name,
+      gradeLevel: dto.gradeLevel ?? null,
     });
 
     try {

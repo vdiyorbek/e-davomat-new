@@ -54,6 +54,13 @@ export class SchoolClass {
   })
   name!: string;
 
+  @Column({
+    type: 'tinyint',
+    unsigned: true,
+    nullable: true,
+  })
+  gradeLevel!: number | null;
+
   @CreateDateColumn({
     type: 'datetime',
     precision: 3,

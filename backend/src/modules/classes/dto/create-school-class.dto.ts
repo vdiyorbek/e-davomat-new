@@ -1,5 +1,13 @@
 import { Transform, Type } from 'class-transformer';
-import { IsInt, IsString, Length, Matches, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateSchoolClassDto {
   @Type(() => Number)
@@ -24,4 +32,11 @@ export class CreateSchoolClassDto {
     message: 'Sinf nomi 1–30 belgidan iborat bo‘lishi kerak',
   })
   name!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  gradeLevel?: number;
 }
