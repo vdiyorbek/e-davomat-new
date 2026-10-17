@@ -20,6 +20,7 @@ import { AttendancePhotoSyncModule } from './modules/attendance-photo-sync/atten
 import { MahallasModule } from './modules/mahallas/mahallas.module';
 import { ClassesModule } from './modules/classes/classes.module';
 import { AttendanceExcusesModule } from './modules/attendance-excuses/attendance-excuses.module';
+import { AttendanceCalendarModule } from './modules/attendance-calendar/attendance-calendar.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { AttendanceExcusesModule } from './modules/attendance-excuses/attendance
     MahallasModule,
     ClassesModule,
     AttendanceExcusesModule,
+    AttendanceCalendarModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
