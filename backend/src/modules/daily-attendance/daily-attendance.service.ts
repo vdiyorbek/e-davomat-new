@@ -66,32 +66,42 @@ export class DailyAttendanceService {
         throw new NotFoundException('Maktabning tumani topilmadi');
       }
 
-      const activeStudents = await manager
+      const activeMemberships = await manager
         .getRepository(SchoolMembership)
         .createQueryBuilder('membership')
         .innerJoin('membership.person', 'person')
         .select('person.pnfl', 'pnfl')
         .addSelect('person.id', 'personId')
+        .addSelect('membership.type', 'membershipType')
         .distinct(true)
         .where('membership.schoolId = :schoolId', {
           schoolId: school.id,
         })
-        .andWhere('membership.type = :type', {
-          type: MembershipType.STUDENT,
+        .andWhere('membership.type IN (:...types)', {
+          types: [MembershipType.STUDENT, MembershipType.TEACHER],
         })
+        .andWhere('person.deletedAt IS NULL')
         .andWhere('membership.startDate <= :date', {
           date: dto.date,
         })
         .andWhere(
           '(membership.endDate IS NULL OR membership.endDate > :date)',
-          { date: dto.date },
+          {
+            date: dto.date,
+          },
         )
-        .getRawMany<{ pnfl: string; personId: string }>();
+        .getRawMany<{
+          pnfl: string;
+          personId: string;
+          membershipType: MembershipType;
+        }>();
+
+      const makeKey = (type: MembershipType, pnfl: string) => `${type}:${pnfl}`;
 
       const people = new Map<string, PersonDayEvents>();
 
-      for (const student of activeStudents) {
-        people.set(student.pnfl, {
+      for (const membership of activeMemberships) {
+        people.set(makeKey(membership.membershipType, membership.pnfl), {
           firstIn: null,
           lastOut: null,
         });
@@ -116,22 +126,34 @@ export class DailyAttendanceService {
       let ignoredEvents = 0;
 
       for (const event of events) {
-        const personDay = people.get(event.pnfl);
+        const studentDay = people.get(
+          makeKey(MembershipType.STUDENT, event.pnfl),
+        );
 
-        if (!personDay) {
+        const teacherDay = people.get(
+          makeKey(MembershipType.TEACHER, event.pnfl),
+        );
+
+        const targets = [studentDay, teacherDay].filter(
+          (item): item is PersonDayEvents => Boolean(item),
+        );
+
+        if (targets.length === 0) {
           ignoredEvents++;
           continue;
         }
 
-        if (
-          event.direction === TerminalDirection.IN &&
-          personDay.firstIn === null
-        ) {
-          personDay.firstIn = event;
-        }
+        for (const personDay of targets) {
+          if (
+            event.direction === TerminalDirection.IN &&
+            personDay.firstIn === null
+          ) {
+            personDay.firstIn = event;
+          }
 
-        if (event.direction === TerminalDirection.OUT) {
-          personDay.lastOut = event;
+          if (event.direction === TerminalDirection.OUT) {
+            personDay.lastOut = event;
+          }
         }
       }
 
@@ -144,16 +166,21 @@ export class DailyAttendanceService {
         },
       });
 
-      const existingByPnfl = new Map(
-        existingRows.map((row) => [row.pnfl, row]),
+      const existingByKey = new Map(
+        existingRows.map((row) => [makeKey(row.membershipType, row.pnfl), row]),
       );
 
       let withFirstIn = 0;
       let withLastOut = 0;
       let onlyOut = 0;
 
-      for (const [pnfl, personDay] of people) {
-        const existing = existingByPnfl.get(pnfl);
+      for (const [key, personDay] of people) {
+        const existing = existingByKey.get(key);
+
+        const [membershipType, pnfl] = key.split(':') as [
+          MembershipType,
+          string,
+        ];
 
         const row =
           existing ??
@@ -161,10 +188,11 @@ export class DailyAttendanceService {
             schoolId: school.id,
             date: dto.date,
             pnfl,
+            membershipType,
             districtId: district.id,
             regionId: district.regionId,
           });
-
+        row.membershipType = membershipType;
         row.firstInTime = personDay.firstIn?.eventAt ?? null;
         row.firstInEventId = personDay.firstIn?.id ?? null;
 
@@ -199,8 +227,12 @@ export class DailyAttendanceService {
 
       let excusedStudents = 0;
 
-      for (const student of activeStudents) {
-        const personDay = people.get(student.pnfl);
+      for (const student of activeMemberships.filter(
+        (item) => item.membershipType === MembershipType.STUDENT,
+      )) {
+        const personDay = people.get(
+          makeKey(MembershipType.STUDENT, student.pnfl),
+        );
 
         if (
           personDay &&
@@ -214,7 +246,13 @@ export class DailyAttendanceService {
 
       const absentStudents =
         people.size - withFirstIn - onlyOut - excusedStudents;
+      const totalStudents = activeMemberships.filter(
+        (item) => item.membershipType === MembershipType.STUDENT,
+      ).length;
 
+      const totalTeachers = activeMemberships.filter(
+        (item) => item.membershipType === MembershipType.TEACHER,
+      ).length;
       return {
         success: true,
         schoolId: school.id,
@@ -224,7 +262,8 @@ export class DailyAttendanceService {
         ignoredEvents,
 
         calculatedPersons: people.size,
-        totalStudents: people.size,
+        totalStudents,
+        totalTeachers,
 
         arrivedStudents: withFirstIn,
         leftStudents:
