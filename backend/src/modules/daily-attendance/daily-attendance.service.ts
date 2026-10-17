@@ -170,10 +170,6 @@ export class DailyAttendanceService {
         existingRows.map((row) => [makeKey(row.membershipType, row.pnfl), row]),
       );
 
-      let withFirstIn = 0;
-      let withLastOut = 0;
-      let onlyOut = 0;
-
       for (const [key, personDay] of people) {
         const existing = existingByKey.get(key);
 
@@ -200,13 +196,6 @@ export class DailyAttendanceService {
         row.lastOutEventId = personDay.lastOut?.id ?? null;
 
         await repository.save(row);
-
-        if (personDay.firstIn) withFirstIn++;
-        if (personDay.lastOut) withLastOut++;
-
-        if (!personDay.firstIn && personDay.lastOut) {
-          onlyOut++;
-        }
       }
 
       const activeExcuses = await manager.getRepository(AttendanceExcuse).find({
@@ -225,34 +214,78 @@ export class DailyAttendanceService {
         activeExcuses.map((excuse) => excuse.personId),
       );
 
-      let excusedStudents = 0;
-
-      for (const student of activeMemberships.filter(
-        (item) => item.membershipType === MembershipType.STUDENT,
-      )) {
-        const personDay = people.get(
-          makeKey(MembershipType.STUDENT, student.pnfl),
+      function summarize(type: MembershipType) {
+        // Bir shaxsda bir nechta membership bo‘lsa,
+        // uni bir marta hisoblaymiz.
+        const members = new Map(
+          activeMemberships
+            .filter((item) => item.membershipType === type)
+            .map((item) => [item.pnfl, item]),
         );
 
-        if (
-          personDay &&
-          personDay.firstIn === null &&
-          personDay.lastOut === null &&
-          excusedPersonIds.has(Number(student.personId))
-        ) {
-          excusedStudents++;
+        const result = {
+          total: members.size,
+          inside: 0,
+          left: 0,
+          excused: 0,
+          absent: 0,
+          anomaly: 0,
+          withFirstIn: 0,
+          withLastOut: 0,
+        };
+
+        for (const member of members.values()) {
+          const day = people.get(makeKey(type, member.pnfl));
+
+          if (!day) {
+            continue;
+          }
+
+          if (day.firstIn) {
+            result.withFirstIn++;
+          }
+
+          if (day.lastOut) {
+            result.withLastOut++;
+          }
+
+          // Kirgan va chiqqan
+          if (day.firstIn && day.lastOut) {
+            result.left++;
+            continue;
+          }
+
+          // Kirgan, hali chiqmagan
+          if (day.firstIn) {
+            result.inside++;
+            continue;
+          }
+
+          // Kirishsiz faqat chiqish qayd etilgan
+          if (day.lastOut) {
+            result.anomaly++;
+            continue;
+          }
+
+          // Sababli holat faqat o‘quvchiga tegishli
+          if (
+            type === MembershipType.STUDENT &&
+            excusedPersonIds.has(Number(member.personId))
+          ) {
+            result.excused++;
+            continue;
+          }
+
+          // Umuman kirish/chiqish qayd etilmagan
+          result.absent++;
         }
+
+        return result;
       }
 
-      const absentStudents =
-        people.size - withFirstIn - onlyOut - excusedStudents;
-      const totalStudents = activeMemberships.filter(
-        (item) => item.membershipType === MembershipType.STUDENT,
-      ).length;
+      const students = summarize(MembershipType.STUDENT);
+      const teachers = summarize(MembershipType.TEACHER);
 
-      const totalTeachers = activeMemberships.filter(
-        (item) => item.membershipType === MembershipType.TEACHER,
-      ).length;
       return {
         success: true,
         schoolId: school.id,
@@ -262,20 +295,48 @@ export class DailyAttendanceService {
         ignoredEvents,
 
         calculatedPersons: people.size,
-        totalStudents,
-        totalTeachers,
 
-        arrivedStudents: withFirstIn,
-        leftStudents:
-          withFirstIn -
-          [...people.values()].filter((day) => day.firstIn && !day.lastOut)
-            .length,
-        excusedStudents,
-        absentStudents,
+        // O‘quvchilar statistikasi
+        totalStudents: students.total,
+        arrivedStudents: students.withFirstIn,
+        insideStudents: students.inside,
+        leftStudents: students.left,
+        excusedStudents: students.excused,
+        absentStudents: students.absent,
+        anomalyStudents: students.anomaly,
 
-        withFirstIn,
-        withLastOut,
-        onlyOut,
+        // O‘qituvchilar statistikasi
+        totalTeachers: teachers.total,
+        arrivedTeachers: teachers.withFirstIn,
+        insideTeachers: teachers.inside,
+        leftTeachers: teachers.left,
+        absentTeachers: teachers.absent,
+        anomalyTeachers: teachers.anomaly,
+
+        // Batafsil ajratilgan statistika
+        students: {
+          total: students.total,
+          inside: students.inside,
+          left: students.left,
+          excused: students.excused,
+          absent: students.absent,
+          anomaly: students.anomaly,
+        },
+
+        teachers: {
+          total: teachers.total,
+          inside: teachers.inside,
+          left: teachers.left,
+          absent: teachers.absent,
+          anomaly: teachers.anomaly,
+        },
+
+        // Eski umumiy response maydonlari
+        withFirstIn: students.withFirstIn + teachers.withFirstIn,
+
+        withLastOut: students.withLastOut + teachers.withLastOut,
+
+        onlyOut: students.anomaly + teachers.anomaly,
       };
     });
   }
