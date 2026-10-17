@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -7,6 +16,7 @@ import { CreateSchoolClassDto } from './dto/create-school-class.dto';
 import { ListSchoolClassesDto } from './dto/list-school-classes.dto';
 import { Req, UnauthorizedException } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { UpdateSchoolClassGradeDto } from './dto/update-school-class-grade.dto';
 
 @Controller('classes')
 @Roles(
@@ -56,5 +66,20 @@ export class ClassesController {
     }
 
     return this.classesService.findAll(dto, user);
+  }
+
+  @Patch(':id/grade-level')
+  updateGradeLevel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSchoolClassGradeDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.classesService.updateGradeLevel(id, dto, user);
   }
 }

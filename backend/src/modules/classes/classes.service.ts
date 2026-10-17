@@ -14,6 +14,7 @@ import { CreateSchoolClassDto } from './dto/create-school-class.dto';
 import { ListSchoolClassesDto } from './dto/list-school-classes.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
+import { UpdateSchoolClassGradeDto } from './dto/update-school-class-grade.dto';
 
 @Injectable()
 export class ClassesService {
@@ -173,5 +174,74 @@ export class ClassesService {
         id: 'ASC',
       },
     });
+  }
+
+  async updateGradeLevel(
+    id: number,
+    dto: UpdateSchoolClassGradeDto,
+    user: AuthenticatedUser,
+  ) {
+    const schoolClass = await this.classesRepository.findOne({
+      where: { id },
+      relations: {
+        school: {
+          district: true,
+        },
+      },
+    });
+
+    if (!schoolClass) {
+      throw new NotFoundException('Sinf topilmadi');
+    }
+
+    const school = schoolClass.school;
+
+    switch (user.role) {
+      case UserRole.SUPER_ADMIN:
+        break;
+
+      case UserRole.REGION_ADMIN:
+        if (!user.regionId || school.district.regionId !== user.regionId) {
+          throw new ForbiddenException(
+            'Ushbu viloyat sinfini o‘zgartirishga ruxsat yo‘q',
+          );
+        }
+        break;
+
+      case UserRole.DISTRICT_ADMIN:
+        if (!user.districtId || school.districtId !== user.districtId) {
+          throw new ForbiddenException(
+            'Ushbu tuman sinfini o‘zgartirishga ruxsat yo‘q',
+          );
+        }
+        break;
+
+      case UserRole.SCHOOL_ADMIN:
+        if (!user.schoolId || school.id !== user.schoolId) {
+          throw new ForbiddenException(
+            'Faqat o‘z maktabingiz sinfini o‘zgartira olasiz',
+          );
+        }
+        break;
+
+      default:
+        throw new ForbiddenException(
+          'Sinf darajasini o‘zgartirishga ruxsat yo‘q',
+        );
+    }
+
+    if (schoolClass.gradeLevel !== dto.gradeLevel) {
+      await this.classesRepository.update(schoolClass.id, {
+        gradeLevel: dto.gradeLevel,
+      });
+    }
+
+    return {
+      id: schoolClass.id,
+      schoolId: schoolClass.schoolId,
+      academicYear: schoolClass.academicYear,
+      name: schoolClass.name,
+      gradeLevel: dto.gradeLevel,
+    };
   }
 }
