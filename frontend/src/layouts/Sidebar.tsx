@@ -29,7 +29,6 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
     ];
     const manage: MenuLink[] = ADMIN_ROLES.includes(session.profile.role)
         ? [
-            { to: '/attendance', label: t('nav.attendance'), icon: ClipboardCheck },
             {
                 to: '/attendance/students',
                 label: 'O‘quvchilar davomati',
