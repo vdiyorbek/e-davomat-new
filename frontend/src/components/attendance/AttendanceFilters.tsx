@@ -436,7 +436,7 @@ export function AttendanceFilters({
                         {(
                             mode === 'teachers'
                                 ? (['inside', 'left', 'absent'] as const)
-                                : (['inside', 'left', 'excused', 'absent', 'anomaly'] as const)
+                                : (['inside', 'left', 'excused', 'absent'] as const)
                         ).map((status) => (
                             <option key={status} value={status}>
                                 {t(`attendance.status.${status}`)}
