@@ -24,12 +24,10 @@ import {
   AttendanceExcuse,
   AttendanceExcuseStatus,
 } from '../attendance-excuses/attendance-excuse.entity';
-import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
 import {
   AttendanceStatusFilter,
   GetDailyAttendanceQueryDto,
 } from './dto/get-daily-attendance-query.dto';
-
 
 @Injectable()
 export class DailyAttendanceReadService {
@@ -249,7 +247,21 @@ export class DailyAttendanceReadService {
 `;
     // Muhim: status MySQL ichida aniqlanadi.
     // Shuning uchun filtr paginationdan OLDIN ishlaydi.
-    if (query.attendanceStatus !== undefined) {
+
+    if (
+      membershipType === MembershipType.TEACHER &&
+      query.attendanceStatus === AttendanceStatusFilter.EXCUSED
+    ) {
+      throw new BadRequestException(
+        'O‘qituvchilar uchun sababli status mavjud emas',
+      );
+    }
+
+    if (query.attendanceStatus === AttendanceStatusFilter.INSIDE) {
+      // Kelgan: kirganlarning barchasi,
+      // keyinchalik chiqib ketganlar ham.
+      builder.andWhere('daily.firstInTime IS NOT NULL');
+    } else if (query.attendanceStatus !== undefined) {
       const statusExpression =
         membershipType === MembershipType.STUDENT
           ? studentStatusExpression
