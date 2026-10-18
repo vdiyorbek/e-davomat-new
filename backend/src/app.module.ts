@@ -21,7 +21,7 @@ import { MahallasModule } from './modules/mahallas/mahallas.module';
 import { ClassesModule } from './modules/classes/classes.module';
 import { AttendanceExcusesModule } from './modules/attendance-excuses/attendance-excuses.module';
 import { AttendanceCalendarModule } from './modules/attendance-calendar/attendance-calendar.module';
-
+import { SubjectsModule } from './modules/subjects/subjects.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -47,6 +47,7 @@ import { AttendanceCalendarModule } from './modules/attendance-calendar/attendan
     ClassesModule,
     AttendanceExcusesModule,
     AttendanceCalendarModule,
+    SubjectsModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
