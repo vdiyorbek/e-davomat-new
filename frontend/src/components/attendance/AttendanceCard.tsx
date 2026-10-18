@@ -106,12 +106,20 @@ export function AttendanceCard({ item }: { item: DailyAttendance }) {
         : '?';
 
     const status = item.attendanceStatus;
+    const newStatusLabels: Record<string, string> = {
+        day_off: 'Dam olish kuni',
+        unconfigured: 'Jadval sozlanmagan',
+        conflict: 'Kalendar ziddiyati',
+    };
     const statusStyle = {
         inside: 'bg-success/15 text-success',
         left: 'bg-warning/20 text-foreground',
         excused: 'bg-primary/10 text-primary',
         absent: 'bg-destructive/10 text-destructive',
         anomaly: 'bg-muted text-muted-foreground',
+        day_off: 'bg-muted text-muted-foreground',
+        unconfigured: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+        conflict: 'bg-destructive/10 text-destructive',
     }[status];
     const stripe = {
         inside: 'bg-success',
@@ -119,6 +127,9 @@ export function AttendanceCard({ item }: { item: DailyAttendance }) {
         excused: 'bg-primary',
         absent: 'bg-destructive',
         anomaly: 'bg-border',
+        day_off: 'bg-muted-foreground',
+        unconfigured: 'bg-amber-500',
+        conflict: 'bg-destructive',
     }[status];
 
     const moments = [
@@ -147,7 +158,9 @@ export function AttendanceCard({ item }: { item: DailyAttendance }) {
                     <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">{t('attendance.pnfl')}: {item.pnfl}</p>
                 </div>
                 <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', statusStyle)}>
-                    {t(`attendance.status.${status}`)}
+                    {t(`attendance.status.${status}`, {
+                        defaultValue: newStatusLabels[status] ?? status,
+                    })}
                 </span>
             </div>
 

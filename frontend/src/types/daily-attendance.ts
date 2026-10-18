@@ -9,7 +9,10 @@ export type AttendanceStatus =
   | "left"
   | "excused"
   | "absent"
-  | "anomaly";
+  | "anomaly"
+  | "day_off"
+  | "unconfigured"
+  | "conflict";
 
 export type CalendarStatus =
   | "WORK_DAY"

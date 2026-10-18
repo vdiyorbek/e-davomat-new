@@ -14,6 +14,9 @@ const STATUS_LABELS: Record<string, string> = {
   excused: 'Sababli',
   absent: 'Kelmagan',
   anomaly: 'Tekshirish kerak',
+  day_off: 'Dam olish kuni',
+  unconfigured: 'Jadval sozlanmagan',
+  conflict: 'Kalendar ziddiyati',
 };
 
 const REASON_LABELS: Record<string, string> = {

@@ -23,6 +23,9 @@ const STATUS_STYLE: Record<AttendanceStatus, string> = {
     excused: 'bg-primary/10 text-primary',
     absent: 'bg-destructive/10 text-destructive',
     anomaly: 'bg-muted text-muted-foreground',
+    day_off: 'bg-muted text-muted-foreground',
+    unconfigured: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+    conflict: 'bg-destructive/10 text-destructive',
 };
 const reasonLabels = {
     ILLNESS: 'Sog‘lig‘i sababli',
@@ -36,6 +39,9 @@ const STATUS_FALLBACK: Record<AttendanceStatus, string> = {
     excused: 'Sababli',
     absent: 'Kelmagan',
     anomaly: 'Tekshirish kerak',
+    day_off: 'Dam olish kuni',
+    unconfigured: 'Jadval sozlanmagan',
+    conflict: 'Kalendar ziddiyati',
 };
 
 const LOCALES: Record<string, string> = {
