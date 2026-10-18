@@ -1,4 +1,4 @@
-import { Building2, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog, FileCheck2 } from 'lucide-react';
+import { Building2, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog, FileCheck2, CalendarDays } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +56,11 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
             { to: '/teachers', label: t('nav.teachers'), icon: BookOpen },
             { to: '/terminals', label: t('nav.terminals'), icon: ScanFace },
             { to: '/classes', label: t('nav.classes'), icon: School },
+            {
+                to: '/attendance/calendar',
+                label: 'O‘quv kalendari',
+                icon: CalendarDays,
+            },
             {
                 to: '/users',
                 label: 'Foydalanuvchilar',
