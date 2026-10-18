@@ -11,6 +11,12 @@ export type AttendanceStatus =
   | "absent"
   | "anomaly";
 
+export type CalendarStatus =
+  | "WORK_DAY"
+  | "DAY_OFF"
+  | "UNCONFIGURED"
+  | "CONFLICT";
+
 export interface DailyAttendance {
   id: string;
   date: string;
@@ -19,7 +25,7 @@ export interface DailyAttendance {
   classId: number | null;
   className: string | null;
   academicYear: string | null;
-
+  calendarStatus: CalendarStatus;
   excuseId: number | null;
   excuseReason: "ILLNESS" | "OLYMPIAD" | "FAMILY" | "OTHER" | null;
 

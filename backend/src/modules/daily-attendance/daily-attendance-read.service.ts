@@ -29,9 +29,17 @@ import {
   GetDailyAttendanceQueryDto,
 } from './dto/get-daily-attendance-query.dto';
 
+import {
+  CalendarResolverService,
+  attendanceCalendarKey,
+} from '../attendance-calendar/calendar-resolver.service';
+
 @Injectable()
 export class DailyAttendanceReadService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly calendarResolver: CalendarResolverService,
+  ) {}
 
   private scopedQuery(user: AuthenticatedUser) {
     const builder = this.dataSource
@@ -386,6 +394,25 @@ export class DailyAttendanceReadService {
       }
     }
 
+    const calendarStates = await this.calendarResolver.resolveForAttendanceDay(
+      query.date,
+      membershipType,
+      rows.map((row) => {
+        const membership = classBySchoolAndPnfl.get(
+          `${row.schoolId}:${row.pnfl}`,
+        );
+
+        return {
+          schoolId: row.schoolId,
+          classId:
+            membershipType === MembershipType.STUDENT &&
+            membership?.classId != null
+              ? Number(membership.classId)
+              : null,
+        };
+      }),
+    );
+
     const personIds = [...new Set(persons.map((p) => p.id))];
 
     // Sahifadagi barcha o‘quvchilar uchun sababli
@@ -512,6 +539,16 @@ export class DailyAttendanceReadService {
 
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
+          calendarStatus:
+            calendarStates.get(
+              attendanceCalendarKey(
+                row.schoolId,
+                membershipType === MembershipType.STUDENT &&
+                  membership?.classId != null
+                  ? Number(membership.classId)
+                  : null,
+              ),
+            ) ?? 'UNCONFIGURED',
         };
       }),
       total,

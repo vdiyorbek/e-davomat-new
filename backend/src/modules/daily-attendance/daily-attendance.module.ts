@@ -6,9 +6,13 @@ import { DailyAttendanceController } from './daily-attendance.controller';
 import { DailyAttendanceService } from './daily-attendance.service';
 import { DailyAttendanceReadService } from './daily-attendance-read.service';
 import { DailyAttendanceExportService } from './daily-attendance-export.service';
+import { AttendanceCalendarModule } from '../attendance-calendar/attendance-calendar.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DailyAttendance])],
+  imports: [
+    TypeOrmModule.forFeature([DailyAttendance]),
+    AttendanceCalendarModule,
+  ],
   controllers: [DailyAttendanceController],
   providers: [
     DailyAttendanceService,

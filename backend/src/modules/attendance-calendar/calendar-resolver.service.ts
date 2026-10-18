@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -20,6 +20,21 @@ import {
 
 import { AttendanceWeeklySchedule } from './attendance-weekly-schedule.entity';
 import { GetCalendarDayStatusDto } from './dto/get-calendar-day-status.dto';
+
+export type AttendanceCalendarState =
+  'WORK_DAY' | 'DAY_OFF' | 'UNCONFIGURED' | 'CONFLICT';
+
+export interface AttendanceCalendarTarget {
+  schoolId: number;
+  classId: number | null;
+}
+
+export function attendanceCalendarKey(
+  schoolId: number,
+  classId: number | null,
+): string {
+  return `${schoolId}:${classId ?? 'none'}`;
+}
 
 @Injectable()
 export class CalendarResolverService {
@@ -289,5 +304,224 @@ export class CalendarResolverService {
       workingDaysMask: firstSchedule.workingDaysMask,
       weekdayIndex: weekday,
     };
+  }
+
+  async resolveForAttendanceDay(
+    date: string,
+    membershipType: MembershipType,
+    targets: AttendanceCalendarTarget[],
+  ): Promise<Map<string, AttendanceCalendarState>> {
+    const result = new Map<string, AttendanceCalendarState>();
+
+    if (targets.length === 0) {
+      return result;
+    }
+
+    const uniqueTargets = new Map<string, AttendanceCalendarTarget>();
+
+    for (const target of targets) {
+      uniqueTargets.set(
+        attendanceCalendarKey(target.schoolId, target.classId),
+        target,
+      );
+    }
+
+    const items = [...uniqueTargets.values()];
+    const schoolIds = [...new Set(items.map((item) => item.schoolId))];
+
+    const classIds = [
+      ...new Set(
+        items
+          .map((item) => item.classId)
+          .filter((id): id is number => id !== null),
+      ),
+    ];
+
+    const academicYear = this.academicYear(date);
+    const weekday = this.dayIndex(date);
+
+    // Maktablar, sinflar va kalendar sozlamalarini
+    // ommaviy yuklaymiz. Har bir o'quvchi uchun
+    // alohida SQL so'rovi yuborilmaydi.
+    const [schools, classes, rules, schedules] = await Promise.all([
+      this.dataSource.getRepository(School).find({
+        where: { id: In(schoolIds) },
+        relations: { district: true },
+      }),
+
+      classIds.length > 0
+        ? this.dataSource.getRepository(SchoolClass).find({
+            where: {
+              id: In(classIds),
+              academicYear,
+            },
+          })
+        : Promise.resolve([] as SchoolClass[]),
+
+      this.dataSource
+        .getRepository(AttendanceCalendarRule)
+        .createQueryBuilder('rule')
+        .where('rule.isActive = :active', {
+          active: true,
+        })
+        .andWhere('rule.startDate <= :date', { date })
+        .andWhere('rule.endDate >= :date', { date })
+        .andWhere('(rule.appliesTo = :audience OR rule.appliesTo = :both)', {
+          audience:
+            membershipType === MembershipType.STUDENT
+              ? CalendarAppliesTo.STUDENT
+              : CalendarAppliesTo.TEACHER,
+          both: CalendarAppliesTo.BOTH,
+        })
+        .getMany(),
+
+      this.dataSource
+        .getRepository(AttendanceWeeklySchedule)
+        .createQueryBuilder('schedule')
+        .where('schedule.schoolId IN (:...schoolIds)', {
+          schoolIds,
+        })
+        .andWhere('schedule.academicYear = :academicYear', { academicYear })
+        .andWhere('schedule.membershipType = :membershipType', {
+          membershipType,
+        })
+        .andWhere('schedule.effectiveFrom <= :date', {
+          date,
+        })
+        .andWhere(
+          '(schedule.effectiveTo IS NULL OR schedule.effectiveTo >= :date)',
+          { date },
+        )
+        .getMany(),
+    ]);
+
+    const schoolMap = new Map(schools.map((school) => [school.id, school]));
+
+    const classMap = new Map(
+      classes.map((schoolClass) => [schoolClass.id, schoolClass]),
+    );
+
+    for (const item of items) {
+      const key = attendanceCalendarKey(item.schoolId, item.classId);
+
+      const school = schoolMap.get(item.schoolId);
+
+      if (!school) {
+        result.set(key, 'UNCONFIGURED');
+        continue;
+      }
+
+      const isStudent = membershipType === MembershipType.STUDENT;
+
+      const schoolClass =
+        item.classId !== null ? classMap.get(item.classId) : undefined;
+
+      if (isStudent && (!schoolClass || schoolClass.schoolId !== school.id)) {
+        result.set(key, 'UNCONFIGURED');
+        continue;
+      }
+
+      const applicableRules = rules
+        .filter((rule) => {
+          switch (rule.scopeType) {
+            case CalendarScopeType.GLOBAL:
+              return true;
+
+            case CalendarScopeType.REGION:
+              return rule.regionId === school.district.regionId;
+
+            case CalendarScopeType.DISTRICT:
+              return rule.districtId === school.districtId;
+
+            case CalendarScopeType.SCHOOL:
+              return (
+                rule.schoolId === school.id &&
+                (rule.classId === null ||
+                  (isStudent && rule.classId === item.classId))
+              );
+
+            default:
+              return false;
+          }
+        })
+        .sort(
+          (a, b) => this.rulePriority(b) - this.rulePriority(a) || a.id - b.id,
+        );
+
+      if (applicableRules.length > 0) {
+        const first = applicableRules[0];
+        const priority = this.rulePriority(first);
+
+        const samePriority = applicableRules.filter(
+          (rule) => this.rulePriority(rule) === priority,
+        );
+
+        const conflict = samePriority.some(
+          (rule) => rule.dayType !== first.dayType,
+        );
+
+        result.set(key, conflict ? 'CONFLICT' : first.dayType);
+
+        continue;
+      }
+
+      // Maxsus qoida yo'q: haftalik jadvalni olamiz.
+      const applicableSchedules = schedules
+        .filter((schedule) => {
+          if (schedule.schoolId !== school.id) {
+            return false;
+          }
+
+          if (!isStudent) {
+            return (
+              schedule.classId === null &&
+              schedule.gradeFrom === null &&
+              schedule.gradeTo === null
+            );
+          }
+
+          if (schedule.classId !== null) {
+            return schedule.classId === item.classId;
+          }
+
+          const grade = schoolClass?.gradeLevel;
+
+          return (
+            grade != null &&
+            schedule.gradeFrom !== null &&
+            schedule.gradeTo !== null &&
+            grade >= schedule.gradeFrom &&
+            grade <= schedule.gradeTo
+          );
+        })
+        .sort(
+          (a, b) =>
+            Number(b.classId !== null) - Number(a.classId !== null) ||
+            a.id - b.id,
+        );
+
+      if (applicableSchedules.length === 0) {
+        result.set(key, 'UNCONFIGURED');
+        continue;
+      }
+
+      const selected = applicableSchedules[0];
+
+      const samePrioritySchedules = applicableSchedules.filter(
+        (schedule) =>
+          (schedule.classId !== null) === (selected.classId !== null),
+      );
+
+      if (samePrioritySchedules.length > 1) {
+        result.set(key, 'CONFLICT');
+        continue;
+      }
+
+      const isWorkingDay = (selected.workingDaysMask & (1 << weekday)) !== 0;
+
+      result.set(key, isWorkingDay ? 'WORK_DAY' : 'DAY_OFF');
+    }
+
+    return result;
   }
 }
