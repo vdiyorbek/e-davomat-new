@@ -25,11 +25,7 @@ const MAX_PDF_SIZE = 30 * 1024 * 1024;
 
 @Injectable()
 export class TextbooksService {
-  private readonly directory = join(
-    process.cwd(),
-    'private-uploads',
-    'textbooks',
-  );
+  private readonly directory = join(process.cwd(), 'uploads', 'textbooks');
 
   constructor(
     @InjectRepository(Textbook)
