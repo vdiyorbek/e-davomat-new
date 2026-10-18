@@ -268,7 +268,13 @@ export async function authorizedGet<T>(
     checkRequest();
 
     try {
-      data = await apiGet<T>(path, current.token, signal, responseType, timeoutMs);
+      data = await apiGet<T>(
+        path,
+        current.token,
+        signal,
+        responseType,
+        timeoutMs,
+      );
     } catch (retryError: unknown) {
       if (
         retryError instanceof ApiError &&
@@ -290,6 +296,7 @@ export async function authorizedGet<T>(
 export async function authorizedPost<T>(
   path: string,
   body: unknown,
+  timeoutMs?: number,
 ): Promise<T> {
   const requestGeneration = generation;
 
@@ -314,7 +321,7 @@ export async function authorizedPost<T>(
   let result: T;
 
   try {
-    result = await apiPost<T>(path, current.token, body);
+    result = await apiPost<T>(path, current.token, body, timeoutMs);
   } catch (error: unknown) {
     checkSession();
 
@@ -327,7 +334,7 @@ export async function authorizedPost<T>(
     checkSession();
 
     try {
-      result = await apiPost<T>(path, current.token, body);
+      result = await apiPost<T>(path, current.token, body, timeoutMs);
     } catch (retryError: unknown) {
       if (
         retryError instanceof ApiError &&

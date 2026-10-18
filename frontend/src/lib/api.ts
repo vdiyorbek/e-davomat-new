@@ -94,11 +94,13 @@ export function apiPost<T>(
   path: string,
   token: string,
   body: unknown,
+  timeoutMs?: number,
 ): Promise<T> {
   return request<T>({
     method: "POST",
     url: path,
     data: body,
+    timeout: timeoutMs,
     headers: {
       Authorization: `Bearer ${token}`,
     },

@@ -5,7 +5,8 @@ import { BookOpen, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useApiQuery } from '@/hooks/useApiQuery';
-
+import { TextbookUploadForm } from './TextbookUploadForm';
+import { TextbookExtractButton } from './TextbookExtractButton';
 interface Textbook {
     id: number;
     subjectId: number;
@@ -19,6 +20,7 @@ interface Textbook {
 interface Subject {
     id: number;
     nameUz: string;
+    isActive?: boolean;
 }
 
 interface TextbookTopic {
@@ -51,7 +53,13 @@ const reviewLabels: Record<TextbookTopic['reviewStatus'], string> = {
     REJECTED: 'Rad etilgan',
 };
 
-function TopicsList({ textbookId }: { textbookId: number }) {
+function TopicsList({
+    textbookId,
+    onUpdated,
+}: {
+    textbookId: number;
+    onUpdated: () => void;
+}) {
     const query = useApiQuery<TopicsResponse>(
         `/textbooks/${textbookId}/topics`,
     );
@@ -89,9 +97,19 @@ function TopicsList({ textbookId }: { textbookId: number }) {
                     {query.error}
                 </p>
             ) : !query.data?.topics.length ? (
-                <p className="text-sm text-muted-foreground">
-                    Ushbu darslikning mavzulari hali ajratilmagan.
-                </p>
+                <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                        Ushbu darslikning mavzulari hali ajratilmagan.
+                    </p>
+
+                    <TextbookExtractButton
+                        textbookId={textbookId}
+                        onExtracted={() => {
+                            query.retry();
+                            onUpdated();
+                        }}
+                    />
+                </div>
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-border">
                     <table className="w-full text-left text-sm">
@@ -165,7 +183,16 @@ export function TextbooksPage() {
                 description="PDF darsliklar va Gemini yordamida ajratilgan mavzularni boshqarish."
                 actions={<BookOpen className="size-7 text-primary" />}
             />
+            {subjectsQuery.error && (
+                <p role="alert" className="text-sm text-destructive">
+                    Fanlarni yuklashda xatolik: {subjectsQuery.error}
+                </p>
+            )}
 
+            <TextbookUploadForm
+                subjects={subjects.filter((item) => item.isActive !== false)}
+                onUploaded={textbooksQuery.retry}
+            />
             <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -275,6 +302,7 @@ export function TextbooksPage() {
                 <TopicsList
                     key={selectedId}
                     textbookId={selectedId}
+                    onUpdated={textbooksQuery.retry}
                 />
             )}
         </div>
