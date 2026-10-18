@@ -20,6 +20,7 @@ import { AttendanceExcusesPage } from '@/pages/attendance/AttendanceExcusesPage'
 import { StudentAttendancePage } from '@/pages/attendance/StudentAttendancePage';
 import { TeacherAttendancePage } from '@/pages/attendance/TeacherAttendancePage';
 import { AttendanceCalendarPage } from '@/pages/attendance/AttendanceCalendarPage';
+import { TeacherAssignmentsPage } from '@/pages/teacher-assignments/TeacherAssignmentsPage';
 
 export const router = createBrowserRouter([
     {
@@ -79,6 +80,10 @@ export const router = createBrowserRouter([
                                         element: <AttendanceExcusesPage />,
                                     },
                                 ],
+                            },
+                            {
+                                path: '/teacher-assignments',
+                                element: <TeacherAssignmentsPage />,
                             },
                         ],
                     },
