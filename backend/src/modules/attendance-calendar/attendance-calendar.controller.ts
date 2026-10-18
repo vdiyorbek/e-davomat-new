@@ -16,7 +16,8 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { AttendanceCalendarService } from './attendance-calendar.service';
 import { GetCalendarRulesDto } from './dto/get-calendar-rules.dto';
 import { Body, Post } from '@nestjs/common';
-
+import { CalendarResolverService } from './calendar-resolver.service';
+import { GetCalendarDayStatusDto } from './dto/get-calendar-day-status.dto';
 import { AttendanceCalendarWriteService } from './attendance-calendar-write.service';
 import { CreateCalendarRuleDto } from './dto/create-calendar-rule.dto';
 import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.service';
@@ -36,6 +37,7 @@ export class AttendanceCalendarController {
     private readonly calendarService: AttendanceCalendarService,
     private readonly calendarWriteService: AttendanceCalendarWriteService,
     private readonly weeklySchedulesService: AttendanceWeeklySchedulesService,
+    private readonly calendarResolver: CalendarResolverService,
   ) {}
 
   @Get('rules')
@@ -109,5 +111,17 @@ export class AttendanceCalendarController {
     }
 
     return this.calendarWriteService.cancelRule(id, request.authUser);
+  }
+
+  @Get('day-status')
+  getDayStatus(
+    @Query() query: GetCalendarDayStatusDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.calendarResolver.resolve(query, request.authUser);
   }
 }

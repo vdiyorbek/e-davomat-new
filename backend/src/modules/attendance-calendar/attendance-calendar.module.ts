@@ -8,7 +8,7 @@ import { SchoolClass } from '../classes/school-class.entity';
 
 import { AttendanceCalendarRule } from './attendance-calendar-rule.entity';
 import { AttendanceWeeklySchedule } from './attendance-weekly-schedule.entity';
-
+import { CalendarResolverService } from './calendar-resolver.service';
 import { AttendanceCalendarController } from './attendance-calendar.controller';
 import { AttendanceCalendarService } from './attendance-calendar.service';
 import { AttendanceCalendarWriteService } from './attendance-calendar-write.service';
@@ -30,7 +30,12 @@ import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.
     AttendanceCalendarService,
     AttendanceCalendarWriteService,
     AttendanceWeeklySchedulesService,
+    CalendarResolverService,
   ],
-  exports: [AttendanceCalendarService, AttendanceWeeklySchedulesService],
+  exports: [
+    AttendanceCalendarService,
+    AttendanceWeeklySchedulesService,
+    CalendarResolverService,
+  ],
 })
 export class AttendanceCalendarModule {}
