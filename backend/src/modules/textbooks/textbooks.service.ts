@@ -139,4 +139,23 @@ export class TextbooksService {
       throw error;
     }
   }
+
+  async findAll() {
+    return this.textbooksRepository.find({
+      select: {
+        id: true,
+        subjectId: true,
+        gradeLevel: true,
+        title: true,
+        languageCode: true,
+        processingStatus: true,
+        isVerified: true,
+        createdAt: true,
+      },
+      order: {
+        id: 'DESC',
+      },
+      take: 200,
+    });
+  }
 }

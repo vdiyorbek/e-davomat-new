@@ -140,4 +140,9 @@ export class TextbooksController {
 
     return this.textbookTopicsService.approveTopic(topicId, actor);
   }
+
+  @Get()
+  findAll() {
+    return this.textbooksService.findAll();
+  }
 }

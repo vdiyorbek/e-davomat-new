@@ -1,4 +1,4 @@
-import { Building2, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog, FileCheck2, CalendarDays, BookOpenCheck } from 'lucide-react';
+import { Building2, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog, FileCheck2, CalendarDays, BookOpenCheck, LibraryBig } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +59,15 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
                 label: 'Fan va sinf biriktirish',
                 icon: BookOpenCheck,
             },
+            ...(session.profile.role === 'SUPER_ADMIN'
+                ? [
+                    {
+                        to: '/textbooks',
+                        label: 'Darsliklar kutubxonasi',
+                        icon: LibraryBig,
+                    },
+                ]
+                : []),
             { to: '/terminals', label: t('nav.terminals'), icon: ScanFace },
             { to: '/classes', label: t('nav.classes'), icon: School },
             {

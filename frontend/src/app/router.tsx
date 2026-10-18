@@ -21,7 +21,7 @@ import { StudentAttendancePage } from '@/pages/attendance/StudentAttendancePage'
 import { TeacherAttendancePage } from '@/pages/attendance/TeacherAttendancePage';
 import { AttendanceCalendarPage } from '@/pages/attendance/AttendanceCalendarPage';
 import { TeacherAssignmentsPage } from '@/pages/teacher-assignments/TeacherAssignmentsPage';
-
+import { TextbooksPage } from '@/pages/textbooks/TextbooksPage';
 export const router = createBrowserRouter([
     {
         element: <AuthLayout />,
@@ -84,6 +84,15 @@ export const router = createBrowserRouter([
                             {
                                 path: '/teacher-assignments',
                                 element: <TeacherAssignmentsPage />,
+                            },
+                            {
+                                element: <RequireRole roles={['SUPER_ADMIN']} />,
+                                children: [
+                                    {
+                                        path: '/textbooks',
+                                        element: <TextbooksPage />,
+                                    },
+                                ],
                             },
                         ],
                     },
