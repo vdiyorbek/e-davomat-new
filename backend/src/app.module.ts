@@ -22,6 +22,8 @@ import { ClassesModule } from './modules/classes/classes.module';
 import { AttendanceExcusesModule } from './modules/attendance-excuses/attendance-excuses.module';
 import { AttendanceCalendarModule } from './modules/attendance-calendar/attendance-calendar.module';
 import { SubjectsModule } from './modules/subjects/subjects.module';
+import { TeacherAssignmentsModule } from './modules/teacher-assignments/teacher-assignments.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,6 +50,7 @@ import { SubjectsModule } from './modules/subjects/subjects.module';
     AttendanceExcusesModule,
     AttendanceCalendarModule,
     SubjectsModule,
+    TeacherAssignmentsModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
