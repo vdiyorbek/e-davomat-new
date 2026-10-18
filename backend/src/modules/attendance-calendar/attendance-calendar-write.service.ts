@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { SchoolClass } from '../classes/school-class.entity';
@@ -39,6 +39,8 @@ export class AttendanceCalendarWriteService {
 
     @InjectRepository(SchoolClass)
     private readonly classes: Repository<SchoolClass>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async createRule(dto: CreateCalendarRuleDto, actor: AuthenticatedUser) {
@@ -274,5 +276,99 @@ export class AttendanceCalendarWriteService {
     });
 
     return this.rules.save(entity);
+  }
+
+  async cancelRule(id: number, actor: AuthenticatedUser) {
+    return this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(AttendanceCalendarRule);
+
+      const rule = await repo.findOne({
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!rule) {
+        throw new NotFoundException('Kalendar qoidasi topilmadi');
+      }
+
+      let allowed = actor.role === UserRole.SUPER_ADMIN;
+
+      if (!allowed) {
+        switch (rule.scopeType) {
+          case CalendarScopeType.GLOBAL:
+            allowed = false;
+            break;
+
+          case CalendarScopeType.REGION:
+            allowed =
+              actor.role === UserRole.REGION_ADMIN &&
+              actor.regionId === rule.regionId;
+            break;
+
+          case CalendarScopeType.DISTRICT: {
+            const district = rule.districtId
+              ? await manager.findOneBy(District, {
+                  id: rule.districtId,
+                })
+              : null;
+
+            allowed =
+              district !== null &&
+              ((actor.role === UserRole.REGION_ADMIN &&
+                actor.regionId === district.regionId) ||
+                (actor.role === UserRole.DISTRICT_ADMIN &&
+                  actor.districtId === district.id));
+            break;
+          }
+
+          case CalendarScopeType.SCHOOL: {
+            const school = rule.schoolId
+              ? await manager.findOne(School, {
+                  where: { id: rule.schoolId },
+                  relations: { district: true },
+                })
+              : null;
+
+            allowed =
+              school !== null &&
+              ((actor.role === UserRole.REGION_ADMIN &&
+                actor.regionId === school.district.regionId) ||
+                (actor.role === UserRole.DISTRICT_ADMIN &&
+                  actor.districtId === school.districtId) ||
+                (actor.role === UserRole.SCHOOL_ADMIN &&
+                  actor.schoolId === school.id));
+            break;
+          }
+
+          default:
+            allowed = false;
+        }
+      }
+
+      if (!allowed) {
+        throw new ForbiddenException(
+          'Ushbu qoidani bekor qilishga ruxsat yo‘q',
+        );
+      }
+
+      if (!rule.isActive) {
+        return {
+          id: rule.id,
+          isActive: false,
+          message: 'Qoida avval bekor qilingan',
+        };
+      }
+
+      rule.isActive = false;
+      rule.updatedByUserId = actor.id;
+
+      await repo.save(rule);
+
+      return {
+        id: rule.id,
+        isActive: false,
+        message: 'Kalendar qoidasi bekor qilindi',
+      };
+    });
   }
 }

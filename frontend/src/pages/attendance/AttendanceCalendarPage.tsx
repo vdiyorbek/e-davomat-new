@@ -11,7 +11,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { authorizedPost } from '@/lib/auth-session';
 import type { School } from '@/types/school';
-
+import { CalendarSpecialDays } from '@/components/attendance/CalendarSpecialDays';
 type MembershipType = 'STUDENT' | 'TEACHER';
 
 interface WeeklySchedule {
@@ -439,7 +439,8 @@ function WeeklySchedules({
 export function AttendanceCalendarPage() {
     const { session } = useAuth();
     const schoolsQuery = useApiQuery<School[]>('/schools');
-
+    const [activeTab, setActiveTab] =
+        useState<'weekly' | 'special'>('weekly');
     const [selectedSchoolId, setSelectedSchoolId] = useState('');
     const [academicYear, setAcademicYear] =
         useState(getAcademicYear);
@@ -517,17 +518,49 @@ export function AttendanceCalendarPage() {
                 </p>
             )}
 
+
             {selectedSchool && validYear ? (
-                <WeeklySchedules
-                    key={`${selectedSchool.id}-${academicYear}`}
-                    schoolId={selectedSchool.id}
-                    academicYear={academicYear}
-                />
+                <div className="space-y-5">
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            type="button"
+                            variant={activeTab === 'weekly' ? 'default' : 'outline'}
+                            aria-pressed={activeTab === 'weekly'}
+                            onClick={() => setActiveTab('weekly')}
+                        >
+                            Haftalik o‘quv rejasi
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant={activeTab === 'special' ? 'default' : 'outline'}
+                            aria-pressed={activeTab === 'special'}
+                            onClick={() => setActiveTab('special')}
+                        >
+                            Bayram va ta’tillar
+                        </Button>
+                    </div>
+
+                    {activeTab === 'weekly' ? (
+                        <WeeklySchedules
+                            key={`${selectedSchool.id}-${academicYear}`}
+                            schoolId={selectedSchool.id}
+                            academicYear={academicYear}
+                        />
+                    ) : (
+                        <CalendarSpecialDays
+                            key={`${selectedSchool.id}-${academicYear}`}
+                            school={selectedSchool}
+                            academicYear={academicYear}
+                        />
+                    )}
+                </div>
             ) : (
                 <p className="text-sm text-muted-foreground">
                     Davom etish uchun maktab va o‘quv yilini tanlang.
                 </p>
             )}
+
         </div>
     );
 }

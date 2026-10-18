@@ -98,4 +98,16 @@ export class AttendanceCalendarController {
 
     return this.weeklySchedulesService.update(id, dto, request.authUser);
   }
+
+  @Patch('rules/:id/cancel')
+  cancelRule(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.calendarWriteService.cancelRule(id, request.authUser);
+  }
 }
