@@ -21,6 +21,7 @@ import { AttendanceCalendarRule } from '../modules/attendance-calendar/attendanc
 import { Subject } from '../modules/subjects/subject.entity';
 import { TeacherClassSubject } from '../modules/teacher-assignments/teacher-class-subject.entity';
 import { Textbook } from '../modules/textbooks/textbook.entity';
+import { TextbookTopic } from '../modules/textbooks/textbook-topic.entity';
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -66,6 +67,7 @@ export default new DataSource({
     Subject,
     TeacherClassSubject,
     Textbook,
+    TextbookTopic,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],
