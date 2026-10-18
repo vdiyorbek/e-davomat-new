@@ -10,11 +10,13 @@ import {
   UnauthorizedException,
   UploadedFile,
   UseInterceptors,
+  Get,
+  Patch,
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-
+import { UpdateTextbookTopicDto } from './dto/update-textbook-topic.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -93,5 +95,49 @@ export class TextbooksController {
       model: result.model,
       topics: result.topics,
     };
+  }
+
+  @Get(':id/topics')
+  @Header('Cache-Control', 'no-store')
+  getTopics(
+    @Param('id', ParseIntPipe) textbookId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbookTopicsService.findByTextbook(textbookId, actor);
+  }
+
+  @Patch('topics/:topicId')
+  updateTopic(
+    @Param('topicId', ParseIntPipe) topicId: number,
+    @Body() dto: UpdateTextbookTopicDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbookTopicsService.updateTopic(topicId, dto, actor);
+  }
+
+  @Patch('topics/:topicId/approve')
+  approveTopic(
+    @Param('topicId', ParseIntPipe) topicId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbookTopicsService.approveTopic(topicId, actor);
   }
 }

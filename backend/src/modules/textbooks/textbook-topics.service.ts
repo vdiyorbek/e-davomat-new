@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
+import { UpdateTextbookTopicDto } from './dto/update-textbook-topic.dto';
 import { DataSource } from 'typeorm';
 
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
@@ -147,6 +147,121 @@ export class TextbookTopicsService {
         savedCount: entities.length,
         reviewStatus: TopicReviewStatus.PENDING_REVIEW,
       };
+    });
+  }
+
+  // 1. Darslik mavzularini olish
+  async findByTextbook(textbookId: number, actor: AuthenticatedUser) {
+    this.requireSuperAdmin(actor);
+
+    const textbook = await this.dataSource
+      .getRepository(Textbook)
+      .findOneBy({ id: textbookId });
+
+    if (!textbook) {
+      throw new NotFoundException('Darslik topilmadi');
+    }
+
+    const topics = await this.dataSource.getRepository(TextbookTopic).find({
+      where: { textbookId },
+      order: { orderIndex: 'ASC' },
+    });
+
+    return {
+      textbookId: textbook.id,
+      textbookTitle: textbook.title,
+      total: topics.length,
+      topics,
+    };
+  }
+
+  // 2. Mavzuni tahrirlash
+  async updateTopic(
+    topicId: number,
+    dto: UpdateTextbookTopicDto,
+    actor: AuthenticatedUser,
+  ) {
+    this.requireSuperAdmin(actor);
+
+    if (Object.keys(dto).length === 0) {
+      throw new BadRequestException('O‘zgartiriladigan ma’lumot yuborilmagan');
+    }
+
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      const topic = await manager.findOne(TextbookTopic, {
+        where: { id: topicId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!topic) {
+        throw new NotFoundException('Mavzu topilmadi');
+      }
+
+      const title = dto.title === undefined ? topic.title : dto.title.trim();
+
+      const chapterTitle =
+        dto.chapterTitle === undefined
+          ? topic.chapterTitle
+          : dto.chapterTitle?.trim() || null;
+
+      const pageStart =
+        dto.pageStart === undefined ? topic.pageStart : dto.pageStart;
+
+      const pageEnd = dto.pageEnd === undefined ? topic.pageEnd : dto.pageEnd;
+
+      if (!title || title.length > 255) {
+        throw new BadRequestException('Mavzu nomi noto‘g‘ri');
+      }
+
+      if (pageStart !== null && pageEnd !== null && pageStart > pageEnd) {
+        throw new BadRequestException(
+          'Boshlanish sahifasi tugash sahifasidan katta',
+        );
+      }
+
+      const changed =
+        topic.title !== title ||
+        topic.chapterTitle !== chapterTitle ||
+        topic.pageStart !== pageStart ||
+        topic.pageEnd !== pageEnd;
+
+      if (!changed) {
+        return topic;
+      }
+
+      topic.title = title;
+      topic.chapterTitle = chapterTitle;
+      topic.pageStart = pageStart;
+      topic.pageEnd = pageEnd;
+
+      // Tahrirlangan mavzu qayta tasdiqlanishi kerak.
+      topic.reviewStatus = TopicReviewStatus.PENDING_REVIEW;
+
+      return manager.save(TextbookTopic, topic);
+    });
+  }
+
+  // 3. Mavzuni tasdiqlash
+  async approveTopic(topicId: number, actor: AuthenticatedUser) {
+    this.requireSuperAdmin(actor);
+
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      const topic = await manager.findOne(TextbookTopic, {
+        where: { id: topicId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!topic) {
+        throw new NotFoundException('Mavzu topilmadi');
+      }
+
+      if (topic.reviewStatus === TopicReviewStatus.APPROVED) {
+        return topic;
+      }
+
+      topic.reviewStatus = TopicReviewStatus.APPROVED;
+
+      return manager.save(TextbookTopic, topic);
     });
   }
 }
