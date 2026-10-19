@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { TextbookUploadForm } from './TextbookUploadForm';
 import { TextbookExtractButton } from './TextbookExtractButton';
+import { TextbookTopicRow } from './TextbookTopicRow';
+
 interface Textbook {
     id: number;
     subjectId: number;
@@ -47,11 +49,6 @@ const processingLabels: Record<Textbook['processingStatus'], string> = {
     FAILED: 'Tahlilda xatolik',
 };
 
-const reviewLabels: Record<TextbookTopic['reviewStatus'], string> = {
-    PENDING_REVIEW: 'Tekshirilmagan',
-    APPROVED: 'Tasdiqlangan',
-    REJECTED: 'Rad etilgan',
-};
 
 function TopicsList({
     textbookId,
@@ -120,36 +117,17 @@ function TopicsList({
                                 <th className="px-4 py-3">Mavzu</th>
                                 <th className="px-4 py-3">Sahifalar</th>
                                 <th className="px-4 py-3">Holati</th>
+                                <th className="px-4 py-3">Amallar</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {query.data.topics.map((topic) => (
-                                <tr key={topic.id} className="border-t border-border">
-                                    <td className="px-4 py-3 tabular-nums">
-                                        {topic.orderIndex}
-                                    </td>
-
-                                    <td className="px-4 py-3">
-                                        {topic.chapterTitle ?? '—'}
-                                    </td>
-
-                                    <td className="px-4 py-3 font-medium">
-                                        {topic.title}
-                                    </td>
-
-                                    <td className="px-4 py-3 tabular-nums">
-                                        {topic.pageStart == null
-                                            ? '—'
-                                            : topic.pageEnd == null
-                                                ? String(topic.pageStart)
-                                                : `${topic.pageStart}–${topic.pageEnd}`}
-                                    </td>
-
-                                    <td className="px-4 py-3">
-                                        {reviewLabels[topic.reviewStatus]}
-                                    </td>
-                                </tr>
+                                <TextbookTopicRow
+                                    key={topic.id}
+                                    topic={topic}
+                                    onUpdated={query.retry}
+                                />
                             ))}
                         </tbody>
                     </table>
