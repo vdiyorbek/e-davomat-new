@@ -47,6 +47,11 @@ export class TextbookTopicsService {
     if (!textbook) {
       throw new NotFoundException('Darslik topilmadi');
     }
+    if (!textbook.isActive) {
+      throw new ConflictException(
+        'Arxivlangan darslikni tahlil qilish mumkin emas',
+      );
+    }
 
     const hasTopics = await this.dataSource
       .getRepository(TextbookTopic)

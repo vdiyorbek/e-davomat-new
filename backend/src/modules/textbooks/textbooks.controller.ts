@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   Get,
   Patch,
+  Delete,
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -25,6 +26,7 @@ import { TextbooksService } from './textbooks.service';
 import { UploadTextbookDto } from './dto/upload-textbook.dto';
 import { TextbookTopicsService } from './textbook-topics.service';
 import { CreateTextbookTopicDto } from './dto/create-textbook-topic.dto';
+import { UpdateTextbookDto } from './dto/update-textbook.dto';
 
 @Controller('textbooks')
 @Roles(UserRole.SUPER_ADMIN)
@@ -161,5 +163,39 @@ export class TextbooksController {
     }
 
     return this.textbookTopicsService.createManualTopic(textbookId, dto, actor);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.textbooksService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTextbookDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbooksService.update(id, dto, actor);
+  }
+
+  @Delete(':id')
+  archive(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbooksService.archive(id, actor);
   }
 }
