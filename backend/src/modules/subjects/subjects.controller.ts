@@ -1,10 +1,20 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 
 import { SubjectsService } from './subjects.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
+import { UpdateSubjectDto } from './dto/update-subject.dto';
 
 @Controller('subjects')
 @Roles(
@@ -22,9 +32,26 @@ export class SubjectsController {
     return this.subjectsService.findAll();
   }
 
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.subjectsService.findOne(id);
+  }
+
   @Post()
   @Roles(UserRole.SUPER_ADMIN)
   create(@Body() dto: CreateSubjectDto) {
     return this.subjectsService.create(dto);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSubjectDto) {
+    return this.subjectsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  archive(@Param('id', ParseIntPipe) id: number) {
+    return this.subjectsService.archive(id);
   }
 }
