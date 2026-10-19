@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPost } from '@/lib/auth-session';
-
+import { SubjectRow } from './SubjectRow';
 interface Subject {
     id: number;
     code: string;
@@ -212,43 +212,18 @@ export function SubjectsPage() {
                                     <th className="px-4 py-3">O‘zbekcha nomi</th>
                                     <th className="px-4 py-3">Ruscha nomi</th>
                                     <th className="px-4 py-3">Holati</th>
+                                    <th className="px-4 py-3">Amallar</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 {subjects.map((subject, index) => (
-                                    <tr
+                                    <SubjectRow
                                         key={subject.id}
-                                        className="border-t border-border"
-                                    >
-                                        <td className="px-4 py-3 tabular-nums">
-                                            {index + 1}
-                                        </td>
-
-                                        <td className="px-4 py-3 font-medium">
-                                            {subject.code}
-                                        </td>
-
-                                        <td className="px-4 py-3">
-                                            {subject.nameUz}
-                                        </td>
-
-                                        <td className="px-4 py-3">
-                                            {subject.nameRu ?? '—'}
-                                        </td>
-
-                                        <td className="px-4 py-3">
-                                            <span
-                                                className={
-                                                    subject.isActive
-                                                        ? 'font-medium text-green-600'
-                                                        : 'text-muted-foreground'
-                                                }
-                                            >
-                                                {subject.isActive ? 'Faol' : 'Faol emas'}
-                                            </span>
-                                        </td>
-                                    </tr>
+                                        subject={subject}
+                                        index={index + 1}
+                                        onUpdated={query.retry}
+                                    />
                                 ))}
                             </tbody>
                         </table>
