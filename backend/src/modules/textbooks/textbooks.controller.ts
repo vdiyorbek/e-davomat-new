@@ -24,6 +24,8 @@ import { GeminiTextbookService } from './gemini-textbook.service';
 import { TextbooksService } from './textbooks.service';
 import { UploadTextbookDto } from './dto/upload-textbook.dto';
 import { TextbookTopicsService } from './textbook-topics.service';
+import { CreateTextbookTopicDto } from './dto/create-textbook-topic.dto';
+
 @Controller('textbooks')
 @Roles(UserRole.SUPER_ADMIN)
 export class TextbooksController {
@@ -144,5 +146,20 @@ export class TextbooksController {
   @Get()
   findAll() {
     return this.textbooksService.findAll();
+  }
+
+  @Post(':id/topics')
+  createManualTopic(
+    @Param('id', ParseIntPipe) textbookId: number,
+    @Body() dto: CreateTextbookTopicDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbookTopicsService.createManualTopic(textbookId, dto, actor);
   }
 }

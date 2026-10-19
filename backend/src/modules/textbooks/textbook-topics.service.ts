@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { UpdateTextbookTopicDto } from './dto/update-textbook-topic.dto';
 import { DataSource } from 'typeorm';
-
+import { CreateTextbookTopicDto } from './dto/create-textbook-topic.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
 
@@ -262,6 +262,85 @@ export class TextbookTopicsService {
       topic.reviewStatus = TopicReviewStatus.APPROVED;
 
       return manager.save(TextbookTopic, topic);
+    });
+  }
+
+  // Mavzuni qo'lda yaratish
+  async createManualTopic(
+    textbookId: number,
+    dto: CreateTextbookTopicDto,
+    actor: AuthenticatedUser,
+  ): Promise<TextbookTopic> {
+    this.requireSuperAdmin(actor);
+
+    const title = dto.title.trim();
+    const chapterTitle = dto.chapterTitle?.trim() || null;
+
+    if (!title) {
+      throw new BadRequestException('Mavzu nomi bo‘sh bo‘lmasligi kerak');
+    }
+
+    const pageStart = dto.pageStart ?? null;
+    const pageEnd = dto.pageEnd ?? null;
+
+    if (pageStart !== null && pageEnd !== null && pageStart > pageEnd) {
+      throw new BadRequestException(
+        'Boshlanish sahifasi tugash sahifasidan katta',
+      );
+    }
+
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      // Bir darslikka parallel qo'shishlarda
+      // tartib raqami takrorlanmasligi uchun.
+      const textbook = await manager.findOne(Textbook, {
+        where: { id: textbookId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!textbook) {
+        throw new NotFoundException('Darslik topilmadi');
+      }
+
+      if (!textbook.isActive) {
+        throw new ConflictException('Darslik faol emas');
+      }
+
+      const repository = manager.getRepository(TextbookTopic);
+
+      const total = await repository.countBy({ textbookId });
+
+      if (total >= 500) {
+        throw new ConflictException(
+          'Bir darslikda 500 tadan ortiq mavzu bo‘lishi mumkin emas',
+        );
+      }
+
+      const result = await repository
+        .createQueryBuilder('topic')
+        .select('MAX(topic.orderIndex)', 'maxOrder')
+        .where('topic.textbookId = :textbookId', { textbookId })
+        .getRawOne<{ maxOrder: string | null }>();
+
+      const maxOrder = Number(result?.maxOrder ?? 0);
+
+      if (!Number.isSafeInteger(maxOrder) || maxOrder >= 4294967295) {
+        throw new ConflictException(
+          'Mavzular tartib raqami chegarasiga yetgan',
+        );
+      }
+
+      const topic = repository.create({
+        textbookId,
+        orderIndex: maxOrder + 1,
+        chapterTitle,
+        title,
+        pageStart,
+        pageEnd,
+        source: TopicSource.MANUAL,
+        reviewStatus: TopicReviewStatus.PENDING_REVIEW,
+      });
+
+      return repository.save(topic);
     });
   }
 }
