@@ -1,4 +1,4 @@
-import { Building2, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog, FileCheck2, CalendarDays, BookOpenCheck, LibraryBig } from 'lucide-react';
+import { Building2, UserRound, Users, BookOpen, ScanFace, ClipboardCheck, School, UserCog, FileCheck2, CalendarDays, BookOpenCheck, LibraryBig, BookMarked } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -61,6 +61,11 @@ export function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
             },
             ...(session.profile.role === 'SUPER_ADMIN'
                 ? [
+                    {
+                        to: '/subjects',
+                        label: 'Fanlar',
+                        icon: BookMarked,
+                    },
                     {
                         to: '/textbooks',
                         label: 'Darsliklar kutubxonasi',

@@ -21,6 +21,7 @@ import { StudentAttendancePage } from '@/pages/attendance/StudentAttendancePage'
 import { TeacherAttendancePage } from '@/pages/attendance/TeacherAttendancePage';
 import { AttendanceCalendarPage } from '@/pages/attendance/AttendanceCalendarPage';
 import { TeacherAssignmentsPage } from '@/pages/teacher-assignments/TeacherAssignmentsPage';
+import { SubjectsPage } from '@/pages/subjects/SubjectsPage';
 import { TextbooksPage } from '@/pages/textbooks/TextbooksPage';
 export const router = createBrowserRouter([
     {
@@ -88,6 +89,10 @@ export const router = createBrowserRouter([
                             {
                                 element: <RequireRole roles={['SUPER_ADMIN']} />,
                                 children: [
+                                    {
+                                        path: '/subjects',
+                                        element: <SubjectsPage />,
+                                    },
                                     {
                                         path: '/textbooks',
                                         element: <TextbooksPage />,
