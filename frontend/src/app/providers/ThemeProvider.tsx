@@ -12,7 +12,8 @@ function readStoredTheme(): Theme {
     } catch {
         /* storage mavjud emas */
     }
-    return 'system';
+    // Standart holat — qorong‘i mavzu (eski E-davomat tizimi kabi).
+    return 'dark';
 }
 
 function systemPrefersDark(): boolean {

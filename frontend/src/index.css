@@ -12,6 +12,11 @@
     --color-success: var(--success);
     --color-warning: var(--warning);
     --color-brand: var(--brand);
+    --color-info: var(--info);
+    --color-pink: var(--pink);
+    --color-violet: var(--violet);
+    --color-gradient-from: var(--gradient-from);
+    --color-gradient-to: var(--gradient-to);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -53,78 +58,94 @@
 }
 
 :root {
-    --background: oklch(0.984 0.006 265);
-    --foreground: oklch(0.2 0.045 265);
+    /* Yorug‘ mavzu: och ko‘kimtir fon, ko‘k → binafsha aksent, to‘q navy yon panel */
+    --background: oklch(0.972 0.012 260);
+    --foreground: oklch(0.23 0.04 264);
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.2 0.045 265);
+    --card-foreground: oklch(0.23 0.04 264);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.2 0.045 265);
-    --primary: oklch(0.55 0.23 268);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.955 0.015 265);
-    --secondary-foreground: oklch(0.25 0.05 265);
-    --muted: oklch(0.96 0.01 265);
-    --muted-foreground: oklch(0.5 0.04 265);
-    --accent: oklch(0.945 0.03 265);
-    --accent-foreground: oklch(0.3 0.09 268);
-    --destructive: oklch(0.6 0.22 25);
-    --border: oklch(0.915 0.015 265);
-    --input: oklch(0.9 0.02 265);
-    --ring: oklch(0.55 0.23 268);
-    --success: oklch(0.65 0.16 160);
-    --warning: oklch(0.82 0.16 85);
-    --brand: oklch(0.27 0.06 265);
-    --chart-1: oklch(0.55 0.23 268);
-    --chart-2: oklch(0.65 0.16 160);
-    --chart-3: oklch(0.82 0.16 85);
-    --chart-4: oklch(0.6 0.22 25);
-    --chart-5: oklch(0.4 0.1 265);
+    --popover-foreground: oklch(0.23 0.04 264);
+    --primary: oklch(0.58 0.2 262);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.945 0.02 262);
+    --secondary-foreground: oklch(0.3 0.06 264);
+    --muted: oklch(0.955 0.012 262);
+    --muted-foreground: oklch(0.5 0.035 264);
+    --accent: oklch(0.94 0.035 270);
+    --accent-foreground: oklch(0.36 0.12 275);
+    --destructive: oklch(0.6 0.21 25);
+    --border: oklch(0.91 0.018 262);
+    --input: oklch(0.88 0.022 262);
+    --ring: oklch(0.58 0.2 262);
+    --success: oklch(0.66 0.17 150);
+    --warning: oklch(0.76 0.16 68);
+    --info: oklch(0.6 0.17 245);
+    --pink: oklch(0.64 0.21 354);
+    --violet: oklch(0.58 0.22 293);
+    --gradient-from: oklch(0.62 0.19 259);
+    --gradient-to: oklch(0.6 0.22 293);
+    --glow-1: oklch(0.62 0.19 259 / 9%);
+    --glow-2: oklch(0.6 0.22 293 / 8%);
+    --brand: oklch(0.22 0.04 264);
+    --chart-1: oklch(0.62 0.19 259);
+    --chart-2: oklch(0.66 0.17 150);
+    --chart-3: oklch(0.76 0.16 68);
+    --chart-4: oklch(0.6 0.21 25);
+    --chart-5: oklch(0.6 0.22 293);
     --radius: 0.75rem;
-    --sidebar: oklch(0.27 0.06 265);
-    --sidebar-foreground: oklch(0.92 0.02 265);
-    --sidebar-primary: oklch(0.55 0.23 268);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(1 0 0 / 8%);
+    --sidebar: oklch(0.205 0.035 264);
+    --sidebar-foreground: oklch(0.86 0.025 264);
+    --sidebar-primary: oklch(0.62 0.19 259);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(1 0 0 / 7%);
     --sidebar-accent-foreground: oklch(1 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-border: oklch(1 0 0 / 8%);
     --sidebar-ring: oklch(0.7 0.15 268);
 }
 
 .dark {
-    --background: oklch(0.17 0.035 265);
-    --foreground: oklch(0.96 0.01 265);
-    --card: oklch(0.22 0.04 265);
-    --card-foreground: oklch(0.96 0.01 265);
-    --popover: oklch(0.22 0.04 265);
-    --popover-foreground: oklch(0.96 0.01 265);
-    --primary: oklch(0.62 0.21 268);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.28 0.045 265);
-    --secondary-foreground: oklch(0.96 0.01 265);
-    --muted: oklch(0.26 0.04 265);
-    --muted-foreground: oklch(0.72 0.03 265);
-    --accent: oklch(0.3 0.06 265);
-    --accent-foreground: oklch(0.96 0.01 265);
-    --destructive: oklch(0.7 0.19 22);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 14%);
-    --ring: oklch(0.65 0.2 268);
-    --success: oklch(0.72 0.16 160);
-    --warning: oklch(0.85 0.16 85);
-    --brand: oklch(0.22 0.05 265);
-    --chart-1: oklch(0.65 0.2 268);
-    --chart-2: oklch(0.72 0.16 160);
-    --chart-3: oklch(0.85 0.16 85);
-    --chart-4: oklch(0.7 0.19 22);
-    --chart-5: oklch(0.6 0.08 265);
-    --sidebar: oklch(0.2 0.05 265);
-    --sidebar-foreground: oklch(0.92 0.02 265);
-    --sidebar-primary: oklch(0.62 0.21 268);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(1 0 0 / 8%);
+    /* Qorong‘i mavzu — eski E-davomat tizimi palitrasi: navy fon, ko‘kimtir kartalar */
+    --background: oklch(0.235 0.035 263);
+    --foreground: oklch(0.95 0.012 264);
+    --card: oklch(0.285 0.04 264);
+    --card-foreground: oklch(0.95 0.012 264);
+    --popover: oklch(0.29 0.042 264);
+    --popover-foreground: oklch(0.95 0.012 264);
+    --primary: oklch(0.65 0.18 259);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.32 0.042 264);
+    --secondary-foreground: oklch(0.95 0.012 264);
+    --muted: oklch(0.31 0.04 264);
+    --muted-foreground: oklch(0.74 0.03 264);
+    --accent: oklch(0.34 0.06 272);
+    --accent-foreground: oklch(0.95 0.012 264);
+    --destructive: oklch(0.67 0.2 22);
+    --border: oklch(0.37 0.045 264);
+    --input: oklch(0.4 0.045 264);
+    --ring: oklch(0.65 0.18 259);
+    --success: oklch(0.74 0.18 150);
+    --warning: oklch(0.79 0.16 70);
+    --info: oklch(0.7 0.15 245);
+    --pink: oklch(0.7 0.19 354);
+    --violet: oklch(0.68 0.19 293);
+    --gradient-from: oklch(0.64 0.19 259);
+    --gradient-to: oklch(0.62 0.21 293);
+    --glow-1: oklch(0.62 0.19 259 / 16%);
+    --glow-2: oklch(0.6 0.21 293 / 12%);
+    --brand: oklch(0.2 0.035 264);
+    --chart-1: oklch(0.68 0.17 259);
+    --chart-2: oklch(0.74 0.18 150);
+    --chart-3: oklch(0.79 0.16 70);
+    --chart-4: oklch(0.67 0.2 22);
+    --chart-5: oklch(0.68 0.19 293);
+    --sidebar: oklch(0.2 0.035 264);
+    --sidebar-foreground: oklch(0.86 0.025 264);
+    --sidebar-primary: oklch(0.65 0.18 259);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(1 0 0 / 7%);
     --sidebar-accent-foreground: oklch(1 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.65 0.2 268);
+    --sidebar-border: oklch(1 0 0 / 7%);
+    --sidebar-ring: oklch(0.65 0.18 259);
 }
 
 @layer base {
@@ -155,10 +176,31 @@
   }
 }
 
+/* Fon: nuqtali daftar katagi + burchaklardagi yumshoq ko‘k/binafsha yorug‘lik */
 @utility paper {
   background-color: var(--background);
-  background-image: radial-gradient(color-mix(in oklch, var(--foreground) 11%, transparent) 1px, transparent 1.2px);
-  background-size: 22px 22px;
+  background-image:
+    radial-gradient(color-mix(in oklch, var(--foreground) 7%, transparent) 1px, transparent 1.2px),
+    radial-gradient(60rem 40rem at 100% 0%, var(--glow-1), transparent 70%),
+    radial-gradient(50rem 36rem at 0% 100%, var(--glow-2), transparent 70%);
+  background-size: 22px 22px, 100% 100%, 100% 100%;
+  background-attachment: scroll, fixed, fixed;
+}
+
+/* Asosiy gradient: ko‘k → binafsha (eski tizimdagi «Kirish» tugmasi kabi) */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(100deg, var(--gradient-from), var(--gradient-to));
+}
+
+@utility text-brand-gradient {
+  background-image: linear-gradient(100deg, var(--gradient-from), var(--gradient-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility brand-line {
+  background-image: linear-gradient(90deg, transparent, var(--gradient-from) 20%, var(--gradient-to) 80%, transparent);
 }
 
 /* Kirill va lotin yozuvlarida uzun so‘zlar kartalardan chiqib ketmasligi uchun */

@@ -12,9 +12,9 @@ export function PageHeader({ title, description, eyebrow, actions }: PageHeaderP
         <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
                 {eyebrow && (
-                    <p className="mb-2 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                        <span aria-hidden="true" className="h-0.5 w-6 rounded-full bg-warning" />
-                        {eyebrow}
+                    <p className="mb-2 inline-flex items-center gap-2 text-xs font-bold tracking-[0.16em] uppercase">
+                        <span aria-hidden="true" className="bg-brand-gradient h-0.5 w-6 rounded-full" />
+                        <span className="text-brand-gradient">{eyebrow}</span>
                     </p>
                 )}
                 <h1>{title}</h1>

@@ -43,7 +43,7 @@ export function MobileTabBar() {
                                         <span
                                             className={cn(
                                                 'grid h-7 w-12 place-items-center rounded-full transition-colors',
-                                                isActive && 'bg-primary/12',
+                                                isActive && 'bg-brand-gradient text-white shadow-md shadow-gradient-to/30',
                                             )}
                                         >
                                             <Icon aria-hidden="true" className="size-5" />

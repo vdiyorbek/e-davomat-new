@@ -13,7 +13,7 @@
         try {
           var lang = localStorage.getItem("edavomat-lang");
           if (lang) document.documentElement.lang = lang;
-          var t = localStorage.getItem("edavomat-theme") || "system";
+          var t = localStorage.getItem("edavomat-theme") || "dark";
           var dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
           if (dark) document.documentElement.classList.add("dark");
         } catch (e) {}

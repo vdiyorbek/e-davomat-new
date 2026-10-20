@@ -125,7 +125,7 @@ export function LoginForm() {
       <Button
         type="submit"
         disabled={busy}
-        className="h-13 w-full rounded-2xl bg-primary text-base font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
+        className="h-13 w-full rounded-2xl text-base font-semibold"
       >
         {busy ? (
           <span role="status" className="flex items-center gap-2">

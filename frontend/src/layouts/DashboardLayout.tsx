@@ -48,10 +48,10 @@ export function DashboardLayout() {
                         {t('common.skipToContent')}
                     </a>
 
-                    <aside className="sticky top-0 hidden h-dvh min-h-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:block lg:hidden">
+                    <aside className="sticky top-0 hidden h-dvh min-h-0 border-r border-sidebar-border bg-sidebar bg-[radial-gradient(30rem_20rem_at_0%_100%,var(--glow-1),transparent)] text-sidebar-foreground md:block lg:hidden">
                         <Sidebar variant="rail" />
                     </aside>
-                    <aside className="sticky top-0 hidden h-dvh min-h-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
+                    <aside className="sticky top-0 hidden h-dvh min-h-0 border-r border-sidebar-border bg-sidebar bg-[radial-gradient(30rem_20rem_at_0%_100%,var(--glow-1),transparent)] text-sidebar-foreground lg:block">
                         <Sidebar variant="full" />
                     </aside>
 

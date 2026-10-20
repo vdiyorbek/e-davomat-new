@@ -45,8 +45,8 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                         'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
                         rail ? 'mx-auto size-12 justify-center' : 'px-2.5 py-1.5',
                         isActive
-                            ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                            : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
+                            ? 'bg-brand-gradient font-semibold text-white shadow-lg shadow-gradient-to/25'
+                            : 'text-sidebar-foreground/75 hover:bg-white/6 hover:text-white',
                     )
                 }
             >
@@ -56,7 +56,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                             <span
                                 aria-hidden="true"
                                 className={cn(
-                                    'absolute top-2.5 bottom-2.5 w-1 rounded-full bg-warning',
+                                    'absolute top-2.5 bottom-2.5 w-1 rounded-full bg-gradient-from',
                                     rail ? '-left-2.5' : '-left-3',
                                 )}
                             />
@@ -65,7 +65,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                             className={cn(
                                 'grid size-8 shrink-0 place-items-center rounded-lg transition-colors',
                                 isActive
-                                    ? 'bg-sidebar-primary text-white shadow-sm shadow-black/20'
+                                    ? 'bg-white/18 text-white'
                                     : 'bg-white/5 text-sidebar-foreground/80 group-hover:bg-white/10',
                             )}
                         >
@@ -101,7 +101,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                 <BrandMark className="size-11" />
                 {!rail && (
                     <div className="min-w-0">
-                        <p className="font-heading text-lg leading-tight font-extrabold tracking-tight text-white">
+                        <p className="font-heading text-lg leading-tight font-extrabold tracking-[0.08em] text-white uppercase">
                             {t('brand.name')}
                         </p>
                         <p className="mt-0.5 truncate text-xs text-sidebar-foreground/60">{t('brand.tagline')}</p>
