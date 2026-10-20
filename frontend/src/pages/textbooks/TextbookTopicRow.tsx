@@ -110,29 +110,59 @@ export function TextbookTopicRow({ topic, onUpdated }: Props) {
         topic.pageStart === null ? '—' : topic.pageEnd === null ? String(topic.pageStart) : `${topic.pageStart}–${topic.pageEnd}`;
 
     return (
-        <li className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
+        <li className="flex min-w-0 flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:gap-4 sm:px-5">
             {dialog}
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold tabular-nums">
-                {topic.orderIndex}
-            </span>
-            <div className="min-w-0 flex-1">
-                {topic.chapterTitle && <p className="truncate text-xs text-muted-foreground">{topic.chapterTitle}</p>}
-                <p className="font-medium [overflow-wrap:anywhere]">{topic.title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{t('textbooks.topics.pagesValue', { pages })}</p>
-                {!editing && error && (
-                    <p role="alert" className="mt-1 text-sm text-destructive">
-                        {error}
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold tabular-nums">
+                    {topic.orderIndex}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                    {topic.chapterTitle && (
+                        <p className="mb-1 text-xs text-muted-foreground break-words">
+                            {topic.chapterTitle}
+                        </p>
+                    )}
+
+                    <p className="text-sm font-semibold leading-6 break-words">
+                        {topic.title}
                     </p>
-                )}
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {t('textbooks.topics.pagesValue', { pages })}
+                    </p>
+
+                    {!editing && error && (
+                        <p role="alert" className="mt-2 text-sm text-destructive">
+                            {error}
+                        </p>
+                    )}
+                </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone={REVIEW_TONE[topic.reviewStatus]}>{t(`textbooks.topics.review.${topic.reviewStatus}`)}</StatusBadge>
-                <Button type="button" variant="outline" size="sm" disabled={busy} onClick={startEditing}>
+
+            <div className="flex shrink-0 flex-wrap items-center gap-2 pl-11 lg:pl-0">
+                <StatusBadge tone={REVIEW_TONE[topic.reviewStatus]}>
+                    {t(`textbooks.topics.review.${topic.reviewStatus}`)}
+                </StatusBadge>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    onClick={startEditing}
+                >
                     <Pencil aria-hidden="true" />
                     {t('common.edit')}
                 </Button>
+
                 {topic.reviewStatus !== 'APPROVED' && (
-                    <Button type="button" size="sm" disabled={busy || editing} onClick={() => void handleApprove()}>
+                    <Button
+                        type="button"
+                        size="sm"
+                        disabled={busy || editing}
+                        onClick={() => void handleApprove()}
+                    >
                         <Check aria-hidden="true" />
                         {t('textbooks.topics.approve')}
                     </Button>

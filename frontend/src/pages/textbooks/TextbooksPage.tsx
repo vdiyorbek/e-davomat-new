@@ -18,7 +18,7 @@ import { TextbookTopicRow } from './TextbookTopicRow';
 import type { TextbookTopic } from './TextbookTopicRow';
 import { TextbookUploadForm } from './TextbookUploadForm';
 import { TextbookArchiveButton } from './TextbookArchiveButton';
-
+import { TextbookPdfViewer } from './TextbookPdfViewer';
 interface Textbook {
     id: number;
     subjectId: number;
@@ -147,9 +147,15 @@ export function TextbooksPage() {
     }
 
 
+
     function textbookActions(textbook: Textbook) {
         return (
             <div className="flex flex-wrap items-center justify-end gap-2">
+                <TextbookPdfViewer
+                    textbookId={textbook.id}
+                    title={textbook.title}
+                />
+
                 {textbook.isActive && (
                     <TextbookEditForm
                         key={textbook.id}
@@ -168,6 +174,7 @@ export function TextbooksPage() {
             </div>
         );
     }
+
 
 
     function topicsButton(textbook: Textbook) {
@@ -260,7 +267,7 @@ export function TextbooksPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {textbooks.map((textbook) => (
+                                    {visibleTextbooks.map((textbook) => (
                                         <TableRow key={textbook.id}>
                                             <TableCell className="max-w-72 pl-5 font-semibold whitespace-normal">{textbook.title}</TableCell>
                                             <TableCell>{subjectName(textbook.subjectId)}</TableCell>
@@ -280,7 +287,10 @@ export function TextbooksPage() {
             </section>
 
             <Sheet open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
-                <SheetContent side="right" className="w-full gap-0 overflow-y-auto sm:max-w-2xl">
+                <SheetContent
+                    side="right"
+                    className="w-full min-w-0 gap-0 overflow-y-auto sm:!max-w-[min(900px,95vw)]"
+                >
                     <SheetHeader className="border-b p-5 pr-12">
                         <SheetTitle className="font-heading text-lg">{selected?.title}</SheetTitle>
                         <SheetDescription>{t('textbooks.topics.sheetHint')}</SheetDescription>

@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DataSource, Repository } from 'typeorm';
 
@@ -299,5 +299,56 @@ export class TextbooksService {
     this.requireSuperAdmin(actor);
 
     return this.update(id, { isActive: false }, actor);
+  }
+
+  async getPdf(id: number): Promise<Buffer> {
+    const textbook = await this.textbooksRepository.findOneBy({ id });
+
+    if (!textbook) {
+      throw new NotFoundException('Darslik topilmadi');
+    }
+
+    const key = textbook.fileStorageKey;
+
+    if (
+      !key ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/i.test(
+        key,
+      )
+    ) {
+      throw new NotFoundException('PDF fayl mavjud emas');
+    }
+
+    const path = join(this.directory, key);
+
+    let pdf: Buffer;
+
+    try {
+      const info = await stat(path);
+
+      if (!info.isFile() || info.size < 100 || info.size > MAX_PDF_SIZE) {
+        throw new BadRequestException('PDF fayl hajmi noto‘g‘ri');
+      }
+
+      pdf = await readFile(path);
+    } catch (error: unknown) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new NotFoundException('PDF faylni serverdan o‘qib bo‘lmadi');
+    }
+
+    const hash = createHash('sha256').update(pdf).digest('hex');
+
+    if (!textbook.fileSha256 || hash !== textbook.fileSha256) {
+      throw new BadRequestException('PDF fayl yaxlitligi buzilgan');
+    }
+
+    if (pdf.subarray(0, 5).toString('ascii') !== '%PDF-') {
+      throw new BadRequestException('Fayl PDF formatida emas');
+    }
+
+    return pdf;
   }
 }

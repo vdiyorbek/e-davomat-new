@@ -14,7 +14,7 @@ import {
   Patch,
   Delete,
 } from '@nestjs/common';
-
+import { StreamableFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UpdateTextbookTopicDto } from './dto/update-textbook-topic.dto';
@@ -197,5 +197,24 @@ export class TextbooksController {
     }
 
     return this.textbooksService.archive(id, actor);
+  }
+
+  @Get(':id/pdf')
+  @Header('Cache-Control', 'private, no-store')
+  async viewPdf(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<StreamableFile> {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    const pdf = await this.textbooksService.getPdf(id);
+
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: 'inline',
+      length: pdf.length,
+    });
   }
 }
