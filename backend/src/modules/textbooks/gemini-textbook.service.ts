@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -33,6 +34,7 @@ export interface ExtractedTextbookTopic {
 
 @Injectable()
 export class GeminiTextbookService {
+  private readonly logger = new Logger(GeminiTextbookService.name);
   private readonly directory = join(process.cwd(), 'uploads', 'textbooks');
 
   constructor(
@@ -170,7 +172,44 @@ Qoidalar:
       });
 
       output = response.output_text ?? '';
-    } catch {
+    } catch (error: unknown) {
+      const details =
+        typeof error === 'object' && error !== null
+          ? (error as {
+              status?: number;
+              code?: string | number;
+              message?: string;
+            })
+          : {};
+
+      const status = details.status ?? 'unknown';
+      const code = details.code ?? 'unknown';
+
+      this.logger.error(
+        `Gemini API xatoligi. Model: ${model}, ` +
+          `Status: ${status}, Code: ${code}`,
+      );
+
+      // API kaliti va PDF ma'lumotlarini logga yozmaymiz.
+      // Faqat xatolik kategoriyasini qayd etamiz.
+      if (status === 400) {
+        this.logger.error('Gemini so‘rov formati rad etildi (400)');
+      } else if (status === 401 || status === 403) {
+        this.logger.error('Gemini API autentifikatsiya yoki ruxsat xatosi');
+      } else if (status === 404) {
+        this.logger.error('Gemini model yoki endpoint topilmadi');
+      } else if (status === 429) {
+        this.logger.error('Gemini API kvotasi yoki so‘rov limiti');
+      } else if (status === 503) {
+        this.logger.error('Gemini xizmati vaqtincha ishlamayapti');
+      } else {
+        this.logger.error(
+          `Gemini so‘rovi muvaffaqiyatsiz. Error turi: ${
+            error instanceof Error ? error.name : typeof error
+          }`,
+        );
+      }
+
       throw new ServiceUnavailableException(
         'Gemini API orqali PDF tahlilini bajarib bo‘lmadi',
       );
