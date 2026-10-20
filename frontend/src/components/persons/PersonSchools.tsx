@@ -1,16 +1,21 @@
 import { useState } from 'react';
+import { ArrowRightLeft, GraduationCap, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import { useApiQuery } from '@/hooks/useApiQuery';
-import type { SchoolMembershipsPage } from '@/types/school-membership';
+import { Pagination } from '@/components/common/Pagination';
+import { ErrorState, SuccessNotice } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { ChangeClassForm } from '@/components/memberships/ChangeClassForm';
-import { useAuth } from '@/hooks/useAuth';
 import { TransferSchoolForm } from '@/components/memberships/TransferSchoolForm';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { formatDate } from '@/lib/date';
+import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-membership';
 
-function formatDate(value: string): string {
-    const [year, month, day] = value.split('-');
-    return `${day}.${month}.${year}`;
-}
+type Status = 'ACTIVE' | 'ENDED';
 
 function MembershipList({
     personId,
@@ -19,33 +24,22 @@ function MembershipList({
     onChanged,
 }: {
     personId: number;
-    status: 'ACTIVE' | 'ENDED';
+    status: Status;
     allowClassChange: boolean;
-    onChanged: () => void;
+    onChanged: (message: string) => void;
 }) {
+    const { t } = useTranslation();
     const [page, setPage] = useState(1);
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [transferringId, setTransferringId] =
-        useState<number | null>(null);
-    const { session } = useAuth()
+    const [changing, setChanging] = useState<SchoolMembership | null>(null);
+    const [transferring, setTransferring] = useState<SchoolMembership | null>(null);
+    const { session } = useAuth();
     const role = session?.profile.role;
-
 
     const canChangeClass =
         allowClassChange &&
-        (
-            role === 'SUPER_ADMIN' ||
-            role === 'REGION_ADMIN' ||
-            role === 'DISTRICT_ADMIN' ||
-            role === 'SCHOOL_ADMIN'
-        );
+        (role === 'SUPER_ADMIN' || role === 'REGION_ADMIN' || role === 'DISTRICT_ADMIN' || role === 'SCHOOL_ADMIN');
     const canTransferSchool =
-        allowClassChange &&
-        (
-            role === 'SUPER_ADMIN' ||
-            role === 'REGION_ADMIN' ||
-            role === 'DISTRICT_ADMIN'
-        );
+        allowClassChange && (role === 'SUPER_ADMIN' || role === 'REGION_ADMIN' || role === 'DISTRICT_ADMIN');
 
     const query = useApiQuery<SchoolMembershipsPage>(
         `/school-memberships?personId=${personId}&status=${status}&page=${page}&limit=20`,
@@ -53,37 +47,19 @@ function MembershipList({
 
     if (query.loading) {
         return (
-            <p role="status" className="text-sm text-muted-foreground">
-                Yuklanmoqda…
-            </p>
-        );
-    }
-
-    if (query.error) {
-        return (
-            <div className="space-y-2">
-                <p role="alert" className="text-sm text-destructive">
-                    {query.error}
-                </p>
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={query.retry}
-                >
-                    Qayta urinish
-                </Button>
+            <div role="status" className="space-y-2">
+                <span className="sr-only">{t('common.loading')}</span>
+                <Skeleton className="h-24 w-full rounded-xl" />
             </div>
         );
     }
-
+    if (query.error) return <ErrorState message={query.error} onRetry={query.retry} />;
     if (!query.data) return null;
 
     if (query.data.total === 0) {
         return (
-            <p className="text-sm text-muted-foreground">
-                {status === 'ACTIVE'
-                    ? 'Hozir faol maktab biriktirishi yo‘q.'
-                    : 'Tugagan biriktirishlar tarixi yo‘q.'}
+            <p className="rounded-xl border border-dashed px-4 py-5 text-sm text-muted-foreground">
+                {status === 'ACTIVE' ? t('persons.schools.noActive') : t('persons.schools.noHistory')}
             </p>
         );
     }
@@ -93,168 +69,133 @@ function MembershipList({
             {query.data.data.map((membership) => {
                 const isStudent = membership.type === 'STUDENT';
                 const schoolClass = membership.schoolClass;
-
-                const label = status === 'ACTIVE'
-                    ? isStudent
-                        ? 'O‘qiyotgan maktabi'
-                        : 'Ishlayotgan maktabi'
-                    : isStudent
-                        ? 'O‘qigan maktabi'
-                        : 'Ishlagan maktabi';
+                const labelKey = `persons.schools.${status === 'ACTIVE' ? 'current' : 'past'}${isStudent ? 'Study' : 'Work'}`;
+                const showActions =
+                    allowClassChange &&
+                    status === 'ACTIVE' &&
+                    isStudent &&
+                    membership.endDate === null &&
+                    (canChangeClass || canTransferSchool);
 
                 return (
-                    <div
-                        key={membership.id}
-                        className="rounded-lg border bg-muted/30 p-4"
-                    >
-                        <p className="text-xs text-muted-foreground">
-                            {label}
-                        </p>
+                    <article key={membership.id} className="rounded-xl border bg-muted/30 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <p className="text-xs text-muted-foreground">{t(labelKey)}</p>
+                            <StatusBadge tone={status === 'ACTIVE' ? 'success' : 'neutral'}>
+                                {t(`common.membershipStatus.${status}`)}
+                            </StatusBadge>
+                        </div>
 
-                        <p className="mt-1 text-sm font-semibold">
+                        <p className="mt-1 text-sm font-semibold [overflow-wrap:anywhere]">
                             {membership.school.name}
-                            {isStudent && schoolClass
-                                ? `, ${schoolClass.name}-sinf`
-                                : ''}
+                            {isStudent && schoolClass && `, ${t('persons.schools.className', { name: schoolClass.name })}`}
                         </p>
-
                         {isStudent && !schoolClass && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Sinf kiritilmagan
-                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">{t('persons.schools.noClass')}</p>
                         )}
 
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            {membership.school.district.region.name}
-                            {' / '}
-                            {membership.school.district.name}
+                        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin aria-hidden="true" className="size-3.5" />
+                            {membership.school.district.region.name} / {membership.school.district.name}
                         </p>
 
-                        {schoolClass && (
-                            <p className="mt-2 text-sm">
-                                O‘quv yili: {schoolClass.academicYear}
-                            </p>
-                        )}
-
-                        <p className="mt-1 text-sm">
-                            {formatDate(membership.startDate)}
-                            {' dan'}
-                            {status === 'ENDED' && membership.endDate
-                                ? ` ${formatDate(membership.endDate)} gacha`
-                                : ' — davom etmoqda'}
-                        </p>
-                        {allowClassChange &&
-                            status === 'ACTIVE' &&
-                            isStudent &&
-                            membership.endDate === null &&
-                            (canChangeClass || canTransferSchool) && (
-                                <div className="mt-4 border-t pt-4">
-                                    {editingId === membership.id ? (
-                                        <ChangeClassForm
-                                            key={`class-${membership.id}`}
-                                            membership={membership}
-                                            onCancel={() => setEditingId(null)}
-                                            onSaved={onChanged}
-                                        />
-                                    ) : transferringId === membership.id ? (
-                                        <TransferSchoolForm
-                                            key={`school-${membership.id}`}
-                                            membership={membership}
-                                            onCancel={() => setTransferringId(null)}
-                                            onSaved={onChanged}
-                                        />
-                                    ) : (
-                                        <div className="flex flex-wrap gap-3">
-                                            {canChangeClass && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        setTransferringId(null);
-                                                        setEditingId(membership.id);
-                                                    }}
-                                                >
-                                                    Sinfni almashtirish
-                                                </Button>
-                                            )}
-
-                                            {canTransferSchool && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        setEditingId(null);
-                                                        setTransferringId(membership.id);
-                                                    }}
-                                                >
-                                                    Boshqa maktabga ko‘chirish
-                                                </Button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+                        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                            {schoolClass && (
+                                <span>{t('persons.schools.academicYear', { year: schoolClass.academicYear })}</span>
                             )}
-                    </div>
+                            <span className="tabular-nums">
+                                {status === 'ENDED' && membership.endDate
+                                    ? t('persons.schools.period', {
+                                        from: formatDate(membership.startDate),
+                                        to: formatDate(membership.endDate),
+                                    })
+                                    : t('persons.schools.ongoing', { from: formatDate(membership.startDate) })}
+                            </span>
+                        </div>
+
+                        {showActions && (
+                            <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                                {canChangeClass && (
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setChanging(membership)}>
+                                        <GraduationCap aria-hidden="true" />
+                                        {t('members.actions.changeClass')}
+                                    </Button>
+                                )}
+                                {canTransferSchool && (
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setTransferring(membership)}>
+                                        <ArrowRightLeft aria-hidden="true" />
+                                        {t('members.actions.transferLong')}
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                    </article>
                 );
             })}
 
             {query.data.totalPages > 1 && (
-                <div className="flex items-center gap-3">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        disabled={page === 1}
-                        onClick={() => setPage((value) => value - 1)}
-                    >
-                        Oldingi
-                    </Button>
-
-                    <span className="text-sm">
-                        {page} / {query.data.totalPages}
-                    </span>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        disabled={page >= query.data.totalPages}
-                        onClick={() => setPage((value) => value + 1)}
-                    >
-                        Keyingi
-                    </Button>
-                </div>
+                <Pagination page={page} totalPages={query.data.totalPages} onPageChange={setPage} />
             )}
+
+            <Dialog open={changing !== null} onOpenChange={(open) => !open && setChanging(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('members.changeClass.title')}</DialogTitle>
+                        <DialogDescription>{t('members.changeClass.description')}</DialogDescription>
+                    </DialogHeader>
+                    {changing && (
+                        <ChangeClassForm
+                            key={changing.id}
+                            membership={changing}
+                            onCancel={() => setChanging(null)}
+                            onSaved={() => {
+                                setChanging(null);
+                                onChanged(t('members.changeClass.success'));
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={transferring !== null} onOpenChange={(open) => !open && setTransferring(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('members.transfer.title')}</DialogTitle>
+                        <DialogDescription>{t('members.transfer.description')}</DialogDescription>
+                    </DialogHeader>
+                    {transferring && (
+                        <TransferSchoolForm
+                            key={transferring.id}
+                            membership={transferring}
+                            onCancel={() => setTransferring(null)}
+                            onSaved={() => {
+                                setTransferring(null);
+                                onChanged(t('members.transfer.success'));
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
 
-export function PersonSchools({
-    personId,
-    allowClassChange = false,
-}: {
-    personId: number;
-    allowClassChange?: boolean;
-}) {
+export function PersonSchools({ personId, allowClassChange = false }: { personId: number; allowClassChange?: boolean }) {
+    const { t } = useTranslation();
     const [revision, setRevision] = useState(0);
     const [success, setSuccess] = useState('');
 
-    function handleChanged() {
-        setSuccess('Ko‘chirish saqlandi.');
+    function handleChanged(message: string) {
+        setSuccess(message);
         setRevision((value) => value + 1);
     }
 
     return (
         <div className="space-y-6">
-            {success && (
-                <p role="status" className="text-sm text-green-700 dark:text-green-400">
-                    {success}
-                </p>
-            )}
+            {success && <SuccessNotice>{success}</SuccessNotice>}
 
             <section className="space-y-3">
-                <h3 className="text-sm font-semibold">
-                    Hozirgi maktabi
-                </h3>
-
+                <h3 className="text-sm font-semibold">{t('persons.schools.currentTitle')}</h3>
                 <MembershipList
                     key={`active-${personId}-${revision}`}
                     personId={personId}
@@ -265,10 +206,7 @@ export function PersonSchools({
             </section>
 
             <section className="space-y-3 border-t pt-5">
-                <h3 className="text-sm font-semibold">
-                    O‘qish va ish tarixi
-                </h3>
-
+                <h3 className="text-sm font-semibold">{t('persons.schools.historyTitle')}</h3>
                 <MembershipList
                     key={`ended-${personId}-${revision}`}
                     personId={personId}

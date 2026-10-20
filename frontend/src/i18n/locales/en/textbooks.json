@@ -1,0 +1,71 @@
+{
+  "title": "Textbook library",
+  "subtitle": "PDF textbooks and topics extracted with Gemini.",
+  "listTitle": "Uploaded textbooks",
+  "textbook": "Textbook",
+  "emptyTitle": "No textbooks",
+  "empty": "No textbooks have been uploaded yet.",
+  "subjectN": "Subject #{{id}}",
+  "topicsButton": "Topics",
+  "processingLabel": "Analysis",
+  "processing": {
+    "DRAFT": "New",
+    "PROCESSING": "Analysing",
+    "READY": "Analysed",
+    "FAILED": "Analysis failed"
+  },
+  "languages": {
+    "uz-Latn": "Uzbek — Latin",
+    "uz-Cyrl": "Uzbek — Cyrillic",
+    "ru": "Russian"
+  },
+  "upload": {
+    "title": "Add a PDF textbook",
+    "hint": "Upload a textbook, then extract its topics with Gemini.",
+    "name": "Textbook title",
+    "namePlaceholder": "e.g. Algebra grade 8",
+    "language": "Language",
+    "file": "PDF file",
+    "submit": "Upload textbook",
+    "success": "“{{title}}” was uploaded. ID: {{id}}",
+    "errors": {
+      "required": "Fill in all required fields.",
+      "failed": "Failed to upload the PDF."
+    }
+  },
+  "extract": {
+    "button": "Extract topics with Gemini",
+    "busy": "Gemini is analysing the PDF…",
+    "wait": "This may take a while. Keep this page open.",
+    "success": "{{count}} topics extracted and saved for review.",
+    "failed": "Gemini analysis failed."
+  },
+  "topics": {
+    "total": "Total topics: {{count}}",
+    "sheetHint": "Review, edit and approve the topics.",
+    "emptyTitle": "No topics yet",
+    "empty": "Topics have not been extracted for this textbook yet.",
+    "pagesValue": "Pages: {{pages}}",
+    "title": "Topic title",
+    "chapter": "Chapter",
+    "pageStart": "First page",
+    "pageEnd": "Last page",
+    "editTitle": "Edit topic {{n}}",
+    "editHint": "An approved topic goes back to review when edited.",
+    "approve": "Approve",
+    "approveTitle": "Approve this topic?",
+    "approveConfirm": "The topic “{{title}}” will be approved.",
+    "review": {
+      "PENDING_REVIEW": "Pending review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "errors": {
+      "title": "The topic title must be 1–255 characters.",
+      "page": "The page number must be a positive whole number.",
+      "range": "The first page is after the last page.",
+      "saveFailed": "Failed to save the topic.",
+      "approveFailed": "Could not approve the topic."
+    }
+  }
+}

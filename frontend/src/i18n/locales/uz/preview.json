@@ -1,0 +1,18 @@
+{
+  "title": "101-guruh · Haftalik davomat",
+  "sample": "Namuna",
+  "caption": "Namuna ma’lumotlari asosidagi haftalik davomat",
+  "student": "O‘quvchi",
+  "days": [
+    "Du",
+    "Se",
+    "Ch",
+    "Pa",
+    "Ju",
+    "Sh"
+  ],
+  "present": "Keldi",
+  "late": "Kechikdi",
+  "absent": "Kelmadi",
+  "empty": "Ma’lumot yo‘q"
+}

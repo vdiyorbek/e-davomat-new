@@ -1,0 +1,69 @@
+{
+  "title": "Terminallar",
+  "subtitle": "Maktablardagi kirish va chiqish Face ID terminallarini boshqarish.",
+  "add": "Terminal qo‘shish",
+  "saved": "Terminal saqlandi.",
+  "loading": "Terminallar yuklanmoqda…",
+  "emptyTitle": "Terminallar yo‘q",
+  "empty": "Bu sahifada terminallar mavjud emas.",
+  "total": "Jami: {{count}} ta terminal",
+  "active": "Faol",
+  "inactive": "O‘chirilgan",
+  "direction": "Yo‘nalish",
+  "directions": {
+    "IN": "Kirish",
+    "OUT": "Chiqish"
+  },
+  "model": "Model",
+  "serial": "Seriya raqami",
+  "firmware": "Proshivka",
+  "unknown": "Aniqlanmagan",
+  "never": "Hali bajarilmagan",
+  "lastCheck": "Oxirgi tekshiruv",
+  "syncStart": "Sinxronlash boshlanishi",
+  "syncedUntil": "Hodisalar tekshirilgan sana",
+  "lastSync": "Oxirgi muvaffaqiyatli sinxronlash",
+  "syncState": {
+    "notStarted": "Avtomatik sinxronlash boshlanmagan.",
+    "disabled": "Terminal o‘chirilgan. Yangi sinxronlash vazifalari qo‘shilmaydi.",
+    "running": "Avtomatik sinxronlash yoqilgan.",
+    "pending": "Boshlanish vaqti saqlangan. Birinchi oraliq hali yakunlanmagan."
+  },
+  "check": {
+    "button": "Ulanishni tekshirish",
+    "checking": "Tekshirilmoqda…",
+    "failed": "Tekshiruv so‘rovini bajarib bo‘lmadi.",
+    "time": "Tekshiruv vaqti: {{time}}"
+  },
+  "sync": {
+    "fromDate": "Qaysi sanadan olinsin?",
+    "hint": "Tanlangan kunning Toshkent vaqti bilan 00:00 dan boshlab hodisalar olinadi. Keyin avtomatik davom etadi.",
+    "inactive": "Sinxronlashni boshlash uchun terminal faol bo‘lishi kerak.",
+    "start": "Sinxronlashni boshlash",
+    "errors": {
+      "date": "Boshlanish sanasini to‘g‘ri kiriting.",
+      "future": "Kelajakdagi sanani tanlab bo‘lmaydi.",
+      "invalid": "Bunday sana mavjud emas.",
+      "failed": "Sinxronlashni boshlab bo‘lmadi."
+    }
+  },
+  "form": {
+    "title": "Yangi terminal",
+    "description": "Hikvision Face ID terminalining tarmoq manzili va kirish ma’lumotlarini kiriting.",
+    "name": "Terminal nomi",
+    "namePlaceholder": "Asosiy kirish terminali",
+    "host": "IP manzili",
+    "hostHint": "http:// va portsiz, faqat IP manzil.",
+    "protocol": "Protokol",
+    "port": "Port",
+    "username": "Terminal logini",
+    "password": "Terminal paroli",
+    "active": "Terminal faol",
+    "save": "Terminalni saqlash",
+    "errors": {
+      "required": "Majburiy maydonlarni to‘ldiring.",
+      "port": "Port 1 dan 65535 gacha butun son bo‘lishi kerak.",
+      "saveFailed": "Terminalni saqlab bo‘lmadi."
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "title": "Sinflar",
+  "subtitle": "Maktab va o‘quv yili bo‘yicha sinflarni boshqarish.",
+  "choose": "Sinflarni ko‘rish uchun maktab va o‘quv yilini tanlang.",
+  "noSchools": "Sizga ko‘rinadigan maktablar mavjud emas.",
+  "createTitle": "Yangi sinf qo‘shish",
+  "name": "Sinf nomi",
+  "namePlaceholder": "Masalan: 2A",
+  "grade": "Sinf darajasi",
+  "chooseGrade": "Darajani tanlang",
+  "add": "Sinf qo‘shish",
+  "created": "Sinf muvaffaqiyatli yaratildi.",
+  "createFailed": "Sinf yaratib bo‘lmadi.",
+  "listTitle": "Mavjud sinflar",
+  "missingGrade": "Darajasi belgilanmagan: {{count}}",
+  "gradeMissing": "Daraja belgilanmagan",
+  "gradeOf": "{{name}} sinf darajasi",
+  "gradeSaveFailed": "Sinf darajasini saqlab bo‘lmadi.",
+  "emptyTitle": "Sinflar yo‘q",
+  "empty": "Ushbu o‘quv yilida sinflar mavjud emas.",
+  "errors": {
+    "required": "Sinf nomi va darajasini kiriting."
+  }
+}

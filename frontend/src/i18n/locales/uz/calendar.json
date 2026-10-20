@@ -1,0 +1,81 @@
+{
+  "title": "O‘quv kalendari",
+  "subtitle": "Maktablarning haftalik o‘quv kunlari, bayramlar va ta’tillarni boshqarish.",
+  "chooseTitle": "Maktabni tanlang",
+  "choose": "Davom etish uchun maktab va o‘quv yilini tanlang.",
+  "tabs": {
+    "weekly": "Haftalik reja",
+    "special": "Bayram va ta’tillar"
+  },
+  "audience": "Kimlar uchun",
+  "audiences": {
+    "STUDENT": "O‘quvchilar",
+    "TEACHER": "O‘qituvchilar",
+    "BOTH": "Barchasi"
+  },
+  "scopes": {
+    "GLOBAL": "Respublika",
+    "REGION": "Viloyat",
+    "DISTRICT": "Tuman",
+    "SCHOOL": "Maktab"
+  },
+  "dayTypes": {
+    "DAY_OFF": "Dam olish kuni",
+    "WORK_DAY": "O‘quv / ish kuni"
+  },
+  "gradeN": "{{grade}}-sinf",
+  "classId": "Sinf ID: {{id}}",
+  "unlimited": "cheklanmagan",
+  "errors": {
+    "range": "Sana oralig‘ini tekshiring."
+  },
+  "weekly": {
+    "createTitle": "Haftalik o‘quv rejasini yaratish",
+    "createHint": "Qaysi sinflar haftaning qaysi kunlari o‘qishini belgilang.",
+    "gradeFrom": "Qaysi sinfdan",
+    "gradeTo": "Qaysi sinfgacha",
+    "grades": "Sinflar",
+    "workingDays": "Haftaning ish kunlari",
+    "fiveDay": "5 kunlik",
+    "sixDay": "6 kunlik",
+    "period": "Amal qilish davri",
+    "submit": "Rejani saqlash",
+    "saved": "Haftalik reja saqlandi.",
+    "saveFailed": "Rejani saqlashda xatolik yuz berdi.",
+    "listTitle": "Mavjud haftalik rejalar",
+    "emptyTitle": "Rejalar yo‘q",
+    "empty": "Hozircha haftalik rejalar yaratilmagan.",
+    "errors": {
+      "noDays": "Kamida bitta ish kunini tanlang.",
+      "grades": "Sinf oralig‘i noto‘g‘ri."
+    }
+  },
+  "special": {
+    "createTitle": "Maxsus kun yaratish",
+    "createHint": "Bayram, ta’til yoki qo‘shimcha o‘quv kunini belgilang.",
+    "dayType": "Kun turi",
+    "scope": "Qoida hududi",
+    "thisSchool": "Ushbu maktab",
+    "national": "Respublika bo‘yicha",
+    "mandatoryLabel": "Majburiy respublika qoidasi",
+    "mandatory": "Majburiy",
+    "reason": "Sabab",
+    "reasonPlaceholder": "Masalan: Kuzgi ta’til",
+    "submit": "Maxsus kunni saqlash",
+    "created": "Maxsus kun qoidasi yaratildi.",
+    "createFailed": "Qoidani yaratishda xatolik yuz berdi.",
+    "listTitle": "Maxsus kunlar ro‘yxati",
+    "emptyTitle": "Maxsus kunlar yo‘q",
+    "empty": "Tanlangan o‘quv yilida maxsus kunlar yo‘q.",
+    "cancel": "Bekor qilish",
+    "cancelling": "Bekor qilinmoqda…",
+    "cancelTitle": "Qoidani bekor qilasizmi?",
+    "cancelConfirm": "«{{reason}}» qoidasi bekor qilinadi.",
+    "cancelled": "Qoida bekor qilindi.",
+    "cancelFailed": "Qoidani bekor qilib bo‘lmadi.",
+    "viewOnly": "Faqat ko‘rish",
+    "errors": {
+      "reason": "Sababni kamida 3 ta belgi bilan kiriting."
+    }
+  }
+}

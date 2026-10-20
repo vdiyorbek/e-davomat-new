@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 import type { LoginResponse, Profile } from "@/types/auth";
+import i18n from "@/i18n";
 
 const http = axios.create({
   baseURL: (
@@ -22,22 +23,25 @@ export class ApiError extends Error {
 
 async function request<T>(config: AxiosRequestConfig): Promise<T> {
   try {
-    const response = await http.request<T>(config);
+    const response = await http.request<T>({
+      ...config,
+      headers: {
+        "Accept-Language": i18n.resolvedLanguage ?? "uz",
+        ...config.headers,
+      },
+    });
     return response.data;
   } catch (error: unknown) {
     if (axios.isCancel(error)) throw error;
     if (!axios.isAxiosError<unknown>(error)) throw error;
 
     if (!error.response) {
-      throw new ApiError(
-        "Server bilan bog‘lanib bo‘lmadi yoki javob vaqti tugadi.",
-        0,
-      );
+      throw new ApiError(i18n.t("common.network.unreachable"), 0);
     }
 
     const status = error.response.status;
     const body = error.response.data;
-    let message = `So‘rov bajarilmadi (${status})`;
+    let message = i18n.t("common.network.failedStatus", { status });
 
     if (typeof body === "object" && body !== null && "message" in body) {
       if (typeof body.message === "string") {
@@ -51,7 +55,7 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
     }
 
     if (status === 429) {
-      message = "Urinishlar soni oshdi. Birozdan keyin qayta urining.";
+      message = i18n.t("common.network.tooMany");
     }
 
     throw new ApiError(message, status);

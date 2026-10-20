@@ -1,41 +1,30 @@
 import { useRef, useState } from 'react';
+import { CheckCircle2, Loader2, PlugZap, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/lib/date';
 import { checkTerminal } from '@/lib/terminals-api';
-
 import type { TerminalCheckResponse } from '@/types/terminal';
 
-interface CheckTerminalButtonProps {
-    terminalId: number;
-}
-
-export function CheckTerminalButton({
-    terminalId,
-}: CheckTerminalButtonProps) {
+export function CheckTerminalButton({ terminalId }: { terminalId: number }) {
+    const { t } = useTranslation();
     const busyRef = useRef(false);
-
     const [busy, setBusy] = useState(false);
-    const [result, setResult] =
-        useState<TerminalCheckResponse | null>(null);
+    const [result, setResult] = useState<TerminalCheckResponse | null>(null);
     const [error, setError] = useState('');
 
     async function handleCheck() {
         if (busyRef.current) return;
-
         busyRef.current = true;
         setBusy(true);
         setResult(null);
         setError('');
-
         try {
-            const response = await checkTerminal(terminalId);
-            setResult(response);
+            setResult(await checkTerminal(terminalId));
         } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Tekshiruv so‘rovini bajarib bo‘lmadi.',
-            );
+            setError(err instanceof Error ? err.message : t('terminals.check.failed'));
         } finally {
             busyRef.current = false;
             setBusy(false);
@@ -43,70 +32,39 @@ export function CheckTerminalButton({
     }
 
     return (
-        <div className="space-y-3 border-t pt-4">
-            <Button
-                type="button"
-                variant="outline"
-                disabled={busy}
-                onClick={handleCheck}
-                className="w-full"
-            >
-                {busy ? 'Tekshirilmoqda…' : 'Ulanishni tekshirish'}
+        <div className="space-y-3">
+            <Button type="button" variant="outline" disabled={busy} onClick={() => void handleCheck()} className="w-full">
+                {busy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <PlugZap aria-hidden="true" />}
+                {busy ? t('terminals.check.checking') : t('terminals.check.button')}
             </Button>
 
             {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
+                <Alert variant="destructive">
+                    <XCircle aria-hidden="true" />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
 
             {result && (
-                <div
-                    role="status"
-                    className={
-                        result.success
-                            ? 'space-y-2 rounded-lg bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200'
-                            : 'space-y-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive'
-                    }
-                >
-                    <p>{result.message}</p>
-
-                    {result.success && (
-                        <dl className="space-y-2">
-                            <div>
-                                <dt className="font-medium">Model</dt>
-                                <dd className="break-words">
-                                    {result.model}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="font-medium">
-                                    Seriya raqami
-                                </dt>
-                                <dd className="break-all">
-                                    {result.serialNumber}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="font-medium">Firmware</dt>
-                                <dd>
-                                    {result.firmwareVersion || 'Noma’lum'}
-                                </dd>
-                            </div>
-                        </dl>
-                    )}
-
-                    <p className="text-xs">
-                        Tekshiruv vaqti:{' '}
-                        {new Intl.DateTimeFormat('uz-UZ', {
-                            timeZone: 'Asia/Tashkent',
-                            dateStyle: 'short',
-                            timeStyle: 'medium',
-                        }).format(new Date(result.checkedAt))}
-                    </p>
-                </div>
+                <Alert variant={result.success ? 'success' : 'destructive'}>
+                    {result.success ? <CheckCircle2 aria-hidden="true" /> : <XCircle aria-hidden="true" />}
+                    <AlertTitle className="line-clamp-none">{result.message}</AlertTitle>
+                    <AlertDescription>
+                        {result.success && (
+                            <dl className="grid w-full grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                                <dt className="font-semibold">{t('terminals.model')}</dt>
+                                <dd className="[overflow-wrap:anywhere]">{result.model}</dd>
+                                <dt className="font-semibold">{t('terminals.serial')}</dt>
+                                <dd className="break-all">{result.serialNumber}</dd>
+                                <dt className="font-semibold">{t('terminals.firmware')}</dt>
+                                <dd>{result.firmwareVersion || t('terminals.unknown')}</dd>
+                            </dl>
+                        )}
+                        <p className="text-xs opacity-80">
+                            {t('terminals.check.time', { time: formatDateTime(result.checkedAt) })}
+                        </p>
+                    </AlertDescription>
+                </Alert>
             )}
         </div>
     );

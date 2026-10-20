@@ -1,7 +1,8 @@
-
 import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
+import { ErrorState, SuccessNotice } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { authorizedPost } from '@/lib/auth-session';
 
@@ -10,41 +11,23 @@ interface Props {
     onExtracted: () => void;
 }
 
-export function TextbookExtractButton({
-    textbookId,
-    onExtracted,
-}: Props) {
+export function TextbookExtractButton({ textbookId, onExtracted }: Props) {
+    const { t } = useTranslation();
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     async function handleExtract() {
         if (busy) return;
-
         setBusy(true);
         setError('');
         setSuccess('');
-
         try {
-            const result = await authorizedPost<{
-                savedCount: number;
-            }>(
-                `/textbooks/${textbookId}/extract-topics`,
-                {},
-                180_000,
-            );
-
-            setSuccess(
-                `${result.savedCount} ta mavzu ajratildi va tekshirish uchun saqlandi.`,
-            );
-
+            const result = await authorizedPost<{ savedCount: number }>(`/textbooks/${textbookId}/extract-topics`, {}, 180_000);
+            setSuccess(t('textbooks.extract.success', { count: result.savedCount }));
             onExtracted();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : 'Gemini tahlilida xatolik yuz berdi.',
-            );
+            setError(caught instanceof Error ? caught.message : t('textbooks.extract.failed'));
         } finally {
             setBusy(false);
         }
@@ -52,34 +35,13 @@ export function TextbookExtractButton({
 
     return (
         <div className="space-y-3">
-            <Button
-                type="button"
-                onClick={() => void handleExtract()}
-                disabled={busy}
-            >
-                <Sparkles className="size-4" />
-                {busy
-                    ? 'Gemini PDF’ni tahlil qilmoqda…'
-                    : 'Gemini orqali mavzularni ajratish'}
+            <Button type="button" onClick={() => void handleExtract()} disabled={busy}>
+                {busy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Sparkles aria-hidden="true" />}
+                {busy ? t('textbooks.extract.busy') : t('textbooks.extract.button')}
             </Button>
-
-            {busy && (
-                <p className="text-sm text-muted-foreground">
-                    Tahlil biroz vaqt olishi mumkin. Sahifani yopmang.
-                </p>
-            )}
-
-            {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
-            )}
-
-            {success && (
-                <p role="status" className="text-sm text-green-600">
-                    {success}
-                </p>
-            )}
+            {busy && <p className="text-sm text-muted-foreground">{t('textbooks.extract.wait')}</p>}
+            {error && <ErrorState message={error} />}
+            {success && <SuccessNotice>{success}</SuccessNotice>}
         </div>
     );
 }

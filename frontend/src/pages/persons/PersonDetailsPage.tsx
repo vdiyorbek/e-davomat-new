@@ -1,159 +1,86 @@
 import { useState } from 'react';
+import { ArrowLeft, Camera, Pencil } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/common/PageHeader';
+import { ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { ChangePersonPhoto } from '@/components/persons/ChangePersonPhoto';
 import { EditPersonForm } from '@/components/persons/EditPersonForm';
 import { PersonPhoto } from '@/components/persons/PersonPhoto';
-import { useAuth } from '@/hooks/useAuth';
-import { useApiQuery } from '@/hooks/useApiQuery';
-import { ChangePersonPhoto } from '@/components/persons/ChangePersonPhoto';
 import { PersonSchools } from '@/components/persons/PersonSchools';
-
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { formatDate } from '@/lib/date';
+import { personFullName } from '@/lib/person';
 import type { Person } from '@/types/person';
 
-function formatDate(value: string | null): string {
-    if (!value) return 'Ko‘rsatilmagan';
-
-    const [year, month, day] = value.split('-');
-    return `${day}.${month}.${year}`;
-}
-
 function PersonDetails({ personId }: { personId: number }) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { session } = useAuth();
-    const [changingPhoto, setChangingPhoto] = useState(false);
     const [searchParams] = useSearchParams();
-    const { data: person, loading, error, retry } =
-        useApiQuery<Person>(`/persons/${personId}`);
+    const { data: person, loading, error, retry } = useApiQuery<Person>(`/persons/${personId}`);
 
-    const [editing, setEditing] = useState(
-        () => searchParams.get('edit') === '1',
-    );
+    const [editing, setEditing] = useState(() => searchParams.get('edit') === '1');
+    const [changingPhoto, setChangingPhoto] = useState(false);
     const [success, setSuccess] = useState('');
 
     const canEdit = session?.profile.role === 'SUPER_ADMIN';
 
-    if (loading) {
-        return (
-            <p role="status" className="text-sm text-muted-foreground">
-                Ma’lumotlar yuklanmoqda…
-            </p>
-        );
-    }
+    const backButton = (
+        <Button variant="outline" onClick={() => navigate(-1)}>
+            <ArrowLeft aria-hidden="true" />
+            {t('common.back')}
+        </Button>
+    );
+
+    if (loading) return <LoadingState rows={6} />;
 
     if (error || !person) {
         return (
             <div className="space-y-4">
-                <p role="alert" className="text-sm text-destructive">
-                    {error || 'Shaxs ma’lumotlari topilmadi.'}
-                </p>
-
-                <div className="flex flex-wrap gap-3">
-                    <Button variant="outline" onClick={() => navigate(-1)}>
-                        Orqaga
-                    </Button>
-
-                    <Button onClick={retry}>
-                        Qayta urinish
-                    </Button>
-                </div>
+                <ErrorState message={error || t('persons.notFound')} onRetry={retry} />
+                {backButton}
             </div>
         );
     }
 
-    const fullName = [
-        person.lastName,
-        person.firstName,
-        person.middleName,
-    ].filter(Boolean).join(' ');
+    const fullName = personFullName(person);
+    const notSet = t('common.notSet');
 
-    const details = [
-        { label: 'PNFL', value: person.pnfl },
-        { label: 'Familiya', value: person.lastName },
-        { label: 'Ism', value: person.firstName },
-        { label: 'Otasining ismi', value: person.middleName },
-        {
-            label: 'Jinsi',
-            value:
-                person.gender === 'MALE'
-                    ? 'Erkak'
-                    : person.gender === 'FEMALE'
-                        ? 'Ayol'
-                        : null,
-        },
-        {
-            label: 'Tug‘ilgan sana',
-            value: formatDate(person.birthDate),
-        },
-        { label: 'Millati', value: person.nationality },
-        { label: 'Telefon raqami', value: person.phoneNumber },
-        {
-            label: 'Yashash viloyati',
-            value: person.mahalla?.district.region.name ?? null,
-        },
-        {
-            label: 'Yashash tumani / shahri',
-            value: person.mahalla?.district.name ?? null,
-        },
-        {
-            label: 'Mahalla',
-            value: person.mahalla?.name ?? null,
-        },
-        { label: 'Yashash manzili', value: person.address },
+    const details: { label: string; value: string | null; wide?: boolean }[] = [
+        { label: t('common.pnfl'), value: person.pnfl },
+        { label: t('persons.gender'), value: person.gender ? t(`persons.genders.${person.gender}`) : null },
+        { label: t('persons.birthDate'), value: person.birthDate ? formatDate(person.birthDate) : null },
+        { label: t('persons.nationality'), value: person.nationality },
+        { label: t('persons.phone'), value: person.phoneNumber },
+        { label: t('common.region'), value: person.mahalla?.district.region.name ?? null },
+        { label: t('common.district'), value: person.mahalla?.district.name ?? null },
+        { label: t('persons.mahalla'), value: person.mahalla?.name ?? null },
+        { label: t('persons.address'), value: person.address, wide: true },
     ];
 
     return (
         <div className="mx-auto w-full max-w-5xl space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Shaxs ma’lumotlari
-                    </h1>
+            <PageHeader title={t('persons.title')} description={t('persons.subtitle')} actions={backButton} />
 
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        O‘quvchi yoki o‘qituvchining shaxsiy ma’lumotlari.
-                    </p>
-                </div>
+            {success && <SuccessNotice>{success}</SuccessNotice>}
 
-                <Button
-                    variant="outline"
-                    className="self-start"
-                    onClick={() => navigate(-1)}
-                >
-                    Orqaga
-                </Button>
-            </div>
-
-            {success && (
-                <p
-                    role="status"
-                    className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200"
-                >
-                    {success}
-                </p>
-            )}
-
-            <section className="overflow-hidden rounded-2xl border bg-card text-card-foreground">
-                <div className="flex flex-col gap-5 border-b p-5 sm:flex-row sm:items-center sm:p-6">
-                    <div className="shrink-0">
-                        <PersonPhoto
-                            personId={person.id}
-                            photoUrl={person.photoUrl}
-                            name={fullName}
-                        />
-                    </div>
-
+            <Card className="gap-0 py-0">
+                <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
+                    <PersonPhoto personId={person.id} photoUrl={person.photoUrl} name={fullName} />
                     <div className="min-w-0 flex-1">
-                        <h2 className="break-words text-xl font-semibold">
-                            {fullName}
-                        </h2>
-
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            PNFL: {person.pnfl}
+                        <h2 className="font-heading text-xl font-bold [overflow-wrap:anywhere] sm:text-2xl">{fullName}</h2>
+                        <p className="mt-2 text-sm text-muted-foreground tabular-nums">
+                            {t('common.pnfl')}: {person.pnfl}
                         </p>
                     </div>
-
-                    {canEdit && !editing && !changingPhoto && (
+                    {canEdit && (
                         <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0">
                             <Button
                                 onClick={() => {
@@ -161,9 +88,9 @@ function PersonDetails({ personId }: { personId: number }) {
                                     setEditing(true);
                                 }}
                             >
-                                Tahrirlash
+                                <Pencil aria-hidden="true" />
+                                {t('common.edit')}
                             </Button>
-
                             <Button
                                 variant="outline"
                                 onClick={() => {
@@ -171,15 +98,60 @@ function PersonDetails({ personId }: { personId: number }) {
                                     setChangingPhoto(true);
                                 }}
                             >
-                                Rasmni almashtirish
+                                <Camera aria-hidden="true" />
+                                {t('photo.change')}
                             </Button>
                         </div>
                     )}
                 </div>
+                <Separator />
+                <dl className="grid gap-x-8 gap-y-5 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-3">
+                    {details.map((item) => (
+                        <div key={item.label} className={item.wide ? 'min-w-0 sm:col-span-2 lg:col-span-3' : 'min-w-0'}>
+                            <dt className="text-xs text-muted-foreground">{item.label}</dt>
+                            <dd className="mt-1 text-sm font-medium whitespace-pre-wrap [overflow-wrap:anywhere]">
+                                {item.value || <span className="font-normal text-muted-foreground">{notSet}</span>}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+            </Card>
 
-                <div className="p-5 sm:p-6">
-                    {changingPhoto && canEdit && (
-                        <div className="mb-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">{t('persons.schools.title')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <PersonSchools key={person.id} personId={person.id} allowClassChange />
+                </CardContent>
+            </Card>
+
+            {canEdit && (
+                <>
+                    <Dialog open={editing} onOpenChange={setEditing}>
+                        <DialogContent className="sm:max-w-3xl">
+                            <DialogHeader>
+                                <DialogTitle>{t('persons.editTitle')}</DialogTitle>
+                                <DialogDescription>{fullName}</DialogDescription>
+                            </DialogHeader>
+                            <EditPersonForm
+                                person={person}
+                                onCancel={() => setEditing(false)}
+                                onSaved={() => {
+                                    setEditing(false);
+                                    setSuccess(t('persons.saved'));
+                                    retry();
+                                }}
+                            />
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={changingPhoto} onOpenChange={setChangingPhoto}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{t('photo.change')}</DialogTitle>
+                                <DialogDescription>{fullName}</DialogDescription>
+                            </DialogHeader>
                             <ChangePersonPhoto
                                 personId={person.id}
                                 photoUrl={person.photoUrl}
@@ -187,75 +159,25 @@ function PersonDetails({ personId }: { personId: number }) {
                                 onCancel={() => setChangingPhoto(false)}
                                 onSaved={() => {
                                     setChangingPhoto(false);
-                                    setSuccess('Profil rasmi yangilandi.');
+                                    setSuccess(t('persons.photoSaved'));
                                     retry();
                                 }}
                             />
-                        </div>
-                    )}
-                    {editing && canEdit ? (
-                        <EditPersonForm
-                            person={person}
-                            onCancel={() => setEditing(false)}
-                            onSaved={() => {
-                                setEditing(false);
-                                setSuccess(
-                                    'Shaxs ma’lumotlari saqlandi.',
-                                );
-                                retry();
-                            }}
-                        />
-                    ) : (
-                        <dl className="grid gap-x-8 gap-y-5 md:grid-cols-2">
-                            {details.map((item) => (
-                                <div
-                                    key={item.label}
-                                    className={
-                                        item.label === 'Yashash manzili'
-                                            ? 'min-w-0 md:col-span-2'
-                                            : 'min-w-0'
-                                    }
-                                >
-                                    <dt className="text-sm text-muted-foreground">
-                                        {item.label}
-                                    </dt>
-
-                                    <dd className="mt-1 whitespace-pre-wrap break-words text-sm font-medium">
-                                        {item.value || 'Ko‘rsatilmagan'}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
-                    )}
-                </div>
-            </section>
-            <section className="rounded-2xl border bg-card p-5 sm:p-6">
-                <PersonSchools
-                    key={person.id}
-                    personId={person.id}
-                    allowClassChange
-                />
-            </section>
+                        </DialogContent>
+                    </Dialog>
+                </>
+            )}
         </div>
     );
 }
 
 export function PersonDetailsPage() {
+    const { t } = useTranslation();
     const { id } = useParams();
-
     const personId = Number(id);
-    const valid =
-        /^[1-9][0-9]*$/.test(id ?? '') &&
-        Number.isSafeInteger(personId) &&
-        personId <= 4294967295;
+    const valid = /^[1-9][0-9]*$/.test(id ?? '') && Number.isSafeInteger(personId) && personId <= 4294967295;
 
-    if (!valid) {
-        return (
-            <p role="alert" className="text-sm text-destructive">
-                Shaxs identifikatori noto‘g‘ri.
-            </p>
-        );
-    }
+    if (!valid) return <ErrorState message={t('persons.invalidId')} />;
 
     return <PersonDetails key={personId} personId={personId} />;
 }

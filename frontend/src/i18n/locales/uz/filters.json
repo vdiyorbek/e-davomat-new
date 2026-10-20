@@ -1,0 +1,12 @@
+{
+  "allRegions": "Barcha viloyatlar",
+  "allDistricts": "Barcha tuman va shaharlar",
+  "allSchools": "Barcha ruxsat berilgan maktablar",
+  "allClasses": "Barcha sinflar",
+  "allStatuses": "Barcha holatlar",
+  "chooseSchoolFirst": "Avval maktabni tanlang",
+  "advanced": "Kengaytirilgan filtrlar",
+  "showMore": "Ko‘proq filtr",
+  "showLess": "Kamroq filtr",
+  "activeCount": "Faol filtrlar: {{count}}"
+}

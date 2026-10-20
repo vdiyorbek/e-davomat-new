@@ -1,16 +1,10 @@
-
-import type { ReactElement } from 'react';
-import { Tooltip } from 'radix-ui';
-import {
-    Eye,
-    Pencil,
-    CalendarX2,
-    ArrowRightLeft,
-    GraduationCap,
-} from 'lucide-react';
+import { ArrowRightLeft, CalendarX2, Eye, GraduationCap, Pencil } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { SchoolMembership } from '@/types/school-membership';
 
 interface Props {
@@ -23,42 +17,17 @@ interface Props {
     onEnd: (membership: SchoolMembership) => void;
     onChangeClass: (membership: SchoolMembership) => void;
     onTransferSchool: (membership: SchoolMembership) => void;
+    /** `labels` — telefondagi kartalarda yozuvli tugmalar; `icons` — jadvalda faqat ikonka. */
+    layout?: 'labels' | 'icons';
 }
 
-function ActionTooltip({
-    label,
-    children,
-}: {
+interface Action {
+    key: string;
     label: string;
-    children: ReactElement;
-}) {
-    return (
-        <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-                {children}
-            </Tooltip.Trigger>
-
-            <Tooltip.Portal>
-                <Tooltip.Content
-                    side="top"
-                    sideOffset={8}
-                    collisionPadding={8}
-                    className="z-50 rounded-lg border border-border
-            bg-popover px-3 py-2 text-xs font-medium
-            text-popover-foreground shadow-lg"
-                >
-                    {label}
-                    <Tooltip.Arrow className="fill-popover" />
-                </Tooltip.Content>
-            </Tooltip.Portal>
-        </Tooltip.Root>
-    );
+    icon: LucideIcon;
+    to?: string;
+    onClick?: () => void;
 }
-
-// Telefonda yozuvli, planshet va kompyuterda
-// faqat ikonka ko‘rinadi.
-const actionStyle =
-    'h-9 w-auto gap-2 px-3 md:h-8 md:w-8 md:px-0';
 
 export function SchoolMemberActions({
     membership,
@@ -70,113 +39,92 @@ export function SchoolMemberActions({
     onEnd,
     onChangeClass,
     onTransferSchool,
+    layout = 'icons',
 }: Props) {
+    const { t } = useTranslation();
     const personId = membership.person?.id;
+    const isActiveStudent = membership.type === 'STUDENT' && membership.endDate === null;
 
-    const isActiveStudent =
-        membership.type === 'STUDENT' &&
-        membership.endDate === null;
+    const actions: Action[] = [];
 
-    const endLabel = membership.endDate
-        ? 'Tugash sanasi'
-        : 'Yakunlash';
+    if (personId) {
+        actions.push({ key: 'view', label: t('members.actions.view'), icon: Eye, to: `/persons/${personId}` });
+        if (canEdit) {
+            actions.push({ key: 'edit', label: t('common.edit'), icon: Pencil, to: `/persons/${personId}?edit=1` });
+        }
+    }
+    if (isActiveStudent && canChangeClass) {
+        actions.push({ key: 'class', label: t('members.actions.changeClass'), icon: GraduationCap, onClick: () => onChangeClass(membership) });
+    }
+    if (isActiveStudent && canTransferSchool) {
+        actions.push({ key: 'transfer', label: t('members.actions.transfer'), icon: ArrowRightLeft, onClick: () => onTransferSchool(membership) });
+    }
+    if (canEnd) {
+        actions.push({
+            key: 'end',
+            label: membership.endDate ? t('members.actions.endDate') : t('members.actions.end'),
+            icon: CalendarX2,
+            onClick: () => onEnd(membership),
+        });
+    }
 
-    return (
-        <Tooltip.Provider delayDuration={250}>
-            <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
-                {personId && (
-                    <ActionTooltip label="Ko‘rish">
-                        <Button
-                            asChild
-                            size="sm"
-                            variant="outline"
-                            className={actionStyle}
-                        >
-                            <Link
-                                to={`/persons/${personId}`}
-                                aria-label="Ko‘rish"
-                            >
-                                <Eye className="size-4" aria-hidden="true" />
-                                <span className="md:sr-only">Ko‘rish</span>
+    if (layout === 'labels') {
+        return (
+            <div className="flex flex-wrap gap-2">
+                {actions.map(({ key, label, icon: Icon, to, onClick }) =>
+                    to ? (
+                        <Button key={key} asChild size="sm" variant="outline">
+                            <Link to={to}>
+                                <Icon aria-hidden="true" />
+                                {label}
                             </Link>
                         </Button>
-                    </ActionTooltip>
-                )}
-
-                {personId && canEdit && (
-                    <ActionTooltip label="Tahrirlash">
+                    ) : (
                         <Button
-                            asChild
-                            size="sm"
-                            variant="outline"
-                            className={actionStyle}
-                        >
-                            <Link
-                                to={`/persons/${personId}?edit=1`}
-                                aria-label="Tahrirlash"
-                            >
-                                <Pencil className="size-4" aria-hidden="true" />
-                                <span className="md:sr-only">Tahrirlash</span>
-                            </Link>
-                        </Button>
-                    </ActionTooltip>
-                )}
-
-                {isActiveStudent && canChangeClass && (
-                    <ActionTooltip label="Sinfni almashtirish">
-                        <Button
+                            key={key}
                             type="button"
                             size="sm"
                             variant="outline"
-                            className={actionStyle}
-                            aria-label="Sinfni almashtirish"
                             disabled={actionsDisabled}
-                            onClick={() => onChangeClass(membership)}
+                            onClick={onClick}
                         >
-                            <GraduationCap className="size-4" aria-hidden="true" />
-                            <span className="md:sr-only">
-                                Sinfni almashtirish
-                            </span>
+                            <Icon aria-hidden="true" />
+                            {label}
                         </Button>
-                    </ActionTooltip>
-                )}
-
-                {isActiveStudent && canTransferSchool && (
-                    <ActionTooltip label="Maktabga ko‘chirish">
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className={actionStyle}
-                            aria-label="Maktabga ko‘chirish"
-                            disabled={actionsDisabled}
-                            onClick={() => onTransferSchool(membership)}
-                        >
-                            <ArrowRightLeft className="size-4" aria-hidden="true" />
-                            <span className="md:sr-only">
-                                Maktabga ko‘chirish
-                            </span>
-                        </Button>
-                    </ActionTooltip>
-                )}
-
-                {canEnd && (
-                    <ActionTooltip label={endLabel}>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className={actionStyle}
-                            aria-label={endLabel}
-                            disabled={actionsDisabled}
-                            onClick={() => onEnd(membership)}
-                        >
-                            <CalendarX2 className="size-4" aria-hidden="true" />
-                            <span className="md:sr-only">{endLabel}</span>
-                        </Button>
-                    </ActionTooltip>
+                    ),
                 )}
             </div>
-        </Tooltip.Provider>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-1.5">
+            {actions.map(({ key, label, icon: Icon, to, onClick }) => (
+                <Tooltip key={key}>
+                    <TooltipTrigger asChild>
+                        {to ? (
+                            <Button asChild size="icon-sm" variant="outline" className="size-8">
+                                <Link to={to} aria-label={label}>
+                                    <Icon aria-hidden="true" />
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button
+                                type="button"
+                                size="icon-sm"
+                                variant="outline"
+                                className="size-8"
+                                aria-label={label}
+                                disabled={actionsDisabled}
+                                onClick={onClick}
+                            >
+                                <Icon aria-hidden="true" />
+                            </Button>
+                        )}
+                    </TooltipTrigger>
+                    <TooltipContent>{label}</TooltipContent>
+                </Tooltip>
+            ))}
+        </div>
     );
 }

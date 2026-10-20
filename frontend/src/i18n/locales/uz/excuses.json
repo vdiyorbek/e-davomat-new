@@ -1,0 +1,81 @@
+{
+  "title": "Sababli arizalar",
+  "subtitle": "O‘quvchilarning sababli davomat arizalari va asoslovchi hujjatlari.",
+  "listTitle": "Arizalar ro‘yxati",
+  "emptyTitle": "Arizalar topilmadi",
+  "empty": "Tanlangan filtrlar bo‘yicha arizalar topilmadi.",
+  "number": "Ariza №{{id}}",
+  "student": "O‘quvchi",
+  "period": "Sana oralig‘i",
+  "reasonType": "Sabab turi",
+  "chooseReason": "Sabab turini tanlang",
+  "reason": {
+    "ILLNESS": "Kasallik",
+    "OLYMPIAD": "Olimpiada",
+    "FAMILY": "Oilaviy sabab",
+    "OTHER": "Boshqa sabab"
+  },
+  "status": {
+    "ACTIVE": "Faol",
+    "CANCELLED": "Bekor qilingan"
+  },
+  "filters": {
+    "personId": "O‘quvchi ID",
+    "personIdPlaceholder": "Masalan: 125",
+    "invalidPersonId": "O‘quvchi ID noto‘g‘ri.",
+    "status": "Ariza holati",
+    "all": "Barcha arizalar"
+  },
+  "markExcused": "Sababli qilish",
+  "markTitle": "O‘quvchini sababli belgilash",
+  "markDescription": "Sabab turini, sana oralig‘ini va asoslovchi PDF hujjatni kiriting.",
+  "selectedStudent": "Tanlangan o‘quvchi",
+  "unknownStudent": "Noma’lum o‘quvchi",
+  "note": "Izoh",
+  "notePlaceholder": "Qisqacha izoh",
+  "noteHint": "Shaxsiy yoki tibbiy tafsilotlarni ortiqcha yozmang.",
+  "file": "Asoslovchi ariza (PDF)",
+  "fileHint": "PDF formatida, maksimal {{size}} MB.",
+  "chooseFile": "PDF tanlash",
+  "submit": "Sababli qilib saqlash",
+  "errors": {
+    "reason": "Sabab turini tanlang.",
+    "range": "Sana oralig‘ini to‘g‘ri kiriting.",
+    "noteLength": "Izoh 500 ta belgidan oshmasligi kerak.",
+    "file": "Asoslovchi PDF arizani tanlang.",
+    "fileSize": "PDF hajmi {{size}} MB dan oshmasligi kerak.",
+    "fileType": "Faqat PDF formatidagi hujjatni yuklang.",
+    "saveFailed": "Arizani saqlashda xatolik yuz berdi."
+  },
+  "pdf": {
+    "title": "Asoslovchi PDF — ariza №{{id}}",
+    "description": "Hujjat faqat ruxsat berilgan foydalanuvchilarga ko‘rsatiladi.",
+    "frameTitle": "Ariza {{id}}",
+    "download": "PDFni yuklab olish",
+    "failed": "PDF hujjatni ochib bo‘lmadi."
+  },
+  "cancel": {
+    "button": "Bekor qilish",
+    "title": "Arizani bekor qilish",
+    "description": "№{{id}} ariza bekor qilinadi. Bekor qilish sababi tarixda saqlanadi.",
+    "reason": "Bekor qilish sababi",
+    "reasonHint": "Kamida 5 ta belgi.",
+    "placeholder": "Masalan: ariza xato sana bilan kiritilgan",
+    "confirm": "Bekor qilishni tasdiqlash",
+    "failed": "Arizani bekor qilib bo‘lmadi."
+  },
+  "create": {
+    "button": "Yangi ariza",
+    "title": "Yangi sababli ariza",
+    "description": "O‘quvchini tanlang va asoslovchi PDF hujjatni yuklang.",
+    "another": "Boshqa o‘quvchini tanlash",
+    "searchLabel": "O‘quvchini F.I.Sh. yoki PNFL orqali qidirish",
+    "searchPlaceholder": "Familiya, ism yoki PNFL",
+    "minChars": "Kamida 2 ta belgi kiriting.",
+    "searching": "O‘quvchilar qidirilmoqda…",
+    "noStudents": "O‘quvchi topilmadi.",
+    "select": "Tanlash",
+    "first50": "Birinchi 50 ta natija ko‘rsatildi. Qidiruvni aniqlashtiring.",
+    "note": "Tarixiy o‘quvchilik bog‘lanishlari ham qidiruvda ko‘rinishi mumkin. Ariza sanasi o‘quvchining shu maktabdagi o‘qish davriga mos bo‘lishi kerak."
+  }
+}

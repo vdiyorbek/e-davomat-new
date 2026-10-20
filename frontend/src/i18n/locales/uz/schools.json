@@ -1,0 +1,41 @@
+{
+  "title": "Maktablar",
+  "subtitle": "Boshqaruv doirangizdagi maktablar.",
+  "add": "Maktab qo‘shish",
+  "listLabel": "Maktablar ro‘yxati",
+  "name": "Maktab nomi",
+  "loading": "Maktablar yuklanmoqda…",
+  "loadFailed": "Maktablarni yuklab bo‘lmadi",
+  "emptyTitle": "Maktablar topilmadi",
+  "empty": "Hozircha boshqaruv doirangizda ko‘rsatiladigan maktab yo‘q.",
+  "search": "Maktab qidirish",
+  "searchPlaceholder": "Nomi, ID, tuman yoki viloyat…",
+  "found": "{{total}} tadan {{found}} ta topildi",
+  "total": "Jami: {{total}} ta maktab",
+  "noMatchTitle": "Qidiruvga mos maktab topilmadi",
+  "noMatch": "Boshqa nom yoki hudud bilan qidirib ko‘ring.",
+  "createTitle": "Yangi maktab",
+  "createHint": "Viloyat va tumanni tanlab, maktab nomini kiriting.",
+  "editTitle": "Maktabni tahrirlash",
+  "editHint": "Maktab nomi yoki joylashgan tumanini yangilang.",
+  "created": "«{{name}}» muvaffaqiyatli qo‘shildi.",
+  "updated": "«{{name}}» ma’lumotlari yangilandi.",
+  "form": {
+    "name": "Maktab nomi",
+    "namePlaceholder": "Masalan, Termiz shahar 1-son maktabi",
+    "nameHint": "Maktabning to‘liq nomini kiriting. 2–200 belgi.",
+    "chooseDistrict": "Tuman yoki shaharni tanlang",
+    "chooseRegionFirst": "Avval viloyatni tanlang",
+    "noDistricts": "Ushbu viloyatda tuman yoki shahar topilmadi.",
+    "noRegions": "Avval tizimga viloyat qo‘shish kerak.",
+    "save": "Maktabni saqlash",
+    "saveChanges": "O‘zgarishlarni saqlash",
+    "errors": {
+      "nameLength": "Maktab nomi 2–200 belgidan iborat bo‘lishi kerak.",
+      "location": "Viloyat va tumanni tanlang.",
+      "noChanges": "Hali hech qanday o‘zgarish kiritilmadi.",
+      "uncertain": "Saqlash natijasini tasdiqlab bo‘lmadi. Qayta yuborishdan oldin oynani yoping va ro‘yxatni yangilab tekshiring.",
+      "saveFailed": "Maktabni saqlashda xatolik yuz berdi."
+    }
+  }
+}

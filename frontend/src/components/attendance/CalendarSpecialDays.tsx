@@ -1,18 +1,24 @@
-
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { CalendarOff, RotateCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { RefreshCw } from 'lucide-react';
-
+import { useConfirm } from '@/components/common/ConfirmDialog';
+import { Field } from '@/components/common/Field';
+import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
+import { SelectField } from '@/components/common/SelectField';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
-import {
-    authorizedPatch,
-    authorizedPost,
-} from '@/lib/auth-session';
-
+import { authorizedPatch, authorizedPost } from '@/lib/auth-session';
+import { formatDate } from '@/lib/date';
 import type { School } from '@/types/school';
 
 type DayType = 'DAY_OFF' | 'WORK_DAY';
@@ -40,30 +46,12 @@ interface Props {
     academicYear: string;
 }
 
-const inputStyle =
-    'h-11 w-full rounded-xl border border-input ' +
-    'bg-background px-3 text-sm';
-
-const scopeLabels: Record<ScopeType, string> = {
-    GLOBAL: 'Respublika',
-    REGION: 'Viloyat',
-    DISTRICT: 'Tuman',
-    SCHOOL: 'Maktab',
-};
-
-const audienceLabels: Record<AppliesTo, string> = {
-    STUDENT: 'O‘quvchilar',
-    TEACHER: 'O‘qituvchilar',
-    BOTH: 'Barchasi',
-};
-
-export function CalendarSpecialDays({
-    school,
-    academicYear,
-}: Props) {
+export function CalendarSpecialDays({ school, academicYear }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
     const { session } = useAuth();
+    const { confirm, dialog } = useConfirm();
     const profile = session?.profile;
-
     const isSuperAdmin = profile?.role === 'SUPER_ADMIN';
 
     const yearStart = `${academicYear.slice(0, 4)}-09-01`;
@@ -73,127 +61,68 @@ export function CalendarSpecialDays({
     const [endDate, setEndDate] = useState(yearStart);
     const [dayType, setDayType] = useState<DayType>('DAY_OFF');
     const [appliesTo, setAppliesTo] = useState<AppliesTo>('STUDENT');
-    const [scopeType, setScopeType] = useState<'SCHOOL' | 'GLOBAL'>(
-        'SCHOOL',
-    );
+    const [scopeType, setScopeType] = useState<'SCHOOL' | 'GLOBAL'>('SCHOOL');
     const [isMandatory, setIsMandatory] = useState(false);
     const [reason, setReason] = useState('');
-
     const [busy, setBusy] = useState(false);
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
     const saving = useRef(false);
 
-    const params = new URLSearchParams({
-        schoolId: String(school.id),
-        startDate: yearStart,
-        endDate: yearEnd,
-    });
-
-    const query = useApiQuery<CalendarRule[]>(
-        `/attendance-calendar/rules?${params.toString()}`,
-    );
+    const params = new URLSearchParams({ schoolId: String(school.id), startDate: yearStart, endDate: yearEnd });
+    const query = useApiQuery<CalendarRule[]>(`/attendance-calendar/rules?${params.toString()}`);
 
     function canCancel(rule: CalendarRule): boolean {
         if (!profile) return false;
-
         if (profile.role === 'SUPER_ADMIN') return true;
-
         if (rule.scopeType === 'GLOBAL') return false;
 
         if (profile.role === 'REGION_ADMIN') {
-            if (rule.scopeType === 'REGION') {
-                return rule.regionId === profile.regionId;
-            }
-
+            if (rule.scopeType === 'REGION') return rule.regionId === profile.regionId;
             if (rule.scopeType === 'DISTRICT') {
-                return (
-                    rule.districtId === school.districtId &&
-                    school.district.regionId === profile.regionId
-                );
+                return rule.districtId === school.districtId && school.district.regionId === profile.regionId;
             }
-
-            return (
-                rule.schoolId === school.id &&
-                school.district.regionId === profile.regionId
-            );
+            return rule.schoolId === school.id && school.district.regionId === profile.regionId;
         }
-
         if (profile.role === 'DISTRICT_ADMIN') {
             if (rule.scopeType === 'REGION') return false;
-
             return (
                 school.districtId === profile.districtId &&
-                (
-                    rule.districtId === profile.districtId ||
-                    rule.schoolId === school.id
-                )
+                (rule.districtId === profile.districtId || rule.schoolId === school.id)
             );
         }
-
-        return (
-            profile.role === 'SCHOOL_ADMIN' &&
-            rule.scopeType === 'SCHOOL' &&
-            rule.schoolId === profile.schoolId
-        );
+        return profile.role === 'SCHOOL_ADMIN' && rule.scopeType === 'SCHOOL' && rule.schoolId === profile.schoolId;
     }
 
-    async function handleCreate(
-        event: FormEvent<HTMLFormElement>,
-    ) {
+    async function handleCreate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (saving.current) return;
-
         setError('');
         setSuccess('');
 
-        if (
-            !startDate ||
-            !endDate ||
-            startDate < yearStart ||
-            endDate > yearEnd ||
-            endDate < startDate
-        ) {
-            setError('Sana oralig‘ini tekshiring.');
-            return;
+        if (!startDate || !endDate || startDate < yearStart || endDate > yearEnd || endDate < startDate) {
+            return setError(t('calendar.errors.range'));
         }
-
-        if (reason.trim().length < 3) {
-            setError('Sababni kamida 3 ta belgi bilan kiriting.');
-            return;
-        }
+        if (reason.trim().length < 3) return setError(t('calendar.special.errors.reason'));
 
         saving.current = true;
         setBusy(true);
-
         try {
-            await authorizedPost(
-                '/attendance-calendar/rules',
-                {
-                    startDate,
-                    endDate,
-                    dayType,
-                    appliesTo,
-                    scopeType,
-                    ...(scopeType === 'SCHOOL'
-                        ? { schoolId: school.id }
-                        : { isMandatory }),
-                    reason: reason.trim(),
-                },
-            );
-
-            setSuccess('Maxsus kun qoidasi yaratildi.');
+            await authorizedPost('/attendance-calendar/rules', {
+                startDate,
+                endDate,
+                dayType,
+                appliesTo,
+                scopeType,
+                ...(scopeType === 'SCHOOL' ? { schoolId: school.id } : { isMandatory }),
+                reason: reason.trim(),
+            });
+            setSuccess(t('calendar.special.created'));
             setReason('');
             query.retry();
         } catch (err: unknown) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Qoidani yaratishda xatolik yuz berdi.',
-            );
+            setError(err instanceof Error ? err.message : t('calendar.special.createFailed'));
         } finally {
             saving.current = false;
             setBusy(false);
@@ -202,289 +131,228 @@ export function CalendarSpecialDays({
 
     async function handleCancel(rule: CalendarRule) {
         if (cancellingId !== null || !canCancel(rule)) return;
-
-        const confirmed = window.confirm(
-            `"${rule.reason}" qoidasini bekor qilasizmi?`,
-        );
-
+        const confirmed = await confirm({
+            title: t('calendar.special.cancelTitle'),
+            description: t('calendar.special.cancelConfirm', { reason: rule.reason }),
+            confirmLabel: t('calendar.special.cancel'),
+            destructive: true,
+        });
         if (!confirmed) return;
 
         setError('');
         setSuccess('');
         setCancellingId(rule.id);
-
         try {
-            await authorizedPatch(
-                `/attendance-calendar/rules/${rule.id}/cancel`,
-                {},
-            );
-
-            setSuccess('Qoida bekor qilindi.');
+            await authorizedPatch(`/attendance-calendar/rules/${rule.id}/cancel`, {});
+            setSuccess(t('calendar.special.cancelled'));
             query.retry();
         } catch (err: unknown) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Qoidani bekor qilib bo‘lmadi.',
-            );
+            setError(err instanceof Error ? err.message : t('calendar.special.cancelFailed'));
         } finally {
             setCancellingId(null);
         }
     }
 
+    function scopeText(rule: CalendarRule) {
+        return (
+            <>
+                {t(`calendar.scopes.${rule.scopeType}`)}
+                {rule.classId !== null && ` · ${t('calendar.classId', { id: rule.classId })}`}
+                {rule.isMandatory && <span className="block text-xs text-muted-foreground">{t('calendar.special.mandatory')}</span>}
+            </>
+        );
+    }
+
+    function dayTypeBadge(rule: CalendarRule) {
+        return (
+            <StatusBadge tone={rule.dayType === 'DAY_OFF' ? 'warning' : 'success'}>
+                {t(`calendar.dayTypes.${rule.dayType}`)}
+            </StatusBadge>
+        );
+    }
+
+    function cancelButton(rule: CalendarRule) {
+        return canCancel(rule) ? (
+            <Button type="button" variant="outline" size="sm" disabled={cancellingId !== null} onClick={() => void handleCancel(rule)}>
+                {cancellingId === rule.id ? t('calendar.special.cancelling') : t('calendar.special.cancel')}
+            </Button>
+        ) : (
+            <span className="text-xs text-muted-foreground">{t('calendar.special.viewOnly')}</span>
+        );
+    }
+
     return (
-        <div className="space-y-6">
-            <form
-                onSubmit={handleCreate}
-                className="space-y-5 rounded-2xl border bg-card p-5"
-            >
-                <div>
-                    <h2 className="text-lg font-semibold">
-                        Maxsus kun yaratish
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Bayram, ta’til yoki qo‘shimcha o‘quv kunini belgilang.
-                    </p>
-                </div>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            {dialog}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">{t('calendar.special.createTitle')}</CardTitle>
+                    <CardDescription>{t('calendar.special.createHint')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleCreate} className="space-y-5">
+                        <fieldset disabled={busy} className="space-y-5">
+                            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+                                <Field htmlFor={`${id}-type`} label={t('calendar.special.dayType')}>
+                                    <SelectField
+                                        id={`${id}-type`}
+                                        value={dayType}
+                                        onValueChange={(value) => setDayType(value as DayType)}
+                                        options={(['DAY_OFF', 'WORK_DAY'] as const).map((value) => ({ value, label: t(`calendar.dayTypes.${value}`) }))}
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-who`} label={t('calendar.audience')}>
+                                    <SelectField
+                                        id={`${id}-who`}
+                                        value={appliesTo}
+                                        onValueChange={(value) => setAppliesTo(value as AppliesTo)}
+                                        options={(['STUDENT', 'TEACHER', 'BOTH'] as const).map((value) => ({ value, label: t(`calendar.audiences.${value}`) }))}
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-scope`} label={t('calendar.special.scope')}>
+                                    <SelectField
+                                        id={`${id}-scope`}
+                                        value={scopeType}
+                                        onValueChange={(value) => {
+                                            setScopeType(value as 'SCHOOL' | 'GLOBAL');
+                                            setIsMandatory(false);
+                                        }}
+                                        options={[
+                                            { value: 'SCHOOL', label: t('calendar.special.thisSchool') },
+                                            ...(isSuperAdmin ? [{ value: 'GLOBAL', label: t('calendar.special.national') }] : []),
+                                        ]}
+                                    />
+                                </Field>
+                            </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                    <label className="space-y-2 text-sm font-medium">
-                        Kun turi
-                        <select
-                            value={dayType}
-                            onChange={(event) =>
-                                setDayType(event.target.value as DayType)
-                            }
-                            disabled={busy}
-                            className={inputStyle}
-                        >
-                            <option value="DAY_OFF">Dam olish kuni</option>
-                            <option value="WORK_DAY">O‘quv / ish kuni</option>
-                        </select>
-                    </label>
-
-                    <label className="space-y-2 text-sm font-medium">
-                        Kimlar uchun?
-                        <select
-                            value={appliesTo}
-                            onChange={(event) =>
-                                setAppliesTo(event.target.value as AppliesTo)
-                            }
-                            disabled={busy}
-                            className={inputStyle}
-                        >
-                            <option value="STUDENT">O‘quvchilar</option>
-                            <option value="TEACHER">O‘qituvchilar</option>
-                            <option value="BOTH">Barchasi</option>
-                        </select>
-                    </label>
-
-                    <label className="space-y-2 text-sm font-medium">
-                        Qoida hududi
-                        <select
-                            value={scopeType}
-                            onChange={(event) => {
-                                setScopeType(
-                                    event.target.value as 'SCHOOL' | 'GLOBAL',
-                                );
-                                setIsMandatory(false);
-                            }}
-                            disabled={busy}
-                            className={inputStyle}
-                        >
-                            <option value="SCHOOL">
-                                Ushbu maktab
-                            </option>
-                            {isSuperAdmin && (
-                                <option value="GLOBAL">
-                                    Respublika bo‘yicha
-                                </option>
+                            {scopeType === 'GLOBAL' && isSuperAdmin && (
+                                <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 px-4 py-3">
+                                    <Label htmlFor={`${id}-mandatory`} className="leading-5">
+                                        {t('calendar.special.mandatoryLabel')}
+                                    </Label>
+                                    <Switch id={`${id}-mandatory`} checked={isMandatory} onCheckedChange={setIsMandatory} />
+                                </div>
                             )}
-                        </select>
-                    </label>
-                </div>
 
-                {scopeType === 'GLOBAL' && isSuperAdmin && (
-                    <label className="flex items-center gap-2 text-sm">
-                        <input
-                            type="checkbox"
-                            checked={isMandatory}
-                            disabled={busy}
-                            onChange={(event) =>
-                                setIsMandatory(event.target.checked)
-                            }
-                        />
-                        Majburiy respublika qoidasi
-                    </label>
-                )}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
+                                    <Input
+                                        id={`${id}-start`}
+                                        type="date"
+                                        value={startDate}
+                                        min={yearStart}
+                                        max={yearEnd}
+                                        required
+                                        onChange={(event) => {
+                                            const next = event.target.value;
+                                            setStartDate(next);
+                                            if (endDate < next) setEndDate(next);
+                                        }}
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-end`} label={t('membership.endDate')} required>
+                                    <Input
+                                        id={`${id}-end`}
+                                        type="date"
+                                        value={endDate}
+                                        min={startDate}
+                                        max={yearEnd}
+                                        required
+                                        onChange={(event) => setEndDate(event.target.value)}
+                                    />
+                                </Field>
+                            </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="space-y-2 text-sm font-medium">
-                        Boshlanish sanasi
-                        <Input
-                            type="date"
-                            value={startDate}
-                            min={yearStart}
-                            max={yearEnd}
-                            disabled={busy}
-                            required
-                            onChange={(event) => {
-                                const next = event.target.value;
-                                setStartDate(next);
-                                if (endDate < next) setEndDate(next);
-                            }}
-                        />
-                    </label>
+                            <Field htmlFor={`${id}-reason`} label={t('calendar.special.reason')} required>
+                                <Input
+                                    id={`${id}-reason`}
+                                    value={reason}
+                                    onChange={(event) => setReason(event.target.value)}
+                                    maxLength={500}
+                                    placeholder={t('calendar.special.reasonPlaceholder')}
+                                    required
+                                />
+                            </Field>
+                        </fieldset>
 
-                    <label className="space-y-2 text-sm font-medium">
-                        Tugash sanasi
-                        <Input
-                            type="date"
-                            value={endDate}
-                            min={startDate}
-                            max={yearEnd}
-                            disabled={busy}
-                            required
-                            onChange={(event) =>
-                                setEndDate(event.target.value)
-                            }
-                        />
-                    </label>
-                </div>
+                        {error && <ErrorState message={error} />}
+                        {success && <SuccessNotice>{success}</SuccessNotice>}
 
-                <label className="block space-y-2 text-sm font-medium">
-                    Sabab
-                    <Input
-                        value={reason}
-                        onChange={(event) =>
-                            setReason(event.target.value)
-                        }
-                        maxLength={500}
-                        placeholder="Masalan: Kuzgi ta’til"
-                        disabled={busy}
-                        required
-                    />
-                </label>
-
-                {error && (
-                    <p role="alert" className="text-sm text-destructive">
-                        {error}
-                    </p>
-                )}
-
-                {success && (
-                    <p role="status" className="text-sm text-green-600">
-                        {success}
-                    </p>
-                )}
-
-                <Button type="submit" disabled={busy}>
-                    {busy ? 'Saqlanmoqda…' : 'Maxsus kunni saqlash'}
-                </Button>
-            </form>
+                        <Button type="submit" disabled={busy} className="w-full sm:w-auto">
+                            {busy ? t('common.saving') : t('calendar.special.submit')}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
 
             <section className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-semibold">
-                        Maxsus kunlar ro‘yxati
-                    </h2>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={query.retry}
-                    >
-                        <RefreshCw className="size-4" />
-                        Yangilash
+                    <h2 className="font-heading text-lg font-semibold">{t('calendar.special.listTitle')}</h2>
+                    <Button type="button" variant="outline" size="sm" onClick={query.retry}>
+                        <RotateCw aria-hidden="true" />
+                        {t('common.refresh')}
                     </Button>
                 </div>
 
                 {query.loading ? (
-                    <p className="text-sm text-muted-foreground">
-                        Qoidalar yuklanmoqda…
-                    </p>
+                    <LoadingState rows={3} />
                 ) : query.error ? (
-                    <p role="alert" className="text-sm text-destructive">
-                        {query.error}
-                    </p>
+                    <ErrorState message={query.error} onRetry={query.retry} />
                 ) : query.data?.length ? (
-                    <div className="overflow-x-auto rounded-xl border">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50">
-                                <tr>
-                                    <th className="px-4 py-3">Sana</th>
-                                    <th className="px-4 py-3">Kun turi</th>
-                                    <th className="px-4 py-3">Kimlar uchun</th>
-                                    <th className="px-4 py-3">Hudud</th>
-                                    <th className="px-4 py-3">Sabab</th>
-                                    <th className="px-4 py-3">Amal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {query.data.map((rule) => (
-                                    <tr key={rule.id} className="border-t">
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            {rule.startDate}
-                                            {' — '}
-                                            {rule.endDate}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {rule.dayType === 'DAY_OFF'
-                                                ? 'Dam olish'
-                                                : 'Ish / o‘quv kuni'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {audienceLabels[rule.appliesTo]}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {scopeLabels[rule.scopeType]}
-                                            {rule.classId !== null && (
-                                                <span>
-                                                    {' · Sinf ID: '}
-                                                    {rule.classId}
+                    <>
+                        <ul className="grid list-none gap-3 sm:grid-cols-2 2xl:hidden">
+                            {query.data.map((rule) => (
+                                <li key={rule.id}>
+                                    <Card size="sm" className="gap-3 px-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <p className="min-w-0 font-semibold [overflow-wrap:anywhere]">{rule.reason}</p>
+                                            {dayTypeBadge(rule)}
+                                        </div>
+                                        <DetailList>
+                                            <DetailItem label={t('common.date')} wide>
+                                                <span className="tabular-nums">
+                                                    {formatDate(rule.startDate)} — {formatDate(rule.endDate)}
                                                 </span>
-                                            )}
-                                            {rule.isMandatory && (
-                                                <span className="block text-xs">
-                                                    Majburiy
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {rule.reason}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {canCancel(rule) ? (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={
-                                                        cancellingId !== null
-                                                    }
-                                                    onClick={() =>
-                                                        void handleCancel(rule)
-                                                    }
-                                                >
-                                                    {cancellingId === rule.id
-                                                        ? 'Bekor qilinmoqda…'
-                                                        : 'Bekor qilish'}
-                                                </Button>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">
-                                                    Faqat ko‘rish
-                                                </span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                            </DetailItem>
+                                            <DetailItem label={t('calendar.audience')}>{t(`calendar.audiences.${rule.appliesTo}`)}</DetailItem>
+                                            <DetailItem label={t('calendar.special.scope')}>{scopeText(rule)}</DetailItem>
+                                        </DetailList>
+                                        <div className="border-t pt-3">{cancelButton(rule)}</div>
+                                    </Card>
+                                </li>
+                            ))}
+                        </ul>
+                        <Card className="hidden py-0 2xl:flex">
+                            <Table className="min-w-[720px]">
+                                <TableHeader className="bg-muted/50">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="pl-5">{t('common.date')}</TableHead>
+                                        <TableHead>{t('calendar.special.dayType')}</TableHead>
+                                        <TableHead>{t('calendar.audience')}</TableHead>
+                                        <TableHead>{t('calendar.special.scope')}</TableHead>
+                                        <TableHead>{t('calendar.special.reason')}</TableHead>
+                                        <TableHead className="pr-5 text-right">{t('common.actions')}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {query.data.map((rule) => (
+                                        <TableRow key={rule.id}>
+                                            <TableCell className="pl-5 tabular-nums">
+                                                {formatDate(rule.startDate)} — {formatDate(rule.endDate)}
+                                            </TableCell>
+                                            <TableCell>{dayTypeBadge(rule)}</TableCell>
+                                            <TableCell>{t(`calendar.audiences.${rule.appliesTo}`)}</TableCell>
+                                            <TableCell>{scopeText(rule)}</TableCell>
+                                            <TableCell className="max-w-56 whitespace-normal">{rule.reason}</TableCell>
+                                            <TableCell className="pr-5 text-right">{cancelButton(rule)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    </>
                 ) : (
-                    <p className="rounded-xl border p-4 text-sm text-muted-foreground">
-                        Tanlangan o‘quv yilida maxsus kunlar yo‘q.
-                    </p>
+                    <EmptyState icon={CalendarOff} title={t('calendar.special.emptyTitle')} description={t('calendar.special.empty')} />
                 )}
             </section>
         </div>

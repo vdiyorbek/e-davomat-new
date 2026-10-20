@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +41,7 @@ export function LoginForm() {
   }
 
   const inputClass =
-    'h-14 rounded-2xl border-input bg-background px-4 text-base text-foreground shadow-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/25 disabled:opacity-60';
+    'h-13 rounded-2xl border-input bg-background px-4 text-base text-foreground shadow-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/25 disabled:opacity-60';
 
   return (
     <form
@@ -48,22 +50,15 @@ export function LoginForm() {
       aria-busy={busy}
     >
       {notice && !error && (
-        <p
-          role="status"
-          className="rounded-xl border border-border bg-muted p-3 text-sm text-foreground"
-        >
-          {notice}
-        </p>
+        <Alert>
+          <AlertDescription className="text-foreground">{notice}</AlertDescription>
+        </Alert>
       )}
 
       {error && (
-        <p
-          id="login-error"
-          role="alert"
-          className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          {error}
-        </p>
+        <Alert variant="destructive" id="login-error">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       <div className="space-y-2.5">
@@ -108,38 +103,40 @@ export function LoginForm() {
             required
             disabled={busy}
             aria-describedby={error ? 'login-error' : undefined}
-            className={`${inputClass} pr-24`}
+            className={`${inputClass} pr-16 sm:pr-32`}
           />
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
             aria-controls="password"
             aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
             aria-pressed={showPassword}
             disabled={busy}
             onClick={() => setShowPassword((value) => !value)}
-            className="absolute inset-y-1 right-2 rounded-lg px-3 text-sm font-semibold text-primary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+            className="absolute inset-y-2 right-2 h-auto gap-1.5 px-3 font-semibold text-primary hover:bg-primary/10 hover:text-primary"
           >
-            {showPassword ? t('auth.hide') : t('auth.show')}
-          </button>
+            {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+            <span className="max-sm:sr-only">{showPassword ? t('auth.hide') : t('auth.show')}</span>
+          </Button>
         </div>
       </div>
 
       <Button
         type="submit"
         disabled={busy}
-        className="h-14 w-full rounded-2xl bg-primary text-base font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
+        className="h-13 w-full rounded-2xl bg-primary text-base font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
       >
         {busy ? (
           <span role="status" className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
-            />
+            <Loader2 aria-hidden="true" className="size-5 animate-spin motion-reduce:animate-none" />
             {t('auth.checking')}
           </span>
         ) : (
-          t('auth.submit')
+          <>
+            <LogIn aria-hidden="true" className="size-5" />
+            {t('auth.submit')}
+          </>
         )}
       </Button>
     </form>

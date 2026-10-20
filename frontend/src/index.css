@@ -132,8 +132,11 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
     }
+
   html {
     @apply font-sans;
     }
@@ -156,4 +159,17 @@
   background-color: var(--background);
   background-image: radial-gradient(color-mix(in oklch, var(--foreground) 11%, transparent) 1px, transparent 1.2px);
   background-size: 22px 22px;
+}
+
+/* Kirill va lotin yozuvlarida uzun so‘zlar kartalardan chiqib ketmasligi uchun */
+@layer base {
+  h1, h2, h3, p, dd, td {
+    overflow-wrap: break-word;
+  }
+}
+
+/* Chop etishda navigatsiya elementlarini yashirish */
+@media print {
+  aside, header, nav, footer { display: none !important; }
+  .paper { background: white !important; }
 }

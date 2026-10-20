@@ -1,20 +1,26 @@
-
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { FileCheck2, RotateCw } from 'lucide-react';
 import { Link } from 'react-router';
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PageHeader } from '@/components/common/PageHeader';
 import { AttendanceExcuseActions } from '@/components/attendance/AttendanceExcuseActions';
-import { useApiQuery } from '@/hooks/useApiQuery';
 import { CreateAttendanceExcuseDialog } from '@/components/attendance/CreateAttendanceExcuseDialog';
+import { Field } from '@/components/common/Field';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Pagination } from '@/components/common/Pagination';
+import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
+import { SelectField } from '@/components/common/SelectField';
+import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { formatDate } from '@/lib/date';
+import { personFullName } from '@/lib/person';
+import type { AttendanceExcuse, AttendanceExcusesPageResponse, ExcuseStatus } from '@/types/attendance-excuse';
 import type { School } from '@/types/school';
-import {
-    EXCUSE_REASON_LABELS,
-    type AttendanceExcusesPageResponse,
-    type ExcuseStatus,
-} from '@/types/attendance-excuse';
 
 interface AppliedFilters {
     schoolId: string;
@@ -22,376 +28,220 @@ interface AppliedFilters {
     status: string;
 }
 
-function formatDate(value: string): string {
-    const date = value.slice(0, 10);
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-
-    return match
-        ? `${match[3]}.${match[2]}.${match[1]}`
-        : value;
-}
+const DEFAULT_FILTERS: AppliedFilters = { schoolId: '', personId: '', status: 'ACTIVE' };
 
 export function AttendanceExcusesPage() {
-    const [draft, setDraft] = useState<AppliedFilters>({
-        schoolId: '',
-        personId: '',
-        status: 'ACTIVE',
-    });
-
-    const [filters, setFilters] = useState<AppliedFilters>(draft);
+    const { t } = useTranslation();
+    const id = useId();
+    const [draft, setDraft] = useState<AppliedFilters>(DEFAULT_FILTERS);
+    const [filters, setFilters] = useState<AppliedFilters>(DEFAULT_FILTERS);
     const [page, setPage] = useState(1);
     const [filterError, setFilterError] = useState('');
 
     const { data: schools } = useApiQuery<School[]>('/schools');
 
-    const query = new URLSearchParams({
-        page: String(page),
-        limit: '20',
-    });
-
+    const query = new URLSearchParams({ page: String(page), limit: '20' });
     if (filters.schoolId) query.set('schoolId', filters.schoolId);
     if (filters.personId) query.set('personId', filters.personId);
     if (filters.status) query.set('status', filters.status);
 
-    const path = `/attendance-excuses?${query.toString()}`;
-
-    const {
-        data,
-        loading,
-        error,
-        retry,
-    } = useApiQuery<AttendanceExcusesPageResponse>(path);
+    const { data, loading, error, retry } = useApiQuery<AttendanceExcusesPageResponse>(`/attendance-excuses?${query.toString()}`);
 
     function applyFilters() {
-        if (
-            draft.personId &&
-            (
-                !/^[1-9]\d*$/.test(draft.personId) ||
-                Number(draft.personId) > 4294967295
-            )
-        ) {
-            setFilterError('O‘quvchi ID noto‘g‘ri.');
+        if (draft.personId && (!/^[1-9]\d*$/.test(draft.personId) || Number(draft.personId) > 4294967295)) {
+            setFilterError(t('excuses.filters.invalidPersonId'));
             return;
         }
-
         setFilterError('');
         setPage(1);
         setFilters({ ...draft });
     }
 
-    const totalPages = Math.max(1, data?.totalPages ?? 1);
+    function statusBadge(item: AttendanceExcuse) {
+        return (
+            <StatusBadge tone={item.status === 'ACTIVE' ? 'primary' : 'neutral'}>
+                {t(`excuses.status.${item.status}`)}
+            </StatusBadge>
+        );
+    }
+
+    function nameLink(item: AttendanceExcuse) {
+        return (
+            <Link to={`/persons/${item.personId}`} className="font-semibold underline-offset-4 hover:text-primary hover:underline">
+                {personFullName(item.person, t('common.personMissing'))}
+            </Link>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Davomat boshqaruvi"
-                title="Sababli arizalar"
-                description="O‘quvchilarning sababli davomat arizalari va asoslovchi hujjatlari."
-
+                eyebrow={t('nav.groups.attendance')}
+                title={t('excuses.title')}
+                description={t('excuses.subtitle')}
                 actions={
                     <>
                         <CreateAttendanceExcuseDialog
                             onSaved={() => {
                                 setPage(1);
-
-                                setDraft((previous) => ({
-                                    ...previous,
-                                    status: 'ACTIVE',
-                                }));
-
-                                setFilters((previous) => ({
-                                    ...previous,
-                                    status: 'ACTIVE',
-                                }));
+                                setDraft((previous) => ({ ...previous, status: 'ACTIVE' }));
+                                setFilters((previous) => ({ ...previous, status: 'ACTIVE' }));
                                 retry();
                             }}
                         />
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={retry}
-                        >
-                            <RefreshCw className="size-4" />
-                            Yangilash
+                        <Button type="button" variant="outline" size="icon" className="bg-card" aria-label={t('common.refresh')} onClick={retry}>
+                            <RotateCw aria-hidden="true" />
                         </Button>
                     </>
                 }
-
             />
 
             <form
-                className="rounded-2xl border border-border bg-card p-4 sm:p-5"
+                className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
                 onSubmit={(event) => {
                     event.preventDefault();
                     applyFilters();
                 }}
             >
                 <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="excuses-school"
-                            className="text-sm font-semibold"
-                        >
-                            Maktab
-                        </label>
-
-                        <select
-                            id="excuses-school"
+                    <Field htmlFor={`${id}-school`} label={t('common.school')}>
+                        <SelectField
+                            id={`${id}-school`}
                             value={draft.schoolId}
-                            onChange={(event) =>
-                                setDraft((previous) => ({
-                                    ...previous,
-                                    schoolId: event.target.value,
-                                }))
-                            }
-                            className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                        >
-                            <option value="">Barcha ruxsat etilgan maktablar</option>
-
-                            {(schools ?? []).map((school) => (
-                                <option key={school.id} value={school.id}>
-                                    {school.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="excuses-person"
-                            className="text-sm font-semibold"
-                        >
-                            O‘quvchi ID (ixtiyoriy)
-                        </label>
-
-                        <Input
-                            id="excuses-person"
-                            type="number"
-                            min={1}
-                            max={4294967295}
-                            step={1}
-                            value={draft.personId}
-                            placeholder="Masalan: 125"
-                            onChange={(event) =>
-                                setDraft((previous) => ({
-                                    ...previous,
-                                    personId: event.target.value,
-                                }))
-                            }
+                            onValueChange={(value) => setDraft((previous) => ({ ...previous, schoolId: value }))}
+                            emptyOption={t('filters.allSchools')}
+                            options={(schools ?? []).map((school) => ({ value: String(school.id), label: school.name }))}
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="excuses-status"
-                            className="text-sm font-semibold"
-                        >
-                            Ariza holati
-                        </label>
-
-                        <select
-                            id="excuses-status"
+                    </Field>
+                    <Field htmlFor={`${id}-person`} label={`${t('excuses.filters.personId')} (${t('common.optional')})`} error={filterError || undefined}>
+                        <Input
+                            id={`${id}-person`}
+                            inputMode="numeric"
+                            value={draft.personId}
+                            placeholder={t('excuses.filters.personIdPlaceholder')}
+                            onChange={(event) => setDraft((previous) => ({ ...previous, personId: event.target.value.replace(/\D/g, '') }))}
+                        />
+                    </Field>
+                    <Field htmlFor={`${id}-status`} label={t('excuses.filters.status')}>
+                        <SelectField
+                            id={`${id}-status`}
                             value={draft.status}
-                            onChange={(event) =>
-                                setDraft((previous) => ({
-                                    ...previous,
-                                    status: event.target.value,
-                                }))
-                            }
-                            className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                        >
-                            <option value="">Barcha arizalar</option>
-                            <option value="ACTIVE">Faol</option>
-                            <option value="CANCELLED">Bekor qilingan</option>
-                        </select>
-                    </div>
+                            onValueChange={(value) => setDraft((previous) => ({ ...previous, status: value }))}
+                            emptyOption={t('excuses.filters.all')}
+                            options={(['ACTIVE', 'CANCELLED'] as const).map((value) => ({ value, label: t(`excuses.status.${value}`) }))}
+                        />
+                    </Field>
                 </div>
-
-                {filterError && (
-                    <p role="alert" className="mt-3 text-sm text-destructive">
-                        {filterError}
-                    </p>
-                )}
-
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => {
-                            const empty = {
-                                schoolId: '',
-                                personId: '',
-                                status: 'ACTIVE',
-                            };
-
-                            setDraft(empty);
-                            setFilters(empty);
+                            setDraft(DEFAULT_FILTERS);
+                            setFilters(DEFAULT_FILTERS);
                             setPage(1);
                             setFilterError('');
                         }}
                     >
-                        Tozalash
+                        {t('common.clearFilters')}
                     </Button>
-
-                    <Button type="submit">
-                        Ko‘rsatish
-                    </Button>
+                    <Button type="submit">{t('common.show')}</Button>
                 </div>
             </form>
 
             <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold">
-                        Arizalar ro‘yxati
-                    </h2>
-
-                    {data && (
-                        <span className="text-sm text-muted-foreground">
-                            Jami: {data.total} ta
-                        </span>
-                    )}
+                <div className="flex items-center justify-between gap-3">
+                    <h2 className="font-heading text-lg font-bold">{t('excuses.listTitle')}</h2>
+                    {data && <span className="text-sm text-muted-foreground">{t('common.total', { count: data.total })}</span>}
                 </div>
 
                 {loading ? (
-                    <p role="status" className="text-sm text-muted-foreground">
-                        Arizalar yuklanmoqda…
-                    </p>
+                    <LoadingState />
                 ) : error || !data ? (
-                    <div className="space-y-3 rounded-2xl border p-5">
-                        <p role="alert" className="text-sm text-destructive">
-                            {error || 'Ma’lumotlarni olib bo‘lmadi.'}
-                        </p>
-
-                        <Button variant="outline" onClick={retry}>
-                            Qayta urinish
-                        </Button>
-                    </div>
+                    <ErrorState message={error || t('common.loadFailed')} onRetry={retry} />
                 ) : data.data.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed bg-card p-8 text-center">
-                        <p className="text-sm text-muted-foreground">
-                            Tanlangan filtrlar bo‘yicha arizalar topilmadi.
-                        </p>
-                    </div>
+                    <EmptyState icon={FileCheck2} title={t('excuses.emptyTitle')} description={t('excuses.empty')} />
                 ) : (
-                    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1050px] text-left text-sm">
-                                <thead className="border-b bg-muted/60">
-                                    <tr className="text-xs font-semibold text-muted-foreground">
-                                        <th className="px-4 py-4">№</th>
-                                        <th className="px-4 py-4">O‘quvchi</th>
-                                        <th className="px-4 py-4">Maktab</th>
-                                        <th className="px-4 py-4">Sabab</th>
-                                        <th className="px-4 py-4">Sana oralig‘i</th>
-                                        <th className="px-4 py-4">Holat</th>
-                                        <th className="px-4 py-4 text-right">Amallar</th>
-                                    </tr>
-                                </thead>
+                    <>
+                        <ul className="grid list-none gap-3 sm:grid-cols-2 xl:hidden">
+                            {data.data.map((item) => (
+                                <li key={item.id}>
+                                    <Card size="sm" className="gap-3 px-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="leading-6 [overflow-wrap:anywhere]">{nameLink(item)}</p>
+                                                <p className="text-xs text-muted-foreground">{t('excuses.number', { id: item.id })}</p>
+                                            </div>
+                                            {statusBadge(item)}
+                                        </div>
+                                        <DetailList>
+                                            <DetailItem label={t('excuses.reasonType')}>{t(`excuses.reason.${item.reason}`)}</DetailItem>
+                                            <DetailItem label={t('excuses.period')}>
+                                                <span className="tabular-nums">
+                                                    {formatDate(item.startDate)} — {formatDate(item.endDate)}
+                                                </span>
+                                            </DetailItem>
+                                            <DetailItem label={t('common.school')} wide>
+                                                {item.school.name}
+                                            </DetailItem>
+                                        </DetailList>
+                                        <div className="border-t pt-3">
+                                            <AttendanceExcuseActions excuseId={item.id} status={item.status as ExcuseStatus} onChanged={retry} />
+                                        </div>
+                                    </Card>
+                                </li>
+                            ))}
+                        </ul>
 
-                                <tbody className="divide-y divide-border">
-                                    {data.data.map((item, index) => {
-                                        const name = item.person
-                                            ? [
-                                                item.person.lastName,
-                                                item.person.firstName,
-                                                item.person.middleName,
-                                            ].filter(Boolean).join(' ')
-                                            : 'Shaxs topilmadi';
-
-                                        return (
-                                            <tr key={item.id} className="hover:bg-muted/30">
-                                                <td className="px-4 py-4 tabular-nums">
-                                                    {(data.page - 1) * data.limit + index + 1}
-                                                </td>
-
-                                                <td className="px-4 py-4">
-                                                    <Link
-                                                        to={`/persons/${item.personId}`}
-                                                        className="font-semibold hover:text-primary hover:underline"
-                                                    >
-                                                        {name}
-                                                    </Link>
-
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        Ariza №{item.id}
-                                                    </p>
-                                                </td>
-
-                                                <td className="px-4 py-4">
-                                                    {item.school.name}
-                                                </td>
-
-                                                <td className="px-4 py-4">
-                                                    {EXCUSE_REASON_LABELS[item.reason]}
-                                                </td>
-
-                                                <td className="px-4 py-4 whitespace-nowrap">
-                                                    {formatDate(item.startDate)}
-                                                    {' — '}
-                                                    {formatDate(item.endDate)}
-                                                </td>
-
-                                                <td className="px-4 py-4">
-                                                    <span
-                                                        className={
-                                                            item.status === 'ACTIVE'
-                                                                ? 'rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary'
-                                                                : 'rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground'
-                                                        }
-                                                    >
-                                                        {item.status === 'ACTIVE'
-                                                            ? 'Faol'
-                                                            : 'Bekor qilingan'}
-                                                    </span>
-                                                </td>
-
-                                                <td className="px-4 py-4">
-                                                    <AttendanceExcuseActions
-                                                        excuseId={item.id}
-                                                        status={item.status as ExcuseStatus}
-                                                        onChanged={retry}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                        <Card className="hidden py-0 xl:flex">
+                            <Table className="min-w-[880px]">
+                                <TableHeader className="bg-muted/50">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
+                                        <TableHead>{t('excuses.student')}</TableHead>
+                                        <TableHead>{t('common.school')}</TableHead>
+                                        <TableHead>{t('excuses.reasonType')}</TableHead>
+                                        <TableHead>{t('excuses.period')}</TableHead>
+                                        <TableHead>{t('common.status')}</TableHead>
+                                        <TableHead className="pr-5 text-right">{t('common.actions')}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {data.data.map((item, index) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="pl-5 text-muted-foreground tabular-nums">
+                                                {(data.page - 1) * data.limit + index + 1}
+                                            </TableCell>
+                                            <TableCell className="max-w-60 whitespace-normal">
+                                                {nameLink(item)}
+                                                <p className="mt-0.5 text-xs text-muted-foreground">{t('excuses.number', { id: item.id })}</p>
+                                            </TableCell>
+                                            <TableCell className="max-w-60 whitespace-normal">{item.school.name}</TableCell>
+                                            <TableCell>{t(`excuses.reason.${item.reason}`)}</TableCell>
+                                            <TableCell className="tabular-nums">
+                                                {formatDate(item.startDate)} — {formatDate(item.endDate)}
+                                            </TableCell>
+                                            <TableCell>{statusBadge(item)}</TableCell>
+                                            <TableCell className="pr-5">
+                                                <AttendanceExcuseActions excuseId={item.id} status={item.status as ExcuseStatus} onChanged={retry} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    </>
                 )}
 
-                {data && (
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="text-sm text-muted-foreground">
-                            {data.page} / {totalPages} sahifa
-                        </span>
-
-                        <div className="flex gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={page <= 1 || loading}
-                                onClick={() => setPage((value) => value - 1)}
-                            >
-                                <ChevronLeft className="size-4" />
-                                Oldingi
-                            </Button>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={page >= totalPages || loading}
-                                onClick={() => setPage((value) => value + 1)}
-                            >
-                                Keyingi
-                                <ChevronRight className="size-4" />
-                            </Button>
-                        </div>
-                    </div>
+                {data && data.total > 0 && (
+                    <Pagination
+                        page={data.page}
+                        totalPages={Math.max(1, data.totalPages)}
+                        onPageChange={setPage}
+                        total={data.total}
+                        pageSize={data.limit}
+                        shownCount={data.data.length}
+                    />
                 )}
             </section>
         </div>

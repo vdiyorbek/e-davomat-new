@@ -1,0 +1,7 @@
+{
+  "startDate": "Start date",
+  "endDate": "End date",
+  "start": "Start",
+  "endExclusive": "First inactive day",
+  "endDateHint": "The end date is the first day on which this membership is no longer active."
+}

@@ -1,0 +1,81 @@
+{
+  "title": "Excused absences",
+  "subtitle": "Student excused-absence requests and supporting documents.",
+  "listTitle": "Requests",
+  "emptyTitle": "No requests found",
+  "empty": "No requests match the selected filters.",
+  "number": "Request #{{id}}",
+  "student": "Student",
+  "period": "Period",
+  "reasonType": "Reason",
+  "chooseReason": "Choose a reason",
+  "reason": {
+    "ILLNESS": "Illness",
+    "OLYMPIAD": "Olympiad",
+    "FAMILY": "Family reasons",
+    "OTHER": "Other"
+  },
+  "status": {
+    "ACTIVE": "Active",
+    "CANCELLED": "Cancelled"
+  },
+  "filters": {
+    "personId": "Student ID",
+    "personIdPlaceholder": "e.g. 125",
+    "invalidPersonId": "Invalid student ID.",
+    "status": "Request status",
+    "all": "All requests"
+  },
+  "markExcused": "Mark excused",
+  "markTitle": "Mark student as excused",
+  "markDescription": "Enter the reason, the period and attach a supporting PDF.",
+  "selectedStudent": "Selected student",
+  "unknownStudent": "Unknown student",
+  "note": "Note",
+  "notePlaceholder": "Short note",
+  "noteHint": "Avoid unnecessary personal or medical details.",
+  "file": "Supporting document (PDF)",
+  "fileHint": "PDF, up to {{size}} MB.",
+  "chooseFile": "Choose PDF",
+  "submit": "Save as excused",
+  "errors": {
+    "reason": "Choose a reason.",
+    "range": "Enter a valid date range.",
+    "noteLength": "The note must not exceed 500 characters.",
+    "file": "Choose the supporting PDF.",
+    "fileSize": "The PDF must not exceed {{size}} MB.",
+    "fileType": "Only PDF documents are accepted.",
+    "saveFailed": "Failed to save the request."
+  },
+  "pdf": {
+    "title": "Supporting PDF — request #{{id}}",
+    "description": "Only authorised users can view this document.",
+    "frameTitle": "Request {{id}}",
+    "download": "Download PDF",
+    "failed": "Could not open the PDF."
+  },
+  "cancel": {
+    "button": "Cancel",
+    "title": "Cancel request",
+    "description": "Request #{{id}} will be cancelled. The reason is kept in the history.",
+    "reason": "Cancellation reason",
+    "reasonHint": "At least 5 characters.",
+    "placeholder": "e.g. the request was entered with the wrong date",
+    "confirm": "Confirm cancellation",
+    "failed": "Could not cancel the request."
+  },
+  "create": {
+    "button": "New request",
+    "title": "New excused-absence request",
+    "description": "Choose a student and upload a supporting PDF.",
+    "another": "Choose another student",
+    "searchLabel": "Find a student by name or PINFL",
+    "searchPlaceholder": "Last name, first name or PINFL",
+    "minChars": "Enter at least 2 characters.",
+    "searching": "Searching students…",
+    "noStudents": "No student found.",
+    "select": "Select",
+    "first50": "Showing the first 50 results. Refine your search.",
+    "note": "Past memberships may also appear. The request dates must fall within the student’s period at this school."
+  }
+}

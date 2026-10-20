@@ -41,9 +41,4 @@ export interface AttendanceExcusesPageResponse {
   totalPages: number;
 }
 
-export const EXCUSE_REASON_LABELS: Record<ExcuseReason, string> = {
-  ILLNESS: "Kasallik",
-  OLYMPIAD: "Olimpiada",
-  FAMILY: "Oilaviy sabab",
-  OTHER: "Boshqa sabab",
-};
+export const EXCUSE_REASONS: ExcuseReason[] = ["ILLNESS", "OLYMPIAD", "FAMILY", "OTHER"];

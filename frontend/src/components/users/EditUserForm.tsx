@@ -1,11 +1,16 @@
-
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { authorizedPatch } from '@/lib/auth-session';
+import { Separator } from '@/components/ui/separator';
 import { ApiError } from '@/lib/api';
+import { authorizedPatch } from '@/lib/auth-session';
+
+import { UserNameFields } from './UserNameFields';
 
 export interface EditableUser {
     id: number;
@@ -21,122 +26,57 @@ interface EditUserFormProps {
     onCancel: () => void;
 }
 
-export function EditUserForm({
-    user,
-    onUpdated,
-    onCancel,
-}: EditUserFormProps) {
-    const [firstName, setFirstName] = useState(
-        user.firstName ?? '',
-    );
-    const [lastName, setLastName] = useState(
-        user.lastName ?? '',
-    );
-    const [middleName, setMiddleName] = useState(
-        user.middleName ?? '',
-    );
+export function EditUserForm({ user, onUpdated, onCancel }: EditUserFormProps) {
+    const { t } = useTranslation();
+    const id = useId();
+    const [names, setNames] = useState({
+        lastName: user.lastName ?? '',
+        firstName: user.firstName ?? '',
+        middleName: user.middleName ?? '',
+    });
     const [login, setLogin] = useState(user.login);
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] =
-        useState('');
-
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const submitting = useRef(false);
 
-    async function handleSubmit(
-        event: FormEvent<HTMLFormElement>,
-    ) {
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (submitting.current) return;
-
         setError('');
 
         const normalizedLogin = login.trim().toLowerCase();
-        const normalizedFirstName = firstName.trim();
-        const normalizedLastName = lastName.trim();
-        const normalizedMiddleName = middleName.trim();
+        const firstName = names.firstName.trim();
+        const lastName = names.lastName.trim();
+        const middleName = names.middleName.trim();
 
-        if (
-            normalizedFirstName.length < 2 ||
-            normalizedLastName.length < 2
-        ) {
-            setError('Ism va familiya kamida 2 belgidan iborat bo‘lsin.');
-            return;
-        }
-
-        if (!/^[a-z0-9._]{3,50}$/.test(normalizedLogin)) {
-            setError('Login formatini tekshiring.');
-            return;
-        }
-
-        if (password && (password.length < 12 || password.length > 128)) {
-            setError('Yangi parol 12–128 belgidan iborat bo‘lishi kerak.');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError('Parollar bir-biriga mos kelmadi.');
-            return;
-        }
+        if (firstName.length < 2 || lastName.length < 2) return setError(t('users.errors.nameLength'));
+        if (!/^[a-z0-9._]{3,50}$/.test(normalizedLogin)) return setError(t('users.errors.login'));
+        if (password && (password.length < 12 || password.length > 128)) return setError(t('users.errors.password'));
+        if (password !== confirmPassword) return setError(t('users.errors.passwordMismatch'));
 
         const changes: Record<string, string> = {};
-
-        if (normalizedFirstName !== (user.firstName ?? '')) {
-            changes.firstName = normalizedFirstName;
+        if (firstName !== (user.firstName ?? '')) changes.firstName = firstName;
+        if (lastName !== (user.lastName ?? '')) changes.lastName = lastName;
+        if (middleName !== (user.middleName ?? '')) {
+            if (!middleName) return setError(t('users.errors.middleNameClear'));
+            changes.middleName = middleName;
         }
-
-        if (normalizedLastName !== (user.lastName ?? '')) {
-            changes.lastName = normalizedLastName;
-        }
-
-        if (normalizedMiddleName !== (user.middleName ?? '')) {
-            if (normalizedMiddleName) {
-                changes.middleName = normalizedMiddleName;
-            } else {
-                setError(
-                    'Otasining ismini tozalash uchun backendda null qo‘llab-quvvatlanishi kerak.',
-                );
-                return;
-            }
-        }
-
-        if (normalizedLogin !== user.login) {
-            changes.login = normalizedLogin;
-        }
-
-        if (password) {
-            changes.password = password;
-        }
-
-        if (Object.keys(changes).length === 0) {
-            setError('Hech qanday o‘zgarish kiritilmadi.');
-            return;
-        }
+        if (normalizedLogin !== user.login) changes.login = normalizedLogin;
+        if (password) changes.password = password;
+        if (Object.keys(changes).length === 0) return setError(t('users.errors.noChanges'));
 
         submitting.current = true;
         setBusy(true);
-
         try {
-            await authorizedPatch(
-                `/users/${user.id}`,
-                changes,
-            );
+            await authorizedPatch(`/users/${user.id}`, changes);
             onUpdated();
         } catch (err: unknown) {
-            if (
-                err instanceof ApiError &&
-                (err.status === 0 || err.status >= 500)
-            ) {
-                setError(
-                    'Natija tasdiqlanmadi. Qayta yuborishdan oldin ro‘yxatni tekshiring.',
-                );
+            if (err instanceof ApiError && (err.status === 0 || err.status >= 500)) {
+                setError(t('users.errors.uncertain'));
             } else {
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : 'Tahrirlashda xatolik yuz berdi.',
-                );
+                setError(err instanceof Error ? err.message : t('users.errors.updateFailed'));
             }
         } finally {
             submitting.current = false;
@@ -145,112 +85,61 @@ export function EditUserForm({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <label htmlFor="edit-last-name">Familiya</label>
-                    <Input
-                        id="edit-last-name"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        minLength={2}
-                        maxLength={100}
-                        required
-                        disabled={busy}
-                    />
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+            <UserNameFields {...names} disabled={busy} onChange={(field, value) => setNames((previous) => ({ ...previous, [field]: value }))} />
 
-                <div className="space-y-2">
-                    <label htmlFor="edit-first-name">Ism</label>
-                    <Input
-                        id="edit-first-name"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        minLength={2}
-                        maxLength={100}
-                        required
-                        disabled={busy}
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <label htmlFor="edit-middle-name">Otasining ismi</label>
+            <Field htmlFor={`${id}-login`} label={t('profile.login')} hint={t('users.loginHint')} required>
                 <Input
-                    id="edit-middle-name"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                    maxLength={100}
-                    disabled={busy}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <label htmlFor="edit-login">Login</label>
-                <Input
-                    id="edit-login"
+                    id={`${id}-login`}
                     value={login}
-                    onChange={(e) => setLogin(e.target.value)}
+                    onChange={(event) => setLogin(event.target.value)}
+                    autoCapitalize="none"
+                    spellCheck={false}
                     maxLength={50}
                     required
                     disabled={busy}
                 />
-            </div>
+            </Field>
 
-            <div className="border-t pt-4">
-                <p className="mb-3 text-sm font-medium">
-                    Parolni almashtirish
-                </p>
-                <p className="mb-4 text-xs text-muted-foreground">
-                    Parol o‘zgarmasa, quyidagi maydonlarni bo‘sh qoldiring.
-                </p>
+            <Separator />
 
+            <div className="space-y-4">
+                <div>
+                    <p className="text-sm font-semibold">{t('users.changePassword')}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{t('users.changePasswordHint')}</p>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                        <label htmlFor="edit-password">Yangi parol</label>
+                    <Field htmlFor={`${id}-password`} label={t('users.newPassword')}>
                         <Input
-                            id="edit-password"
+                            id={`${id}-password`}
                             type="password"
                             autoComplete="new-password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(event) => setPassword(event.target.value)}
                             disabled={busy}
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label htmlFor="edit-confirm-password">
-                            Parolni tasdiqlash
-                        </label>
+                    </Field>
+                    <Field htmlFor={`${id}-confirm`} label={t('users.confirmPassword')}>
                         <Input
-                            id="edit-confirm-password"
+                            id={`${id}-confirm`}
                             type="password"
                             autoComplete="new-password"
                             value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            onChange={(event) => setConfirmPassword(event.target.value)}
                             disabled={busy}
                         />
-                    </div>
+                    </Field>
                 </div>
             </div>
 
-            {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
-            )}
+            {error && <ErrorState message={error} />}
 
-            <div className="flex justify-end gap-3 border-t pt-4">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={busy}
-                >
-                    Bekor qilish
+            <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+                    {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={busy}>
-                    {busy ? 'Saqlanmoqda...' : 'O‘zgarishlarni saqlash'}
+                    {busy ? t('common.saving') : t('users.saveChanges')}
                 </Button>
             </div>
         </form>

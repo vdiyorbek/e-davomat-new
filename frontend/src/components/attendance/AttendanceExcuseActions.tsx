@@ -1,13 +1,21 @@
+import { useEffect, useId, useState } from 'react';
+import { Ban, Download, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { useEffect, useState } from 'react';
-import { Dialog } from 'radix-ui';
-import { FileText, Ban, X } from 'lucide-react';
-
+import { Field } from '@/components/common/Field';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import {
-    authorizedGet,
-    authorizedPatch,
-} from '@/lib/auth-session';
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { authorizedGet, authorizedPatch } from '@/lib/auth-session';
 
 interface Props {
     excuseId: number;
@@ -16,114 +24,74 @@ interface Props {
 }
 
 function PdfPreview({ excuseId }: { excuseId: number }) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [url, setUrl] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
         if (!open) return;
-
         const controller = new AbortController();
         let objectUrl: string | null = null;
-
         setUrl('');
         setError('');
 
-        void authorizedGet<Blob>(
-            `/attendance-excuses/${excuseId}/pdf`,
-            controller.signal,
-            'blob',
-        )
+        void authorizedGet<Blob>(`/attendance-excuses/${excuseId}/pdf`, controller.signal, 'blob')
             .then((blob) => {
                 if (controller.signal.aborted) return;
-
                 objectUrl = URL.createObjectURL(blob);
                 setUrl(objectUrl);
             })
             .catch((err: unknown) => {
                 if (controller.signal.aborted) return;
-
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : 'PDF hujjatni ochib bo‘lmadi.',
-                );
+                setError(err instanceof Error ? err.message : t('excuses.pdf.failed'));
             });
 
         return () => {
             controller.abort();
-
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
-            }
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-    }, [open, excuseId]);
+    }, [open, excuseId, t]);
 
     return (
-        <Dialog.Root open={open} onOpenChange={setOpen}>
-            <Dialog.Trigger asChild>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
                 <Button type="button" variant="outline" size="sm">
-                    <FileText className="size-4" />
+                    <FileText aria-hidden="true" />
                     PDF
                 </Button>
-            </Dialog.Trigger>
-
-            <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
-
-                <Dialog.Content
-                    className="fixed left-1/2 top-1/2 z-50 flex h-[90dvh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-background p-4 shadow-xl outline-none"
-                >
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                        <div>
-                            <Dialog.Title className="font-bold">
-                                Asoslovchi PDF — ariza №{excuseId}
-                            </Dialog.Title>
-                            <Dialog.Description className="text-sm text-muted-foreground">
-                                Hujjat faqat ruxsat berilgan foydalanuvchiga ko‘rsatiladi.
-                            </Dialog.Description>
-                        </div>
-
-                        <Dialog.Close asChild>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label="Yopish"
-                            >
-                                <X className="size-4" />
-                            </Button>
-                        </Dialog.Close>
+            </DialogTrigger>
+            <DialogContent className="flex h-[90svh] flex-col sm:max-w-5xl">
+                <DialogHeader className="pr-8">
+                    <DialogTitle>{t('excuses.pdf.title', { id: excuseId })}</DialogTitle>
+                    <DialogDescription>{t('excuses.pdf.description')}</DialogDescription>
+                </DialogHeader>
+                {error ? (
+                    <ErrorState message={error} />
+                ) : url ? (
+                    <>
+                        <iframe src={url} title={t('excuses.pdf.frameTitle', { id: excuseId })} className="min-h-0 w-full flex-1 rounded-xl border bg-muted" />
+                        <Button asChild variant="outline" className="w-full sm:w-fit sm:self-end">
+                            <a href={url} download={`ariza-${excuseId}.pdf`}>
+                                <Download aria-hidden="true" />
+                                {t('excuses.pdf.download')}
+                            </a>
+                        </Button>
+                    </>
+                ) : (
+                    <div role="status" className="flex-1">
+                        <span className="sr-only">{t('common.loading')}</span>
+                        <Skeleton className="h-full w-full rounded-xl" />
                     </div>
-
-                    {error ? (
-                        <p role="alert" className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    ) : url ? (
-                        <iframe
-                            src={url}
-                            title={`Ariza ${excuseId}`}
-                            className="min-h-0 w-full flex-1 rounded-xl border"
-                        />
-                    ) : (
-                        <p role="status" className="text-sm text-muted-foreground">
-                            PDF yuklanmoqda…
-                        </p>
-                    )}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }
 
-function CancelExcuse({
-    excuseId,
-    onChanged,
-}: {
-    excuseId: number;
-    onChanged: () => void;
-}) {
+function CancelExcuse({ excuseId, onChanged }: { excuseId: number; onChanged: () => void }) {
+    const { t } = useTranslation();
+    const id = useId();
     const [open, setOpen] = useState(false);
     const [reason, setReason] = useState('');
     const [saving, setSaving] = useState(false);
@@ -131,142 +99,80 @@ function CancelExcuse({
 
     async function submit() {
         const cancellationReason = reason.trim();
-
-        if (
-            cancellationReason.length < 5 ||
-            cancellationReason.length > 500 ||
-            saving
-        ) {
-            return;
-        }
+        if (cancellationReason.length < 5 || cancellationReason.length > 500 || saving) return;
 
         setSaving(true);
         setError('');
-
         try {
-            await authorizedPatch(
-                `/attendance-excuses/${excuseId}/cancel`,
-                { cancellationReason },
-            );
-
+            await authorizedPatch(`/attendance-excuses/${excuseId}/cancel`, { cancellationReason });
             setOpen(false);
             setReason('');
             onChanged();
         } catch (err: unknown) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Arizani bekor qilib bo‘lmadi.',
-            );
+            setError(err instanceof Error ? err.message : t('excuses.cancel.failed'));
         } finally {
             setSaving(false);
         }
     }
 
     return (
-        <Dialog.Root
-            open={open}
-            onOpenChange={(next) => {
-                if (!saving) setOpen(next);
-            }}
-        >
-            <Dialog.Trigger asChild>
+        <Dialog open={open} onOpenChange={(next) => !saving && setOpen(next)}>
+            <DialogTrigger asChild>
                 <Button type="button" variant="destructive" size="sm">
-                    <Ban className="size-4" />
-                    Bekor qilish
+                    <Ban aria-hidden="true" />
+                    {t('excuses.cancel.button')}
                 </Button>
-            </Dialog.Trigger>
-
-            <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
-
-                <Dialog.Content
-                    className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-background p-6 shadow-xl outline-none"
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{t('excuses.cancel.title')}</DialogTitle>
+                    <DialogDescription>{t('excuses.cancel.description', { id: excuseId })}</DialogDescription>
+                </DialogHeader>
+                <form
+                    className="space-y-4"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        void submit();
+                    }}
                 >
-                    <Dialog.Title className="text-lg font-bold">
-                        Arizani bekor qilish
-                    </Dialog.Title>
-
-                    <Dialog.Description className="mt-2 text-sm text-muted-foreground">
-                        №{excuseId} ariza bekor qilinadi. Bekor qilish sababi
-                        tarixda saqlanadi.
-                    </Dialog.Description>
-
-                    <form
-                        className="mt-5 space-y-4"
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            void submit();
-                        }}
-                    >
-                        <div className="space-y-2">
-                            <label
-                                htmlFor={`cancel-${excuseId}`}
-                                className="text-sm font-semibold"
-                            >
-                                Bekor qilish sababi *
-                            </label>
-
-                            <textarea
-                                id={`cancel-${excuseId}`}
-                                required
-                                minLength={5}
-                                maxLength={500}
-                                rows={3}
-                                value={reason}
-                                disabled={saving}
-                                onChange={(event) => setReason(event.target.value)}
-                                className="w-full rounded-xl border border-input bg-background p-3 text-sm"
-                                placeholder="Masalan: ariza xato sana bilan kiritilgan"
-                            />
-                        </div>
-
-                        {error && (
-                            <p role="alert" className="text-sm text-destructive">
-                                {error}
-                            </p>
-                        )}
-
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={saving}
-                                onClick={() => setOpen(false)}
-                            >
-                                Ortga
-                            </Button>
-
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                disabled={saving || reason.trim().length < 5}
-                            >
-                                {saving ? 'Saqlanmoqda…' : 'Bekor qilishni tasdiqlash'}
-                            </Button>
-                        </div>
-                    </form>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                    <Field htmlFor={`${id}-reason`} label={t('excuses.cancel.reason')} hint={t('excuses.cancel.reasonHint')} required>
+                        <Textarea
+                            id={`${id}-reason`}
+                            required
+                            minLength={5}
+                            maxLength={500}
+                            rows={3}
+                            value={reason}
+                            disabled={saving}
+                            onChange={(event) => setReason(event.target.value)}
+                            placeholder={t('excuses.cancel.placeholder')}
+                        />
+                    </Field>
+                    {error && <ErrorState message={error} />}
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <Button type="button" variant="outline" disabled={saving} onClick={() => setOpen(false)}>
+                            {t('common.back')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="destructive"
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            disabled={saving || reason.trim().length < 5}
+                        >
+                            {saving ? t('common.saving') : t('excuses.cancel.confirm')}
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 
-export function AttendanceExcuseActions({
-    excuseId,
-    status,
-    onChanged,
-}: Props) {
+export function AttendanceExcuseActions({ excuseId, status, onChanged }: Props) {
     return (
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
             <PdfPreview excuseId={excuseId} />
-
-            {status === 'ACTIVE' && (
-                <CancelExcuse
-                    excuseId={excuseId}
-                    onChanged={onChanged}
-                />
-            )}
+            {status === 'ACTIVE' && <CancelExcuse excuseId={excuseId} onChanged={onChanged} />}
         </div>
     );
 }

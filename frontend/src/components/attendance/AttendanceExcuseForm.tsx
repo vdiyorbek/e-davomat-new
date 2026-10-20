@@ -1,17 +1,20 @@
-
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
+import { FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { FileInput } from '@/components/common/FileInput';
+import { SelectField } from '@/components/common/SelectField';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { authorizedPost } from '@/lib/auth-session';
+import { personFullName } from '@/lib/person';
+import { EXCUSE_REASONS } from '@/types/attendance-excuse';
+import type { ExcuseReason } from '@/types/attendance-excuse';
 import type { DailyAttendance } from '@/types/daily-attendance';
-
-type ExcuseReason =
-    | 'ILLNESS'
-    | 'OLYMPIAD'
-    | 'FAMILY'
-    | 'OTHER';
 
 export interface ExcuseStudentSelection {
     personId: number;
@@ -25,16 +28,7 @@ export interface ExcuseStudentSelection {
 type Props = {
     onSaved: () => void;
     onCancel: () => void;
-} & (
-        | {
-            item: DailyAttendance;
-            selection?: never;
-        }
-        | {
-            item?: never;
-            selection: ExcuseStudentSelection;
-        }
-    );
+} & ({ item: DailyAttendance; selection?: never } | { item?: never; selection: ExcuseStudentSelection });
 
 interface CreatedExcuse {
     id: number;
@@ -43,12 +37,8 @@ interface CreatedExcuse {
 
 const MAX_PDF_SIZE = 5 * 1024 * 1024;
 
-export function AttendanceExcuseForm({
-    item,
-    selection,
-    onSaved,
-    onCancel,
-}: Props) {
+export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Props) {
+    const { t } = useTranslation();
     const id = useId();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -59,263 +49,119 @@ export function AttendanceExcuseForm({
             ? {
                 personId: item.person.id,
                 schoolId: item.schoolId,
-                name: [
-                    item.person.lastName,
-                    item.person.firstName,
-                    item.person.middleName,
-                ].filter(Boolean).join(' '),
+                name: personFullName(item.person),
                 schoolName: item.school.name,
                 className: item.className,
                 defaultDate: item.date,
             }
             : null);
 
-    async function handleSubmit(
-        event: FormEvent<HTMLFormElement>,
-    ) {
+    const [reason, setReason] = useState<ExcuseReason | ''>('');
+    const [startDate, setStartDate] = useState(student?.defaultDate ?? '');
+    const [endDate, setEndDate] = useState(student?.defaultDate ?? '');
+    const [reasonNote, setReasonNote] = useState('');
+    const [file, setFile] = useState<File | null>(null);
+
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (saving || !student) return;
-
-        const form = new FormData(event.currentTarget);
-
-        const reason = String(form.get('reason') ?? '');
-        const reasonNote = String(
-            form.get('reasonNote') ?? '',
-        ).trim();
-
-        const startDate = String(form.get('startDate') ?? '');
-        const endDate = String(form.get('endDate') ?? '');
-
-        const file = form.get('file');
-
         setError('');
 
-        if (!['ILLNESS', 'OLYMPIAD', 'FAMILY', 'OTHER'].includes(reason)) {
-            setError('Sabab turini tanlang.');
-            return;
-        }
+        const note = reasonNote.trim();
 
-        if (!startDate || !endDate || endDate < startDate) {
-            setError('Sana oralig‘ini to‘g‘ri kiriting.');
-            return;
-        }
-
-        if (reasonNote.length > 500) {
-            setError('Izoh 500 ta belgidan oshmasligi kerak.');
-            return;
-        }
-
-        if (!(file instanceof File) || file.size === 0) {
-            setError('Asoslovchi PDF arizani tanlang.');
-            return;
-        }
-
-        if (file.size > MAX_PDF_SIZE) {
-            setError('PDF hajmi 5 MB dan oshmasligi kerak.');
-            return;
-        }
-
-        if (
-            !file.name.toLowerCase().endsWith('.pdf') ||
-            (file.type !== '' && file.type !== 'application/pdf')
-        ) {
-            setError('Faqat PDF formatidagi hujjatni yuklang.');
-            return;
+        if (!reason) return setError(t('excuses.errors.reason'));
+        if (!startDate || !endDate || endDate < startDate) return setError(t('excuses.errors.range'));
+        if (note.length > 500) return setError(t('excuses.errors.noteLength'));
+        if (!file || file.size === 0) return setError(t('excuses.errors.file'));
+        if (file.size > MAX_PDF_SIZE) return setError(t('excuses.errors.fileSize', { size: 5 }));
+        if (!file.name.toLowerCase().endsWith('.pdf') || (file.type !== '' && file.type !== 'application/pdf')) {
+            return setError(t('excuses.errors.fileType'));
         }
 
         const payload = new FormData();
-
         payload.append('personId', String(student.personId));
         payload.append('schoolId', String(student.schoolId));
-        payload.append('reason', reason as ExcuseReason);
+        payload.append('reason', reason);
         payload.append('startDate', startDate);
         payload.append('endDate', endDate);
-
-        if (reasonNote) {
-            payload.append('reasonNote', reasonNote);
-        }
-
+        if (note) payload.append('reasonNote', note);
         payload.append('file', file);
 
         setSaving(true);
-
         try {
-            await authorizedPost<CreatedExcuse>(
-                '/attendance-excuses',
-                payload,
-            );
-
+            await authorizedPost<CreatedExcuse>('/attendance-excuses', payload);
             onSaved();
         } catch (err: unknown) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Arizani saqlashda xatolik yuz berdi.',
-            );
+            setError(err instanceof Error ? err.message : t('excuses.errors.saveFailed'));
         } finally {
             setSaving(false);
         }
     }
 
-    const inputClass =
-        'h-11 w-full rounded-xl border border-input ' +
-        'bg-background px-3 text-sm outline-none ' +
-        'focus-visible:ring-2 focus-visible:ring-ring';
-
     return (
-        <form onSubmit={(event) => void handleSubmit(event)}
-            className="space-y-5"
-        >
-            <div className="rounded-xl bg-muted/50 p-4">
-                <p className="text-xs text-muted-foreground">
-                    Tanlangan o‘quvchi
-                </p>
-                <p className="mt-1 font-semibold">
-                    {student?.name ?? 'Noma’lum o‘quvchi'}
-                </p>
-
+        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
+            <div className="rounded-xl border bg-muted/40 px-4 py-3">
+                <p className="text-xs text-muted-foreground">{t('excuses.selectedStudent')}</p>
+                <p className="mt-1 font-semibold [overflow-wrap:anywhere]">{student?.name ?? t('excuses.unknownStudent')}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                     {student?.schoolName ?? '—'}
                     {student?.className ? ` · ${student.className}` : ''}
                 </p>
             </div>
 
-            <div className="space-y-2">
-                <label
-                    htmlFor={`${id}-reason`}
-                    className="text-sm font-semibold"
-                >
-                    Sabab turi *
-                </label>
-
-                <select
+            <Field htmlFor={`${id}-reason`} label={t('excuses.reasonType')} required>
+                <SelectField
                     id={`${id}-reason`}
-                    name="reason"
+                    value={reason}
+                    onValueChange={(value) => setReason(value as ExcuseReason)}
+                    placeholder={t('excuses.chooseReason')}
                     required
-                    defaultValue=""
                     disabled={saving}
-                    className={inputClass}
-                >
-                    <option value="" disabled>
-                        Sabab turini tanlang
-                    </option>
-                    <option value="ILLNESS">Kasallik</option>
-                    <option value="OLYMPIAD">Olimpiada</option>
-                    <option value="FAMILY">Oilaviy sabab</option>
-                    <option value="OTHER">Boshqa sabab</option>
-                </select>
-            </div>
+                    options={EXCUSE_REASONS.map((value) => ({ value, label: t(`excuses.reason.${value}`) }))}
+                />
+            </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <label
-                        htmlFor={`${id}-start`}
-                        className="text-sm font-semibold"
-                    >
-                        Boshlanish sanasi *
-                    </label>
-
-                    <Input
-                        id={`${id}-start`}
-                        name="startDate"
-                        type="date"
-                        required
-                        defaultValue={student?.defaultDate ?? ''}
-                        disabled={saving}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor={`${id}-end`}
-                        className="text-sm font-semibold"
-                    >
-                        Tugash sanasi *
-                    </label>
-
-                    <Input
-                        id={`${id}-end`}
-                        name="endDate"
-                        type="date"
-                        required
-                        defaultValue={student?.defaultDate ?? ''}
-                        disabled={saving}
-                    />
-                </div>
+                <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
+                    <Input id={`${id}-start`} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={saving} />
+                </Field>
+                <Field htmlFor={`${id}-end`} label={t('membership.endDate')} required>
+                    <Input id={`${id}-end`} type="date" required min={startDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={saving} />
+                </Field>
             </div>
 
-            <div className="space-y-2">
-                <label
-                    htmlFor={`${id}-note`}
-                    className="text-sm font-semibold"
-                >
-                    Izoh (ixtiyoriy)
-                </label>
-
-                <textarea
+            <Field htmlFor={`${id}-note`} label={`${t('excuses.note')} (${t('common.optional')})`} hint={t('excuses.noteHint')}>
+                <Textarea
                     id={`${id}-note`}
-                    name="reasonNote"
                     maxLength={500}
                     rows={3}
                     disabled={saving}
-                    placeholder="Qisqacha izoh"
-                    className={[
-                        'w-full resize-y rounded-xl border border-input',
-                        'bg-background px-3 py-2 text-sm outline-none',
-                        'focus-visible:ring-2 focus-visible:ring-ring',
-                    ].join(' ')}
+                    value={reasonNote}
+                    onChange={(e) => setReasonNote(e.target.value)}
+                    placeholder={t('excuses.notePlaceholder')}
                 />
+            </Field>
 
-                <p className="text-xs text-muted-foreground">
-                    Shaxsiy yoki tibbiy tafsilotlarni ortiqcha yozmang.
-                </p>
-            </div>
-
-            <div className="space-y-2">
-                <label
-                    htmlFor={`${id}-file`}
-                    className="text-sm font-semibold"
-                >
-                    Asoslovchi ariza (PDF) *
-                </label>
-
-                <input
+            <Field htmlFor={`${id}-file`} label={t('excuses.file')} hint={t('excuses.fileHint', { size: 5 })} required>
+                <FileInput
                     id={`${id}-file`}
-                    name="file"
-                    type="file"
                     accept=".pdf,application/pdf"
-                    required
+                    file={file}
+                    onFileChange={setFile}
                     disabled={saving}
-                    className="block w-full rounded-xl border border-input bg-background p-3 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5"
+                    icon={<FileText aria-hidden="true" />}
+                    buttonLabel={t('excuses.chooseFile')}
                 />
+            </Field>
 
-                <p className="text-xs text-muted-foreground">
-                    PDF formatida, maksimal 5 MB.
-                </p>
-            </div>
+            {error && <ErrorState message={error} />}
 
-            {error && (
-                <p
-                    role="alert"
-                    className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-                >
-                    {error}
-                </p>
-            )}
-
-            <div className="flex flex-wrap justify-end gap-3 border-t pt-4">
-                <Button
-                    type="button"
-                    variant="outline"
-                    disabled={saving}
-                    onClick={onCancel}
-                >
-                    Bekor qilish
+            <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" disabled={saving} onClick={onCancel}>
+                    {t('common.cancel')}
                 </Button>
-
                 <Button type="submit" disabled={saving}>
-                    {saving ? 'Saqlanmoqda...' : 'Sababli qilib saqlash'}
+                    {saving ? t('common.saving') : t('excuses.submit')}
                 </Button>
             </div>
         </form>

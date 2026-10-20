@@ -1,0 +1,54 @@
+{
+  "title": "Attendance",
+  "students": {
+    "title": "Student attendance",
+    "subtitle": "Student entry and exit data from Face ID. Times are in Tashkent time."
+  },
+  "teachers": {
+    "title": "Teacher attendance",
+    "subtitle": "Teacher entry and exit data from Face ID. Times are in Tashkent time."
+  },
+  "details": {
+    "students": "Student attendance",
+    "teachers": "Teacher attendance"
+  },
+  "statusLabel": "Attendance status",
+  "searchByName": "Search by name",
+  "searchPlaceholder": "Last or first name",
+  "prevDay": "Previous day",
+  "nextDay": "Next day",
+  "show": "Show",
+  "export": "Download Excel",
+  "exporting": "Preparing Excel…",
+  "exportFailed": "Excel export failed.",
+  "loading": "Loading attendance…",
+  "loadFailed": "Could not load attendance.",
+  "emptyTitle": "No records found",
+  "empty": "No attendance records match the selected filters.",
+  "total": "Total records: {{formatted}}",
+  "perPage": "Per page",
+  "firstPage": "First page",
+  "lastPage": "Last page",
+  "invalidUrl": "The date, school, PINFL or page in the address is invalid.",
+  "in": "In",
+  "out": "Out",
+  "firstIn": "First entry",
+  "lastOut": "Last exit",
+  "notRecorded": "Not recorded",
+  "noPhoto": "No photo",
+  "noEvent": "No event recorded",
+  "photoPending": "Photo is pending",
+  "photoFailed": "Photo failed to load",
+  "noPerson": "Person details are missing",
+  "status": {
+    "inside": "Present",
+    "left": "Left",
+    "none": "No record",
+    "excused": "Excused",
+    "absent": "Absent",
+    "anomaly": "Needs review",
+    "day_off": "Day off",
+    "unconfigured": "Schedule not set",
+    "conflict": "Calendar conflict"
+  }
+}

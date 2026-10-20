@@ -1,0 +1,12 @@
+{
+  "allRegions": "All regions",
+  "allDistricts": "All districts and cities",
+  "allSchools": "All permitted schools",
+  "allClasses": "All classes",
+  "allStatuses": "All statuses",
+  "chooseSchoolFirst": "Choose a school first",
+  "advanced": "Advanced filters",
+  "showMore": "More filters",
+  "showLess": "Fewer filters",
+  "activeCount": "Active filters: {{count}}"
+}

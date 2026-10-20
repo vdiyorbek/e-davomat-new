@@ -1,0 +1,12 @@
+{
+  "allRegions": "Все области",
+  "allDistricts": "Все районы и города",
+  "allSchools": "Все доступные школы",
+  "allClasses": "Все классы",
+  "allStatuses": "Все статусы",
+  "chooseSchoolFirst": "Сначала выберите школу",
+  "advanced": "Расширенные фильтры",
+  "showMore": "Больше фильтров",
+  "showLess": "Меньше фильтров",
+  "activeCount": "Активных фильтров: {{count}}"
+}

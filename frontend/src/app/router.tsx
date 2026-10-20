@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { RequireRole } from '@/components/auth/RequireRole';
@@ -5,24 +6,25 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { ProfilePage } from '@/pages/cabinet/ProfilePage';
-import { SchoolsPage } from '@/pages/schools/SchoolsPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ADMIN_ROLES } from '@/lib/roles';
-import { StudentsPage } from '@/pages/students/StudentsPage';
-import { TeachersPage } from '@/pages/teachers/TeachersPage';
-import { PersonDetailsPage } from '@/pages/persons/PersonDetailsPage';
-import { TerminalsPage } from '@/pages/terminals/TerminalsPage';
-import { AttendancePage } from '@/pages/attendance/AttendancePage';
-import { ClassesPage } from '@/pages/classes/ClassesPage';
-import { UsersPage } from '@/pages/users/UsersPage';
-import { AttendanceExcusesPage } from '@/pages/attendance/AttendanceExcusesPage';
-import { StudentAttendancePage } from '@/pages/attendance/StudentAttendancePage';
-import { TeacherAttendancePage } from '@/pages/attendance/TeacherAttendancePage';
-import { AttendanceCalendarPage } from '@/pages/attendance/AttendanceCalendarPage';
-import { TeacherAssignmentsPage } from '@/pages/teacher-assignments/TeacherAssignmentsPage';
-import { SubjectsPage } from '@/pages/subjects/SubjectsPage';
-import { TextbooksPage } from '@/pages/textbooks/TextbooksPage';
+
+const SchoolsPage = lazy(() => import('@/pages/schools/SchoolsPage').then((m) => ({ default: m.SchoolsPage })));
+const StudentsPage = lazy(() => import('@/pages/students/StudentsPage').then((m) => ({ default: m.StudentsPage })));
+const TeachersPage = lazy(() => import('@/pages/teachers/TeachersPage').then((m) => ({ default: m.TeachersPage })));
+const PersonDetailsPage = lazy(() => import('@/pages/persons/PersonDetailsPage').then((m) => ({ default: m.PersonDetailsPage })));
+const TerminalsPage = lazy(() => import('@/pages/terminals/TerminalsPage').then((m) => ({ default: m.TerminalsPage })));
+const AttendancePage = lazy(() => import('@/pages/attendance/AttendancePage').then((m) => ({ default: m.AttendancePage })));
+const ClassesPage = lazy(() => import('@/pages/classes/ClassesPage').then((m) => ({ default: m.ClassesPage })));
+const UsersPage = lazy(() => import('@/pages/users/UsersPage').then((m) => ({ default: m.UsersPage })));
+const AttendanceExcusesPage = lazy(() => import('@/pages/attendance/AttendanceExcusesPage').then((m) => ({ default: m.AttendanceExcusesPage })));
+const StudentAttendancePage = lazy(() => import('@/pages/attendance/StudentAttendancePage').then((m) => ({ default: m.StudentAttendancePage })));
+const TeacherAttendancePage = lazy(() => import('@/pages/attendance/TeacherAttendancePage').then((m) => ({ default: m.TeacherAttendancePage })));
+const AttendanceCalendarPage = lazy(() => import('@/pages/attendance/AttendanceCalendarPage').then((m) => ({ default: m.AttendanceCalendarPage })));
+const TeacherAssignmentsPage = lazy(() => import('@/pages/teacher-assignments/TeacherAssignmentsPage').then((m) => ({ default: m.TeacherAssignmentsPage })));
+const TextbooksPage = lazy(() => import('@/pages/textbooks/TextbooksPage').then((m) => ({ default: m.TextbooksPage })));
+
 export const router = createBrowserRouter([
     {
         element: <AuthLayout />,
@@ -89,10 +91,6 @@ export const router = createBrowserRouter([
                             {
                                 element: <RequireRole roles={['SUPER_ADMIN']} />,
                                 children: [
-                                    {
-                                        path: '/subjects',
-                                        element: <SubjectsPage />,
-                                    },
                                     {
                                         path: '/textbooks',
                                         element: <TextbooksPage />,

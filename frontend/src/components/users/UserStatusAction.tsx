@@ -1,13 +1,21 @@
-
 import { useRef, useState } from 'react';
-import { Ban, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import { authorizedPatch } from '@/lib/auth-session';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ApiError } from '@/lib/api';
+import { authorizedPatch } from '@/lib/auth-session';
 import type { UserRole } from '@/types/auth';
 
-interface StatusUser {
+export interface StatusUser {
     id: number;
     login: string;
     fullName: string;
@@ -16,128 +24,76 @@ interface StatusUser {
 }
 
 interface Props {
-    user: StatusUser;
-    currentUserId: number;
+    user: StatusUser | null;
+    onClose: () => void;
     onUpdated: (message: string) => void;
 }
 
-export function UserStatusAction({
-    user,
-    currentUserId,
-    onUpdated,
-}: Props) {
-    const [confirming, setConfirming] = useState(false);
+/** Foydalanuvchini bloklash yoki qayta faollashtirishni tasdiqlash oynasi. */
+export function UserStatusDialog({ user, onClose, onUpdated }: Props) {
+    const { t } = useTranslation();
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const submitting = useRef(false);
 
-    const protectedUser =
-        user.id === currentUserId ||
-        user.role === 'SUPER_ADMIN';
-
     async function changeStatus() {
-        if (submitting.current || protectedUser) return;
-
+        if (!user || submitting.current) return;
         submitting.current = true;
         setBusy(true);
         setError('');
-
         const nextActive = !user.isActive;
-
         try {
-            await authorizedPatch(
-                `/users/${user.id}`,
-                { isActive: nextActive },
-            );
-
-            setConfirming(false);
-            onUpdated(
-                nextActive
-                    ? 'Фойдаланувчи қайта фаоллаштирилди.'
-                    : 'Фойдаланувчи блокланди.',
-            );
+            await authorizedPatch(`/users/${user.id}`, { isActive: nextActive });
+            onUpdated(nextActive ? t('users.status.activated') : t('users.status.blocked'));
+            onClose();
         } catch (err: unknown) {
-            setError(
-                err instanceof ApiError
-                    ? err.message
-                    : 'Ҳолатни ўзгартиришда хатолик юз берди.',
-            );
+            setError(err instanceof ApiError ? err.message : t('users.status.failed'));
         } finally {
             submitting.current = false;
             setBusy(false);
         }
     }
 
-    if (protectedUser) {
-        return null;
-    }
-
     return (
-        <div className="space-y-2">
-            {!confirming ? (
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setConfirming(true)}
-                    className={
-                        user.isActive
-                            ? 'text-destructive'
-                            : ''
-                    }
-                >
-                    {user.isActive ? (
-                        <>
-                            <Ban className="mr-2 size-4" />
-                            Блоклаш
-                        </>
-                    ) : (
-                        <>
-                            <CheckCircle2 className="mr-2 size-4" />
-                            Фаоллаштириш
-                        </>
-                    )}
-                </Button>
-            ) : (
-                <div className="max-w-sm space-y-3 rounded-xl border bg-card p-3">
-                    <p className="text-sm font-medium">
-                        {user.fullName || user.login}
+        <AlertDialog
+            open={user !== null}
+            onOpenChange={(open) => {
+                if (!open && !busy) {
+                    setError('');
+                    onClose();
+                }
+            }}
+        >
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        {user?.isActive ? t('users.status.blockTitle') : t('users.status.activateTitle')}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        <strong className="text-foreground">{user?.fullName || user?.login}</strong>
+                        <br />
+                        {user?.isActive ? t('users.status.blockText') : t('users.status.activateText')}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                {error && (
+                    <p role="alert" className="text-sm text-destructive">
+                        {error}
                     </p>
-
-                    <p className="text-xs text-muted-foreground">
-                        {user.isActive
-                            ? 'Ушбу аккаунт блоклансинми? Фаол сессиялари бекор қилинади.'
-                            : 'Ушбу аккаунт қайта фаоллаштирилсинми?'}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => setConfirming(false)}
-                        >
-                            Бекор қилиш
-                        </Button>
-
-                        <Button
-                            type="button"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => void changeStatus()}
-                        >
-                            {busy ? 'Бажарилмоқда...' : 'Тасдиқлаш'}
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            {error && (
-                <p role="alert" className="text-xs text-destructive">
-                    {error}
-                </p>
-            )}
-        </div>
+                )}
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={busy}>{t('common.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction
+                        variant={user?.isActive ? 'destructive' : 'default'}
+                        disabled={busy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            void changeStatus();
+                        }}
+                    >
+                        {busy ? t('common.saving') : user?.isActive ? t('users.status.block') : t('users.status.activate')}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }

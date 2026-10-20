@@ -1,26 +1,20 @@
-
 import { Menu } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
-import { useAuth } from '@/hooks/useAuth';
-import { LogoutButton } from '@/components/auth/LogoutButton';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { TodayChip } from '@/components/common/TodayChip';
+import { Button } from '@/components/ui/button';
 import { SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/useAuth';
 
-const PAGE_TITLE_KEYS: Record<string, string> = {
-    '/me': 'nav.profile',
-    '/me/schools': 'nav.mySchools',
-    '/schools': 'nav.schools',
-    '/forbidden': 'nav.forbidden',
-    '/students': 'nav.students',
-    '/teachers': 'nav.teachers',
-    '/terminals': 'nav.terminals',
-    '/attendance': 'nav.attendance',
-    '/classes': 'nav.classes',
-    '/users': 'nav.users',
+import { findNavItem, NAV_GROUPS } from './nav-config';
+import { UserMenu } from './UserMenu';
+
+const EXTRA_TITLES: Record<string, string> = {
+    '/forbidden': 'nav.items.forbidden',
+    '/me/schools': 'nav.items.mySchools',
 };
 
 export function Header() {
@@ -30,142 +24,52 @@ export function Header() {
 
     if (!session) return null;
 
-    const { profile } = session;
+    const path = pathname.replace(/\/+$/, '') || '/';
+    const item = findNavItem(path);
+    const group = item && NAV_GROUPS.find((g) => g.items.includes(item));
 
-    const fullName =
-        [
-            profile.lastName,
-            profile.firstName,
-            profile.middleName,
-        ]
-            .filter(Boolean)
-            .join(' ') || profile.login;
-
-    const initials =
-        [
-            profile.firstName?.charAt(0),
-            profile.lastName?.charAt(0),
-        ]
-            .filter(Boolean)
-            .join('')
-            .toUpperCase() ||
-        profile.login.slice(0, 2).toUpperCase();
-
-    const currentPath = pathname.replace(/\/+$/, '') || '/';
-
-    const title =
-        currentPath === '/attendance-excuses'
-            ? t('nav.attendanceExcuses', {
-                defaultValue: 'Sababli arizalar',
-            })
-            : t(
-                PAGE_TITLE_KEYS[currentPath] ?? 'nav.cabinet',
-            );
+    const title = EXTRA_TITLES[path]
+        ? t(EXTRA_TITLES[path])
+        : path.startsWith('/persons/')
+            ? t('nav.items.person')
+            : item
+                ? t(`nav.items.${item.key}`)
+                : t('nav.cabinet');
 
     return (
-        <header
-            className="
-        sticky top-0 z-30
-        w-full min-w-0
-        border-b border-border
-        bg-background/85
-        px-4 py-3
-        backdrop-blur
-        supports-[backdrop-filter]:bg-background/70
-        sm:px-6 lg:px-8
-      "
-        >
-            <div className="flex w-full min-w-0 items-center justify-between gap-2">
-                {/* Chap qism: menyu va sahifa sarlavhasi */}
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                    <SheetTrigger asChild>
-                        <button
-                            type="button"
-                            aria-label={t('nav.openMenu')}
-                            className="
-                inline-flex size-9 shrink-0
-  items-center justify-center
-  rounded-xl border border-border
-  bg-card hover:bg-muted
-  focus-visible:outline-none
-  focus-visible:ring-2
-  focus-visible:ring-ring
-  sm:size-11 md:hidden
-              "
-                        >
-                            <Menu
-                                aria-hidden="true"
-                                className="size-5"
-                            />
-                        </button>
-                    </SheetTrigger>
+        <header className="sticky top-0 z-30 w-full min-w-0 border-b border-border bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+            <div className="flex h-16 w-full min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
+                <SheetTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 bg-card lg:hidden"
+                        aria-label={t('nav.openMenu')}
+                    >
+                        <Menu aria-hidden="true" />
+                    </Button>
+                </SheetTrigger>
 
-                    <div className="min-w-0">
-                        <p className="hidden truncate text-xs text-muted-foreground sm:block">
-                            {t('nav.breadcrumb')}
-                        </p>
+                
 
-                        <p
-                            className="min-w-0 truncate font-heading text-sm font-bold tracking-tight sm:text-lg"
-                            title={title}
-                        >
-                            {title}
-                        </p>
-                    </div>
+                <div className="min-w-0 flex-1">
+                    <p className="hidden truncate text-xs text-muted-foreground sm:block">
+                        {t('brand.name')}
+                        {group && <> / {t(`nav.groups.${group.key}`)}</>}
+                    </p>
+                    <p
+                        className="truncate font-heading text-base leading-tight font-bold tracking-tight sm:text-lg"
+                        title={title}
+                    >
+                        {title}
+                    </p>
                 </div>
 
-                {/* O‘ng qism: boshqaruv elementlari */}
-                <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 lg:gap-3">
-                    {/* Katta monitorlarda sana */}
-                    <div className="hidden 2xl:block">
-                        <TodayChip />
-                    </div>
-
-                    {/* Kengroq ekranlarda til tanlash */}
-                    <LanguageSwitcher
-                        className="hidden lg:inline-flex"
-                    />
-
-                    {/* Mavzu sozlamasi */}
-                    <ThemeToggle />
-
-                    {/* Katta ekranlarda foydalanuvchi */}
-                    <div
-                        className="
-              hidden min-w-0 items-center gap-3
-              border-l border-border pl-3
-              xl:flex
-            "
-                    >
-                        <div
-                            aria-hidden="true"
-                            className="
-                flex size-10 shrink-0
-                items-center justify-center
-                rounded-full
-                bg-primary/10
-                text-sm font-semibold
-                text-primary
-              "
-                        >
-                            {initials}
-                        </div>
-
-                        <div className="min-w-0 max-w-48">
-                            <p
-                                title={fullName}
-                                className="truncate text-sm font-semibold"
-                            >
-                                {fullName}
-                            </p>
-
-                            <p className="truncate text-xs text-muted-foreground">
-                                {t(`roles.${profile.role}`)}
-                            </p>
-                        </div>
-                    </div>
-
-                    <LogoutButton />
+                <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                    <TodayChip className="hidden 2xl:inline-flex" />
+                    <LanguageSwitcher className="max-sm:hidden" />
+                    <ThemeToggle className="max-sm:hidden" />
+                    <UserMenu />
                 </div>
             </div>
         </header>

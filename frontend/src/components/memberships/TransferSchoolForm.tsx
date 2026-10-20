@@ -1,14 +1,20 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { academicYearFor, academicYearOptions, isValidAcademicYear, todayInTashkent } from '@/lib/date';
 import { transferSchoolMembership } from '@/lib/school-memberships-api';
-import { SchoolClassSelect } from './SchoolClassSelect';
-
 import type { School } from '@/types/school';
 import type { SchoolMembership } from '@/types/school-membership';
+
+import { MemberSummary } from './MemberSummary';
+import { SchoolClassSelect } from './SchoolClassSelect';
 
 interface Props {
     membership: SchoolMembership;
@@ -16,73 +22,48 @@ interface Props {
     onCancel: () => void;
 }
 
-export function TransferSchoolForm({
-    membership,
-    onSaved,
-    onCancel,
-}: Props) {
+export function TransferSchoolForm({ membership, onSaved, onCancel }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
     const saving = useRef(false);
 
     const [schoolId, setSchoolId] = useState('');
     const [classId, setClassId] = useState('');
     const [academicYear, setAcademicYear] = useState(
-        membership.schoolClass?.academicYear ?? '',
+        membership.schoolClass?.academicYear ?? academicYearFor(todayInTashkent()),
     );
     const [startDate, setStartDate] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
     const schoolsQuery = useApiQuery<School[]>('/schools');
-
-    const schools = (schoolsQuery.data ?? []).filter(
-        (school) => school.id !== membership.schoolId,
-    );
+    const schools = (schoolsQuery.data ?? []).filter((school) => school.id !== membership.schoolId);
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (saving.current) return;
-
         setError('');
 
-        const selectedSchool = schools.find(
-            (school) => String(school.id) === schoolId,
-        );
-
-        if (
-            schoolsQuery.loading ||
-            schoolsQuery.error ||
-            !selectedSchool
-        ) {
-            setError('Ro‘yxatdan yangi maktabni tanlang.');
+        const selectedSchool = schools.find((school) => String(school.id) === schoolId);
+        if (schoolsQuery.loading || schoolsQuery.error || !selectedSchool) {
+            setError(t('members.errors.chooseNewSchool'));
             return;
         }
-
-        const [from, to] = academicYear.split('-').map(Number);
-
-        if (
-            !/^[1-9][0-9]{3}-[1-9][0-9]{3}$/.test(academicYear) ||
-            to !== from + 1
-        ) {
-            setError('O‘quv yilini to‘g‘ri kiriting: 2026-2027.');
+        if (!isValidAcademicYear(academicYear)) {
+            setError(t('members.errors.academicYear'));
             return;
         }
-
         if (!classId) {
-            setError('Yangi maktabdagi sinfni tanlang.');
+            setError(t('members.errors.chooseNewSchoolClass'));
             return;
         }
-
         if (!startDate || startDate <= membership.startDate) {
-            setError(
-                'Ko‘chirish sanasi eski biriktirish boshlanishidan keyin bo‘lsin.',
-            );
+            setError(t('members.errors.dateAfterStart'));
             return;
         }
 
         saving.current = true;
         setBusy(true);
-
         try {
             await transferSchoolMembership(membership.id, {
                 schoolId: selectedSchool.id,
@@ -90,98 +71,66 @@ export function TransferSchoolForm({
                 startDate,
             });
         } catch (err: unknown) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Boshqa maktabga ko‘chirib bo‘lmadi.',
-            );
+            setError(err instanceof Error ? err.message : t('members.transfer.failed'));
             return;
         } finally {
             saving.current = false;
             setBusy(false);
         }
-
         onSaved();
     }
 
+    const noSchools = !schoolsQuery.loading && !schoolsQuery.error && schools.length === 0;
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <p className="text-sm font-medium">
-                Hozirgi maktab: {membership.school.name}
-            </p>
+        <form onSubmit={handleSubmit} className="space-y-5">
+            <MemberSummary membership={membership} />
 
             <fieldset disabled={busy} className="space-y-4">
-                <label className="block text-sm font-medium">
-                    Yangi maktab
-                    <select
+                <Field
+                    htmlFor={`${id}-school`}
+                    label={t('members.transfer.newSchool')}
+                    required
+                    error={schoolsQuery.error || undefined}
+                    hint={noSchools ? t('members.transfer.noSchools') : undefined}
+                >
+                    <SelectField
+                        id={`${id}-school`}
                         value={schoolId}
-                        onChange={(event) => {
-                            setSchoolId(event.target.value);
+                        onValueChange={(value) => {
+                            setSchoolId(value);
                             setClassId('');
                         }}
                         required
-                        disabled={
-                            schoolsQuery.loading ||
-                            Boolean(schoolsQuery.error) ||
-                            schools.length === 0
-                        }
-                        className="mt-2 h-12 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
-                    >
-                        <option value="">
-                            {schoolsQuery.loading
-                                ? 'Yuklanmoqda…'
-                                : 'Maktabni tanlang'}
-                        </option>
-
-                        {schools.map((school) => (
-                            <option key={school.id} value={school.id}>
-                                {school.name} — {school.district.name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-
-                {schoolsQuery.error && (
-                    <div className="space-y-2">
-                        <p role="alert" className="text-sm text-destructive">
-                            {schoolsQuery.error}
-                        </p>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={schoolsQuery.retry}
-                        >
-                            Qayta urinish
-                        </Button>
-                    </div>
-                )}
-
-                {!schoolsQuery.loading &&
-                    !schoolsQuery.error &&
-                    schools.length === 0 && (
-                        <p className="text-sm text-muted-foreground">
-                            Ko‘chirish uchun boshqa maktab topilmadi.
-                        </p>
-                    )}
-
-                <label className="block text-sm font-medium">
-                    O‘quv yili
-                    <Input
-                        value={academicYear}
-                        onChange={(event) => {
-                            setAcademicYear(event.target.value);
-                            setClassId('');
-                        }}
-                        placeholder="2026-2027"
-                        pattern="[1-9][0-9]{3}-[1-9][0-9]{3}"
-                        maxLength={9}
-                        required
-                        className="mt-2"
+                        disabled={schoolsQuery.loading || Boolean(schoolsQuery.error) || schools.length === 0}
+                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
+                        searchable
+                        options={schools.map((school) => ({
+                            value: String(school.id),
+                            label: `${school.name} — ${school.district.name}`,
+                        }))}
                     />
-                </label>
+                    {schoolsQuery.error && (
+                        <Button type="button" variant="outline" size="sm" className="w-fit" onClick={schoolsQuery.retry}>
+                            {t('common.retry')}
+                        </Button>
+                    )}
+                </Field>
 
-                {schoolId &&
-                    /^[1-9][0-9]{3}-[1-9][0-9]{3}$/.test(academicYear) && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field htmlFor={`${id}-year`} label={t('members.academicYear')} required>
+                        <SelectField
+                            id={`${id}-year`}
+                            value={academicYear}
+                            onValueChange={(value) => {
+                                setAcademicYear(value);
+                                setClassId('');
+                            }}
+                            options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
+                        />
+                    </Field>
+
+                    {schoolId ? (
                         <SchoolClassSelect
                             key={`${schoolId}-${academicYear}`}
                             schoolId={Number(schoolId)}
@@ -190,55 +139,43 @@ export function TransferSchoolForm({
                             onChange={setClassId}
                             disabled={busy}
                         />
+                    ) : (
+                        <Field htmlFor={`${id}-class`} label={t('common.class')} required>
+                            <SelectField
+                                id={`${id}-class`}
+                                value=""
+                                onValueChange={() => undefined}
+                                disabled
+                                placeholder={t('members.chooseSchoolFirst')}
+                                options={[]}
+                            />
+                        </Field>
                     )}
+                </div>
 
-                <label className="block text-sm font-medium">
-                    Yangi maktabda o‘qish boshlanadigan sana
+                <Field htmlFor={`${id}-date`} label={t('members.transfer.date')} hint={t('members.transfer.hint')} required>
                     <Input
+                        id={`${id}-date`}
                         type="date"
                         value={startDate}
-                        onChange={(event) =>
-                            setStartDate(event.target.value)
-                        }
+                        onChange={(event) => setStartDate(event.target.value)}
                         min={membership.startDate}
                         required
-                        className="mt-2"
                     />
-                </label>
-
-                <p className="text-xs text-muted-foreground">
-                    Shu kundan eski maktabdagi biriktirish tugaydi.
-                    Oldingi maktab va sinf tarixda saqlanadi.
-                </p>
+                </Field>
             </fieldset>
 
-            {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
-            )}
+            {error && <ErrorState message={error} />}
 
-            <div className="flex flex-wrap justify-end gap-3">
-                <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={onCancel}
-                >
-                    Bekor qilish
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" disabled={busy} onClick={onCancel}>
+                    {t('common.cancel')}
                 </Button>
-
                 <Button
                     type="submit"
-                    disabled={
-                        busy ||
-                        schoolsQuery.loading ||
-                        Boolean(schoolsQuery.error) ||
-                        !schoolId ||
-                        !classId
-                    }
+                    disabled={busy || schoolsQuery.loading || Boolean(schoolsQuery.error) || !schoolId || !classId}
                 >
-                    {busy ? 'Saqlanmoqda…' : 'Maktabga ko‘chirish'}
+                    {busy ? t('common.saving') : t('members.actions.transfer')}
                 </Button>
             </div>
         </form>

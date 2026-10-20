@@ -1,13 +1,18 @@
-
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
+import { useConfirm } from '@/components/common/ConfirmDialog';
+import { Field } from '@/components/common/Field';
+import { ErrorState } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { authorizedPatch } from '@/lib/auth-session';
 
-interface TextbookTopic {
+export interface TextbookTopic {
     id: number;
     orderIndex: number;
     chapterTitle: string | null;
@@ -22,44 +27,27 @@ interface Props {
     onUpdated: () => void;
 }
 
-const reviewLabels: Record<TextbookTopic['reviewStatus'], string> = {
-    PENDING_REVIEW: 'Tekshirilmagan',
-    APPROVED: 'Tasdiqlangan',
-    REJECTED: 'Rad etilgan',
-};
+const REVIEW_TONE = { PENDING_REVIEW: 'warning', APPROVED: 'success', REJECTED: 'danger' } as const;
 
-function parsePage(value: string): number | null {
+function parsePage(value: string, message: string): number | null {
     if (!value.trim()) return null;
-
     const number = Number(value);
-
-    if (!Number.isSafeInteger(number) || number < 1) {
-        throw new Error(
-            'Sahifa raqami musbat butun son bo‘lishi kerak.',
-        );
-    }
-
+    if (!Number.isSafeInteger(number) || number < 1) throw new Error(message);
     return number;
 }
 
-export function TextbookTopicRow({
-    topic,
-    onUpdated,
-}: Props) {
+/** Darslik mavzusi: ro‘yxat elementi, tahrirlash oynasi va tasdiqlash. */
+export function TextbookTopicRow({ topic, onUpdated }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
+    const { confirm, dialog } = useConfirm();
     const [editing, setEditing] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-
     const [title, setTitle] = useState(topic.title);
-    const [chapterTitle, setChapterTitle] = useState(
-        topic.chapterTitle ?? '',
-    );
-    const [pageStart, setPageStart] = useState(
-        topic.pageStart?.toString() ?? '',
-    );
-    const [pageEnd, setPageEnd] = useState(
-        topic.pageEnd?.toString() ?? '',
-    );
+    const [chapterTitle, setChapterTitle] = useState(topic.chapterTitle ?? '');
+    const [pageStart, setPageStart] = useState(topic.pageStart?.toString() ?? '');
+    const [pageEnd, setPageEnd] = useState(topic.pageEnd?.toString() ?? '');
 
     function startEditing() {
         setTitle(topic.title);
@@ -70,57 +58,28 @@ export function TextbookTopicRow({
         setEditing(true);
     }
 
-    function cancelEditing() {
-        setEditing(false);
-        setError('');
-    }
-
     async function handleSave(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (busy) return;
-
         setError('');
-
         try {
             const cleanTitle = title.trim();
-            const cleanChapter = chapterTitle.trim();
-
-            if (!cleanTitle || cleanTitle.length > 255) {
-                throw new Error(
-                    'Mavzu nomi 1–255 belgidan iborat bo‘lishi kerak.',
-                );
-            }
-
-            const start = parsePage(pageStart);
-            const end = parsePage(pageEnd);
-
-            if (start !== null && end !== null && start > end) {
-                throw new Error(
-                    'Boshlanish sahifasi tugash sahifasidan katta.',
-                );
-            }
+            if (!cleanTitle || cleanTitle.length > 255) throw new Error(t('textbooks.topics.errors.title'));
+            const start = parsePage(pageStart, t('textbooks.topics.errors.page'));
+            const end = parsePage(pageEnd, t('textbooks.topics.errors.page'));
+            if (start !== null && end !== null && start > end) throw new Error(t('textbooks.topics.errors.range'));
 
             setBusy(true);
-
-            await authorizedPatch(
-                `/textbooks/topics/${topic.id}`,
-                {
-                    title: cleanTitle,
-                    chapterTitle: cleanChapter || null,
-                    pageStart: start,
-                    pageEnd: end,
-                },
-            );
-
+            await authorizedPatch(`/textbooks/topics/${topic.id}`, {
+                title: cleanTitle,
+                chapterTitle: chapterTitle.trim() || null,
+                pageStart: start,
+                pageEnd: end,
+            });
             setEditing(false);
             onUpdated();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : 'Mavzuni saqlashda xatolik yuz berdi.',
-            );
+            setError(caught instanceof Error ? caught.message : t('textbooks.topics.errors.saveFailed'));
         } finally {
             setBusy(false);
         }
@@ -128,212 +87,91 @@ export function TextbookTopicRow({
 
     async function handleApprove() {
         if (busy || editing) return;
-
-        const confirmed = window.confirm(
-            `"${topic.title}" mavzusini tasdiqlaysizmi?`,
-        );
-
+        const confirmed = await confirm({
+            title: t('textbooks.topics.approveTitle'),
+            description: t('textbooks.topics.approveConfirm', { title: topic.title }),
+            confirmLabel: t('textbooks.topics.approve'),
+        });
         if (!confirmed) return;
 
         setBusy(true);
         setError('');
-
         try {
-            await authorizedPatch(
-                `/textbooks/topics/${topic.id}/approve`,
-                {},
-            );
-
+            await authorizedPatch(`/textbooks/topics/${topic.id}/approve`, {});
             onUpdated();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : 'Mavzuni tasdiqlab bo‘lmadi.',
-            );
+            setError(caught instanceof Error ? caught.message : t('textbooks.topics.errors.approveFailed'));
         } finally {
             setBusy(false);
         }
     }
 
+    const pages =
+        topic.pageStart === null ? '—' : topic.pageEnd === null ? String(topic.pageStart) : `${topic.pageStart}–${topic.pageEnd}`;
+
     return (
-        <>
-            <tr className="border-t border-border">
-                <td className="px-4 py-3 tabular-nums">
-                    {topic.orderIndex}
-                </td>
+        <li className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
+            {dialog}
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold tabular-nums">
+                {topic.orderIndex}
+            </span>
+            <div className="min-w-0 flex-1">
+                {topic.chapterTitle && <p className="truncate text-xs text-muted-foreground">{topic.chapterTitle}</p>}
+                <p className="font-medium [overflow-wrap:anywhere]">{topic.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{t('textbooks.topics.pagesValue', { pages })}</p>
+                {!editing && error && (
+                    <p role="alert" className="mt-1 text-sm text-destructive">
+                        {error}
+                    </p>
+                )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge tone={REVIEW_TONE[topic.reviewStatus]}>{t(`textbooks.topics.review.${topic.reviewStatus}`)}</StatusBadge>
+                <Button type="button" variant="outline" size="sm" disabled={busy} onClick={startEditing}>
+                    <Pencil aria-hidden="true" />
+                    {t('common.edit')}
+                </Button>
+                {topic.reviewStatus !== 'APPROVED' && (
+                    <Button type="button" size="sm" disabled={busy || editing} onClick={() => void handleApprove()}>
+                        <Check aria-hidden="true" />
+                        {t('textbooks.topics.approve')}
+                    </Button>
+                )}
+            </div>
 
-                <td className="px-4 py-3">
-                    {topic.chapterTitle ?? '—'}
-                </td>
-
-                <td className="px-4 py-3 font-medium">
-                    {topic.title}
-                </td>
-
-                <td className="px-4 py-3 tabular-nums">
-                    {topic.pageStart === null
-                        ? '—'
-                        : topic.pageEnd === null
-                            ? String(topic.pageStart)
-                            : `${topic.pageStart}–${topic.pageEnd}`}
-                </td>
-
-                <td className="px-4 py-3">
-                    <span
-                        className={
-                            topic.reviewStatus === 'APPROVED'
-                                ? 'font-medium text-green-600'
-                                : 'text-muted-foreground'
-                        }
-                    >
-                        {reviewLabels[topic.reviewStatus]}
-                    </span>
-                </td>
-
-                <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={busy}
-                            onClick={
-                                editing ? cancelEditing : startEditing
-                            }
-                        >
-                            <Pencil className="size-4" />
-                            {editing ? 'Bekor qilish' : 'Tahrirlash'}
-                        </Button>
-
-                        {topic.reviewStatus !== 'APPROVED' && (
-                            <Button
-                                type="button"
-                                size="sm"
-                                disabled={busy || editing}
-                                onClick={() => void handleApprove()}
-                            >
-                                <Check className="size-4" />
-                                Tasdiqlash
+            <Dialog open={editing} onOpenChange={(open) => !busy && setEditing(open)}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('textbooks.topics.editTitle', { n: topic.orderIndex })}</DialogTitle>
+                        <DialogDescription>{t('textbooks.topics.editHint')}</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={(event) => void handleSave(event)} className="space-y-4">
+                        <Field htmlFor={`${id}-title`} label={t('textbooks.topics.title')} required>
+                            <Input id={`${id}-title`} value={title} onChange={(e) => setTitle(e.target.value)} maxLength={255} disabled={busy} required />
+                        </Field>
+                        <Field htmlFor={`${id}-chapter`} label={t('textbooks.topics.chapter')}>
+                            <Input id={`${id}-chapter`} value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} maxLength={255} disabled={busy} />
+                        </Field>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field htmlFor={`${id}-start`} label={t('textbooks.topics.pageStart')}>
+                                <Input id={`${id}-start`} type="number" inputMode="numeric" min={1} step={1} value={pageStart} onChange={(e) => setPageStart(e.target.value)} disabled={busy} />
+                            </Field>
+                            <Field htmlFor={`${id}-end`} label={t('textbooks.topics.pageEnd')}>
+                                <Input id={`${id}-end`} type="number" inputMode="numeric" min={1} step={1} value={pageEnd} onChange={(e) => setPageEnd(e.target.value)} disabled={busy} />
+                            </Field>
+                        </div>
+                        {error && <ErrorState message={error} />}
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <Button type="button" variant="outline" onClick={() => setEditing(false)} disabled={busy}>
+                                {t('common.cancel')}
                             </Button>
-                        )}
-                    </div>
-
-                    {!editing && error && (
-                        <p
-                            role="alert"
-                            className="mt-2 text-sm text-destructive"
-                        >
-                            {error}
-                        </p>
-                    )}
-                </td>
-            </tr>
-
-            {editing && (
-                <tr className="border-t border-border bg-muted/30">
-                    <td colSpan={6} className="p-4">
-                        <form
-                            onSubmit={(event) => void handleSave(event)}
-                            className="space-y-4"
-                        >
-                            <h3 className="font-semibold">
-                                {topic.orderIndex}-mavzuni tahrirlash
-                            </h3>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <label className="text-sm font-medium">
-                                    Mavzu nomi
-                                    <Input
-                                        className="mt-2"
-                                        value={title}
-                                        onChange={(event) =>
-                                            setTitle(event.target.value)
-                                        }
-                                        maxLength={255}
-                                        disabled={busy}
-                                        required
-                                    />
-                                </label>
-
-                                <label className="text-sm font-medium">
-                                    Bob nomi
-                                    <Input
-                                        className="mt-2"
-                                        value={chapterTitle}
-                                        onChange={(event) =>
-                                            setChapterTitle(event.target.value)
-                                        }
-                                        maxLength={255}
-                                        disabled={busy}
-                                    />
-                                </label>
-
-                                <label className="text-sm font-medium">
-                                    Boshlanish sahifasi
-                                    <Input
-                                        className="mt-2"
-                                        type="number"
-                                        min={1}
-                                        step={1}
-                                        value={pageStart}
-                                        onChange={(event) =>
-                                            setPageStart(event.target.value)
-                                        }
-                                        disabled={busy}
-                                    />
-                                </label>
-
-                                <label className="text-sm font-medium">
-                                    Tugash sahifasi
-                                    <Input
-                                        className="mt-2"
-                                        type="number"
-                                        min={1}
-                                        step={1}
-                                        value={pageEnd}
-                                        onChange={(event) =>
-                                            setPageEnd(event.target.value)
-                                        }
-                                        disabled={busy}
-                                    />
-                                </label>
-                            </div>
-
-                            <p className="text-xs text-muted-foreground">
-                                Tasdiqlangan mavzu o‘zgartirilsa,
-                                qayta tekshirish holatiga o‘tadi.
-                            </p>
-
-                            {error && (
-                                <p
-                                    role="alert"
-                                    className="text-sm text-destructive"
-                                >
-                                    {error}
-                                </p>
-                            )}
-
-                            <div className="flex flex-wrap gap-2">
-                                <Button type="submit" disabled={busy}>
-                                    <Check className="size-4" />
-                                    {busy ? 'Saqlanmoqda…' : 'Saqlash'}
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={cancelEditing}
-                                    disabled={busy}
-                                >
-                                    <X className="size-4" />
-                                    Bekor qilish
-                                </Button>
-                            </div>
-                        </form>
-                    </td>
-                </tr>
-            )}
-        </>
+                            <Button type="submit" disabled={busy}>
+                                {busy ? t('common.saving') : t('common.save')}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </li>
     );
 }

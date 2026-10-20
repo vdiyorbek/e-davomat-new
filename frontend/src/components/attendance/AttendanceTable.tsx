@@ -1,14 +1,19 @@
-
+import { LogIn, LogOut } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
-import { AttendanceDetailsDialog } from './AttendanceDetailsDialog';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { Card } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
+import { formatTime } from '@/lib/date';
+import { personFullName } from '@/lib/person';
+import { cn } from '@/lib/utils';
+import type { DailyAttendance } from '@/types/daily-attendance';
+
+import { AttendanceDetailsDialog } from './AttendanceDetailsDialog';
 import { AttendanceExcuseDialog } from './AttendanceExcuseDialog';
-import type {
-    AttendanceStatus,
-    DailyAttendance,
-} from '@/types/daily-attendance';
+import { ATTENDANCE_STRIPE, ATTENDANCE_TONE } from './status';
 
 interface Props {
     items: DailyAttendance[];
@@ -17,213 +22,137 @@ interface Props {
     mode?: 'students' | 'teachers';
 }
 
-const STATUS_STYLE: Record<AttendanceStatus, string> = {
-    inside: 'bg-success/15 text-success',
-    left: 'bg-warning/20 text-foreground',
-    excused: 'bg-primary/10 text-primary',
-    absent: 'bg-destructive/10 text-destructive',
-    anomaly: 'bg-muted text-muted-foreground',
-    day_off: 'bg-muted text-muted-foreground',
-    unconfigured: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-    conflict: 'bg-destructive/10 text-destructive',
-};
-const reasonLabels = {
-    ILLNESS: 'Sog‘lig‘i sababli',
-    OLYMPIAD: 'Olimpiada',
-    FAMILY: 'Oilaviy sabab',
-    OTHER: 'Boshqa',
-};
-const STATUS_FALLBACK: Record<AttendanceStatus, string> = {
-    inside: 'Kelgan',
-    left: 'Ketgan',
-    excused: 'Sababli',
-    absent: 'Kelmagan',
-    anomaly: 'Tekshirish kerak',
-    day_off: 'Dam olish kuni',
-    unconfigured: 'Jadval sozlanmagan',
-    conflict: 'Kalendar ziddiyati',
-};
-
-const LOCALES: Record<string, string> = {
-    uz: 'uz-UZ',
-    'uz-Cyrl': 'uz-Cyrl-UZ',
-    ru: 'ru-RU',
-    en: 'en-GB',
-};
-
-export function AttendanceTable({
-    items,
-    startIndex,
-    onExcuseSaved,
-    mode = 'students',
-}: Props) {
-    const { t, i18n } = useTranslation();
+export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'students' }: Props) {
+    const { t } = useTranslation();
     const { session } = useAuth();
-    const locale =
-        LOCALES[i18n.resolvedLanguage ?? 'uz'] ?? 'uz-UZ';
+    const profile = session?.profile;
+    const students = mode === 'students';
 
-    function formatTime(value: string | null): string {
-        if (!value) return '—';
+    function canCreateExcuse(item: DailyAttendance) {
+        return (
+            students &&
+            Boolean(item.person) &&
+            item.attendanceStatus === 'absent' &&
+            !item.firstInTime &&
+            !item.lastOutTime &&
+            (profile?.role === 'SUPER_ADMIN' || (profile?.role === 'SCHOOL_ADMIN' && profile.schoolId === item.schoolId))
+        );
+    }
 
-        const date = new Date(value);
+    function reasonOf(item: DailyAttendance) {
+        return item.attendanceStatus === 'excused' && item.excuseReason ? t(`excuses.reason.${item.excuseReason}`) : null;
+    }
 
-        if (Number.isNaN(date.getTime())) return '—';
-
-        return new Intl.DateTimeFormat(locale, {
-            timeZone: 'Asia/Tashkent',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hourCycle: 'h23',
-        }).format(date);
+    function NameCell({ item }: { item: DailyAttendance }) {
+        const name = personFullName(item.person, t('attendance.noPerson'));
+        return item.person ? (
+            <Link
+                to={`/persons/${item.person.id}`}
+                className="font-semibold underline-offset-4 hover:text-primary hover:underline"
+            >
+                {name}
+            </Link>
+        ) : (
+            <span className="text-muted-foreground">{name}</span>
+        );
     }
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
-            <div className="w-full overflow-x-auto">
-                <table className="w-full min-w-[1080px] text-left text-sm">
-                    <thead className="border-b border-border bg-muted/60">
-                        <tr className="text-xs font-semibold text-muted-foreground">
-                            <th scope="col" className="px-4 py-4">№</th>
-                            <th scope="col" className="px-4 py-4">F.I.Sh.</th>
-                            <th scope="col" className="px-4 py-4">Maktab</th>
-                            {mode === 'students' && (
-                                <th scope="col" className="px-4 py-4">Sinf</th>
-                            )}
-                            <th scope="col" className="px-4 py-4">Kirish</th>
-                            <th scope="col" className="px-4 py-4">Chiqish</th>
-                            <th scope="col" className="px-4 py-4">Holat</th>
-                            {mode === 'students' && (
-                                <th scope="col" className="px-4 py-4">Sabab</th>
-                            )}
-                            <th scope="col" className="px-4 py-4 text-right">
-                                Amallar
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-border">
-                        {items.map((item, index) => {
-                            const name = item.person
-                                ? [
-                                    item.person.lastName,
-                                    item.person.firstName,
-                                    item.person.middleName,
-                                ]
-                                    .filter(Boolean)
-                                    .join(' ')
-                                : t('attendance.noPerson');
-
-                            const statusLabel = t(
-                                `attendance.status.${item.attendanceStatus}`,
-                                {
-                                    defaultValue:
-                                        STATUS_FALLBACK[item.attendanceStatus],
-                                },
-                            );
-                            const profile = session?.profile;
-                            const canCreateExcuse = mode === 'students' &&
-                                Boolean(item.person) &&
-                                item.attendanceStatus === 'absent' &&
-                                !item.firstInTime &&
-                                !item.lastOutTime &&
-                                (
-                                    profile?.role === 'SUPER_ADMIN' ||
-                                    (
-                                        profile?.role === 'SCHOOL_ADMIN' &&
-                                        profile.schoolId === item.schoolId
-                                    )
-                                );
-
-
-                            return (
-                                <tr
-                                    key={item.id}
-                                    className="transition-colors hover:bg-muted/35"
-                                >
-                                    <td className="px-4 py-4 tabular-nums text-muted-foreground">
-                                        {startIndex + index}
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        {item.person ? (
-                                            <Link
-                                                to={`/persons/${item.person.id}`}
-                                                className="font-semibold hover:text-primary hover:underline"
-                                            >
-                                                {name}
-                                            </Link>
-                                        ) : (
-                                            <span>{name}</span>
-                                        )}
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <span className="font-medium">
+        <>
+            {/* Telefon va planshet: ixcham kartalar */}
+            <ul className="grid list-none gap-3 sm:grid-cols-2 xl:hidden">
+                {items.map((item) => {
+                    const reason = reasonOf(item);
+                    return (
+                        <li key={item.id}>
+                            <Card size="sm" className="relative gap-3 overflow-hidden pr-4 pl-5">
+                                <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', ATTENDANCE_STRIPE[item.attendanceStatus])} />
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="leading-6 [overflow-wrap:anywhere]">
+                                            <NameCell item={item} />
+                                        </p>
+                                        <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">
                                             {item.school.name}
-                                        </span>
+                                            {students && item.className && ` · ${item.className}`}
+                                        </p>
+                                    </div>
+                                    <StatusBadge tone={ATTENDANCE_TONE[item.attendanceStatus]}>
+                                        {t(`attendance.status.${item.attendanceStatus}`)}
+                                    </StatusBadge>
+                                </div>
+                                <div className="flex items-center gap-4 text-sm">
+                                    <span className="flex items-center gap-1.5">
+                                        <LogIn aria-hidden="true" className="size-4 text-success" />
+                                        <span className="sr-only">{t('attendance.in')}:</span>
+                                        <span className="font-semibold tabular-nums">{formatTime(item.firstInTime)}</span>
+                                    </span>
+                                    <span className="flex items-center gap-1.5">
+                                        <LogOut aria-hidden="true" className="size-4 text-warning" />
+                                        <span className="sr-only">{t('attendance.out')}:</span>
+                                        <span className="font-semibold tabular-nums">{formatTime(item.lastOutTime)}</span>
+                                    </span>
+                                    {reason && <span className="truncate text-xs text-muted-foreground">{reason}</span>}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <AttendanceDetailsDialog item={item} mode={mode} />
+                                    {canCreateExcuse(item) && <AttendanceExcuseDialog item={item} onSaved={onExcuseSaved} />}
+                                </div>
+                            </Card>
+                        </li>
+                    );
+                })}
+            </ul>
 
-                                        <div className="mt-1 text-xs text-muted-foreground">
-                                            {item.district.name}
-                                        </div>
-                                    </td>
-
-                                    {mode === 'students' && (
-                                        <td className="px-4 py-4">
-                                            {item.className ?? '—'}
-                                        </td>
-                                    )}
-
-                                    <td className="px-4 py-4 font-medium tabular-nums">
-                                        {formatTime(item.firstInTime)}
-                                    </td>
-
-                                    <td className="px-4 py-4 font-medium tabular-nums">
-                                        {formatTime(item.lastOutTime)}
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <span
-                                            className={[
-                                                'inline-flex rounded-full px-2.5 py-1',
-                                                'whitespace-nowrap text-xs font-semibold',
-                                                STATUS_STYLE[item.attendanceStatus],
-                                            ].join(' ')}
-                                        >
-                                            {statusLabel}
-                                        </span>
-                                    </td>
-
-                                    {mode === 'students' && (
-                                        <td className="px-4 py-4 text-muted-foreground">
-                                            {item.attendanceStatus === 'excused' &&
-                                                item.excuseReason
-                                                ? reasonLabels[item.excuseReason]
-                                                : '—'}
-                                        </td>
-                                    )}
-
-                                    <td className="px-4 py-4">
+            {/* Kompyuter: jadval */}
+            <Card className="hidden py-0 xl:flex">
+                <Table className={students ? 'min-w-[900px]' : 'min-w-[760px]'}>
+                    <TableHeader className="bg-muted/50">
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
+                            <TableHead>{t('common.fullName')}</TableHead>
+                            <TableHead>{t('common.school')}</TableHead>
+                            {students && <TableHead className="w-20">{t('common.class')}</TableHead>}
+                            <TableHead className="w-20">{t('attendance.in')}</TableHead>
+                            <TableHead className="w-20">{t('attendance.out')}</TableHead>
+                            <TableHead className="w-36">{t('common.status')}</TableHead>
+                            <TableHead className="pr-5 text-right">{t('common.actions')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {items.map((item, index) => {
+                            const reason = reasonOf(item);
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell className="pl-5 text-muted-foreground tabular-nums">{startIndex + index}</TableCell>
+                                    <TableCell className="max-w-64 whitespace-normal">
+                                        <NameCell item={item} />
+                                    </TableCell>
+                                    <TableCell className="max-w-64 whitespace-normal">
+                                        <span className="font-medium">{item.school.name}</span>
+                                        <span className="mt-0.5 block text-xs text-muted-foreground">{item.district.name}</span>
+                                    </TableCell>
+                                    {students && <TableCell>{item.className ?? '—'}</TableCell>}
+                                    <TableCell className="font-semibold tabular-nums">{formatTime(item.firstInTime)}</TableCell>
+                                    <TableCell className="font-semibold tabular-nums">{formatTime(item.lastOutTime)}</TableCell>
+                                    <TableCell>
+                                        <StatusBadge tone={ATTENDANCE_TONE[item.attendanceStatus]}>
+                                            {t(`attendance.status.${item.attendanceStatus}`)}
+                                        </StatusBadge>
+                                        {reason && <span className="mt-1 block text-xs text-muted-foreground">{reason}</span>}
+                                    </TableCell>
+                                    <TableCell className="pr-5">
                                         <div className="flex items-center justify-end gap-2">
-                                            <AttendanceDetailsDialog
-                                                item={item}
-                                                mode={mode}
-                                            />
-
-                                            {canCreateExcuse && (
-                                                <AttendanceExcuseDialog
-                                                    item={item}
-                                                    onSaved={onExcuseSaved}
-                                                />
-                                            )}
+                                            <AttendanceDetailsDialog item={item} mode={mode} iconOnly />
+                                            {canCreateExcuse(item) && <AttendanceExcuseDialog item={item} onSaved={onExcuseSaved} />}
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             );
                         })}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    </TableBody>
+                </Table>
+            </Card>
+        </>
     );
 }

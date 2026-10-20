@@ -1,0 +1,24 @@
+{
+  "title": "O‘qituvchi — fan — sinf",
+  "subtitle": "O‘qituvchilarga o‘quv yili bo‘yicha fan va sinflarni biriktirish.",
+  "choose": "Biriktirishlarni ko‘rish uchun maktab va o‘quv yilini tanlang.",
+  "createTitle": "Yangi biriktirish",
+  "createHint": "O‘qituvchini qidirib toping, so‘ng sinf va fanni tanlang.",
+  "searchTeacher": "O‘qituvchini izlash",
+  "teacher": "O‘qituvchi",
+  "chooseTeacher": "O‘qituvchini tanlang",
+  "noTeachers": "Bu maktabda izlovga mos faol o‘qituvchi topilmadi.",
+  "subject": "Fan",
+  "subjects": "Fanlar",
+  "chooseSubject": "Fanni tanlang",
+  "submit": "Biriktirish",
+  "created": "O‘qituvchi fan va sinfga muvaffaqiyatli biriktirildi.",
+  "createFailed": "Biriktirishni saqlab bo‘lmadi.",
+  "listTitle": "Mavjud biriktirishlar",
+  "emptyTitle": "Biriktirishlar yo‘q",
+  "empty": "Hozircha biriktirish mavjud emas.",
+  "ongoing": "Davom etmoqda",
+  "errors": {
+    "required": "O‘qituvchi, sinf, fan va boshlanish sanasini belgilang."
+  }
+}

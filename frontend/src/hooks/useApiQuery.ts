@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 import { authorizedGet } from "@/lib/auth-session";
+import i18n from "@/i18n";
 
 interface QueryState<T> {
   data: T | null;
@@ -55,7 +56,7 @@ export function useApiQuery<T>(path: string) {
           error:
             error instanceof ApiError
               ? error.message
-              : "Ma’lumotlarni yuklashda xatolik yuz berdi.",
+              : i18n.t("common.loadFailed"),
           loading: false,
         });
       });

@@ -1,12 +1,17 @@
-
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
+import { ChevronLeft, ChevronRight, Filter, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
-
+import { academicYearFor, addDays, todayInTashkent } from '@/lib/date';
+import { schoolScopeOptions } from '@/lib/school-scope';
+import { cn } from '@/lib/utils';
 import type { School } from '@/types/school';
 
 export interface AttendanceFilterValues {
@@ -33,29 +38,6 @@ interface SchoolClassOption {
     name: string;
 }
 
-function todayInTashkent(): string {
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Tashkent',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).formatToParts(new Date());
-
-    const part = (type: string) =>
-        parts.find((item) => item.type === type)?.value ?? '';
-
-    return `${part('year')}-${part('month')}-${part('day')}`;
-}
-
-function academicYearFor(date: string): string {
-    const year = Number(date.slice(0, 4));
-    const month = Number(date.slice(5, 7));
-
-    const startYear = month >= 9 ? year : year - 1;
-
-    return `${startYear}-${startYear + 1}`;
-}
-
 function ClassFilter({
     id,
     schoolId,
@@ -70,168 +52,59 @@ function ClassFilter({
     onChange: (value: string) => void;
 }) {
     const { t } = useTranslation();
-
-    const academicYear = academicYearFor(date);
-
-    const path =
-        `/classes?schoolId=${encodeURIComponent(schoolId)}` +
-        `&academicYear=${encodeURIComponent(academicYear)}`;
-
-    const {
-        data: classes,
-        loading,
-        error,
-        retry,
-    } = useApiQuery<SchoolClassOption[]>(path);
+    const path = `/classes?schoolId=${encodeURIComponent(schoolId)}&academicYear=${encodeURIComponent(academicYearFor(date))}`;
+    const { data: classes, loading, error, retry } = useApiQuery<SchoolClassOption[]>(path);
 
     return (
-        <div className="space-y-2">
-            <label htmlFor={id} className="text-sm font-semibold">
-                {t('attendance.filterClass', {
-                    defaultValue: 'Sinf',
-                })}
-            </label>
-
-            <select
+        <Field htmlFor={id} label={t('common.class')} error={error || undefined}>
+            <SelectField
                 id={id}
                 value={value}
-                onChange={(event) => onChange(event.target.value)}
+                onValueChange={onChange}
                 disabled={loading || Boolean(error)}
-                className="h-11 w-full rounded-xl border border-input bg-card px-3 text-sm"
-            >
-                <option value="">
-                    {t('attendance.allClasses', {
-                        defaultValue: 'Barcha sinflar',
-                    })}
-                </option>
-
-                {(classes ?? []).map((schoolClass) => (
-                    <option key={schoolClass.id} value={schoolClass.id}>
-                        {schoolClass.name}
-                    </option>
-                ))}
-            </select>
-
-            {loading && (
-                <p className="text-xs text-muted-foreground">
-                    Sinflar yuklanmoqda…
-                </p>
-            )}
-
+                emptyOption={loading ? t('common.loading') : t('filters.allClasses')}
+                options={(classes ?? []).map((schoolClass) => ({ value: String(schoolClass.id), label: schoolClass.name }))}
+            />
             {error && (
-                <div className="flex items-center gap-2">
-                    <p role="alert" className="text-xs text-destructive">
-                        {error}
-                    </p>
-
-                    <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        onClick={retry}
-                    >
-                        Qayta urinish
-                    </Button>
-                </div>
+                <Button type="button" size="sm" variant="outline" className="w-fit" onClick={retry}>
+                    {t('common.retry')}
+                </Button>
             )}
-        </div>
+        </Field>
     );
 }
 
-export function AttendanceFilters({
-    values,
-    onApply,
-    mode = 'students',
-}: Props) {
+const STUDENT_STATUSES = ['inside', 'left', 'excused', 'absent'] as const;
+const TEACHER_STATUSES = ['inside', 'left', 'absent'] as const;
+
+export function AttendanceFilters({ values, onApply, mode = 'students' }: Props) {
     const { t } = useTranslation();
     const id = useId();
+    const [draft, setDraft] = useState<AttendanceFilterValues>(values);
+    const { data: schools, loading, error, retry } = useApiQuery<School[]>('/schools');
 
-    const [draft, setDraft] =
-        useState<AttendanceFilterValues>(values);
+    const advancedCount = [values.regionId, values.districtId, values.schoolId, values.classId, values.pnfl].filter(Boolean).length;
+    const [expanded, setExpanded] = useState(advancedCount > 0);
 
-    const {
-        data: schools,
-        loading,
-        error,
-        retry,
-    } = useApiQuery<School[]>('/schools');
+    const scope = schoolScopeOptions(schools, draft.regionId, draft.districtId);
+    const today = todayInTashkent();
 
-    // /schools API faqat foydalanuvchi ko‘rishi
-    // mumkin bo‘lgan maktablarni qaytaradi.
-    const permittedSchools = schools ?? [];
-
-    const regionMap = new Map<number, string>();
-
-    for (const school of permittedSchools) {
-        regionMap.set(
-            school.district.region.id,
-            school.district.region.name,
-        );
+    function update<K extends keyof AttendanceFilterValues>(key: K, value: AttendanceFilterValues[K]) {
+        setDraft((previous) => ({ ...previous, [key]: value }));
     }
 
-    const regions = [...regionMap.entries()]
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-    const districtMap = new Map<number, string>();
-
-    for (const school of permittedSchools) {
-        if (
-            draft.regionId &&
-            String(school.district.region.id) !== draft.regionId
-        ) {
-            continue;
-        }
-
-        districtMap.set(
-            school.district.id,
-            school.district.name,
-        );
-    }
-
-    const districts = [...districtMap.entries()]
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-    const filteredSchools = permittedSchools
-        .filter((school) => {
-            if (
-                draft.regionId &&
-                String(school.district.region.id) !== draft.regionId
-            ) {
-                return false;
-            }
-
-            if (
-                draft.districtId &&
-                String(school.districtId) !== draft.districtId
-            ) {
-                return false;
-            }
-
-            return true;
-        })
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-    function update<K extends keyof AttendanceFilterValues>(
-        key: K,
-        value: AttendanceFilterValues[K],
-    ) {
-        setDraft((previous) => ({
-            ...previous,
-            [key]: value,
-        }));
+    function apply(next: AttendanceFilterValues) {
+        onApply({
+            ...next,
+            classId: mode === 'teachers' ? '' : next.classId,
+            search: next.search.trim(),
+            pnfl: next.pnfl.trim(),
+        });
     }
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
-        onApply({
-            ...draft,
-            classId: mode === 'teachers' ? '' : draft.classId,
-            search: draft.search.trim(),
-            pnfl: draft.pnfl.trim(),
-        });
+        apply(draft);
     }
 
     function clearFilters() {
@@ -245,154 +118,152 @@ export function AttendanceFilters({
             search: '',
             pnfl: '',
         };
-
         setDraft(cleared);
         onApply(cleared);
     }
 
-    const selectClassName =
-        'h-11 w-full rounded-xl border border-input bg-card ' +
-        'px-3 text-sm outline-none focus-visible:ring-2 ' +
-        'focus-visible:ring-ring';
+    function shiftDate(days: number) {
+        const next = addDays(draft.date, days);
+        if (next > today) return;
+        const updated = { ...draft, date: next, classId: '' };
+        setDraft(updated);
+        apply(updated);
+    }
+
+    const statuses = mode === 'teachers' ? TEACHER_STATUSES : STUDENT_STATUSES;
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="space-y-5 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
-        >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-semibold">
-                    {t('attendance.advancedFilters', {
-                        defaultValue: 'Kengaytirilgan filtrlar',
-                    })}
-                </h2>
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            {/* Asosiy qator: sana, holat, qidiruv */}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+                <Field htmlFor={`${id}-date`} label={t('common.date')}>
+                    <div className="flex gap-1.5">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-11 shrink-0 bg-card"
+                            aria-label={t('attendance.prevDay')}
+                            onClick={() => shiftDate(-1)}
+                        >
+                            <ChevronLeft aria-hidden="true" />
+                        </Button>
+                        <Input
+                            id={`${id}-date`}
+                            type="date"
+                            required
+                            min="2000-01-01"
+                            max={today}
+                            value={draft.date}
+                            onChange={(event) => setDraft((previous) => ({ ...previous, date: event.target.value, classId: '' }))}
+                            className="min-w-0"
+                        />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-11 shrink-0 bg-card"
+                            aria-label={t('attendance.nextDay')}
+                            disabled={draft.date >= today}
+                            onClick={() => shiftDate(1)}
+                        >
+                            <ChevronRight aria-hidden="true" />
+                        </Button>
+                    </div>
+                </Field>
 
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={clearFilters}
-                >
-                    {t('attendance.clearFilters')}
-                </Button>
+                <Field htmlFor={`${id}-status`} label={t('attendance.statusLabel')}>
+                    <SelectField
+                        id={`${id}-status`}
+                        value={draft.attendanceStatus}
+                        onValueChange={(value) => update('attendanceStatus', value)}
+                        emptyOption={t('filters.allStatuses')}
+                        options={statuses.map((status) => ({ value: status, label: t(`attendance.status.${status}`) }))}
+                    />
+                </Field>
+
+                <Field htmlFor={`${id}-search`} label={t('attendance.searchByName')} className="sm:col-span-2 xl:col-span-1">
+                    <div className="relative">
+                        <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            id={`${id}-search`}
+                            type="search"
+                            value={draft.search}
+                            minLength={2}
+                            maxLength={100}
+                            placeholder={t('attendance.searchPlaceholder')}
+                            onChange={(event) => update('search', event.target.value)}
+                            className="pl-10"
+                        />
+                    </div>
+                </Field>
+
+                <div className="flex items-end gap-2 sm:col-span-2 xl:col-span-1">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 flex-1 bg-card xl:flex-none"
+                        aria-expanded={expanded}
+                        aria-controls={`${id}-advanced`}
+                        onClick={() => setExpanded((value) => !value)}
+                    >
+                        <Filter aria-hidden="true" />
+                        {expanded ? t('filters.showLess') : t('filters.showMore')}
+                        {advancedCount > 0 && (
+                            <span className="grid size-5 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                                {advancedCount}
+                            </span>
+                        )}
+                    </Button>
+                    <Button type="submit" className="h-11 flex-1 xl:flex-none" disabled={loading || Boolean(error)}>
+                        {t('attendance.show')}
+                    </Button>
+                </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-date`} className="text-sm font-semibold">
-                        {t('attendance.date')}
-                    </label>
-
-                    <Input
-                        id={`${id}-date`}
-                        type="date"
-                        required
-                        min="2000-01-01"
-                        max={todayInTashkent()}
-                        value={draft.date}
-                        onChange={(event) =>
-                            setDraft((previous) => ({
-                                ...previous,
-                                date: event.target.value,
-                                classId: '',
-                            }))
-                        }
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-region`} className="text-sm font-semibold">
-                        {t('attendance.filterRegion', {
-                            defaultValue: 'Viloyat',
-                        })}
-                    </label>
-
-                    <select
+            {/* Kengaytirilgan filtrlar */}
+            <div
+                id={`${id}-advanced`}
+                hidden={!expanded}
+                className={cn('grid gap-4 border-t pt-4 sm:grid-cols-2 xl:grid-cols-5')}
+            >
+                <Field htmlFor={`${id}-region`} label={t('common.region')}>
+                    <SelectField
                         id={`${id}-region`}
-                        className={selectClassName}
                         value={draft.regionId}
                         disabled={loading}
-                        onChange={(event) =>
-                            setDraft((previous) => ({
-                                ...previous,
-                                regionId: event.target.value,
-                                districtId: '',
-                                schoolId: '',
-                                classId: '',
-                            }))
+                        emptyOption={t('filters.allRegions')}
+                        options={scope.regions}
+                        onValueChange={(value) =>
+                            setDraft((previous) => ({ ...previous, regionId: value, districtId: '', schoolId: '', classId: '' }))
                         }
-                    >
-                        <option value="">Barcha viloyatlar</option>
-                        {regions.map((region) => (
-                            <option key={region.id} value={region.id}>
-                                {region.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-district`} className="text-sm font-semibold">
-                        {t('attendance.filterDistrict', {
-                            defaultValue: 'Tuman / shahar',
-                        })}
-                    </label>
-
-                    <select
+                    />
+                </Field>
+                <Field htmlFor={`${id}-district`} label={t('common.district')}>
+                    <SelectField
                         id={`${id}-district`}
-                        className={selectClassName}
                         value={draft.districtId}
                         disabled={loading}
-                        onChange={(event) =>
-                            setDraft((previous) => ({
-                                ...previous,
-                                districtId: event.target.value,
-                                schoolId: '',
-                                classId: '',
-                            }))
+                        emptyOption={t('filters.allDistricts')}
+                        options={scope.districts}
+                        onValueChange={(value) =>
+                            setDraft((previous) => ({ ...previous, districtId: value, schoolId: '', classId: '' }))
                         }
-                    >
-                        <option value="">Barcha tumanlar</option>
-                        {districts.map((district) => (
-                            <option key={district.id} value={district.id}>
-                                {district.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-school`} className="text-sm font-semibold">
-                        {t('attendance.school')}
-                    </label>
-
-                    <select
+                    />
+                </Field>
+                <Field htmlFor={`${id}-school`} label={t('common.school')}>
+                    <SelectField
                         id={`${id}-school`}
-                        className={selectClassName}
                         value={draft.schoolId}
                         disabled={loading}
-                        onChange={(event) =>
-                            setDraft((previous) => ({
-                                ...previous,
-                                schoolId: event.target.value,
-                                classId: '',
-                            }))
-                        }
-                    >
-                        <option value="">
-                            {t('attendance.allSchools')}
-                        </option>
+                        emptyOption={t('filters.allSchools')}
+                        options={scope.schools}
+                        onValueChange={(value) => setDraft((previous) => ({ ...previous, schoolId: value, classId: '' }))}
+                    />
+                </Field>
 
-                        {filteredSchools.map((school) => (
-                            <option key={school.id} value={school.id}>
-                                {school.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {mode !== 'teachers' && (
-                    draft.schoolId ? (
+                {mode !== 'teachers' &&
+                    (draft.schoolId ? (
                         <ClassFilter
                             key={`${draft.schoolId}-${academicYearFor(draft.date)}`}
                             id={`${id}-class`}
@@ -402,101 +273,41 @@ export function AttendanceFilters({
                             onChange={(value) => update('classId', value)}
                         />
                     ) : (
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold">
-                                Sinf
-                            </label>
-                            <select
-                                disabled
-                                className={selectClassName}
+                        <Field htmlFor={`${id}-class`} label={t('common.class')}>
+                            <SelectField
+                                id={`${id}-class`}
                                 value=""
-                            >
-                                <option value="">
-                                    Avval maktabni tanlang
-                                </option>
-                            </select>
-                        </div>
-                    )
-                )}
+                                onValueChange={() => undefined}
+                                disabled
+                                placeholder={t('filters.chooseSchoolFirst')}
+                                options={[]}
+                            />
+                        </Field>
+                    ))}
 
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-status`} className="text-sm font-semibold">
-                        Davomat holati
-                    </label>
-
-                    <select
-                        id={`${id}-status`}
-                        className={selectClassName}
-                        value={draft.attendanceStatus}
-                        onChange={(event) =>
-                            update('attendanceStatus', event.target.value)
-                        }
-                    >
-                        <option value="">Barcha holatlar</option>
-                        {(
-                            mode === 'teachers'
-                                ? (['inside', 'left', 'absent'] as const)
-                                : (['inside', 'left', 'excused', 'absent'] as const)
-                        ).map((status) => (
-                            <option key={status} value={status}>
-                                {t(`attendance.status.${status}`)}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-search`} className="text-sm font-semibold">
-                        F.I.Sh. bo‘yicha qidirish
-                    </label>
-
-                    <Input
-                        id={`${id}-search`}
-                        value={draft.search}
-                        minLength={2}
-                        maxLength={100}
-                        placeholder="Familiya yoki ism"
-                        onChange={(event) =>
-                            update('search', event.target.value)
-                        }
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor={`${id}-pnfl`} className="text-sm font-semibold">
-                        {t('attendance.pnfl')}
-                    </label>
-
+                <Field htmlFor={`${id}-pnfl`} label={t('common.pnfl')}>
                     <Input
                         id={`${id}-pnfl`}
                         value={draft.pnfl}
                         inputMode="numeric"
                         pattern="[0-9]{14}"
                         maxLength={14}
-                        placeholder="14 ta raqam"
-                        onChange={(event) =>
-                            update('pnfl', event.target.value)
-                        }
+                        placeholder={t('common.pnflHint')}
+                        title={t('common.pnflInvalid')}
+                        onChange={(event) => update('pnfl', event.target.value.replace(/\D/g, ''))}
+                        className="tabular-nums"
                     />
-                </div>
-            </div>
+                </Field>
 
-            {error && (
-                <div className="flex items-center gap-3">
-                    <p role="alert" className="text-sm text-destructive">
-                        {error}
-                    </p>
-                    <Button type="button" variant="outline" onClick={retry}>
-                        Qayta urinish
+                <div className="flex items-end sm:col-span-2 xl:col-span-5 xl:justify-end">
+                    <Button type="button" variant="ghost" onClick={clearFilters}>
+                        <X aria-hidden="true" />
+                        {t('common.clearFilters')}
                     </Button>
                 </div>
-            )}
-
-            <div className="flex justify-end">
-                <Button type="submit" disabled={loading || Boolean(error)}>
-                    {t('attendance.show')}
-                </Button>
             </div>
+
+            {error && <ErrorState message={error} onRetry={retry} />}
         </form>
     );
 }

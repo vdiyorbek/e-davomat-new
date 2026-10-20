@@ -1,0 +1,9 @@
+{
+  "title": "Personal details",
+  "subtitle": "Your user profile and account details.",
+  "details": "Account details",
+  "detailsHint": "Contact an administrator to change these details.",
+  "login": "Login",
+  "role": "System role",
+  "notEntered": "Not provided"
+}

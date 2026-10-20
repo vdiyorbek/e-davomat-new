@@ -1,0 +1,41 @@
+{
+  "title": "Schools",
+  "subtitle": "Schools within your scope.",
+  "add": "Add school",
+  "listLabel": "School list",
+  "name": "School name",
+  "loading": "Loading schools…",
+  "loadFailed": "Could not load schools",
+  "emptyTitle": "No schools found",
+  "empty": "There are no schools in your scope yet.",
+  "search": "Search schools",
+  "searchPlaceholder": "Name, ID, district or region…",
+  "found": "{{found}} of {{total}} found",
+  "total": "Total schools: {{total}}",
+  "noMatchTitle": "No matching schools",
+  "noMatch": "Try another name or area.",
+  "createTitle": "New school",
+  "createHint": "Choose the region and district, then enter the school name.",
+  "editTitle": "Edit school",
+  "editHint": "Update the school name or its district.",
+  "created": "“{{name}}” was added.",
+  "updated": "“{{name}}” was updated.",
+  "form": {
+    "name": "School name",
+    "namePlaceholder": "e.g. Termez city school No. 1",
+    "nameHint": "The full school name, 2–200 characters.",
+    "chooseDistrict": "Choose a district or city",
+    "chooseRegionFirst": "Choose a region first",
+    "noDistricts": "No districts or cities in this region.",
+    "noRegions": "Regions need to be added first.",
+    "save": "Save school",
+    "saveChanges": "Save changes",
+    "errors": {
+      "nameLength": "The name must be 2–200 characters.",
+      "location": "Choose a region and a district.",
+      "noChanges": "Nothing has changed yet.",
+      "uncertain": "Could not confirm the save. Close the window and refresh the list before trying again.",
+      "saveFailed": "Failed to save the school."
+    }
+  }
+}

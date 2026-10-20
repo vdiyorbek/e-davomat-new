@@ -1,0 +1,24 @@
+{
+  "title": "Classes",
+  "subtitle": "Manage classes by school and academic year.",
+  "choose": "Choose a school and an academic year to see its classes.",
+  "noSchools": "There are no schools available to you.",
+  "createTitle": "Add a class",
+  "name": "Class name",
+  "namePlaceholder": "e.g. 2A",
+  "grade": "Grade level",
+  "chooseGrade": "Choose a grade",
+  "add": "Add class",
+  "created": "Class created.",
+  "createFailed": "Could not create the class.",
+  "listTitle": "Existing classes",
+  "missingGrade": "Without grade: {{count}}",
+  "gradeMissing": "Grade not set",
+  "gradeOf": "Grade of {{name}}",
+  "gradeSaveFailed": "Could not save the grade.",
+  "emptyTitle": "No classes",
+  "empty": "There are no classes in this academic year.",
+  "errors": {
+    "required": "Enter the class name and grade."
+  }
+}

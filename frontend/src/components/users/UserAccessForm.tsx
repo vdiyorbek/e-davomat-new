@@ -1,23 +1,19 @@
-
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { authorizedPatch } from '@/lib/auth-session';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
+import { authorizedPatch } from '@/lib/auth-session';
 import type { UserRole } from '@/types/auth';
 
 interface Option {
     id: number;
     name: string;
-}
-
-interface DistrictOption extends Option {
-    regionId: number;
-}
-
-interface SchoolOption extends Option {
-    districtId: number;
 }
 
 export interface AccessUser {
@@ -41,121 +37,66 @@ interface Props {
     onCancel: () => void;
 }
 
-const fieldClass =
-    'w-full rounded-xl border bg-background px-3 py-3 text-sm ' +
-    'disabled:cursor-not-allowed disabled:opacity-50';
+type ScopeKind = 'NONE' | 'REGION' | 'DISTRICT' | 'SCHOOL';
 
-function DistrictPicker({
-    regionId, value, onChange, disabled,
+function OptionsPicker({
+    path,
+    label,
+    placeholder,
+    value,
+    onChange,
+    disabled,
+    searchable,
 }: {
-    regionId: string;
+    path: string;
+    label: string;
+    placeholder: string;
     value: string;
     onChange: (value: string) => void;
     disabled: boolean;
+    searchable?: boolean;
 }) {
-    const { data, loading, error, retry } =
-        useApiQuery<DistrictOption[]>(
-            `/districts/options?regionId=${regionId}`,
-        );
+    const { t } = useTranslation();
+    const id = useId();
+    const { data, loading, error, retry } = useApiQuery<Option[]>(path);
 
     return (
-        <div className="space-y-2">
-            <label htmlFor="access-district">Туман / шаҳар</label>
-            <select
-                id="access-district"
-                className={fieldClass}
+        <Field htmlFor={id} label={label} required error={error || undefined}>
+            <SelectField
+                id={id}
                 value={value}
+                onValueChange={onChange}
                 disabled={disabled || loading || Boolean(error)}
-                onChange={(e) => onChange(e.target.value)}
-            >
-                <option value="">Туманни танланг</option>
-                {(data ?? []).map((item) => (
-                    <option key={item.id} value={item.id}>
-                        {item.name}
-                    </option>
-                ))}
-            </select>
+                placeholder={loading ? t('common.loading') : placeholder}
+                searchable={searchable}
+                options={(data ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
+            />
             {error && (
-                <Button type="button" variant="outline" onClick={retry}>
-                    Туманларни қайта юклаш
+                <Button type="button" variant="outline" size="sm" className="w-fit" onClick={retry}>
+                    {t('common.retry')}
                 </Button>
             )}
-        </div>
+        </Field>
     );
 }
 
-function SchoolPicker({
-    districtId, value, onChange, disabled,
-}: {
-    districtId: string;
-    value: string;
-    onChange: (value: string) => void;
-    disabled: boolean;
-}) {
-    const { data, loading, error, retry } =
-        useApiQuery<SchoolOption[]>(
-            `/schools?districtId=${districtId}`,
-        );
-
-    return (
-        <div className="space-y-2">
-            <label htmlFor="access-school">Мактаб</label>
-            <select
-                id="access-school"
-                className={fieldClass}
-                value={value}
-                disabled={disabled || loading || Boolean(error)}
-                onChange={(e) => onChange(e.target.value)}
-            >
-                <option value="">Мактабни танланг</option>
-                {(data ?? []).map((item) => (
-                    <option key={item.id} value={item.id}>
-                        {item.name}
-                    </option>
-                ))}
-            </select>
-            {error && (
-                <Button type="button" variant="outline" onClick={retry}>
-                    Мактабларни қайта юклаш
-                </Button>
-            )}
-        </div>
-    );
-}
-
-export function UserAccessForm({
-    user, onUpdated, onCancel,
-}: Props) {
+export function UserAccessForm({ user, onUpdated, onCancel }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
     const { session } = useAuth();
     const currentRole = session?.profile.role;
     const currentId = session?.profile.id;
 
     const [role, setRole] = useState<UserRole>(user.role);
-    const [regionId, setRegionId] = useState(
-        String(user.region?.id ?? user.scope.regionId ?? ''),
+    const [regionId, setRegionId] = useState(String(user.region?.id ?? user.scope.regionId ?? ''));
+    const [districtId, setDistrictId] = useState(String(user.district?.id ?? user.scope.districtId ?? ''));
+    const [schoolId, setSchoolId] = useState(String(user.scope.schoolId ?? ''));
+    const [userScopeType, setUserScopeType] = useState<ScopeKind>(
+        user.scope.schoolId ? 'SCHOOL' : user.scope.districtId ? 'DISTRICT' : user.scope.regionId ? 'REGION' : 'NONE',
     );
-    const [districtId, setDistrictId] = useState(
-        String(user.district?.id ?? user.scope.districtId ?? ''),
-    );
-    const [schoolId, setSchoolId] = useState(
-        String(user.scope.schoolId ?? ''),
-    );
-
-    const [userScopeType, setUserScopeType] = useState<
-        'NONE' | 'REGION' | 'DISTRICT' | 'SCHOOL'
-    >(
-        user.scope.schoolId ? 'SCHOOL' :
-            user.scope.districtId ? 'DISTRICT' :
-                user.scope.regionId ? 'REGION' : 'NONE',
-    );
-
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const submitting = useRef(false);
-
-    const { data: regions, loading: regionsLoading,
-        error: regionsError, retry: retryRegions } =
-        useApiQuery<Option[]>('/regions/options');
 
     const allowedRoles: UserRole[] =
         currentRole === 'SUPER_ADMIN'
@@ -171,51 +112,24 @@ export function UserAccessForm({
         user.id !== currentId &&
         allowedRoles.length > 0 &&
         (currentRole === 'SUPER_ADMIN' ||
-            (currentRole === 'REGION_ADMIN' &&
-                !['REGION_ADMIN', 'SUPER_ADMIN'].includes(user.role)) ||
-            (currentRole === 'DISTRICT_ADMIN' &&
-                ['USER', 'SCHOOL_ADMIN'].includes(user.role)));
+            (currentRole === 'REGION_ADMIN' && !['REGION_ADMIN', 'SUPER_ADMIN'].includes(user.role)) ||
+            (currentRole === 'DISTRICT_ADMIN' && ['USER', 'SCHOOL_ADMIN'].includes(user.role)));
 
-    const scopeType =
-        role === 'REGION_ADMIN' ? 'REGION' :
-            role === 'DISTRICT_ADMIN' ? 'DISTRICT' :
-                role === 'SCHOOL_ADMIN' ? 'SCHOOL' :
-                    userScopeType;
+    const scopeType: ScopeKind =
+        role === 'REGION_ADMIN' ? 'REGION' : role === 'DISTRICT_ADMIN' ? 'DISTRICT' : role === 'SCHOOL_ADMIN' ? 'SCHOOL' : userScopeType;
 
     const needsRegion = scopeType !== 'NONE';
-    const needsDistrict =
-        scopeType === 'DISTRICT' || scopeType === 'SCHOOL';
+    const needsDistrict = scopeType === 'DISTRICT' || scopeType === 'SCHOOL';
     const needsSchool = scopeType === 'SCHOOL';
-
-    function changeRegion(value: string) {
-        setRegionId(value);
-        setDistrictId('');
-        setSchoolId('');
-    }
-
-    function changeDistrict(value: string) {
-        setDistrictId(value);
-        setSchoolId('');
-    }
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (submitting.current || !editable) return;
-
         setError('');
 
-        if (!allowedRoles.includes(role)) {
-            setError('Ушбу ролни тайинлашга рухсат йўқ.');
-            return;
-        }
-
-        if (
-            (needsRegion && !regionId) ||
-            (needsDistrict && !districtId) ||
-            (needsSchool && !schoolId)
-        ) {
-            setError('Ролга мос ҳудудни тўлиқ танланг.');
-            return;
+        if (!allowedRoles.includes(role)) return setError(t('users.access.errors.roleNotAllowed'));
+        if ((needsRegion && !regionId) || (needsDistrict && !districtId) || (needsSchool && !schoolId)) {
+            return setError(t('users.access.errors.scope'));
         }
 
         const payload = {
@@ -225,27 +139,22 @@ export function UserAccessForm({
             schoolId: scopeType === 'SCHOOL' ? Number(schoolId) : null,
         };
 
-        const unchanged =
+        if (
             payload.role === user.role &&
             payload.regionId === user.scope.regionId &&
             payload.districtId === user.scope.districtId &&
-            payload.schoolId === user.scope.schoolId;
-
-        if (unchanged) {
-            setError('Ҳеч қандай ўзгариш киритилмади.');
-            return;
+            payload.schoolId === user.scope.schoolId
+        ) {
+            return setError(t('users.errors.noChanges'));
         }
 
         submitting.current = true;
         setBusy(true);
-
         try {
             await authorizedPatch(`/users/${user.id}/access`, payload);
             onUpdated();
         } catch (err: unknown) {
-            setError(err instanceof Error
-                ? err.message
-                : 'Ваколатни сақлашда хатолик юз берди.');
+            setError(err instanceof Error ? err.message : t('users.access.errors.saveFailed'));
         } finally {
             submitting.current = false;
             setBusy(false);
@@ -255,121 +164,103 @@ export function UserAccessForm({
     if (!editable) {
         return (
             <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                    Ушбу фойдаланувчининг ваколатини ўзгартиришга
-                    рухсат йўқ ёки ҳисоб фаол эмас.
-                </p>
+                <p className="text-sm text-muted-foreground">{t('users.access.notAllowed')}</p>
                 <Button type="button" variant="outline" onClick={onCancel}>
-                    Ёпиш
+                    {t('common.close')}
                 </Button>
             </div>
         );
     }
 
     return (
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
-            <p className="text-sm text-muted-foreground">
-                Фойдаланувчи: <strong>{user.login}</strong>
-            </p>
-
-            <div className="space-y-2">
-                <label htmlFor="access-role">Рол</label>
-                <select
-                    id="access-role"
-                    className={fieldClass}
-                    value={role}
-                    disabled={busy}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
-                >
-                    {allowedRoles.map((value) => (
-                        <option key={value} value={value}>
-                            {value}
-                        </option>
-                    ))}
-                </select>
+        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
+            <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm">
+                {t('users.access.user')}: <strong>@{user.login}</strong>
             </div>
 
-            {role === 'USER' && (
-                <div className="space-y-2">
-                    <label htmlFor="access-scope-type">Оддий фойдаланувчи ҳудуди</label>
-                    <select
-                        id="access-scope-type"
-                        className={fieldClass}
-                        value={userScopeType}
+            <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor={`${id}-role`} label={t('users.role')} required>
+                    <SelectField
+                        id={`${id}-role`}
+                        value={role}
                         disabled={busy}
-                        onChange={(e) => {
-                            setUserScopeType(e.target.value as typeof userScopeType);
-                            setRegionId('');
+                        onValueChange={(value) => setRole(value as UserRole)}
+                        options={allowedRoles.map((value) => ({ value, label: t(`roles.${value}`) }))}
+                    />
+                </Field>
+
+                {role === 'USER' && (
+                    <Field htmlFor={`${id}-scope`} label={t('users.access.userScope')}>
+                        <SelectField
+                            id={`${id}-scope`}
+                            value={userScopeType}
+                            disabled={busy}
+                            onValueChange={(value) => {
+                                setUserScopeType(value as ScopeKind);
+                                setRegionId('');
+                                setDistrictId('');
+                                setSchoolId('');
+                            }}
+                            options={(['NONE', 'REGION', 'DISTRICT', 'SCHOOL'] as const).map((value) => ({
+                                value,
+                                label: t(`users.access.scopes.${value}`),
+                            }))}
+                        />
+                    </Field>
+                )}
+            </div>
+
+            {needsRegion && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <OptionsPicker
+                        path="/regions/options"
+                        label={t('common.region')}
+                        placeholder={t('persons.chooseRegion')}
+                        value={regionId}
+                        disabled={busy}
+                        onChange={(value) => {
+                            setRegionId(value);
                             setDistrictId('');
                             setSchoolId('');
                         }}
-                    >
-                        <option value="NONE">Ҳудудсиз</option>
-                        <option value="REGION">Вилоят</option>
-                        <option value="DISTRICT">Туман / шаҳар</option>
-                        <option value="SCHOOL">Мактаб</option>
-                    </select>
-                </div>
-            )}
-
-            {needsRegion && (
-                <div className="space-y-2">
-                    <label htmlFor="access-region">Вилоят</label>
-                    <select
-                        id="access-region"
-                        className={fieldClass}
-                        value={regionId}
-                        disabled={busy || regionsLoading || Boolean(regionsError)}
-                        onChange={(e) => changeRegion(e.target.value)}
-                    >
-                        <option value="">Вилоятни танланг</option>
-                        {(regions ?? []).map((region) => (
-                            <option key={region.id} value={region.id}>
-                                {region.name}
-                            </option>
-                        ))}
-                    </select>
-                    {regionsError && (
-                        <Button type="button" variant="outline" onClick={retryRegions}>
-                            Вилоятларни қайта юклаш
-                        </Button>
+                    />
+                    {needsDistrict && regionId && (
+                        <OptionsPicker
+                            key={regionId}
+                            path={`/districts/options?regionId=${regionId}`}
+                            label={t('common.district')}
+                            placeholder={t('persons.chooseDistrict')}
+                            value={districtId}
+                            disabled={busy}
+                            onChange={(value) => {
+                                setDistrictId(value);
+                                setSchoolId('');
+                            }}
+                        />
+                    )}
+                    {needsSchool && districtId && (
+                        <OptionsPicker
+                            key={districtId}
+                            path={`/schools?districtId=${districtId}`}
+                            label={t('common.school')}
+                            placeholder={t('members.chooseSchool')}
+                            value={schoolId}
+                            disabled={busy}
+                            onChange={setSchoolId}
+                            searchable
+                        />
                     )}
                 </div>
             )}
 
-            {needsDistrict && regionId && (
-                <DistrictPicker
-                    key={regionId}
-                    regionId={regionId}
-                    value={districtId}
-                    disabled={busy}
-                    onChange={changeDistrict}
-                />
-            )}
+            {error && <ErrorState message={error} />}
 
-            {needsSchool && districtId && (
-                <SchoolPicker
-                    key={districtId}
-                    districtId={districtId}
-                    value={schoolId}
-                    disabled={busy}
-                    onChange={setSchoolId}
-                />
-            )}
-
-            {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
-            )}
-
-            <div className="flex justify-end gap-3 border-t pt-4">
-                <Button type="button" variant="outline"
-                    disabled={busy} onClick={onCancel}>
-                    Бекор қилиш
+            <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" disabled={busy} onClick={onCancel}>
+                    {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={busy}>
-                    {busy ? 'Сақланмоқда...' : 'Ваколатни сақлаш'}
+                    {busy ? t('common.saving') : t('users.access.save')}
                 </Button>
             </div>
         </form>

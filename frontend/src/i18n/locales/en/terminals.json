@@ -1,0 +1,69 @@
+{
+  "title": "Terminals",
+  "subtitle": "Manage the Face ID entry and exit terminals at schools.",
+  "add": "Add terminal",
+  "saved": "Terminal saved.",
+  "loading": "Loading terminals…",
+  "emptyTitle": "No terminals",
+  "empty": "There are no terminals on this page.",
+  "total": "Total terminals: {{count}}",
+  "active": "Active",
+  "inactive": "Disabled",
+  "direction": "Direction",
+  "directions": {
+    "IN": "Entry",
+    "OUT": "Exit"
+  },
+  "model": "Model",
+  "serial": "Serial number",
+  "firmware": "Firmware",
+  "unknown": "Unknown",
+  "never": "Not yet",
+  "lastCheck": "Last check",
+  "syncStart": "Sync start",
+  "syncedUntil": "Events synced until",
+  "lastSync": "Last successful sync",
+  "syncState": {
+    "notStarted": "Automatic sync has not started.",
+    "disabled": "The terminal is disabled. No new sync jobs will be added.",
+    "running": "Automatic sync is on.",
+    "pending": "Start time saved. The first interval has not finished yet."
+  },
+  "check": {
+    "button": "Test connection",
+    "checking": "Testing…",
+    "failed": "The connection test failed.",
+    "time": "Checked at: {{time}}"
+  },
+  "sync": {
+    "fromDate": "Load events from",
+    "hint": "Events are loaded from 00:00 Tashkent time on the chosen day, then continue automatically.",
+    "inactive": "The terminal must be active to start syncing.",
+    "start": "Start sync",
+    "errors": {
+      "date": "Enter a valid start date.",
+      "future": "A future date cannot be chosen.",
+      "invalid": "That date does not exist.",
+      "failed": "Could not start syncing."
+    }
+  },
+  "form": {
+    "title": "New terminal",
+    "description": "Enter the network address and credentials of the Hikvision Face ID terminal.",
+    "name": "Terminal name",
+    "namePlaceholder": "Main entrance terminal",
+    "host": "IP address",
+    "hostHint": "IP address only, without http:// or a port.",
+    "protocol": "Protocol",
+    "port": "Port",
+    "username": "Terminal login",
+    "password": "Terminal password",
+    "active": "Terminal is active",
+    "save": "Save terminal",
+    "errors": {
+      "required": "Fill in the required fields.",
+      "port": "The port must be a whole number from 1 to 65535.",
+      "saveFailed": "Could not save the terminal."
+    }
+  }
+}

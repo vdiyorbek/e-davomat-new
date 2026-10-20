@@ -1,44 +1,56 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { CreateMemberForm } from './CreateMemberForm';
-import { Button } from '@/components/ui/button';
-import { useApiQuery } from '@/hooks/useApiQuery';
-import type {
-    SchoolMembership,
-    SchoolMembershipsPage,
-} from '@/types/school-membership';
+import { Plus, Users, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
+
+import { PageHeader } from '@/components/common/PageHeader';
+import { Pagination } from '@/components/common/Pagination';
+import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { SchoolMembersFilters } from '@/components/memberships/SchoolMembersFilters';
-import { SchoolMemberActions } from './SchoolMemberActions';
-import { EndMembershipForm } from './EndMembershipForm';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { formatDate, todayInTashkent } from '@/lib/date';
+import { personFullName } from '@/lib/person';
+import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-membership';
+
 import { ChangeClassForm } from './ChangeClassForm';
+import { CreateMemberForm } from './CreateMemberForm';
+import { EndMembershipForm } from './EndMembershipForm';
+import { SchoolMemberActions } from './SchoolMemberActions';
 import { TransferSchoolForm } from './TransferSchoolForm';
-type MembershipType = 'STUDENT' | 'TEACHER'
+
+type MembershipType = 'STUDENT' | 'TEACHER';
+
 interface SchoolMembersPageProps {
-    type: MembershipType
+    type: MembershipType;
 }
 
-
-function formatDate(value: string | null): string {
-    if (!value) return 'Belgilanmagan';
-
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-
-    return match
-        ? `${match[3]}.${match[2]}.${match[1]}`
-        : value;
+function membershipState(item: SchoolMembership): 'ACTIVE' | 'ENDED' | 'PLANNED' {
+    const today = todayInTashkent();
+    if (item.startDate > today) return 'PLANNED';
+    if (item.endDate && item.endDate <= today) return 'ENDED';
+    return 'ACTIVE';
 }
 
-function fullName(item: SchoolMembership): string {
-    if (!item.person) return 'Shaxs ma’lumoti mavjud emas';
+const STATE_TONE = { ACTIVE: 'success', ENDED: 'neutral', PLANNED: 'info' } as const;
 
-    return [
-        item.person.lastName,
-        item.person.firstName,
-        item.person.middleName,
-    ]
-        .filter(Boolean)
-        .join(' ');
+function PersonLink({ item }: { item: SchoolMembership }) {
+    const { t } = useTranslation();
+    if (!item.person) return <span className="text-muted-foreground">{t('common.personMissing')}</span>;
+    return (
+        <Link
+            to={`/persons/${item.person.id}`}
+            className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:underline"
+        >
+            {personFullName(item.person)}
+        </Link>
+    );
 }
 
 interface MembersResultsProps {
@@ -47,604 +59,356 @@ interface MembersResultsProps {
     onPageChange: (page: number) => void;
 }
 
-function MembersResults({
-    path,
-    type,
-    onPageChange,
-}: MembersResultsProps) {
-    const peopleLabel = type === "STUDENT" ? "O'quvchilar" : "O'qituvchilar"
-    const { data, loading, error, retry } =
-        useApiQuery<SchoolMembershipsPage>(path);
+function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
+    const { t } = useTranslation();
+    const kind = type === 'STUDENT' ? 'students' : 'teachers';
+    const { data, loading, error, retry } = useApiQuery<SchoolMembershipsPage>(path);
     const { session } = useAuth();
 
-    const [endingMembership, setEndingMembership] =
-        useState<SchoolMembership | null>(null);
-
-    const [endSuccess, setEndSuccess] = useState('');
+    const [ending, setEnding] = useState<SchoolMembership | null>(null);
+    const [changingClass, setChangingClass] = useState<SchoolMembership | null>(null);
+    const [transferring, setTransferring] = useState<SchoolMembership | null>(null);
+    const [success, setSuccess] = useState('');
 
     const role = session?.profile.role;
-
     const canEnd = role === 'SUPER_ADMIN';
     const canEdit = role === 'SUPER_ADMIN';
-
     const canChangeClass =
-        type === 'STUDENT' &&
-        ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN', 'SCHOOL_ADMIN']
-            .includes(role ?? '');
-
+        type === 'STUDENT' && ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN', 'SCHOOL_ADMIN'].includes(role ?? '');
     const canTransferSchool =
-        type === 'STUDENT' &&
-        ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN']
-            .includes(role ?? '');
-    const [changingClass, setChangingClass] =
-        useState<SchoolMembership | null>(null);
+        type === 'STUDENT' && ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN'].includes(role ?? '');
+    const actionsDisabled = ending !== null || changingClass !== null || transferring !== null;
 
-    const [transferringSchool, setTransferringSchool] =
-        useState<SchoolMembership | null>(null);
-
-    const actionsDisabled =
-        endingMembership !== null ||
-        changingClass !== null ||
-        transferringSchool !== null;
-
-    function openEnd(membership: SchoolMembership) {
-        setEndSuccess('');
-        setChangingClass(null);
-        setTransferringSchool(null);
-        setEndingMembership(membership);
+    function open(setter: (m: SchoolMembership) => void) {
+        return (membership: SchoolMembership) => {
+            setSuccess('');
+            setter(membership);
+        };
     }
 
-    function openChangeClass(membership: SchoolMembership) {
-        setEndSuccess('');
-        setEndingMembership(null);
-        setTransferringSchool(null);
-        setChangingClass(membership);
-    }
-
-    function openTransferSchool(membership: SchoolMembership) {
-        setEndSuccess('');
-        setEndingMembership(null);
+    function handleSaved(message: string) {
+        setEnding(null);
         setChangingClass(null);
-        setTransferringSchool(membership);
-    }
-
-    function handleActionSaved(message: string) {
-        setEndingMembership(null);
-        setChangingClass(null);
-        setTransferringSchool(null);
-        setEndSuccess(message);
+        setTransferring(null);
+        setSuccess(message);
         retry();
     }
-    if (loading) {
-        return (
-            <p
-                role="status"
-                className="rounded-xl border bg-background p-6 text-sm text-muted-foreground"
-            >
-                {peopleLabel} yuklanmoqda…
-            </p>
-        );
-    }
 
-    if (error) {
-        return (
-            <div
-                role="alert"
-                className="space-y-4 rounded-xl border bg-background p-5"
-            >
-                <p className="text-sm text-destructive">{error}</p>
-
-                <Button variant="outline" onClick={retry}>
-                    Qayta urinish
-                </Button>
-            </div>
-        );
-    }
-
+    if (loading) return <LoadingState label={t(`members.${kind}.loading`)} />;
+    if (error) return <ErrorState message={error} onRetry={retry} />;
     if (!data) return null;
 
     if (data.data.length === 0) {
         return (
-            <div className="rounded-2xl border border-dashed bg-background p-8 text-center">
-                <h2 className="font-semibold">
-                    {peopleLabel} topilmadi
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Tanlangan doirada o‘quvchi biriktirishlari mavjud emas
-                    yoki sahifa raqami ro‘yxat chegarasidan tashqarida.
-                </p>
-
-                {data.page > 1 && (
-                    <Button
-                        variant="outline"
-                        className="mt-5"
-                        onClick={() => onPageChange(1)}
-                    >
-                        Birinchi sahifaga qaytish
-                    </Button>
-                )}
-            </div>
+            <EmptyState
+                icon={Users}
+                title={t(`members.${kind}.emptyTitle`)}
+                description={t(`members.${kind}.emptyText`)}
+                action={
+                    data.page > 1 ? (
+                        <Button variant="outline" onClick={() => onPageChange(1)}>
+                            {t('common.pagination.firstPage')}
+                        </Button>
+                    ) : undefined
+                }
+            />
         );
     }
 
     const firstRow = (data.page - 1) * data.limit + 1;
-    const lastRow = firstRow + data.data.length - 1;
+    const actionProps = {
+        canEdit,
+        canEnd,
+        canChangeClass,
+        canTransferSchool,
+        actionsDisabled,
+        onEnd: open(setEnding),
+        onChangeClass: open(setChangingClass),
+        onTransferSchool: open(setTransferring),
+    };
 
     return (
         <div className="min-w-0 space-y-4">
-            <p className="text-sm tabular-nums text-muted-foreground">
-                Jami {data.total} ta biriktirish.
-                {' '}{firstRow}–{lastRow} ko‘rsatilmoqda.
-            </p>
-            {endSuccess && (
-                <p
-                    role="status"
-                    className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200"
-                >
-                    {endSuccess}
-                </p>
-            )}
+            {success && <SuccessNotice>{success}</SuccessNotice>}
 
-            {endingMembership && canEnd && (
-                <EndMembershipForm
-                    key={endingMembership.id}
-                    membership={endingMembership}
-                    onCancel={() => setEndingMembership(null)}
-                    onSaved={() =>
-                        handleActionSaved(
-                            'Maktabga biriktirish muvaffaqiyatli yakunlandi.'
-                        )
-                    }
-                />
-            )}
-            {changingClass && canChangeClass && (
-                <section className="rounded-2xl border bg-card p-5">
-                    <h2 className="mb-4 text-lg font-semibold">
-                        O‘quvchini boshqa sinfga o‘tkazish
-                    </h2>
-
-                    <ChangeClassForm
-                        key={changingClass.id}
-                        membership={changingClass}
-                        onCancel={() => setChangingClass(null)}
-                        onSaved={() =>
-                            handleActionSaved('O‘quvchining sinfi almashtirildi.')
-                        }
-                    />
-                </section>
-            )}
-
-            {transferringSchool && canTransferSchool && (
-                <section className="rounded-2xl border bg-card p-5">
-                    <h2 className="mb-4 text-lg font-semibold">
-                        O‘quvchini boshqa maktabga ko‘chirish
-                    </h2>
-
-                    <TransferSchoolForm
-                        key={transferringSchool.id}
-                        membership={transferringSchool}
-                        onCancel={() => setTransferringSchool(null)}
-                        onSaved={() =>
-                            handleActionSaved('O‘quvchi boshqa maktabga ko‘chirildi.')
-                        }
-                    />
-                </section>
-            )}
-
-            {/* Mobil ko‘rinish */}
-            <ul className="grid min-w-0 list-none gap-4 md:hidden">
-                {data.data.map((item) => (
-                    <li
-                        key={item.id}
-                        className="min-w-0 rounded-2xl border bg-background p-5"
-                    >
-                        <h2 className="font-semibold leading-6 [overflow-wrap:anywhere]">
-                            {item.person ? (
-                                <Link
-                                    to={`/persons/${item.person.id}`}
-                                    className="font-medium text-primary underline-offset-4 hover:underline focus-visible:underline"
-                                >
-                                    {fullName(item)}
-                                </Link>
-                            ) : (
-                                <span>Shaxs ma’lumotlari mavjud emas</span>
-                            )}
-                        </h2>
-
-                        <dl className="mt-4 space-y-3 text-sm">
-                            <div>
-                                <dt className="text-muted-foreground">
-                                    PNFL
-                                </dt>
-                                <dd className="mt-1 break-all">
-                                    {item.person?.pnfl ?? 'Mavjud emas'}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-muted-foreground">
-                                    Maktab
-                                </dt>
-                                <dd className="mt-1 [overflow-wrap:anywhere]">
-                                    {item.school.name}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-muted-foreground">
-                                    Boshlanish sanasi
-                                </dt>
-                                <dd className="mt-1">
-                                    {formatDate(item.startDate)}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-muted-foreground">
-                                    Faol bo‘lmaydigan birinchi kun
-                                </dt>
-                                <dd className="mt-1">
-                                    {formatDate(item.endDate)}
-                                </dd>
-                            </div>
-                        </dl>
-                        <div className="mt-4 border-t pt-4">
-                            <p className="mb-3 text-xs font-medium text-muted-foreground">
-                                Amallar
-                            </p>
-
-                            <SchoolMemberActions
-                                membership={item}
-                                canEdit={canEdit}
-                                canEnd={canEnd}
-                                canChangeClass={canChangeClass}
-                                canTransferSchool={canTransferSchool}
-                                actionsDisabled={actionsDisabled}
-                                onEnd={openEnd}
-                                onChangeClass={openChangeClass}
-                                onTransferSchool={openTransferSchool}
-                            />
-                        </div>
-                    </li>
-
-                ))}
+            {/* Telefon va planshet: kartalar */}
+            <ul className="grid min-w-0 list-none gap-3 sm:grid-cols-2 xl:hidden">
+                {data.data.map((item) => {
+                    const state = membershipState(item);
+                    return (
+                        <li key={item.id}>
+                            <Card size="sm" className="gap-4 px-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <h2 className="min-w-0 text-base leading-6 [overflow-wrap:anywhere]">
+                                        <PersonLink item={item} />
+                                    </h2>
+                                    <StatusBadge tone={STATE_TONE[state]}>{t(`common.membershipStatus.${state}`)}</StatusBadge>
+                                </div>
+                                <DetailList>
+                                    <DetailItem label={t('common.pnfl')}>
+                                        <span className="tabular-nums">{item.person?.pnfl ?? t('common.notAvailable')}</span>
+                                    </DetailItem>
+                                    {item.schoolClass && (
+                                        <DetailItem label={t('common.class')}>{item.schoolClass.name}</DetailItem>
+                                    )}
+                                    <DetailItem label={t('common.school')} wide>
+                                        {item.school.name}
+                                    </DetailItem>
+                                    <DetailItem label={t('membership.start')}>{formatDate(item.startDate)}</DetailItem>
+                                    <DetailItem label={t('membership.endExclusive')}>{formatDate(item.endDate)}</DetailItem>
+                                </DetailList>
+                                <div className="border-t pt-3">
+                                    <SchoolMemberActions membership={item} layout="labels" {...actionProps} />
+                                </div>
+                            </Card>
+                        </li>
+                    );
+                })}
             </ul>
 
-            {/* Planshet va kompyuter ko‘rinishi */}
-            <div className="hidden min-w-0 overflow-hidden rounded-2xl border bg-background md:block">
-                <div
-                    role="region"
-                    aria-label={`${peopleLabel} jadvali`}
-                    tabIndex={0}
-                    className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                >
-                    <table className="w-full min-w-[1100px] table-auto text-left text-sm">
-                        <caption className="sr-only">
-                            {peopleLabel} maktablarga biriktirishlar
-                        </caption>
-
-                        <thead className="border-b bg-muted/50">
-                            <tr>
-                                <th scope="col" className="w-16 p-4">№</th>
-                                <th scope="col" className="w-1/4 p-4">F.I.Sh.</th>
-                                <th scope="col" className="w-40 p-4">PNFL</th>
-                                <th scope="col" className="p-4">Maktab</th>
-                                <th scope="col" className="w-32 p-4">
-                                    Boshlanish
-                                </th>
-                                <th scope="col" className="w-40 p-4">
-                                    Faol bo‘lmaydigan birinchi kun
-                                </th>
-                                <th scope="col" className="w-[240px] whitespace-nowrap px-4 py-3 text-left">
-                                    Amallar
-                                </th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-                            {data.data.map((item, index) => (
-                                <tr
-                                    key={item.id}
-                                    className="border-b align-top last:border-0 hover:bg-muted/30"
-                                >
-                                    <td className="p-4 text-muted-foreground">
-                                        {firstRow + index}
-                                    </td>
-
-                                    <th
-                                        scope="row"
-                                        className="p-4 font-medium leading-6 [overflow-wrap:anywhere]"
-                                    >
-                                        {item.person ? (
-                                            <Link
-                                                to={`/persons/${item.person.id}`}
-                                                className="font-medium text-primary underline-offset-4 hover:underline focus-visible:underline"
-                                            >
-                                                {fullName(item)}
-                                            </Link>
-                                        ) : (
-                                            <span>Shaxs ma’lumotlari mavjud emas</span>
+            {/* Kompyuter: jadval */}
+            <Card className="hidden py-0 xl:flex">
+                <Table className="min-w-[860px]">
+                    <TableHeader className="bg-muted/50">
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
+                            <TableHead>{t('common.fullName')}</TableHead>
+                            <TableHead className="w-40">{t('common.pnfl')}</TableHead>
+                            <TableHead>{t('common.school')}</TableHead>
+                            <TableHead className="w-28">{t('membership.start')}</TableHead>
+                            <TableHead className="w-32">{t('common.status')}</TableHead>
+                            <TableHead className="w-44 pr-5 text-right">{t('common.actions')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.data.map((item, index) => {
+                            const state = membershipState(item);
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell className="pl-5 text-muted-foreground tabular-nums">{firstRow + index}</TableCell>
+                                    <TableCell className="max-w-72 whitespace-normal">
+                                        <PersonLink item={item} />
+                                        {item.schoolClass && (
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {t('common.class')}: {item.schoolClass.name}
+                                            </p>
                                         )}
-                                    </th>
+                                    </TableCell>
+                                    <TableCell className="tabular-nums">{item.person?.pnfl ?? t('common.notAvailable')}</TableCell>
+                                    <TableCell className="max-w-72 whitespace-normal">{item.school.name}</TableCell>
+                                    <TableCell className="tabular-nums">{formatDate(item.startDate)}</TableCell>
+                                    <TableCell>
+                                        <StatusBadge tone={STATE_TONE[state]}>{t(`common.membershipStatus.${state}`)}</StatusBadge>
+                                        {item.endDate && (
+                                            <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                                                {t('members.until', { date: formatDate(item.endDate) })}
+                                            </p>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="pr-5">
+                                        <div className="flex justify-end">
+                                            <SchoolMemberActions membership={item} {...actionProps} />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </Card>
 
-                                    <td className="p-4 tabular-nums">
-                                        {item.person?.pnfl ?? 'Mavjud emas'}
-                                    </td>
+            <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                onPageChange={onPageChange}
+                total={data.total}
+                pageSize={data.limit}
+                shownCount={data.data.length}
+                label={t(`members.${kind}.pagesLabel`)}
+            />
 
-                                    <td className="p-4 leading-6 [overflow-wrap:anywhere]">
-                                        {item.school.name}
-                                    </td>
+            <Dialog open={ending !== null && canEnd} onOpenChange={(value) => !value && setEnding(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('members.end.title')}</DialogTitle>
+                        <DialogDescription>{t('members.end.description')}</DialogDescription>
+                    </DialogHeader>
+                    {ending && (
+                        <EndMembershipForm
+                            key={ending.id}
+                            membership={ending}
+                            onCancel={() => setEnding(null)}
+                            onSaved={() => handleSaved(t('members.end.success'))}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
-                                    <td className="p-4">
-                                        {formatDate(item.startDate)}
-                                    </td>
+            <Dialog open={changingClass !== null && canChangeClass} onOpenChange={(value) => !value && setChangingClass(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('members.changeClass.title')}</DialogTitle>
+                        <DialogDescription>{t('members.changeClass.description')}</DialogDescription>
+                    </DialogHeader>
+                    {changingClass && (
+                        <ChangeClassForm
+                            key={changingClass.id}
+                            membership={changingClass}
+                            onCancel={() => setChangingClass(null)}
+                            onSaved={() => handleSaved(t('members.changeClass.success'))}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
-                                    <td className="p-4">
-                                        {formatDate(item.endDate)}
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3">
-                                        <SchoolMemberActions
-                                            membership={item}
-                                            canEdit={canEdit}
-                                            canEnd={canEnd}
-                                            canChangeClass={canChangeClass}
-                                            canTransferSchool={canTransferSchool}
-                                            actionsDisabled={actionsDisabled}
-                                            onEnd={openEnd}
-                                            onChangeClass={openChangeClass}
-                                            onTransferSchool={openTransferSchool}
-                                        />
-                                    </td>
-                                </tr>
-
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <nav
-                aria-label={`${peopleLabel} ro‘yxati sahifalari`}
-                className="flex flex-wrap items-center justify-between gap-3"
-            >
-                <Button
-                    variant="outline"
-                    disabled={data.page <= 1}
-                    onClick={() => onPageChange(data.page - 1)}
-                    className="min-h-11"
-                >
-                    Oldingi
-                </Button>
-
-                <span className="text-sm tabular-nums text-muted-foreground">
-                    {data.page} / {data.totalPages}
-                </span>
-
-                <Button
-                    variant="outline"
-                    disabled={
-                        data.page >= data.totalPages ||
-                        data.page >= 100000
-                    }
-                    onClick={() => onPageChange(data.page + 1)}
-                    className="min-h-11"
-                >
-                    Keyingi
-                </Button>
-            </nav>
+            <Dialog open={transferring !== null && canTransferSchool} onOpenChange={(value) => !value && setTransferring(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('members.transfer.title')}</DialogTitle>
+                        <DialogDescription>{t('members.transfer.description')}</DialogDescription>
+                    </DialogHeader>
+                    {transferring && (
+                        <TransferSchoolForm
+                            key={transferring.id}
+                            membership={transferring}
+                            onCancel={() => setTransferring(null)}
+                            onSaved={() => handleSaved(t('members.transfer.success'))}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
 
-export function SchoolMembersPage({ type, }: SchoolMembersPageProps) {
-    const peopleLabel = type === "STUDENT" ? "O'quvchilar" : "O'qituvchilar";
-    const membershipLabel = type === "STUDENT" ? "o'quvchi" : "o'qituvchi";
+const ID_PATTERN = /^[1-9][0-9]*$/;
+const MAX_ID = 4294967295;
+
+function validId(value: string | null) {
+    return value === null || (ID_PATTERN.test(value) && Number(value) <= MAX_ID);
+}
+
+export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
+    const { t } = useTranslation();
+    const kind = type === 'STUDENT' ? 'students' : 'teachers';
     const [searchParams, setSearchParams] = useSearchParams();
+    const { session } = useAuth();
+
+    const [showCreate, setShowCreate] = useState(false);
+    const [success, setSuccess] = useState('');
+    const [refreshVersion, setRefreshVersion] = useState(0);
 
     const pageValue = searchParams.get('page') ?? '1';
     const schoolValue = searchParams.get('schoolId');
     const regionValue = searchParams.get('regionId');
     const districtValue = searchParams.get('districtId');
     const statusValue = searchParams.get('status') ?? '';
-
-    const validStatus = [
-        '',
-        'ACTIVE',
-        'ENDED',
-        'PLANNED',
-    ].includes(statusValue);
     const searchValue = searchParams.get('q') ?? '';
-    const validAreaFilters = [regionValue, districtValue].every(
-        (value) =>
-            value === null ||
-            (
-                /^[1-9][0-9]*$/.test(value) &&
-                Number.isSafeInteger(Number(value)) &&
-                Number(value) <= 4294967295
-            ),
+    const page = Number(pageValue);
+
+    const canCreate = session?.profile.role === 'SUPER_ADMIN';
+
+    const valid =
+        /^\d+$/.test(pageValue) &&
+        page >= 1 &&
+        page <= 100000 &&
+        validId(schoolValue) &&
+        validId(regionValue) &&
+        validId(districtValue) &&
+        searchValue.length <= 100 &&
+        ['', 'ACTIVE', 'ENDED', 'PLANNED'].includes(statusValue);
+
+    const header = (
+        <PageHeader
+            eyebrow={t('nav.groups.education')}
+            title={t(`members.${kind}.title`)}
+            description={schoolValue ? t(`members.${kind}.subtitleSchool`) : t(`members.${kind}.subtitle`)}
+            actions={
+                canCreate ? (
+                    <Button
+                        type="button"
+                        className="w-full sm:w-auto"
+                        onClick={() => {
+                            setSuccess('');
+                            setShowCreate(true);
+                        }}
+                    >
+                        <Plus aria-hidden="true" />
+                        {t(`members.${kind}.add`)}
+                    </Button>
+                ) : undefined
+            }
+        />
     );
 
-    const validSearch = searchValue.length <= 100;
-    const page = Number(pageValue);
-    const { session } = useAuth()
-
-    const [showCreateForm, setShowCreateForm] = useState(false)
-    const [successMessage, setSuccessMessage] = useState('')
-    const [refreshVersion, setRefreshVersion] = useState(0)
-
-    const canCreate = session?.profile.role === 'SUPER_ADMIN'
-    const pageValid =
-        /^\d+$/.test(pageValue) &&
-        Number.isInteger(page) &&
-        page >= 1 &&
-        page <= 100000;
-
-    const schoolValid =
-        schoolValue === null ||
-        (
-            /^\d+$/.test(schoolValue) &&
-            Number.isInteger(Number(schoolValue)) &&
-            Number(schoolValue) >= 1 &&
-            Number(schoolValue) <= 4294967295
-        );
-
-    if (!pageValid || !schoolValid || !validAreaFilters || !validSearch || !validStatus) {
+    if (!valid) {
         return (
-            <div role="alert" className="space-y-4">
-                <p>Sahifa raqami yoki maktab identifikatori noto‘g‘ri.</p>
-
-                <Button
-                    variant="outline"
-                    onClick={() => setSearchParams({})}
-                >
-                    <div>
-                        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                            {peopleLabel}
-                        </h1>
-
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                            {schoolValue
-                                ? `Tanlangan maktabdagi ${membershipLabel} biriktirishlari.`
-                                : `Boshqaruv doirangizdagi ${membershipLabel} biriktirishlari.`}
-                            {' '}Barcha davrlar ko‘rsatiladi.
-                        </p>
-                    </div>
+            <div className="space-y-6">
+                {header}
+                <ErrorState message={t('common.invalidUrl')} />
+                <Button variant="outline" onClick={() => setSearchParams({})}>
+                    {t('common.resetUrl')}
                 </Button>
             </div>
         );
     }
 
-    const query = new URLSearchParams({
-        type,
-        page: String(page),
-        limit: '20',
-    });
-
-    if (schoolValue !== null) {
-        query.set('schoolId', String(Number(schoolValue)));
-    }
-    if (regionValue) {
-        query.set('regionId', regionValue);
-    }
-
-    if (districtValue) {
-        query.set('districtId', districtValue);
-    }
-
-    if (searchValue.trim()) {
-        query.set('q', searchValue.trim());
-    }
-    if (statusValue) {
-        query.set('status', statusValue);
-    }
+    const query = new URLSearchParams({ type, page: String(page), limit: '20' });
+    if (schoolValue !== null) query.set('schoolId', String(Number(schoolValue)));
+    if (regionValue) query.set('regionId', regionValue);
+    if (districtValue) query.set('districtId', districtValue);
+    if (searchValue.trim()) query.set('q', searchValue.trim());
+    if (statusValue) query.set('status', statusValue);
     const path = `/school-memberships?${query.toString()}`;
 
     function changePage(nextPage: number) {
         const next = new URLSearchParams(searchParams);
         next.set('page', String(nextPage));
         setSearchParams(next);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     return (
         <div className="min-w-0 space-y-5 sm:space-y-6">
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                    {peopleLabel}
-                </h1>
-
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {schoolValue
-                        ? 'Tanlangan maktabdagi o‘quvchi biriktirishlari.'
-                        : 'Boshqaruv doirangizdagi o‘quvchi biriktirishlari.'}
-                    {' '}Barcha davrlar ko‘rsatiladi.
-                </p>
-            </div>
+            {header}
 
             {schoolValue && (
-                <Button
-                    variant="outline"
-                    onClick={() => setSearchParams({})}
-                    className="min-h-11"
-                >
-                    Maktab filtrini olib tashlash
+                <Button variant="outline" size="sm" onClick={() => setSearchParams({})}>
+                    <X aria-hidden="true" />
+                    {t('members.removeSchoolFilter')}
                 </Button>
             )}
-            {successMessage && (
-                <p
-                    role="status"
-                    className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300"
-                >
-                    {successMessage}
-                </p>
-            )}
 
-            {canCreate && !showCreateForm && (
-                <div className="flex justify-end">
-                    <Button
-                        type="button"
-                        className="min-h-11 w-full sm:w-auto"
-                        onClick={() => {
-                            setSuccessMessage('');
-                            setShowCreateForm(true);
-                        }}
-                    >
-                        {type === 'STUDENT'
-                            ? 'O‘quvchi qo‘shish'
-                            : 'O‘qituvchi qo‘shish'}
-                    </Button>
-                </div>
-            )}
+            {success && <SuccessNotice>{success}</SuccessNotice>}
 
-            {canCreate && showCreateForm && (
-                <section
-                    aria-labelledby="create-member-title"
-                    className="min-w-0 rounded-2xl border bg-background p-5 sm:p-6"
-                >
-                    <h2
-                        id="create-member-title"
-                        className="mb-5 text-lg font-semibold"
-                    >
-                        {type === 'STUDENT'
-                            ? 'O‘quvchini maktabga biriktirish'
-                            : 'O‘qituvchini maktabga biriktirish'}
-                    </h2>
-
-                    <CreateMemberForm
-                        key={`${type}-${schoolValue ?? 'all'}`}
-                        type={type}
-                        {...(
-                            schoolValue !== null
-                                ? { initialSchoolId: Number(schoolValue) }
-                                : {}
-                        )}
-                        onCancel={() => setShowCreateForm(false)}
-                        onSaved={() => {
-                            setShowCreateForm(false);
-
-                            setSuccessMessage(
-                                type === 'STUDENT'
-                                    ? 'O‘quvchi maktabga muvaffaqiyatli biriktirildi.'
-                                    : 'O‘qituvchi maktabga muvaffaqiyatli biriktirildi.',
-                            );
-
-                            const next = new URLSearchParams(searchParams);
-                            next.set('page', '1');
-                            setSearchParams(next);
-
-                            setRefreshVersion((value) => value + 1);
-                        }}
-                    />
-                </section>
-            )}
             <SchoolMembersFilters />
-            <MembersResults
-                key={`${path}-${refreshVersion}`}
-                path={path}
-                type={type}
-                onPageChange={changePage}
-            />
+
+            <MembersResults key={`${path}-${refreshVersion}`} path={path} type={type} onPageChange={changePage} />
+
+            {canCreate && (
+                <Dialog open={showCreate} onOpenChange={setShowCreate}>
+                    <DialogContent className="sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>{t(`members.${kind}.createTitle`)}</DialogTitle>
+                            <DialogDescription>{t('members.create.description')}</DialogDescription>
+                        </DialogHeader>
+                        <CreateMemberForm
+                            key={`${type}-${schoolValue ?? 'all'}`}
+                            type={type}
+                            {...(schoolValue !== null ? { initialSchoolId: Number(schoolValue) } : {})}
+                            onCancel={() => setShowCreate(false)}
+                            onSaved={() => {
+                                setShowCreate(false);
+                                setSuccess(t(`members.${kind}.created`));
+                                const next = new URLSearchParams(searchParams);
+                                next.set('page', '1');
+                                setSearchParams(next);
+                                setRefreshVersion((value) => value + 1);
+                            }}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }

@@ -1,0 +1,40 @@
+{
+  "main": "Asosiy menyu",
+  "quick": "Tezkor navigatsiya",
+  "openMenu": "Asosiy menyuni ochish",
+  "menuHint": "Kabinet bo‘limlaridan birini tanlang.",
+  "settings": "Sozlamalar",
+  "cabinet": "Shaxsiy kabinet",
+  "sidebarNote": "Ma’lumotlaringiz va maktablaringiz bir joyda.",
+  "groups": {
+    "personal": "Shaxsiy",
+    "attendance": "Davomat",
+    "education": "Ta’lim tuzilmasi",
+    "system": "Tizim"
+  },
+  "items": {
+    "profile": "Shaxsiy ma’lumotlar",
+    "mySchools": "Mening maktablarim",
+    "studentAttendance": "O‘quvchilar davomati",
+    "teacherAttendance": "O‘qituvchilar davomati",
+    "excuses": "Sababli arizalar",
+    "calendar": "O‘quv kalendari",
+    "schools": "Maktablar",
+    "classes": "Sinflar",
+    "students": "O‘quvchilar",
+    "teachers": "O‘qituvchilar",
+    "assignments": "Fan va sinf biriktirish",
+    "textbooks": "Darsliklar kutubxonasi",
+    "terminals": "Terminallar",
+    "users": "Foydalanuvchilar",
+    "person": "Shaxs ma’lumotlari",
+    "forbidden": "Kirish cheklangan"
+  },
+  "short": {
+    "profile": "Profil",
+    "studentAttendance": "O‘quvchilar",
+    "teacherAttendance": "O‘qituvchilar",
+    "schools": "Maktablar",
+    "more": "Menyu"
+  }
+}

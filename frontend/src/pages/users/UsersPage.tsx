@@ -1,25 +1,38 @@
+import { useEffect, useState } from 'react';
+import { Ban, CheckCircle2, MoreHorizontal, Pencil, Plus, ShieldCheck, UserCog } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { useState, useEffect } from 'react';
-import { Plus, ShieldCheck } from 'lucide-react';
-import {
-    UsersFilters,
-    type UsersFilterValues,
-} from '@/components/users/UsersFilters';
-import {
-    UserAccessForm,
-    type AccessUser,
-} from '@/components/users/UserAccessForm';
-import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Pagination } from '@/components/common/Pagination';
+import { SelectField } from '@/components/common/SelectField';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateUserForm } from '@/components/users/CreateUserForm';
-import { useApiQuery } from '@/hooks/useApiQuery';
-import type { UserRole } from '@/types/auth';
-import { Pencil } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import { EditUserForm } from '@/components/users/EditUserForm';
 import type { EditableUser } from '@/components/users/EditUserForm';
+import { UserAccessForm } from '@/components/users/UserAccessForm';
+import type { AccessUser } from '@/components/users/UserAccessForm';
+import { UsersFilters } from '@/components/users/UsersFilters';
+import type { UsersFilterValues } from '@/components/users/UsersFilters';
+import { UserStatusDialog } from '@/components/users/UserStatusAction';
+import type { StatusUser } from '@/components/users/UserStatusAction';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useAuth } from '@/hooks/useAuth';
 import { authorizedGet } from '@/lib/auth-session';
-import { UserStatusAction } from '@/components/users/UserStatusAction';
-import { PageHeader } from '@/components/common/PageHeader';
+import type { UserRole } from '@/types/auth';
+
 interface UserItem {
     id: number;
     login: string;
@@ -40,396 +53,320 @@ interface UsersResponse {
     totalPages: number;
 }
 
+const EMPTY_FILTERS: UsersFilterValues = { search: '', role: '', isActive: '', regionId: '', districtId: '', schoolId: '' };
+
+function initials(user: UserItem) {
+    const parts = (user.fullName || user.login).split(/\s+/).filter(Boolean);
+    return ((parts[1]?.[0] ?? '') + (parts[0]?.[0] ?? '')).toUpperCase() || user.login.slice(0, 2).toUpperCase();
+}
+
 export function UsersPage() {
-    const [showCreate, setShowCreate] = useState(false);
-    const [notice, setNotice] = useState('');
-
+    const { t } = useTranslation();
     const { session } = useAuth();
-    const isSuperAdmin =
-        session?.profile.role === 'SUPER_ADMIN';
-    const [accessUser, setAccessUser] =
-        useState<AccessUser | null>(null);
+    const profile = session?.profile;
+    const isSuperAdmin = profile?.role === 'SUPER_ADMIN';
+    const canManageAccess = ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN'].includes(profile?.role ?? '');
 
-    const [accessLoading, setAccessLoading] = useState(false);
-    const [accessError, setAccessError] = useState('');
-
-    const [filters, setFilters] = useState<UsersFilterValues>({
-        search: '',
-        role: '',
-        isActive: '',
-        regionId: '',
-        districtId: '',
-        schoolId: '',
-    });
-
+    const [filters, setFilters] = useState<UsersFilterValues>(EMPTY_FILTERS);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
-
-    // Ҳар бир ҳарф учун серверга сўров юбормаслик.
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [notice, setNotice] = useState('');
+    const [actionError, setActionError] = useState('');
 
+    const [showCreate, setShowCreate] = useState(false);
+    const [editingUser, setEditingUser] = useState<EditableUser | null>(null);
+    const [accessUser, setAccessUser] = useState<AccessUser | null>(null);
+    const [statusUser, setStatusUser] = useState<StatusUser | null>(null);
+    const [loadingId, setLoadingId] = useState<number | null>(null);
+
+    // Har bir harf uchun serverga so‘rov yubormaslik.
     useEffect(() => {
-        const timer = window.setTimeout(() => {
-            setDebouncedSearch(filters.search.trim());
-        }, 350);
-
+        const timer = window.setTimeout(() => setDebouncedSearch(filters.search.trim()), 350);
         return () => window.clearTimeout(timer);
     }, [filters.search]);
 
-    function updateFilters(next: UsersFilterValues) {
-        setFilters(next);
-        setPage(1);
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    for (const key of ['role', 'isActive', 'regionId', 'districtId', 'schoolId'] as const) {
+        if (filters[key]) params.set(key, filters[key]);
     }
+    const query = useApiQuery<UsersResponse>(`/users?${params.toString()}`);
 
-    function resetFilters() {
-        setFilters({
-            search: '',
-            role: '',
-            isActive: '',
-            regionId: '',
-            districtId: '',
-            schoolId: '',
-        });
-        setPage(1);
-    }
-
-    const canManageAccess = [
-        'SUPER_ADMIN',
-        'REGION_ADMIN',
-        'DISTRICT_ADMIN',
-    ].includes(session?.profile.role ?? '');
-
-    async function openAccess(userId: number) {
-        setAccessError('');
-        setAccessLoading(true);
-
+    async function load<T>(userId: number, onLoaded: (value: T) => void) {
+        setActionError('');
+        setLoadingId(userId);
         try {
-            const result = await authorizedGet<AccessUser>(
-                `/users/${userId}`,
-            );
-            setAccessUser(result);
+            onLoaded(await authorizedGet<T>(`/users/${userId}`));
         } catch (error: unknown) {
-            setAccessError(
-                error instanceof Error
-                    ? error.message
-                    : 'Фойдаланувчини юклаб бўлмади.',
-            );
+            setActionError(error instanceof Error ? error.message : t('common.loadFailed'));
         } finally {
-            setAccessLoading(false);
+            setLoadingId(null);
         }
     }
 
-    const [editingUser, setEditingUser] =
-        useState<EditableUser | null>(null);
-    const [editLoading, setEditLoading] = useState(false);
-    const [editError, setEditError] = useState('');
-
-    const params = new URLSearchParams();
-
-    params.set('page', String(page));
-    params.set('limit', String(limit));
-
-    if (debouncedSearch) {
-        params.set('search', debouncedSearch);
+    function canEditAccess(user: UserItem) {
+        return (
+            canManageAccess &&
+            user.id !== profile?.id &&
+            user.isActive &&
+            !(profile?.role === 'REGION_ADMIN' && ['REGION_ADMIN', 'SUPER_ADMIN'].includes(user.role)) &&
+            !(profile?.role === 'DISTRICT_ADMIN' && !['USER', 'SCHOOL_ADMIN'].includes(user.role))
+        );
     }
 
-    if (filters.role) {
-        params.set('role', filters.role);
+    function canChangeStatus(user: UserItem) {
+        return isSuperAdmin && user.id !== profile?.id && user.role !== 'SUPER_ADMIN';
     }
 
-    if (filters.isActive) {
-        params.set('isActive', filters.isActive);
+    function actionsMenu(user: UserItem) {
+        const items = [isSuperAdmin, canEditAccess(user), canChangeStatus(user)];
+        if (!items.some(Boolean)) return null;
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="icon-sm"
+                        className="size-8"
+                        disabled={loadingId === user.id}
+                        aria-label={`${t('common.actions')}: ${user.fullName || user.login}`}
+                    >
+                        <MoreHorizontal aria-hidden="true" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-52">
+                    {isSuperAdmin && (
+                        <DropdownMenuItem onSelect={() => void load<EditableUser>(user.id, setEditingUser)}>
+                            <Pencil aria-hidden="true" />
+                            {t('common.edit')}
+                        </DropdownMenuItem>
+                    )}
+                    {canEditAccess(user) && (
+                        <DropdownMenuItem onSelect={() => void load<AccessUser>(user.id, setAccessUser)}>
+                            <ShieldCheck aria-hidden="true" />
+                            {t('users.access.title')}
+                        </DropdownMenuItem>
+                    )}
+                    {canChangeStatus(user) && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                variant={user.isActive ? 'destructive' : 'default'}
+                                onSelect={() => setStatusUser(user)}
+                            >
+                                {user.isActive ? <Ban aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+                                {user.isActive ? t('users.status.block') : t('users.status.activate')}
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
     }
 
-    if (filters.regionId) {
-        params.set('regionId', filters.regionId);
+    function statusBadge(user: UserItem) {
+        return <StatusBadge tone={user.isActive ? 'success' : 'danger'}>{user.isActive ? t('users.active') : t('users.blocked')}</StatusBadge>;
     }
 
-    if (filters.districtId) {
-        params.set('districtId', filters.districtId);
-    }
+    const data = query.data;
 
-    if (filters.schoolId) {
-        params.set('schoolId', filters.schoolId);
-    }
-
-    const query = useApiQuery<UsersResponse>(
-        `/users?${params.toString()}`,
-    );
-
-    function handleCreated() {
-        setShowCreate(false);
-        setNotice('Foydalanuvchi muvaffaqiyatli yaratildi.');
-        query.retry();
-    }
-    async function openEdit(userId: number) {
-        setEditError('');
-        setEditLoading(true);
-
-        try {
-            const user = await authorizedGet<EditableUser>(
-                `/users/${userId}`,
-            );
-            setEditingUser(user);
-        } catch (error: unknown) {
-            setEditError(
-                error instanceof Error
-                    ? error.message
-                    : 'Ma’lumotlarni yuklab bo‘lmadi.',
-            );
-        } finally {
-            setEditLoading(false);
-        }
-    }
     return (
         <div className="w-full min-w-0 space-y-6">
             <PageHeader
-                eyebrow="Boshqaruv"
-                title="Foydalanuvchilar"
-                description="Tizim foydalanuvchilarini boshqarish."
+                eyebrow={t('nav.groups.system')}
+                title={t('users.title')}
+                description={t('users.subtitle')}
                 actions={
                     <Button
                         type="button"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                             setShowCreate(true);
                             setNotice('');
                         }}
                     >
-                        <Plus className="size-4" />
-                        Foydalanuvchi qo‘shish
+                        <Plus aria-hidden="true" />
+                        {t('users.add')}
                     </Button>
                 }
             />
+
             <UsersFilters
                 value={filters}
-                onChange={updateFilters}
-                onReset={resetFilters}
+                onChange={(next) => {
+                    setFilters(next);
+                    setPage(1);
+                }}
+                onReset={() => {
+                    setFilters(EMPTY_FILTERS);
+                    setPage(1);
+                }}
             />
 
-            {notice && (
-                <p role="status" className="text-sm text-green-600">
-                    {notice}
-                </p>
-            )}
-
-            {showCreate && (
-                <div className="space-y-5 rounded-xl border bg-card p-5">
-                    <h2 className="text-lg font-semibold">
-                        Yangi foydalanuvchi
-                    </h2>
-
-                    <CreateUserForm
-                        onCreated={handleCreated}
-                        onCancel={() => setShowCreate(false)}
-                    />
-                </div>
-            )}
+            {notice && <SuccessNotice>{notice}</SuccessNotice>}
+            {actionError && <ErrorState message={actionError} />}
 
             {query.loading ? (
-                <p>Foydalanuvchilar yuklanmoqda...</p>
+                <LoadingState label={t('users.loading')} />
             ) : query.error ? (
-                <div className="space-y-3">
-                    <p role="alert" className="text-destructive">
-                        {query.error}
-                    </p>
-                    <Button variant="outline" onClick={query.retry}>
-                        Qayta urinish
-                    </Button>
-                </div>
+                <ErrorState message={query.error} onRetry={query.retry} />
+            ) : !data || data.data.length === 0 ? (
+                <EmptyState icon={UserCog} title={t('users.emptyTitle')} description={t('users.empty')} />
             ) : (
-                <div className="overflow-x-auto rounded-xl border">
-                    {editError && (
-                        <p role="alert" className="text-sm text-destructive">
-                            {editError}
-                        </p>
-                    )}
+                <>
+                    <ul className="grid list-none gap-3 sm:grid-cols-2 xl:hidden">
+                        {data.data.map((user) => (
+                            <li key={user.id}>
+                                <Card size="sm" className="flex-row items-center gap-3 px-4">
+                                    <Avatar size="lg">
+                                        <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">{initials(user)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0 flex-1 space-y-1">
+                                        <p className="truncate font-semibold">{user.fullName || user.login}</p>
+                                        <p className="truncate text-xs text-muted-foreground">
+                                            @{user.login} · {t(`roles.${user.role}`)}
+                                        </p>
+                                        {user.school && <p className="truncate text-xs text-muted-foreground">{user.school.name}</p>}
+                                        {statusBadge(user)}
+                                    </div>
+                                    {actionsMenu(user)}
+                                </Card>
+                            </li>
+                        ))}
+                    </ul>
 
-                    {editingUser && (
-                        <section className="rounded-2xl border bg-card p-5 sm:p-6">
-                            <h2 className="mb-5 text-lg font-semibold">
-                                Foydalanuvchini tahrirlash
-                            </h2>
+                    <Card className="hidden py-0 xl:flex">
+                        <Table className="min-w-[820px]">
+                            <TableHeader className="bg-muted/50">
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="pl-5">{t('common.fullName')}</TableHead>
+                                    <TableHead>{t('profile.login')}</TableHead>
+                                    <TableHead>{t('users.role')}</TableHead>
+                                    <TableHead>{t('common.school')}</TableHead>
+                                    <TableHead>{t('common.status')}</TableHead>
+                                    <TableHead className="w-16 pr-5 text-right">
+                                        <span className="sr-only">{t('common.actions')}</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {data.data.map((user) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell className="pl-5">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar>
+                                                    <AvatarFallback className="bg-primary/10 text-[11px] font-bold text-primary">{initials(user)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-semibold">{user.fullName || '—'}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs">{user.login}</TableCell>
+                                        <TableCell>{t(`roles.${user.role}`)}</TableCell>
+                                        <TableCell className="max-w-60 whitespace-normal">{user.school?.name ?? '—'}</TableCell>
+                                        <TableCell>{statusBadge(user)}</TableCell>
+                                        <TableCell className="pr-5 text-right">{actionsMenu(user)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Card>
 
-                            <EditUserForm
-                                key={editingUser.id}
-                                user={editingUser}
-                                onCancel={() => setEditingUser(null)}
-                                onUpdated={() => {
-                                    setEditingUser(null);
-                                    setNotice('Foydalanuvchi yangilandi.');
-                                    query.retry();
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <Pagination
+                            className="flex-1"
+                            page={data.page}
+                            totalPages={Math.max(1, data.totalPages)}
+                            onPageChange={setPage}
+                            total={data.total}
+                            pageSize={data.limit}
+                            shownCount={data.data.length}
+                        />
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="text-sm text-muted-foreground">{t('attendance.perPage')}</span>
+                            <SelectField
+                                value={String(limit)}
+                                onValueChange={(value) => {
+                                    setLimit(Number(value));
+                                    setPage(1);
                                 }}
+                                options={['10', '20', '50', '100'].map((value) => ({ value, label: value }))}
+                                aria-label={t('attendance.perPage')}
+                                className="h-10 w-20"
                             />
-                        </section>
-                    )}
-
-                    {accessError && (
-                        <p role="alert" className="text-sm text-destructive">
-                            {accessError}
-                        </p>
-                    )}
-
-                    {accessUser && (
-                        <section className="rounded-2xl border bg-card p-5 sm:p-6">
-                            <h2 className="mb-5 text-lg font-semibold">
-                                Рол ва ҳудудий ваколат
-                            </h2>
-
-                            <UserAccessForm
-                                key={accessUser.id}
-                                user={accessUser}
-                                onCancel={() => setAccessUser(null)}
-                                onUpdated={() => {
-                                    setAccessUser(null);
-                                    setNotice('Фойдаланувчи ваколати янгиланди.');
-                                    query.retry();
-                                }}
-                            />
-                        </section>
-                    )}
-
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                <th className="p-4">F.I.Sh.</th>
-                                <th className="p-4">Login</th>
-                                <th className="p-4">Rol</th>
-                                <th className="p-4">Maktab</th>
-                                <th className="p-4">Holat</th>
-                                <th className="p-4">Amallar</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {query.data?.data.map((user) => (
-                                <tr key={user.id} className="border-t">
-                                    <td className="p-4 font-medium">
-                                        {user.fullName}
-                                    </td>
-                                    <td className="p-4">{user.login}</td>
-                                    <td className="p-4">{user.role}</td>
-                                    <td className="p-4">
-                                        {user.school?.name ?? '—'}
-                                    </td>
-                                    <td className="p-4">
-                                        {user.isActive ? 'Faol' : 'Bloklangan'}
-                                    </td>
-                                    <td className="p-4">
-                                        {session?.profile.role === 'SUPER_ADMIN' && (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={editLoading}
-                                                onClick={() => void openEdit(user.id)}
-                                            >
-                                                <Pencil className="mr-2 size-4" />
-                                                Tahrirlash
-                                            </Button>
-                                        )}
-
-                                        {canManageAccess &&
-                                            user.id !== session?.profile.id &&
-                                            user.isActive &&
-                                            !(
-                                                session?.profile.role === 'REGION_ADMIN' &&
-                                                ['REGION_ADMIN', 'SUPER_ADMIN'].includes(user.role)
-                                            ) &&
-                                            !(
-                                                session?.profile.role === 'DISTRICT_ADMIN' &&
-                                                !['USER', 'SCHOOL_ADMIN'].includes(user.role)
-                                            ) && (
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    disabled={accessLoading}
-                                                    onClick={() => void openAccess(user.id)}
-                                                >
-                                                    <ShieldCheck className="mr-2 size-4" />
-                                                    Рол ва ваколат
-                                                </Button>
-                                            )}
-                                        {isSuperAdmin && session && (
-                                            <UserStatusAction
-                                                key={`${user.id}-${user.isActive}`}
-                                                user={user}
-                                                currentUserId={session.profile.id}
-                                                onUpdated={(message) => {
-                                                    setNotice(message);
-                                                    query.retry();
-                                                }}
-                                            />
-                                        )}
-
-                                    </td>
-                                </tr>
-                            ))}
-                            {query.data?.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-6 text-center text-muted-foreground"
-                                    >
-                                        Foydalanuvchilar topilmadi.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-
-                    {!query.loading && !query.error && query.data && (
-                        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-4">
-                            <div className="text-sm text-muted-foreground">
-                                Жами: <strong>{query.data.total}</strong> та фойдаланувчи
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3">
-                                <label htmlFor="users-page-size" className="text-sm">
-                                    Саҳифада:
-                                </label>
-
-                                <select
-                                    id="users-page-size"
-                                    className="rounded-lg border bg-background px-3 py-2 text-sm"
-                                    value={limit}
-                                    onChange={(e) => {
-                                        setLimit(Number(e.target.value));
-                                        setPage(1);
-                                    }}
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={20}>20</option>
-                                    <option value={50}>50</option>
-                                    <option value={100}>100</option>
-                                </select>
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={page <= 1}
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                >
-                                    Олдинги
-                                </Button>
-
-                                <span className="text-sm tabular-nums">
-                                    {query.data.page} / {Math.max(1, query.data.totalPages)}
-                                </span>
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={page >= query.data.totalPages}
-                                    onClick={() => setPage((p) => p + 1)}
-                                >
-                                    Кейинги
-                                </Button>
-                            </div>
                         </div>
-                    )}
-
-                </div>
+                    </div>
+                </>
             )}
+
+            <Dialog open={showCreate} onOpenChange={setShowCreate}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('users.createTitle')}</DialogTitle>
+                        <DialogDescription>{t('users.createHint')}</DialogDescription>
+                    </DialogHeader>
+                    <CreateUserForm
+                        onCreated={() => {
+                            setShowCreate(false);
+                            setNotice(t('users.created'));
+                            query.retry();
+                        }}
+                        onCancel={() => setShowCreate(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={editingUser !== null} onOpenChange={(open) => !open && setEditingUser(null)}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('users.editTitle')}</DialogTitle>
+                        <DialogDescription>@{editingUser?.login}</DialogDescription>
+                    </DialogHeader>
+                    {editingUser && (
+                        <EditUserForm
+                            key={editingUser.id}
+                            user={editingUser}
+                            onCancel={() => setEditingUser(null)}
+                            onUpdated={() => {
+                                setEditingUser(null);
+                                setNotice(t('users.updated'));
+                                query.retry();
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={accessUser !== null} onOpenChange={(open) => !open && setAccessUser(null)}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('users.access.title')}</DialogTitle>
+                        <DialogDescription>{t('users.access.hint')}</DialogDescription>
+                    </DialogHeader>
+                    {accessUser && (
+                        <UserAccessForm
+                            key={accessUser.id}
+                            user={accessUser}
+                            onCancel={() => setAccessUser(null)}
+                            onUpdated={() => {
+                                setAccessUser(null);
+                                setNotice(t('users.access.updated'));
+                                query.retry();
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <UserStatusDialog
+                user={statusUser}
+                onClose={() => setStatusUser(null)}
+                onUpdated={(message) => {
+                    setNotice(message);
+                    query.retry();
+                }}
+            />
         </div>
     );
 }

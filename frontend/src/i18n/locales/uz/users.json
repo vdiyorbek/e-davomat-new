@@ -1,0 +1,75 @@
+{
+  "title": "Foydalanuvchilar",
+  "subtitle": "Tizim foydalanuvchilari, ularning rollari va vakolatlari.",
+  "add": "Foydalanuvchi qo‘shish",
+  "loading": "Foydalanuvchilar yuklanmoqda…",
+  "emptyTitle": "Foydalanuvchilar topilmadi",
+  "empty": "Filtrlarni o‘zgartirib ko‘ring.",
+  "role": "Rol",
+  "active": "Faol",
+  "blocked": "Bloklangan",
+  "createTitle": "Yangi foydalanuvchi",
+  "createHint": "Hisob yaratilgandan so‘ng unga rol va vakolat berish mumkin.",
+  "create": "Foydalanuvchi yaratish",
+  "created": "Foydalanuvchi muvaffaqiyatli yaratildi.",
+  "editTitle": "Foydalanuvchini tahrirlash",
+  "updated": "Foydalanuvchi yangilandi.",
+  "saveChanges": "O‘zgarishlarni saqlash",
+  "loginHint": "Lotin harflari, raqamlar, nuqta va pastki chiziq. 3–50 belgi.",
+  "loginPlaceholder": "Masalan: school.admin",
+  "passwordHint": "Kamida 12 ta belgi.",
+  "confirmPassword": "Parolni tasdiqlash",
+  "changePassword": "Parolni almashtirish",
+  "changePasswordHint": "Parol o‘zgarmasa, quyidagi maydonlarni bo‘sh qoldiring.",
+  "newPassword": "Yangi parol",
+  "filters": {
+    "search": "F.I.Sh. yoki login",
+    "allRoles": "Barcha rollar",
+    "assignedRegion": "Biriktirilgan viloyat",
+    "assignedDistrict": "Biriktirilgan tuman",
+    "assignedSchool": "Biriktirilgan maktab",
+    "chooseRegionFirst": "Avval viloyatni tanlang"
+  },
+  "errors": {
+    "login": "Login 3–50 ta lotin harfi, raqam, nuqta yoki pastki chiziqdan iborat bo‘lsin.",
+    "password": "Parol 12–128 belgidan iborat bo‘lishi kerak.",
+    "passwordMismatch": "Parollar bir-biriga mos kelmadi.",
+    "nameLength": "Ism va familiya kamida 2 belgidan iborat bo‘lsin.",
+    "middleNameClear": "Otasining ismini butunlay o‘chirib bo‘lmaydi.",
+    "noChanges": "Hech qanday o‘zgarish kiritilmadi.",
+    "uncertain": "Server javobini tasdiqlab bo‘lmadi. Qayta yuborishdan oldin ro‘yxatni tekshiring.",
+    "createFailed": "Foydalanuvchi yaratishda xatolik yuz berdi.",
+    "updateFailed": "Tahrirlashda xatolik yuz berdi."
+  },
+  "status": {
+    "block": "Bloklash",
+    "activate": "Faollashtirish",
+    "blockTitle": "Hisobni bloklaysizmi?",
+    "activateTitle": "Hisobni faollashtirasizmi?",
+    "blockText": "Foydalanuvchining barcha faol sessiyalari bekor qilinadi.",
+    "activateText": "Foydalanuvchi yana tizimga kira oladi.",
+    "blocked": "Foydalanuvchi bloklandi.",
+    "activated": "Foydalanuvchi qayta faollashtirildi.",
+    "failed": "Holatni o‘zgartirishda xatolik yuz berdi."
+  },
+  "access": {
+    "title": "Rol va hududiy vakolat",
+    "hint": "Rolga mos hududni tanlang: viloyat, tuman yoki maktab.",
+    "user": "Foydalanuvchi",
+    "userScope": "Oddiy foydalanuvchi hududi",
+    "scopes": {
+      "NONE": "Hududsiz",
+      "REGION": "Viloyat",
+      "DISTRICT": "Tuman / shahar",
+      "SCHOOL": "Maktab"
+    },
+    "save": "Vakolatni saqlash",
+    "updated": "Foydalanuvchi vakolati yangilandi.",
+    "notAllowed": "Ushbu foydalanuvchining vakolatini o‘zgartirishga ruxsat yo‘q yoki hisob faol emas.",
+    "errors": {
+      "roleNotAllowed": "Ushbu rolni tayinlashga ruxsat yo‘q.",
+      "scope": "Rolga mos hududni to‘liq tanlang.",
+      "saveFailed": "Vakolatni saqlashda xatolik yuz berdi."
+    }
+  }
+}

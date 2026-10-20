@@ -1,0 +1,12 @@
+{
+  "allRegions": "Барча вилоятлар",
+  "allDistricts": "Барча туман ва шаҳарлар",
+  "allSchools": "Барча рухсат берилган мактаблар",
+  "allClasses": "Барча синфлар",
+  "allStatuses": "Барча ҳолатлар",
+  "chooseSchoolFirst": "Аввал мактабни танланг",
+  "advanced": "Кенгайтирилган филтрлар",
+  "showMore": "Кўпроқ филтр",
+  "showLess": "Камроқ филтр",
+  "activeCount": "Фаол филтрлар: {{count}}"
+}

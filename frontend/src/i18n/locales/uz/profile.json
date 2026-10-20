@@ -1,0 +1,9 @@
+{
+  "title": "Shaxsiy ma’lumotlar",
+  "subtitle": "Tizim foydalanuvchisi profili va hisob ma’lumotlari.",
+  "details": "Hisob ma’lumotlari",
+  "detailsHint": "Ma’lumotlarni o‘zgartirish uchun administratorga murojaat qiling.",
+  "login": "Login",
+  "role": "Tizimdagi roli",
+  "notEntered": "Kiritilmagan"
+}

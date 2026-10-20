@@ -1,0 +1,40 @@
+{
+  "main": "Main menu",
+  "quick": "Quick navigation",
+  "openMenu": "Open main menu",
+  "menuHint": "Choose one of the cabinet sections.",
+  "settings": "Settings",
+  "cabinet": "Personal cabinet",
+  "sidebarNote": "Your details and schools in one place.",
+  "groups": {
+    "personal": "Personal",
+    "attendance": "Attendance",
+    "education": "Education",
+    "system": "System"
+  },
+  "items": {
+    "profile": "Personal details",
+    "mySchools": "My schools",
+    "studentAttendance": "Student attendance",
+    "teacherAttendance": "Teacher attendance",
+    "excuses": "Excused absences",
+    "calendar": "Academic calendar",
+    "schools": "Schools",
+    "classes": "Classes",
+    "students": "Students",
+    "teachers": "Teachers",
+    "assignments": "Subject & class assignments",
+    "textbooks": "Textbook library",
+    "terminals": "Terminals",
+    "users": "Users",
+    "person": "Person details",
+    "forbidden": "Access restricted"
+  },
+  "short": {
+    "profile": "Profile",
+    "studentAttendance": "Students",
+    "teacherAttendance": "Teachers",
+    "schools": "Schools",
+    "more": "Menu"
+  }
+}

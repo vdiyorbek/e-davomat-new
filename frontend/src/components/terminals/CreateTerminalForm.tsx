@@ -1,253 +1,168 @@
 import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { createTerminal } from '@/lib/terminals-api';
-
 import type { School } from '@/types/school';
-import type { TerminalProtocol } from '@/types/terminal';
+import type { TerminalDirection, TerminalProtocol } from '@/types/terminal';
 
 interface CreateTerminalFormProps {
     onSaved: () => void;
     onCancel: () => void;
 }
 
-export function CreateTerminalForm({
-    onSaved,
-    onCancel,
-}: CreateTerminalFormProps) {
+export function CreateTerminalForm({ onSaved, onCancel }: CreateTerminalFormProps) {
+    const { t } = useTranslation();
     const formId = useId();
     const busyRef = useRef(false);
 
-    const [protocol, setProtocol] =
-        useState<TerminalProtocol>('HTTP');
+    const [name, setName] = useState('');
+    const [schoolId, setSchoolId] = useState('');
+    const [direction, setDirection] = useState<TerminalDirection>('IN');
+    const [host, setHost] = useState('');
+    const [protocol, setProtocol] = useState<TerminalProtocol>('HTTP');
     const [port, setPort] = useState('80');
+    const [username, setUsername] = useState('admin');
+    const [password, setPassword] = useState('');
+    const [isActive, setIsActive] = useState(true);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
-    const {
-        data: schools,
-        loading,
-        error: schoolsError,
-        retry,
-    } = useApiQuery<School[]>('/schools');
+    const { data: schools, loading, error: schoolsError, retry } = useApiQuery<School[]>('/schools');
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (busyRef.current) return;
-
         setError('');
 
-        const form = new FormData(event.currentTarget);
-
-        const name = String(form.get('name') ?? '').trim();
-        const schoolId = Number(form.get('schoolId'));
-        const direction = form.get('direction');
-        const host = String(form.get('host') ?? '').trim();
-        const username = String(form.get('username') ?? '').trim();
-        const password = String(form.get('password') ?? '');
         const portNumber = Number(port);
+        const school = schools?.find((item) => String(item.id) === schoolId);
 
-        if (!schools?.some((school) => school.id === schoolId)) {
-            setError('Ro‘yxatdan maktabni tanlang.');
-            return;
-        }
-
-        if (direction !== 'IN' && direction !== 'OUT') {
-            setError('Terminal yo‘nalishini tanlang.');
-            return;
-        }
-
-        if (name.length < 2 || !host || !username || !password) {
-            setError('Majburiy maydonlarni to‘ldiring.');
-            return;
-        }
-
-        if (
-            !Number.isInteger(portNumber) ||
-            portNumber < 1 ||
-            portNumber > 65535
-        ) {
-            setError('Port 1 dan 65535 gacha butun son bo‘lishi kerak.');
-            return;
-        }
+        if (!school) return setError(t('members.errors.chooseSchool'));
+        if (name.trim().length < 2 || !host.trim() || !username.trim() || !password) return setError(t('terminals.form.errors.required'));
+        if (!Number.isInteger(portNumber) || portNumber < 1 || portNumber > 65535) return setError(t('terminals.form.errors.port'));
 
         busyRef.current = true;
         setBusy(true);
-
         try {
             await createTerminal({
-                name,
-                schoolId,
+                name: name.trim(),
+                schoolId: school.id,
                 direction,
                 protocol,
-                host,
+                host: host.trim(),
                 port: portNumber,
-                username,
+                username: username.trim(),
                 password,
-                isActive: form.get('isActive') === 'on',
+                isActive,
             });
         } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Terminalni saqlab bo‘lmadi.',
-            );
+            setError(err instanceof Error ? err.message : t('terminals.form.errors.saveFailed'));
             return;
         } finally {
             busyRef.current = false;
             setBusy(false);
         }
-
         onSaved();
     }
 
-    const selectClass =
-        'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
-
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="space-y-5 rounded-2xl border bg-card p-4 text-card-foreground sm:p-6"
-        >
-            <h2 className="text-lg font-semibold">
-                Yangi terminal
-            </h2>
-
+        <form onSubmit={handleSubmit} className="space-y-5">
             <fieldset disabled={busy} className="space-y-5">
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-name`}
-                            className="text-sm font-medium"
-                        >
-                            Terminal nomi
-                        </label>
-
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field htmlFor={`${formId}-name`} label={t('terminals.form.name')} required>
                         <Input
                             id={`${formId}-name`}
-                            name="name"
-                            placeholder="Asosiy kirish terminali"
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                            placeholder={t('terminals.form.namePlaceholder')}
                             required
                             minLength={2}
                             maxLength={150}
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-school`}
-                            className="text-sm font-medium"
-                        >
-                            Maktab
-                        </label>
-
-                        <select
-                            id={`${formId}-school`}
-                            name="schoolId"
-                            required
-                            defaultValue=""
-                            disabled={loading || Boolean(schoolsError)}
-                            className={selectClass}
-                        >
-                            <option value="">
-                                {loading ? 'Yuklanmoqda…' : 'Maktabni tanlang'}
-                            </option>
-
-                            {schools?.map((school) => (
-                                <option key={school.id} value={school.id}>
-                                    {school.district.region.name}
-                                    {' / '}
-                                    {school.district.name}
-                                    {' / '}
-                                    {school.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-direction`}
-                            className="text-sm font-medium"
-                        >
-                            Yo‘nalish
-                        </label>
-
-                        <select
+                    </Field>
+                    <Field htmlFor={`${formId}-direction`} label={t('terminals.direction')} required>
+                        <SelectField
                             id={`${formId}-direction`}
-                            name="direction"
-                            defaultValue="IN"
-                            className={selectClass}
-                        >
-                            <option value="IN">Kirish</option>
-                            <option value="OUT">Chiqish</option>
-                        </select>
-                    </div>
+                            value={direction}
+                            onValueChange={(value) => setDirection(value === 'OUT' ? 'OUT' : 'IN')}
+                            options={[
+                                { value: 'IN', label: t('terminals.directions.IN') },
+                                { value: 'OUT', label: t('terminals.directions.OUT') },
+                            ]}
+                        />
+                    </Field>
+                    <Field
+                        htmlFor={`${formId}-school`}
+                        label={t('common.school')}
+                        required
+                        className="sm:col-span-2"
+                        error={schoolsError || undefined}
+                        hint={!loading && !schoolsError && schools?.length === 0 ? t('members.create.noSchools') : undefined}
+                    >
+                        <SelectField
+                            id={`${formId}-school`}
+                            value={schoolId}
+                            onValueChange={setSchoolId}
+                            required
+                            searchable
+                            disabled={loading || Boolean(schoolsError)}
+                            placeholder={loading ? t('common.loading') : t('members.chooseSchool')}
+                            options={(schools ?? []).map((school) => ({
+                                value: String(school.id),
+                                label: `${school.district.region.name} / ${school.district.name} / ${school.name}`,
+                            }))}
+                        />
+                        {schoolsError && (
+                            <Button type="button" variant="outline" size="sm" className="w-fit" onClick={retry}>
+                                {t('common.retry')}
+                            </Button>
+                        )}
+                    </Field>
+                </div>
 
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-host`}
-                            className="text-sm font-medium"
-                        >
-                            IP manzili
-                        </label>
-
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                    <Field htmlFor={`${formId}-host`} label={t('terminals.form.host')} hint={t('terminals.form.hostHint')} required>
                         <Input
                             id={`${formId}-host`}
-                            name="host"
+                            value={host}
+                            onChange={(event) => setHost(event.target.value)}
                             placeholder="192.168.1.100"
                             required
                             maxLength={253}
                             autoComplete="off"
+                            inputMode="url"
+                            className="font-mono"
                         />
-
-                        <p className="text-xs text-muted-foreground">
-                            http:// va portsiz, faqat IP manzil.
-                        </p>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-protocol`}
-                            className="text-sm font-medium"
-                        >
-                            Protokol
-                        </label>
-
-                        <select
+                    </Field>
+                    <Field htmlFor={`${formId}-protocol`} label={t('terminals.form.protocol')}>
+                        <SelectField
                             id={`${formId}-protocol`}
                             value={protocol}
-                            onChange={(event) => {
-                                const value =
-                                    event.target.value === 'HTTPS'
-                                        ? 'HTTPS'
-                                        : 'HTTP';
-
-                                setProtocol(value);
-                                setPort(value === 'HTTPS' ? '443' : '80');
+                            onValueChange={(value) => {
+                                const next = value === 'HTTPS' ? 'HTTPS' : 'HTTP';
+                                setProtocol(next);
+                                setPort(next === 'HTTPS' ? '443' : '80');
                             }}
-                            className={selectClass}
-                        >
-                            <option value="HTTP">HTTP</option>
-                            <option value="HTTPS">HTTPS</option>
-                        </select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-port`}
-                            className="text-sm font-medium"
-                        >
-                            Port
-                        </label>
-
+                            options={[
+                                { value: 'HTTP', label: 'HTTP' },
+                                { value: 'HTTPS', label: 'HTTPS' },
+                            ]}
+                        />
+                    </Field>
+                    <Field htmlFor={`${formId}-port`} label={t('terminals.form.port')} required>
                         <Input
                             id={`${formId}-port`}
                             type="number"
+                            inputMode="numeric"
                             min={1}
                             max={65535}
                             step={1}
@@ -255,105 +170,49 @@ export function CreateTerminalForm({
                             value={port}
                             onChange={(event) => setPort(event.target.value)}
                         />
-                    </div>
+                    </Field>
+                </div>
 
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-username`}
-                            className="text-sm font-medium"
-                        >
-                            Terminal logini
-                        </label>
-
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field htmlFor={`${formId}-username`} label={t('terminals.form.username')} required>
                         <Input
                             id={`${formId}-username`}
-                            name="username"
-                            defaultValue="admin"
+                            value={username}
+                            onChange={(event) => setUsername(event.target.value)}
                             required
                             maxLength={100}
                             autoComplete="off"
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor={`${formId}-password`}
-                            className="text-sm font-medium"
-                        >
-                            Terminal paroli
-                        </label>
-
+                    </Field>
+                    <Field htmlFor={`${formId}-password`} label={t('terminals.form.password')} required>
                         <Input
                             id={`${formId}-password`}
-                            name="password"
                             type="password"
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
                             required
                             maxLength={256}
                             autoComplete="new-password"
                         />
-                    </div>
+                    </Field>
                 </div>
 
-                <label className="flex items-center gap-3 text-sm">
-                    <input
-                        type="checkbox"
-                        name="isActive"
-                        defaultChecked
-                        className="h-4 w-4"
-                    />
-                    Terminal faol
-                </label>
+                <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 px-4 py-3">
+                    <Label htmlFor={`${formId}-active`} className="leading-5">
+                        {t('terminals.form.active')}
+                    </Label>
+                    <Switch id={`${formId}-active`} checked={isActive} onCheckedChange={setIsActive} />
+                </div>
             </fieldset>
 
-            {schoolsError && (
-                <div className="space-y-2">
-                    <p role="alert" className="text-sm text-destructive">
-                        {schoolsError}
-                    </p>
+            {error && <ErrorState message={error} />}
 
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={retry}
-                        disabled={busy}
-                    >
-                        Maktablarni qayta yuklash
-                    </Button>
-                </div>
-            )}
-
-            {!loading && !schoolsError && schools?.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                    Avval maktab yarating.
-                </p>
-            )}
-
-            {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
-            )}
-
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={onCancel}
-                >
-                    Bekor qilish
+            <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" disabled={busy} onClick={onCancel}>
+                    {t('common.cancel')}
                 </Button>
-
-                <Button
-                    type="submit"
-                    disabled={
-                        busy ||
-                        loading ||
-                        Boolean(schoolsError) ||
-                        !schools?.length
-                    }
-                >
-                    {busy ? 'Saqlanmoqda…' : 'Terminalni saqlash'}
+                <Button type="submit" disabled={busy || loading || Boolean(schoolsError) || !schools?.length}>
+                    {busy ? t('common.saving') : t('terminals.form.save')}
                 </Button>
             </div>
         </form>

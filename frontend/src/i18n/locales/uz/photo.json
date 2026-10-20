@@ -1,0 +1,13 @@
+{
+  "alt": "Profil rasmi",
+  "choose": "Rasm tanlash",
+  "change": "Rasmni almashtirish",
+  "save": "Rasmni saqlash",
+  "saved": "Rasm muvaffaqiyatli saqlandi.",
+  "hint": "JPEG, PNG yoki WebP. Maksimal {{size}} MB.",
+  "wrongType": "Faqat JPEG, PNG yoki WebP rasm tanlang.",
+  "tooLarge": "Rasm hajmi {{size}} MB dan oshmasligi kerak.",
+  "uploadFailed": "Rasmni yuklashda xatolik yuz berdi.",
+  "loadFailed": "Rasmni yuklab bo‘lmadi.",
+  "loading": "Rasm yuklanmoqda…"
+}

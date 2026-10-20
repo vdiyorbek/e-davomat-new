@@ -1,0 +1,40 @@
+{
+  "main": "Главное меню",
+  "quick": "Быстрая навигация",
+  "openMenu": "Открыть главное меню",
+  "menuHint": "Выберите один из разделов кабинета.",
+  "settings": "Настройки",
+  "cabinet": "Личный кабинет",
+  "sidebarNote": "Ваши данные и школы в одном месте.",
+  "groups": {
+    "personal": "Личное",
+    "attendance": "Посещаемость",
+    "education": "Учебная структура",
+    "system": "Система"
+  },
+  "items": {
+    "profile": "Личные данные",
+    "mySchools": "Мои школы",
+    "studentAttendance": "Посещаемость учеников",
+    "teacherAttendance": "Посещаемость учителей",
+    "excuses": "Уважительные причины",
+    "calendar": "Учебный календарь",
+    "schools": "Школы",
+    "classes": "Классы",
+    "students": "Ученики",
+    "teachers": "Учителя",
+    "assignments": "Назначение предметов и классов",
+    "textbooks": "Библиотека учебников",
+    "terminals": "Терминалы",
+    "users": "Пользователи",
+    "person": "Карточка человека",
+    "forbidden": "Доступ ограничен"
+  },
+  "short": {
+    "profile": "Профиль",
+    "studentAttendance": "Ученики",
+    "teacherAttendance": "Учителя",
+    "schools": "Школы",
+    "more": "Меню"
+  }
+}

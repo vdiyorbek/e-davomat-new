@@ -9,6 +9,7 @@ import {
   apiPatch,
 } from "@/lib/api";
 import type { LoginResponse, Session, Profile } from "@/types/auth";
+import i18n from "@/i18n";
 
 interface AuthState {
   session: Session | null;
@@ -48,7 +49,7 @@ function updateState(next: AuthState): void {
 function errorMessage(error: unknown): string {
   return error instanceof ApiError
     ? error.message
-    : "So‘rovni bajarishda xatolik yuz berdi. Qayta urinib ko‘ring.";
+    : i18n.t("common.requestFailed");
 }
 
 // Bitta sahifadagi auth operatsiyalari navbat bilan bajariladi.
@@ -156,7 +157,7 @@ export function signIn(username: string, password: string): Promise<void> {
   });
 }
 
-export function signOut(message = "Kabinetdan chiqdingiz."): Promise<void> {
+export function signOut(message = i18n.t("common.signedOut")): Promise<void> {
   return withAuthLock(async () => {
     // Server tasdiqlamaguncha mahalliy sessiyani o‘chirmaymiz.
     await logoutAuth();
@@ -173,7 +174,7 @@ function refreshCurrentSession(failedToken?: string): Promise<Session> {
     const current = state.session;
 
     if (!current) {
-      throw new ApiError("Avval tizimga kiring.", 401);
+      throw new ApiError(i18n.t("common.session.signInFirst"), 401);
     }
 
     // Boshqa so‘rov tokenni allaqachon yangilagan.
@@ -195,7 +196,7 @@ function refreshCurrentSession(failedToken?: string): Promise<Session> {
       return session;
     } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 401) {
-        clearSession("Sessiya tugadi. Qayta tizimga kiring.");
+        clearSession(i18n.t("common.session.expired"));
       }
 
       // Tarmoq yoki server xatosida sessiya saqlanadi.
@@ -227,7 +228,7 @@ export async function authorizedGet<T>(
   let current = state.session;
 
   if (!current) {
-    throw new ApiError("Avval tizimga kiring.", 401);
+    throw new ApiError(i18n.t("common.session.signInFirst"), 401);
   }
 
   if (current.expiresAt <= Date.now() + 30_000) {
@@ -239,7 +240,7 @@ export async function authorizedGet<T>(
 
     // Chiqish yoki akkaunt almashishdan oldingi javobni tashlaymiz.
     if (requestGeneration !== generation || !state.session) {
-      throw new DOMException("Sessiya o‘zgardi.", "AbortError");
+      throw new DOMException(i18n.t("common.session.changed"), "AbortError");
     }
   }
 
@@ -281,7 +282,7 @@ export async function authorizedGet<T>(
         retryError.status === 401 &&
         state.session?.token === current.token
       ) {
-        clearSession("Sessiya tugadi. Qayta tizimga kiring.");
+        clearSession(i18n.t("common.session.expired"));
       }
 
       throw retryError;
@@ -303,7 +304,7 @@ export async function authorizedPost<T>(
   let current = state.session;
 
   if (!current) {
-    throw new ApiError("Avval tizimga kiring.", 401);
+    throw new ApiError(i18n.t("common.session.signInFirst"), 401);
   }
 
   if (current.expiresAt <= Date.now() + 30_000) {
@@ -312,7 +313,7 @@ export async function authorizedPost<T>(
 
   function checkSession(): void {
     if (requestGeneration !== generation || !state.session) {
-      throw new DOMException("Sessiya o‘zgardi.", "AbortError");
+      throw new DOMException(i18n.t("common.session.changed"), "AbortError");
     }
   }
 
@@ -342,7 +343,7 @@ export async function authorizedPost<T>(
         state.session?.token === current.token &&
         requestGeneration === generation
       ) {
-        clearSession("Sessiya tugadi. Qayta tizimga kiring.");
+        clearSession(i18n.t("common.session.expired"));
       }
 
       throw retryError;
@@ -363,7 +364,7 @@ export async function authorizedPatch<T>(
   let current = state.session;
 
   if (!current) {
-    throw new ApiError("Avval tizimga kiring.", 401);
+    throw new ApiError(i18n.t("common.session.signInFirst"), 401);
   }
 
   if (current.expiresAt <= Date.now() + 30_000) {
@@ -372,7 +373,7 @@ export async function authorizedPatch<T>(
 
   function checkSession(): void {
     if (requestGeneration !== generation || !state.session) {
-      throw new DOMException("Sessiya o‘zgardi.", "AbortError");
+      throw new DOMException(i18n.t("common.session.changed"), "AbortError");
     }
   }
 
@@ -403,7 +404,7 @@ export async function authorizedPatch<T>(
         state.session?.token === current.token &&
         requestGeneration === generation
       ) {
-        clearSession("Sessiya tugadi. Qayta tizimga kiring.");
+        clearSession(i18n.t("common.session.expired"));
       }
 
       throw retryError;
@@ -419,7 +420,7 @@ export async function reloadCurrentProfile(): Promise<void> {
   const current = state.session;
 
   if (!current) {
-    throw new ApiError("Avval tizimga kiring.", 401);
+    throw new ApiError(i18n.t("common.session.signInFirst"), 401);
   }
 
   const currentGeneration = generation;

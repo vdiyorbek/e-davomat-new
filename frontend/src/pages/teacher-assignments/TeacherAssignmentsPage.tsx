@@ -1,12 +1,24 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import { BookOpenCheck, RefreshCw } from 'lucide-react';
+import { BookOpenCheck, Link2, RotateCw, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
 import { PageHeader } from '@/components/common/PageHeader';
+import { Pagination } from '@/components/common/Pagination';
+import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
+import { SelectField } from '@/components/common/SelectField';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPost } from '@/lib/auth-session';
+import { academicYearFor, academicYearOptions, formatDate, isValidAcademicYear, todayInTashkent } from '@/lib/date';
+import { localizedName } from '@/lib/localized';
+import { personFullName } from '@/lib/person';
 import type { School } from '@/types/school';
 
 interface SchoolClass {
@@ -30,12 +42,7 @@ interface TeacherMembership {
     type: 'TEACHER';
     startDate: string;
     endDate: string | null;
-    person: {
-        id: number;
-        firstName: string;
-        lastName: string;
-        middleName: string | null;
-    };
+    person: { id: number; firstName: string; lastName: string; middleName: string | null };
 }
 
 interface MembershipPage {
@@ -48,84 +55,19 @@ interface MembershipPage {
 interface TeacherAssignment {
     id: number;
     teacherMembershipId: number;
-    teacher: {
-        personId: number;
-        firstName: string;
-        lastName: string;
-        middleName: string | null;
-    };
-    class: {
-        id: number;
-        name: string;
-        gradeLevel: number | null;
-    };
-    subject: {
-        id: number;
-        code: string;
-        nameUz: string;
-    };
+    teacher: { personId: number; firstName: string; lastName: string; middleName: string | null };
+    class: { id: number; name: string; gradeLevel: number | null };
+    subject: { id: number; code: string; nameUz: string };
     startDate: string;
     endDate: string | null;
 }
 
-const fieldStyle =
-    'mt-2 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ' +
-    'disabled:cursor-not-allowed disabled:opacity-50';
-
-function tashkentToday(): string {
-    const parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Asia/Tashkent',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    }).formatToParts(new Date());
-    const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
-    return `${pick('year')}-${pick('month')}-${pick('day')}`;
-}
-
-function currentAcademicYear(): string {
-    const today = tashkentToday();
-    const year = Number(today.slice(0, 4));
-    const month = Number(today.slice(5, 7));
-    const startYear = month >= 9 ? year : year - 1;
-    return `${startYear}-${startYear + 1}`;
-}
-
-function isValidAcademicYear(value: string): boolean {
-    const matched = /^(\d{4})-(\d{4})$/.exec(value);
-    return Boolean(
-        matched &&
-        Number(matched[2]) === Number(matched[1]) + 1 &&
-        Number(matched[1]) >= 2000 &&
-        Number(matched[2]) <= 2100,
-    );
-}
-
-function personName(person: {
-    firstName: string;
-    lastName: string;
-    middleName: string | null;
-}) {
-    return [person.lastName, person.firstName, person.middleName]
-        .filter(Boolean)
-        .join(' ');
-}
-
-function AssignmentsForSchool({
-    schoolId,
-    academicYear,
-}: {
-    schoolId: number;
-    academicYear: string;
-}) {
-    const classesQuery = useApiQuery<SchoolClass[]>(
-        `/classes?schoolId=${schoolId}&academicYear=${academicYear}`,
-    );
+function AssignmentsForSchool({ schoolId, academicYear }: { schoolId: number; academicYear: string }) {
+    const { t } = useTranslation();
+    const id = useId();
+    const classesQuery = useApiQuery<SchoolClass[]>(`/classes?schoolId=${schoolId}&academicYear=${academicYear}`);
     const subjectsQuery = useApiQuery<Subject[]>('/subjects');
-    const assignmentsQuery = useApiQuery<TeacherAssignment[]>(
-        `/teacher-assignments?schoolId=${schoolId}&academicYear=${academicYear}`,
-    );
+    const assignmentsQuery = useApiQuery<TeacherAssignment[]>(`/teacher-assignments?schoolId=${schoolId}&academicYear=${academicYear}`);
 
     const [searchText, setSearchText] = useState('');
     const [appliedSearch, setAppliedSearch] = useState('');
@@ -133,7 +75,7 @@ function AssignmentsForSchool({
     const [teacherMembershipId, setTeacherMembershipId] = useState('');
     const [classId, setClassId] = useState('');
     const [subjectId, setSubjectId] = useState('');
-    const [startDate, setStartDate] = useState(tashkentToday);
+    const [startDate, setStartDate] = useState(todayInTashkent);
     const [endDate, setEndDate] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
@@ -147,10 +89,8 @@ function AssignmentsForSchool({
         limit: '100',
     });
     if (appliedSearch) teacherParams.set('q', appliedSearch);
+    const teachersQuery = useApiQuery<MembershipPage>(`/school-memberships?${teacherParams.toString()}`);
 
-    const teachersQuery = useApiQuery<MembershipPage>(
-        `/school-memberships?${teacherParams.toString()}`,
-    );
     const teachers = teachersQuery.data?.data ?? [];
     const classes = classesQuery.data ?? [];
     const subjects = (subjectsQuery.data ?? []).filter((subject) => subject.isActive);
@@ -163,26 +103,14 @@ function AssignmentsForSchool({
         setAppliedSearch(searchText.trim());
     }
 
-    function changeTeacherPage(next: number) {
-        setTeacherMembershipId('');
-        setTeacherPage(next);
-    }
-
     async function handleCreate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (busy) return;
         setError('');
         setSuccess('');
 
-        if (!teacherMembershipId || !classId || !subjectId || !startDate) {
-            setError('O‘qituvchi, sinf, fan va boshlanish sanasini belgilang.');
-            return;
-        }
-
-        if (endDate && endDate <= startDate) {
-            setError('Tugash sanasi boshlanish sanasidan keyin bo‘lishi kerak.');
-            return;
-        }
+        if (!teacherMembershipId || !classId || !subjectId || !startDate) return setError(t('assignments.errors.required'));
+        if (endDate && endDate <= startDate) return setError(t('members.end.errorBeforeStart'));
 
         setBusy(true);
         try {
@@ -193,195 +121,197 @@ function AssignmentsForSchool({
                 startDate,
                 ...(endDate ? { endDate } : {}),
             });
-            setSuccess('O‘qituvchi fan va sinfga muvaffaqiyatli biriktirildi.');
+            setSuccess(t('assignments.created'));
             assignmentsQuery.retry();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error ? caught.message : 'Biriktirishni saqlab bo‘lmadi.',
-            );
+            setError(caught instanceof Error ? caught.message : t('assignments.createFailed'));
         } finally {
             setBusy(false);
         }
     }
 
+    const loadErrors = [
+        teachersQuery.error && `${t('nav.items.teachers')}: ${teachersQuery.error}`,
+        classesQuery.error && `${t('nav.items.classes')}: ${classesQuery.error}`,
+        subjectsQuery.error && `${t('assignments.subjects')}: ${subjectsQuery.error}`,
+    ].filter(Boolean);
+
     return (
-        <div className="space-y-6">
-            <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
-                <h2 className="text-lg font-semibold">O‘qituvchini fan va sinfga biriktirish</h2>
-                <form onSubmit={applyTeacherSearch} className="flex flex-wrap items-end gap-3">
-                    <label className="min-w-56 flex-1 text-sm font-medium">
-                        O‘qituvchini izlash
-                        <Input
-                            value={searchText}
-                            onChange={(event) => setSearchText(event.target.value)}
-                            maxLength={100}
-                            placeholder="Ism yoki familiya"
-                            className="mt-2"
-                        />
-                    </label>
-                    <Button type="submit" variant="outline">Qidirish</Button>
-                </form>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+            <Card className="h-fit">
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">{t('assignments.createTitle')}</CardTitle>
+                    <CardDescription>{t('assignments.createHint')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <form onSubmit={applyTeacherSearch}>
+                        <Field htmlFor={`${id}-search`} label={t('assignments.searchTeacher')}>
+                            <div className="flex gap-2">
+                                <Input
+                                    id={`${id}-search`}
+                                    type="search"
+                                    value={searchText}
+                                    onChange={(event) => setSearchText(event.target.value)}
+                                    maxLength={100}
+                                    placeholder={t('attendance.searchPlaceholder')}
+                                />
+                                <Button type="submit" variant="outline" size="icon" className="size-11 shrink-0 bg-card" aria-label={t('common.search')}>
+                                    <Search aria-hidden="true" />
+                                </Button>
+                            </div>
+                        </Field>
+                    </form>
 
-                <form onSubmit={(event) => void handleCreate(event)} className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <label className="text-sm font-medium">
-                            O‘qituvchi
-                            <select
-                                className={fieldStyle}
+                    <form onSubmit={(event) => void handleCreate(event)} className="space-y-4">
+                        <Field
+                            htmlFor={`${id}-teacher`}
+                            label={t('assignments.teacher')}
+                            required
+                            hint={!teachersQuery.loading && !teachersQuery.error && teachers.length === 0 ? t('assignments.noTeachers') : undefined}
+                        >
+                            <SelectField
+                                id={`${id}-teacher`}
                                 value={teacherMembershipId}
-                                onChange={(event) => setTeacherMembershipId(event.target.value)}
+                                onValueChange={setTeacherMembershipId}
                                 disabled={busy || teachersQuery.loading || Boolean(teachersQuery.error)}
+                                placeholder={teachersQuery.loading ? t('common.loading') : t('assignments.chooseTeacher')}
                                 required
-                            >
-                                <option value="">O‘qituvchini tanlang</option>
-                                {teachers.map((item) => (
-                                    <option key={item.id} value={item.id}>
-                                        {personName(item.person)}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="text-sm font-medium">
-                            Sinf
-                            <select
-                                className={fieldStyle}
-                                value={classId}
-                                onChange={(event) => setClassId(event.target.value)}
-                                disabled={busy || classesQuery.loading || Boolean(classesQuery.error)}
-                                required
-                            >
-                                <option value="">Sinfni tanlang</option>
-                                {classes.map((item) => (
-                                    <option value={item.id} key={item.id}>
-                                        {item.name}{item.gradeLevel ? ` (${item.gradeLevel}-sinf)` : ''}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="text-sm font-medium">
-                            Fan
-                            <select
-                                className={fieldStyle}
-                                value={subjectId}
-                                onChange={(event) => setSubjectId(event.target.value)}
-                                disabled={busy || subjectsQuery.loading || Boolean(subjectsQuery.error)}
-                                required
-                            >
-                                <option value="">Fanni tanlang</option>
-                                {subjects.map((item) => (
-                                    <option value={item.id} key={item.id}>{item.nameUz}</option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="text-sm font-medium">
-                            Boshlanish sanasi
-                            <Input
-                                type="date"
-                                value={startDate}
-                                onChange={(event) => setStartDate(event.target.value)}
-                                disabled={busy}
-                                className="mt-2"
-                                required
+                                options={teachers.map((item) => ({ value: String(item.id), label: personFullName(item.person) }))}
                             />
-                        </label>
+                            {teachersQuery.data && teachersQuery.data.totalPages > 1 && (
+                                <Pagination
+                                    page={teacherPage}
+                                    totalPages={teachersQuery.data.totalPages}
+                                    onPageChange={(next) => {
+                                        setTeacherMembershipId('');
+                                        setTeacherPage(next);
+                                    }}
+                                />
+                            )}
+                        </Field>
 
-                        <label className="text-sm font-medium">
-                            Tugash sanasi (ixtiyoriy)
-                            <Input
-                                type="date"
-                                value={endDate}
-                                onChange={(event) => setEndDate(event.target.value)}
-                                disabled={busy}
-                                className="mt-2"
-                            />
-                        </label>
-                    </div>
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                            <Field htmlFor={`${id}-class`} label={t('common.class')} required>
+                                <SelectField
+                                    id={`${id}-class`}
+                                    value={classId}
+                                    onValueChange={setClassId}
+                                    disabled={busy || classesQuery.loading || Boolean(classesQuery.error)}
+                                    placeholder={t('members.chooseClass')}
+                                    required
+                                    options={classes.map((item) => ({
+                                        value: String(item.id),
+                                        label: item.gradeLevel ? `${item.name} (${t('calendar.gradeN', { grade: item.gradeLevel })})` : item.name,
+                                    }))}
+                                />
+                            </Field>
+                            <Field htmlFor={`${id}-subject`} label={t('assignments.subject')} required>
+                                <SelectField
+                                    id={`${id}-subject`}
+                                    value={subjectId}
+                                    onValueChange={setSubjectId}
+                                    disabled={busy || subjectsQuery.loading || Boolean(subjectsQuery.error)}
+                                    placeholder={t('assignments.chooseSubject')}
+                                    required
+                                    options={subjects.map((item) => ({ value: String(item.id), label: localizedName(item) }))}
+                                />
+                            </Field>
+                            <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
+                                <Input id={`${id}-start`} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={busy} required />
+                            </Field>
+                            <Field htmlFor={`${id}-end`} label={`${t('membership.endDate')} (${t('common.optional')})`}>
+                                <Input id={`${id}-end`} type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} disabled={busy} />
+                            </Field>
+                        </div>
 
-                    {teachersQuery.error && <p role="alert" className="text-sm text-destructive">O‘qituvchilar: {teachersQuery.error}</p>}
-                    {classesQuery.error && <p role="alert" className="text-sm text-destructive">Sinflar: {classesQuery.error}</p>}
-                    {subjectsQuery.error && <p role="alert" className="text-sm text-destructive">Fanlar: {subjectsQuery.error}</p>}
+                        {loadErrors.map((message) => (
+                            <ErrorState key={message as string} message={message} />
+                        ))}
+                        {error && <ErrorState message={error} />}
+                        {success && <SuccessNotice>{success}</SuccessNotice>}
 
-                    {!teachersQuery.loading && !teachersQuery.error && teachers.length === 0 && (
-                        <p className="text-sm text-muted-foreground">Bu maktabda izlovga mos faol o‘qituvchi topilmadi.</p>
-                    )}
-
-                    <div className="flex flex-wrap items-center gap-3">
                         <Button
                             type="submit"
-                            disabled={busy || !teacherMembershipId || !classId || !subjectId || !startDate ||
-                                classesQuery.loading || subjectsQuery.loading || teachersQuery.loading}
+                            className="w-full"
+                            disabled={
+                                busy || !teacherMembershipId || !classId || !subjectId || !startDate ||
+                                classesQuery.loading || subjectsQuery.loading || teachersQuery.loading
+                            }
                         >
-                            {busy ? 'Saqlanmoqda…' : 'Biriktirish'}
+                            <Link2 aria-hidden="true" />
+                            {busy ? t('common.saving') : t('assignments.submit')}
                         </Button>
-                        {teachersQuery.data && teachersQuery.data.totalPages > 1 && (
-                            <div className="flex items-center gap-2 text-sm">
-                                <Button
-                                    type="button" variant="outline" size="sm"
-                                    disabled={teacherPage <= 1 || teachersQuery.loading}
-                                    onClick={() => changeTeacherPage(teacherPage - 1)}
-                                >Oldingi</Button>
-                                <span>{teacherPage} / {teachersQuery.data.totalPages}</span>
-                                <Button
-                                    type="button" variant="outline" size="sm"
-                                    disabled={teacherPage >= teachersQuery.data.totalPages || teachersQuery.loading}
-                                    onClick={() => changeTeacherPage(teacherPage + 1)}
-                                >Keyingi</Button>
-                            </div>
-                        )}
-                    </div>
-                    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-                    {success && <p role="status" className="text-sm text-green-600">{success}</p>}
-                </form>
-            </section>
+                    </form>
+                </CardContent>
+            </Card>
 
-            <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
+            <section className="min-w-0 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-lg font-semibold">Mavjud biriktirishlar</h2>
-                        <p className="text-sm text-muted-foreground">Jami: {assignments.length}</p>
+                        <h2 className="font-heading text-lg font-semibold">{t('assignments.listTitle')}</h2>
+                        <p className="text-sm text-muted-foreground">{t('common.total', { count: assignments.length })}</p>
                     </div>
-                    <Button
-                        type="button" variant="outline" size="sm"
-                        onClick={assignmentsQuery.retry}
-                        disabled={assignmentsQuery.loading}
-                    >
-                        <RefreshCw aria-hidden="true" /> Yangilash
+                    <Button type="button" variant="outline" size="sm" onClick={assignmentsQuery.retry} disabled={assignmentsQuery.loading}>
+                        <RotateCw aria-hidden="true" />
+                        {t('common.refresh')}
                     </Button>
                 </div>
+
                 {assignmentsQuery.loading ? (
-                    <p className="text-sm text-muted-foreground">Biriktirishlar yuklanmoqda…</p>
+                    <LoadingState rows={4} />
                 ) : assignmentsQuery.error ? (
-                    <p role="alert" className="text-sm text-destructive">{assignmentsQuery.error}</p>
+                    <ErrorState message={assignmentsQuery.error} onRetry={assignmentsQuery.retry} />
                 ) : assignments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Hozircha biriktirish mavjud emas.</p>
+                    <EmptyState icon={BookOpenCheck} title={t('assignments.emptyTitle')} description={t('assignments.empty')} />
                 ) : (
-                    <div className="overflow-x-auto rounded-xl border border-border">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50">
-                                <tr>
-                                    <th className="px-4 py-3">O‘qituvchi</th>
-                                    <th className="px-4 py-3">Sinf</th>
-                                    <th className="px-4 py-3">Fan</th>
-                                    <th className="px-4 py-3">Boshlanishi</th>
-                                    <th className="px-4 py-3">Tugashi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {assignments.map((item) => (
-                                    <tr key={item.id} className="border-t border-border">
-                                        <td className="px-4 py-3 font-medium">{personName(item.teacher)}</td>
-                                        <td className="px-4 py-3">{item.class.name}</td>
-                                        <td className="px-4 py-3">{item.subject.nameUz}</td>
-                                        <td className="px-4 py-3 tabular-nums">{item.startDate}</td>
-                                        <td className="px-4 py-3 tabular-nums">{item.endDate ?? 'Davom etmoqda'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <>
+                        <ul className="grid list-none gap-3 sm:grid-cols-2 xl:hidden">
+                            {assignments.map((item) => (
+                                <li key={item.id}>
+                                    <Card size="sm" className="gap-3 px-4">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <p className="font-semibold [overflow-wrap:anywhere]">{personFullName(item.teacher)}</p>
+                                            <StatusBadge tone={item.endDate ? 'neutral' : 'success'}>
+                                                {item.endDate ? t('common.membershipStatus.ENDED') : t('common.membershipStatus.ACTIVE')}
+                                            </StatusBadge>
+                                        </div>
+                                        <DetailList>
+                                            <DetailItem label={t('common.class')}>{item.class.name}</DetailItem>
+                                            <DetailItem label={t('assignments.subject')}>{localizedName(item.subject)}</DetailItem>
+                                            <DetailItem label={t('membership.start')}>{formatDate(item.startDate)}</DetailItem>
+                                            <DetailItem label={t('membership.endDate')}>{item.endDate ? formatDate(item.endDate) : t('assignments.ongoing')}</DetailItem>
+                                        </DetailList>
+                                    </Card>
+                                </li>
+                            ))}
+                        </ul>
+                        <Card className="hidden py-0 xl:flex">
+                            <Table className="min-w-[680px]">
+                                <TableHeader className="bg-muted/50">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="pl-5">{t('assignments.teacher')}</TableHead>
+                                        <TableHead>{t('common.class')}</TableHead>
+                                        <TableHead>{t('assignments.subject')}</TableHead>
+                                        <TableHead>{t('membership.start')}</TableHead>
+                                        <TableHead className="pr-5">{t('membership.endDate')}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {assignments.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="pl-5 font-semibold">{personFullName(item.teacher)}</TableCell>
+                                            <TableCell>{item.class.name}</TableCell>
+                                            <TableCell>{localizedName(item.subject)}</TableCell>
+                                            <TableCell className="tabular-nums">{formatDate(item.startDate)}</TableCell>
+                                            <TableCell className="pr-5 tabular-nums">
+                                                {item.endDate ? formatDate(item.endDate) : <StatusBadge tone="success">{t('assignments.ongoing')}</StatusBadge>}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    </>
                 )}
             </section>
         </div>
@@ -389,57 +319,41 @@ function AssignmentsForSchool({
 }
 
 export function TeacherAssignmentsPage() {
+    const { t } = useTranslation();
+    const id = useId();
     const schoolsQuery = useApiQuery<School[]>('/schools');
     const [schoolId, setSchoolId] = useState('');
-    const [academicYear, setAcademicYear] = useState(currentAcademicYear);
+    const [academicYear, setAcademicYear] = useState(() => academicYearFor(todayInTashkent()));
     const schools = schoolsQuery.data ?? [];
-    const validYear = isValidAcademicYear(academicYear);
     const school = schools.find((item) => String(item.id) === schoolId);
 
     return (
         <div className="w-full min-w-0 space-y-6">
-            <PageHeader
-                eyebrow="Elektron ta’lim"
-                title="O‘qituvchi — fan — sinf"
-                description="O‘qituvchilarga o‘quv yili bo‘yicha fan va sinflarni biriktirish."
-                actions={<BookOpenCheck className="size-7 text-primary" />}
-            />
-            <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 md:grid-cols-2">
-                <label className="text-sm font-medium">
-                    Maktab
-                    <select
-                        className={fieldStyle}
+            <PageHeader eyebrow={t('nav.groups.education')} title={t('assignments.title')} description={t('assignments.subtitle')} />
+            <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <Field htmlFor={`${id}-school`} label={t('common.school')} error={schoolsQuery.error || undefined}>
+                    <SelectField
+                        id={`${id}-school`}
                         value={schoolId}
-                        onChange={(event) => setSchoolId(event.target.value)}
+                        onValueChange={setSchoolId}
                         disabled={schoolsQuery.loading || Boolean(schoolsQuery.error)}
-                    >
-                        <option value="">Maktabni tanlang</option>
-                        {schools.map((item) => (
-                            <option key={item.id} value={item.id}>
-                                {item.name} — {item.district.name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <label className="text-sm font-medium">
-                    O‘quv yili
-                    <Input
-                        className="mt-2"
-                        value={academicYear}
-                        onChange={(event) => setAcademicYear(event.target.value)}
-                        placeholder="2026-2027"
-                        maxLength={9}
+                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
+                        options={schools.map((item) => ({ value: String(item.id), label: `${item.name} — ${item.district.name}` }))}
                     />
-                </label>
+                </Field>
+                <Field htmlFor={`${id}-year`} label={t('members.academicYear')}>
+                    <SelectField
+                        id={`${id}-year`}
+                        value={academicYear}
+                        onValueChange={setAcademicYear}
+                        options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
+                    />
+                </Field>
             </div>
-            {schoolsQuery.error && <p role="alert" className="text-sm text-destructive">{schoolsQuery.error}</p>}
-            {!validYear && <p role="alert" className="text-sm text-destructive">O‘quv yilini 2026-2027 shaklida kiriting.</p>}
-            {school && validYear && (
-                <AssignmentsForSchool
-                    key={`${school.id}-${academicYear}`}
-                    schoolId={school.id}
-                    academicYear={academicYear}
-                />
+            {school && isValidAcademicYear(academicYear) ? (
+                <AssignmentsForSchool key={`${school.id}-${academicYear}`} schoolId={school.id} academicYear={academicYear} />
+            ) : (
+                !schoolsQuery.loading && <EmptyState icon={BookOpenCheck} title={t('calendar.chooseTitle')} description={t('assignments.choose')} />
             )}
         </div>
     );

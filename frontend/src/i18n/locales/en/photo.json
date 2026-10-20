@@ -1,0 +1,13 @@
+{
+  "alt": "Profile photo",
+  "choose": "Choose photo",
+  "change": "Change photo",
+  "save": "Save photo",
+  "saved": "Photo saved successfully.",
+  "hint": "JPEG, PNG or WebP. Up to {{size}} MB.",
+  "wrongType": "Please choose a JPEG, PNG or WebP image.",
+  "tooLarge": "The image must not exceed {{size}} MB.",
+  "uploadFailed": "Failed to upload the photo.",
+  "loadFailed": "Could not load the photo.",
+  "loading": "Loading photo…"
+}

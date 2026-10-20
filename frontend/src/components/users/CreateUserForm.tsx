@@ -1,11 +1,15 @@
-
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { authorizedPost } from '@/lib/auth-session';
 import { ApiError } from '@/lib/api';
+import { authorizedPost } from '@/lib/auth-session';
+
+import { UserNameFields } from './UserNameFields';
 
 interface CreatedUser {
     id: number;
@@ -20,84 +24,45 @@ interface CreateUserFormProps {
     onCancel: () => void;
 }
 
-export function CreateUserForm({
-    onCreated,
-    onCancel,
-}: CreateUserFormProps) {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [middleName, setMiddleName] = useState('');
+export function CreateUserForm({ onCreated, onCancel }: CreateUserFormProps) {
+    const { t } = useTranslation();
+    const id = useId();
+    const [names, setNames] = useState({ lastName: '', firstName: '', middleName: '' });
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-
     const submitting = useRef(false);
 
-    async function handleSubmit(
-        event: FormEvent<HTMLFormElement>,
-    ) {
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (submitting.current) return;
-
         setError('');
 
-
         const normalizedLogin = login.trim().toLowerCase();
-
-
-        if (!/^[a-z0-9._]{3,50}$/.test(normalizedLogin)) {
-            setError('Login 3–50 belgidan iborat bo‘lsin.');
-            return;
-        }
-
-        if (password.length < 12 || password.length > 128) {
-            setError('Parol 12–128 belgidan iborat bo‘lishi kerak.');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError('Parollar bir-biriga mos kelmadi.');
-            return;
-        }
+        if (!/^[a-z0-9._]{3,50}$/.test(normalizedLogin)) return setError(t('users.errors.login'));
+        if (password.length < 12 || password.length > 128) return setError(t('users.errors.password'));
+        if (password !== confirmPassword) return setError(t('users.errors.passwordMismatch'));
 
         submitting.current = true;
         setBusy(true);
-
         try {
-            const created = await authorizedPost<CreatedUser>(
-                '/users',
-                {
-                    firstName: firstName.trim(),
-                    lastName: lastName.trim(),
-                    middleName: middleName.trim() || undefined,
-                    login: normalizedLogin,
-                    password,
-                }
-            );
-
+            const created = await authorizedPost<CreatedUser>('/users', {
+                firstName: names.firstName.trim(),
+                lastName: names.lastName.trim(),
+                middleName: names.middleName.trim() || undefined,
+                login: normalizedLogin,
+                password,
+            });
             setPassword('');
             setConfirmPassword('');
             onCreated(created);
         } catch (err: unknown) {
-            if (
-                err instanceof ApiError &&
-                (err.status === 0 || err.status >= 500)
-            ) {
-                setError(
-                    'Server javobini tasdiqlab bo‘lmadi. ' +
-                    'Qayta yuborishdan oldin foydalanuvchilar ' +
-                    'ro‘yxatini tekshiring.',
-                );
+            if (err instanceof ApiError && (err.status === 0 || err.status >= 500)) {
+                setError(t('users.errors.uncertain'));
             } else {
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : 'Foydalanuvchi yaratishda xatolik yuz berdi.',
-                );
+                setError(err instanceof Error ? err.message : t('users.errors.createFailed'));
             }
         } finally {
             submitting.current = false;
@@ -107,137 +72,58 @@ export function CreateUserForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                    <label htmlFor="user-last-name">Familiya</label>
-                    <Input
-                        id="user-last-name"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        minLength={2}
-                        maxLength={100}
-                        required
-                        disabled={busy}
-                        placeholder="Valiyev"
-                    />
-                </div>
+            <UserNameFields {...names} disabled={busy} onChange={(field, value) => setNames((previous) => ({ ...previous, [field]: value }))} />
 
-                <div className="space-y-2">
-                    <label htmlFor="user-first-name">Ism</label>
-                    <Input
-                        id="user-first-name"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        minLength={2}
-                        maxLength={100}
-                        required
-                        disabled={busy}
-                        placeholder="Ali"
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <label htmlFor="user-middle-name">Otasining ismi</label>
+            <Field htmlFor={`${id}-login`} label={t('profile.login')} hint={t('users.loginHint')} required>
                 <Input
-                    id="user-middle-name"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                    maxLength={100}
-                    disabled={busy}
-                    placeholder="Karimovich"
-                />
-            </div>
-
-            <div className="space-y-2">
-                <label
-                    htmlFor="user-login"
-                    className="text-sm font-medium"
-                >
-                    Login
-                </label>
-
-                <Input
-                    id="user-login"
+                    id={`${id}-login`}
                     value={login}
-                    onChange={(event) =>
-                        setLogin(event.target.value)
-                    }
-                    placeholder="Masalan: school.admin"
+                    onChange={(event) => setLogin(event.target.value)}
+                    placeholder={t('users.loginPlaceholder')}
                     autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     maxLength={50}
                     required
                     disabled={busy}
                 />
-            </div>
+            </Field>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                    <label
-                        htmlFor="user-password"
-                        className="text-sm font-medium"
-                    >
-                        Parol
-                    </label>
-
+            <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor={`${id}-password`} label={t('auth.password')} hint={t('users.passwordHint')} required>
                     <Input
-                        id="user-password"
+                        id={`${id}-password`}
                         type="password"
                         value={password}
-                        onChange={(event) =>
-                            setPassword(event.target.value)
-                        }
+                        onChange={(event) => setPassword(event.target.value)}
                         minLength={12}
                         maxLength={128}
                         autoComplete="new-password"
                         required
                         disabled={busy}
                     />
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor="user-confirm-password"
-                        className="text-sm font-medium"
-                    >
-                        Parolni tasdiqlash
-                    </label>
-
+                </Field>
+                <Field htmlFor={`${id}-confirm`} label={t('users.confirmPassword')} required>
                     <Input
-                        id="user-confirm-password"
+                        id={`${id}-confirm`}
                         type="password"
                         value={confirmPassword}
-                        onChange={(event) =>
-                            setConfirmPassword(event.target.value)
-                        }
+                        onChange={(event) => setConfirmPassword(event.target.value)}
                         autoComplete="new-password"
                         required
                         disabled={busy}
                     />
-                </div>
+                </Field>
             </div>
 
-            {error && (
-                <p
-                    role="alert"
-                    className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive"
-                >
-                    {error}
-                </p>
-            )}
+            {error && <ErrorState message={error} />}
 
-            <div className="flex justify-end gap-3 border-t pt-4">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={busy}
-                >
-                    Bekor qilish
+            <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+                    {t('common.cancel')}
                 </Button>
-
                 <Button type="submit" disabled={busy}>
-                    {busy ? 'Saqlanmoqda...' : 'Foydalanuvchi yaratish'}
+                    {busy ? t('common.saving') : t('users.create')}
                 </Button>
             </div>
         </form>

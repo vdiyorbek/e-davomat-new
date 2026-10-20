@@ -1,0 +1,10 @@
+{
+  "title": "Mening maktablarim",
+  "subtitle": "Barcha davrlardagi o‘qish va ish joylaringiz.",
+  "count": "{{count}} ta biriktirish",
+  "studyPeriod": "O‘qish davri",
+  "workPeriod": "Faoliyat davri",
+  "emptyTitle": "Hali maktab biriktirilmagan",
+  "emptyText": "Maktabga biriktirilganingizdan so‘ng, o‘qish yoki ish joyingiz shu yerda ko‘rinadi. Ma’lumot yetishmayotgan bo‘lsa, maktab administratoriga murojaat qiling.",
+  "listLabel": "Maktablarga biriktirishlar"
+}

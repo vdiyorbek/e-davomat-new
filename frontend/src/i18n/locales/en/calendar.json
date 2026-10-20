@@ -1,0 +1,81 @@
+{
+  "title": "Academic calendar",
+  "subtitle": "Manage weekly school days, holidays and breaks.",
+  "chooseTitle": "Choose a school",
+  "choose": "Choose a school and an academic year to continue.",
+  "tabs": {
+    "weekly": "Weekly plan",
+    "special": "Holidays & breaks"
+  },
+  "audience": "Applies to",
+  "audiences": {
+    "STUDENT": "Students",
+    "TEACHER": "Teachers",
+    "BOTH": "Everyone"
+  },
+  "scopes": {
+    "GLOBAL": "Nationwide",
+    "REGION": "Region",
+    "DISTRICT": "District",
+    "SCHOOL": "School"
+  },
+  "dayTypes": {
+    "DAY_OFF": "Day off",
+    "WORK_DAY": "School / work day"
+  },
+  "gradeN": "Grade {{grade}}",
+  "classId": "Class ID: {{id}}",
+  "unlimited": "open-ended",
+  "errors": {
+    "range": "Check the date range."
+  },
+  "weekly": {
+    "createTitle": "Create a weekly plan",
+    "createHint": "Set which days of the week the chosen grades attend.",
+    "gradeFrom": "From grade",
+    "gradeTo": "To grade",
+    "grades": "Grades",
+    "workingDays": "Working days",
+    "fiveDay": "5-day week",
+    "sixDay": "6-day week",
+    "period": "Valid period",
+    "submit": "Save plan",
+    "saved": "Weekly plan saved.",
+    "saveFailed": "Failed to save the plan.",
+    "listTitle": "Existing weekly plans",
+    "emptyTitle": "No plans yet",
+    "empty": "No weekly plans have been created yet.",
+    "errors": {
+      "noDays": "Choose at least one working day.",
+      "grades": "Invalid grade range."
+    }
+  },
+  "special": {
+    "createTitle": "Add a special day",
+    "createHint": "Mark a holiday, a break or an extra school day.",
+    "dayType": "Day type",
+    "scope": "Scope",
+    "thisSchool": "This school",
+    "national": "Nationwide",
+    "mandatoryLabel": "Mandatory nationwide rule",
+    "mandatory": "Mandatory",
+    "reason": "Reason",
+    "reasonPlaceholder": "e.g. Autumn break",
+    "submit": "Save special day",
+    "created": "Special day rule created.",
+    "createFailed": "Failed to create the rule.",
+    "listTitle": "Special days",
+    "emptyTitle": "No special days",
+    "empty": "There are no special days in the selected academic year.",
+    "cancel": "Cancel rule",
+    "cancelling": "Cancelling…",
+    "cancelTitle": "Cancel this rule?",
+    "cancelConfirm": "The rule “{{reason}}” will be cancelled.",
+    "cancelled": "The rule was cancelled.",
+    "cancelFailed": "Could not cancel the rule.",
+    "viewOnly": "View only",
+    "errors": {
+      "reason": "Enter a reason of at least 3 characters."
+    }
+  }
+}

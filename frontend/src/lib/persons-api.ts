@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { ApiError } from "@/lib/api";
 import {
   authorizedGet,
@@ -19,7 +20,7 @@ export async function findPersonByPnfl(
   const normalizedPnfl = pnfl.trim();
 
   if (!/^[0-9]{14}$/.test(normalizedPnfl)) {
-    throw new ApiError("PNFL aynan 14 ta raqamdan iborat bo‘lishi kerak.", 400);
+    throw new ApiError(i18n.t("common.pnflInvalid"), 400);
   }
 
   const query = new URLSearchParams({

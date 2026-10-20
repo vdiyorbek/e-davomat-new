@@ -1,0 +1,51 @@
+{
+  "long": "{{year}}-yil {{day}}-{{month}}, {{weekday}}",
+  "weekdays": {
+    "long": {
+      "0": "Dushanba",
+      "1": "Seshanba",
+      "2": "Chorshanba",
+      "3": "Payshanba",
+      "4": "Juma",
+      "5": "Shanba",
+      "6": "Yakshanba"
+    },
+    "short": {
+      "0": "Du",
+      "1": "Se",
+      "2": "Ch",
+      "3": "Pa",
+      "4": "Ju",
+      "5": "Sh",
+      "6": "Ya"
+    }
+  },
+  "months": {
+    "1": "Yanvar",
+    "2": "Fevral",
+    "3": "Mart",
+    "4": "Aprel",
+    "5": "May",
+    "6": "Iyun",
+    "7": "Iyul",
+    "8": "Avgust",
+    "9": "Sentyabr",
+    "10": "Oktabr",
+    "11": "Noyabr",
+    "12": "Dekabr"
+  },
+  "monthsGenitive": {
+    "1": "yanvar",
+    "2": "fevral",
+    "3": "mart",
+    "4": "aprel",
+    "5": "may",
+    "6": "iyun",
+    "7": "iyul",
+    "8": "avgust",
+    "9": "sentyabr",
+    "10": "oktabr",
+    "11": "noyabr",
+    "12": "dekabr"
+  }
+}

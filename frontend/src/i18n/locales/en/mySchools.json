@@ -1,0 +1,10 @@
+{
+  "title": "My schools",
+  "subtitle": "All the places you have studied or worked.",
+  "count": "Memberships: {{count}}",
+  "studyPeriod": "Study period",
+  "workPeriod": "Work period",
+  "emptyTitle": "No school assigned yet",
+  "emptyText": "Once you are assigned to a school, it will appear here. If something is missing, contact your school administrator.",
+  "listLabel": "School memberships"
+}

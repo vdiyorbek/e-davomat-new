@@ -1,3 +1,8 @@
+import { useId } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
 import { Button } from '@/components/ui/button';
 import { useApiQuery } from '@/hooks/useApiQuery';
 
@@ -13,82 +18,42 @@ interface Props {
     value: string;
     onChange: (value: string) => void;
     disabled?: boolean;
+    label?: string;
 }
 
-export function SchoolClassSelect({
-    schoolId,
-    academicYear,
-    value,
-    onChange,
-    disabled = false,
-}: Props) {
-    const params = new URLSearchParams({
-        schoolId: String(schoolId),
-        academicYear,
-    });
+export function SchoolClassSelect({ schoolId, academicYear, value, onChange, disabled = false, label }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
+    const params = new URLSearchParams({ schoolId: String(schoolId), academicYear });
+    const query = useApiQuery<SchoolClass[]>(`/classes?${params.toString()}`);
 
-    const query = useApiQuery<SchoolClass[]>(
-        `/classes?${params.toString()}`,
-    );
+    const empty = !query.loading && !query.error && query.data?.length === 0;
 
     return (
-        <div className="space-y-2">
-            <label className="block text-sm font-medium">
-                Sinf
-                <select
-                    value={value}
-                    onChange={(event) => onChange(event.target.value)}
-                    required
-                    disabled={
-                        disabled ||
-                        query.loading ||
-                        Boolean(query.error) ||
-                        !query.data?.length
-                    }
-                    className="mt-2 h-12 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
-                >
-                    <option value="">
-                        {query.loading
-                            ? 'Yuklanmoqda…'
-                            : 'Sinfni tanlang'}
-                    </option>
-
-                    {query.data?.map((schoolClass) => (
-                        <option
-                            key={schoolClass.id}
-                            value={schoolClass.id}
-                        >
-                            {schoolClass.name}
-                        </option>
-                    ))}
-                </select>
-            </label>
-
+        <Field
+            htmlFor={id}
+            label={label ?? t('common.class')}
+            required
+            hint={empty ? t('members.noClasses') : undefined}
+            error={query.error || undefined}
+        >
+            <SelectField
+                id={id}
+                value={value}
+                onValueChange={onChange}
+                required
+                disabled={disabled || query.loading || Boolean(query.error) || !query.data?.length}
+                placeholder={query.loading ? t('common.loading') : t('members.chooseClass')}
+                options={(query.data ?? []).map((schoolClass) => ({
+                    value: String(schoolClass.id),
+                    label: schoolClass.name,
+                }))}
+            />
             {query.error && (
-                <div className="space-y-2">
-                    <p role="alert" className="text-sm text-destructive">
-                        {query.error}
-                    </p>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        disabled={disabled}
-                        onClick={query.retry}
-                    >
-                        Qayta urinish
-                    </Button>
-                </div>
+                <Button type="button" variant="outline" size="sm" className="w-fit" disabled={disabled} onClick={query.retry}>
+                    {t('common.retry')}
+                </Button>
             )}
-
-            {!query.loading &&
-                !query.error &&
-                query.data?.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        Ushbu maktab va o‘quv yilida sinflar yo‘q.
-                        Avval sinf yarating.
-                    </p>
-                )}
-        </div>
+        </Field>
     );
 }

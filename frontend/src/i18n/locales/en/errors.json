@@ -1,0 +1,12 @@
+{
+  "403": {
+    "title": "Access denied",
+    "text": "Your account is not allowed to view this page. Contact your administrator if you need access."
+  },
+  "404": {
+    "title": "Page not found",
+    "text": "The page you’re looking for doesn’t exist or may have been moved."
+  },
+  "toCabinet": "Back to cabinet",
+  "toProfile": "Back to personal cabinet"
+}

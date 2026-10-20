@@ -1,0 +1,71 @@
+{
+  "title": "Darsliklar kutubxonasi",
+  "subtitle": "PDF darsliklar va Gemini yordamida ajratilgan mavzularni boshqarish.",
+  "listTitle": "Yuklangan darsliklar",
+  "textbook": "Darslik",
+  "emptyTitle": "Darsliklar yo‘q",
+  "empty": "Hozircha darslik yuklanmagan.",
+  "subjectN": "Fan #{{id}}",
+  "topicsButton": "Mavzular",
+  "processingLabel": "Tahlil holati",
+  "processing": {
+    "DRAFT": "Yangi",
+    "PROCESSING": "Tahlil qilinmoqda",
+    "READY": "Tahlil tugagan",
+    "FAILED": "Tahlilda xatolik"
+  },
+  "languages": {
+    "uz-Latn": "O‘zbek — lotin",
+    "uz-Cyrl": "O‘zbek — kirill",
+    "ru": "Rus tili"
+  },
+  "upload": {
+    "title": "Yangi PDF darslik qo‘shish",
+    "hint": "Darslikni yuklang, keyin Gemini orqali mavzularini ajrating.",
+    "name": "Darslik nomi",
+    "namePlaceholder": "Masalan: Algebra 8-sinf",
+    "language": "Darslik tili",
+    "file": "PDF fayl",
+    "submit": "PDF darslikni yuklash",
+    "success": "«{{title}}» darsligi muvaffaqiyatli yuklandi. ID: {{id}}",
+    "errors": {
+      "required": "Barcha majburiy maydonlarni to‘ldiring.",
+      "failed": "PDF yuklashda xatolik yuz berdi."
+    }
+  },
+  "extract": {
+    "button": "Gemini orqali mavzularni ajratish",
+    "busy": "Gemini PDF’ni tahlil qilmoqda…",
+    "wait": "Tahlil biroz vaqt olishi mumkin. Sahifani yopmang.",
+    "success": "{{count}} ta mavzu ajratildi va tekshirish uchun saqlandi.",
+    "failed": "Gemini tahlilida xatolik yuz berdi."
+  },
+  "topics": {
+    "total": "Jami mavzular: {{count}}",
+    "sheetHint": "Mavzularni tekshiring, tahrirlang va tasdiqlang.",
+    "emptyTitle": "Mavzular ajratilmagan",
+    "empty": "Ushbu darslikning mavzulari hali ajratilmagan.",
+    "pagesValue": "Sahifalar: {{pages}}",
+    "title": "Mavzu nomi",
+    "chapter": "Bob nomi",
+    "pageStart": "Boshlanish sahifasi",
+    "pageEnd": "Tugash sahifasi",
+    "editTitle": "{{n}}-mavzuni tahrirlash",
+    "editHint": "Tasdiqlangan mavzu o‘zgartirilsa, qayta tekshirish holatiga o‘tadi.",
+    "approve": "Tasdiqlash",
+    "approveTitle": "Mavzuni tasdiqlaysizmi?",
+    "approveConfirm": "«{{title}}» mavzusi tasdiqlanadi.",
+    "review": {
+      "PENDING_REVIEW": "Tekshirilmagan",
+      "APPROVED": "Tasdiqlangan",
+      "REJECTED": "Rad etilgan"
+    },
+    "errors": {
+      "title": "Mavzu nomi 1–255 belgidan iborat bo‘lishi kerak.",
+      "page": "Sahifa raqami musbat butun son bo‘lishi kerak.",
+      "range": "Boshlanish sahifasi tugash sahifasidan katta.",
+      "saveFailed": "Mavzuni saqlashda xatolik yuz berdi.",
+      "approveFailed": "Mavzuni tasdiqlab bo‘lmadi."
+    }
+  }
+}

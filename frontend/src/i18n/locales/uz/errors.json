@@ -1,0 +1,12 @@
+{
+  "403": {
+    "title": "Kirishga ruxsat yo‘q",
+    "text": "Hisobingiz ushbu sahifadan foydalanish huquqiga ega emas. Kerak bo‘lsa, administratorga murojaat qiling."
+  },
+  "404": {
+    "title": "Sahifa topilmadi",
+    "text": "Siz izlagan sahifa mavjud emas yoki boshqa manzilga ko‘chirilgan bo‘lishi mumkin."
+  },
+  "toCabinet": "Kabinetga qaytish",
+  "toProfile": "Shaxsiy kabinetga qaytish"
+}

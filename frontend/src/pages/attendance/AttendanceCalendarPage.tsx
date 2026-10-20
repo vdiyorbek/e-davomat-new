@@ -1,17 +1,27 @@
-
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { CalendarDays, CalendarRange, PartyPopper, RotateCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { CalendarDays, RefreshCw } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { CalendarSpecialDays } from '@/components/attendance/CalendarSpecialDays';
+import { Field } from '@/components/common/Field';
 import { PageHeader } from '@/components/common/PageHeader';
+import { SelectField } from '@/components/common/SelectField';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { authorizedPost } from '@/lib/auth-session';
+import { academicYearFor, academicYearOptions, formatDate, isValidAcademicYear, todayInTashkent, weekdayName } from '@/lib/date';
+import { cn } from '@/lib/utils';
 import type { School } from '@/types/school';
-import { CalendarSpecialDays } from '@/components/attendance/CalendarSpecialDays';
+
 type MembershipType = 'STUDENT' | 'TEACHER';
 
 interface WeeklySchedule {
@@ -27,409 +37,219 @@ interface WeeklySchedule {
     effectiveTo: string | null;
 }
 
-const DAYS = [
-    'Dushanba',
-    'Seshanba',
-    'Chorshanba',
-    'Payshanba',
-    'Juma',
-    'Shanba',
-    'Yakshanba',
-];
-
-const inputStyle =
-    'h-11 w-full rounded-xl border border-input ' +
-    'bg-background px-3 text-sm';
-
-function getAcademicYear() {
-    const parts = new Intl.DateTimeFormat('en', {
-        timeZone: 'Asia/Tashkent',
-        year: 'numeric',
-        month: '2-digit',
-    }).formatToParts(new Date());
-
-    const year = Number(
-        parts.find((part) => part.type === 'year')?.value,
-    );
-
-    const month = Number(
-        parts.find((part) => part.type === 'month')?.value,
-    );
-
-    const start = month >= 9 ? year : year - 1;
-
-    return `${start}-${start + 1}`;
-}
+const WEEK = [0, 1, 2, 3, 4, 5, 6];
+const GRADES = Array.from({ length: 12 }, (_, index) => String(index + 1));
 
 function formatDays(mask: number) {
-    return DAYS
-        .filter((_, index) => (mask & (1 << index)) !== 0)
+    return WEEK.filter((index) => (mask & (1 << index)) !== 0)
+        .map((index) => weekdayName(index, 'short'))
         .join(', ');
 }
 
-function WeeklySchedules({
-    schoolId,
-    academicYear,
-}: {
-    schoolId: number;
-    academicYear: string;
-}) {
-    const path =
-        `/attendance-calendar/weekly-schedules` +
-        `?schoolId=${schoolId}&academicYear=${academicYear}`;
+function WeeklySchedules({ schoolId, academicYear }: { schoolId: number; academicYear: string }) {
+    const { t } = useTranslation();
+    const id = useId();
+    const query = useApiQuery<WeeklySchedule[]>(
+        `/attendance-calendar/weekly-schedules?schoolId=${schoolId}&academicYear=${academicYear}`,
+    );
 
-    const query = useApiQuery<WeeklySchedule[]>(path);
-
-    const [membershipType, setMembershipType] =
-        useState<MembershipType>('STUDENT');
-
+    const [membershipType, setMembershipType] = useState<MembershipType>('STUDENT');
     const [gradeFrom, setGradeFrom] = useState('1');
     const [gradeTo, setGradeTo] = useState('4');
-
-    const [workingDaysMask, setWorkingDaysMask] =
-        useState(31);
-
-    const [effectiveFrom, setEffectiveFrom] = useState(
-        `${academicYear.slice(0, 4)}-09-01`,
-    );
-
-    const [effectiveTo, setEffectiveTo] = useState(
-        `${academicYear.slice(5)}-08-31`,
-    );
-
+    const [workingDaysMask, setWorkingDaysMask] = useState(31);
+    const [effectiveFrom, setEffectiveFrom] = useState(`${academicYear.slice(0, 4)}-09-01`);
+    const [effectiveTo, setEffectiveTo] = useState(`${academicYear.slice(5)}-08-31`);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
     const saving = useRef(false);
 
-    function changeDay(index: number) {
-        setWorkingDaysMask((previous) =>
-            previous ^ (1 << index),
-        );
-    }
-
-    async function handleSubmit(
-        event: FormEvent<HTMLFormElement>,
-    ) {
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (saving.current) return;
-
         setError('');
         setSuccess('');
 
-        if (workingDaysMask === 0) {
-            setError('Kamida bitta ish kunini tanlang.');
-            return;
-        }
-
-        if (
-            effectiveTo &&
-            effectiveTo < effectiveFrom
-        ) {
-            setError('Sana oralig‘i noto‘g‘ri.');
-            return;
-        }
-
-        if (
-            membershipType === 'STUDENT' &&
-            Number(gradeFrom) > Number(gradeTo)
-        ) {
-            setError('Sinf oralig‘i noto‘g‘ri.');
-            return;
-        }
+        if (workingDaysMask === 0) return setError(t('calendar.weekly.errors.noDays'));
+        if (effectiveTo && effectiveTo < effectiveFrom) return setError(t('calendar.errors.range'));
+        if (membershipType === 'STUDENT' && Number(gradeFrom) > Number(gradeTo)) return setError(t('calendar.weekly.errors.grades'));
 
         saving.current = true;
         setBusy(true);
-
         try {
-            await authorizedPost(
-                '/attendance-calendar/weekly-schedules',
-                {
-                    schoolId,
-                    academicYear,
-                    membershipType,
-                    ...(membershipType === 'STUDENT'
-                        ? {
-                            gradeFrom: Number(gradeFrom),
-                            gradeTo: Number(gradeTo),
-                        }
-                        : {}),
-                    workingDaysMask,
-                    effectiveFrom,
-                    ...(effectiveTo
-                        ? { effectiveTo }
-                        : {}),
-                },
-            );
-
-            setSuccess('Haftalik reja saqlandi.');
+            await authorizedPost('/attendance-calendar/weekly-schedules', {
+                schoolId,
+                academicYear,
+                membershipType,
+                ...(membershipType === 'STUDENT' ? { gradeFrom: Number(gradeFrom), gradeTo: Number(gradeTo) } : {}),
+                workingDaysMask,
+                effectiveFrom,
+                ...(effectiveTo ? { effectiveTo } : {}),
+            });
+            setSuccess(t('calendar.weekly.saved'));
             query.retry();
         } catch (err: unknown) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Rejani saqlashda xatolik yuz berdi.',
-            );
+            setError(err instanceof Error ? err.message : t('calendar.weekly.saveFailed'));
         } finally {
             saving.current = false;
             setBusy(false);
         }
     }
 
+    const gradeOptions = GRADES.map((grade) => ({ value: grade, label: t('calendar.gradeN', { grade }) }));
+
     return (
-        <div className="space-y-6">
-            <form
-                onSubmit={handleSubmit}
-                className="space-y-5 rounded-2xl border bg-card p-5"
-            >
-                <h2 className="text-lg font-semibold">
-                    Haftalik o‘quv rejasini yaratish
-                </h2>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                    <label className="space-y-2 text-sm font-medium">
-                        Kimlar uchun?
-                        <select
-                            value={membershipType}
-                            onChange={(event) =>
-                                setMembershipType(
-                                    event.target.value as MembershipType,
-                                )
-                            }
-                            disabled={busy}
-                            className={inputStyle}
-                        >
-                            <option value="STUDENT">
-                                O‘quvchilar
-                            </option>
-                            <option value="TEACHER">
-                                O‘qituvchilar
-                            </option>
-                        </select>
-                    </label>
-
-                    {membershipType === 'STUDENT' && (
-                        <>
-                            <label className="space-y-2 text-sm font-medium">
-                                Qaysi sinfdan?
-                                <select
-                                    value={gradeFrom}
-                                    onChange={(event) =>
-                                        setGradeFrom(event.target.value)
-                                    }
-                                    disabled={busy}
-                                    className={inputStyle}
-                                >
-                                    {Array.from(
-                                        { length: 12 },
-                                        (_, index) => index + 1,
-                                    ).map((level) => (
-                                        <option key={level} value={level}>
-                                            {level}-sinf
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <label className="space-y-2 text-sm font-medium">
-                                Qaysi sinfgacha?
-                                <select
-                                    value={gradeTo}
-                                    onChange={(event) =>
-                                        setGradeTo(event.target.value)
-                                    }
-                                    disabled={busy}
-                                    className={inputStyle}
-                                >
-                                    {Array.from(
-                                        { length: 12 },
-                                        (_, index) => index + 1,
-                                    ).map((level) => (
-                                        <option key={level} value={level}>
-                                            {level}-sinf
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                        </>
-                    )}
-                </div>
-
-                <div className="space-y-3">
-                    <p className="text-sm font-semibold">
-                        Haftaning ish kunlari
-                    </p>
-
-                    <div className="flex flex-wrap gap-2">
-                        {DAYS.map((day, index) => {
-                            const checked =
-                                (workingDaysMask & (1 << index)) !== 0;
-
-                            return (
-                                <label
-                                    key={day}
-                                    className={
-                                        'flex cursor-pointer items-center gap-2 ' +
-                                        'rounded-xl border px-3 py-2 text-sm ' +
-                                        (checked
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-border bg-background')
-                                    }
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        disabled={busy}
-                                        onChange={() => changeDay(index)}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">{t('calendar.weekly.createTitle')}</CardTitle>
+                    <CardDescription>{t('calendar.weekly.createHint')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <fieldset disabled={busy} className="space-y-5">
+                            <div className="grid gap-4 sm:grid-cols-3">
+                                <Field htmlFor={`${id}-who`} label={t('calendar.audience')}>
+                                    <SelectField
+                                        id={`${id}-who`}
+                                        value={membershipType}
+                                        onValueChange={(value) => setMembershipType(value as MembershipType)}
+                                        options={[
+                                            { value: 'STUDENT', label: t('calendar.audiences.STUDENT') },
+                                            { value: 'TEACHER', label: t('calendar.audiences.TEACHER') },
+                                        ]}
                                     />
-                                    {day}
-                                </label>
-                            );
-                        })}
-                    </div>
+                                </Field>
+                                {membershipType === 'STUDENT' && (
+                                    <>
+                                        <Field htmlFor={`${id}-from`} label={t('calendar.weekly.gradeFrom')}>
+                                            <SelectField id={`${id}-from`} value={gradeFrom} onValueChange={setGradeFrom} options={gradeOptions} />
+                                        </Field>
+                                        <Field htmlFor={`${id}-to`} label={t('calendar.weekly.gradeTo')}>
+                                            <SelectField id={`${id}-to`} value={gradeTo} onValueChange={setGradeTo} options={gradeOptions} />
+                                        </Field>
+                                    </>
+                                )}
+                            </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => setWorkingDaysMask(31)}
-                        >
-                            5 kunlik
+                            <fieldset className="space-y-3">
+                                <legend className="mb-2 text-sm font-semibold">{t('calendar.weekly.workingDays')}</legend>
+                                <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                                    {WEEK.map((index) => {
+                                        const checked = (workingDaysMask & (1 << index)) !== 0;
+                                        return (
+                                            <label
+                                                key={index}
+                                                className={cn(
+                                                    'flex cursor-pointer flex-col items-center gap-2 rounded-xl border px-2 py-2.5 text-xs font-semibold transition-colors',
+                                                    checked ? 'border-primary bg-primary/10 text-primary dark:text-foreground' : 'bg-card text-muted-foreground hover:bg-muted',
+                                                )}
+                                            >
+                                                <Checkbox
+                                                    checked={checked}
+                                                    onCheckedChange={() => setWorkingDaysMask((previous) => previous ^ (1 << index))}
+                                                    aria-label={weekdayName(index)}
+                                                />
+                                                {weekdayName(index, 'short')}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button type="button" variant="outline" size="sm" onClick={() => setWorkingDaysMask(31)}>
+                                        {t('calendar.weekly.fiveDay')}
+                                    </Button>
+                                    <Button type="button" variant="outline" size="sm" onClick={() => setWorkingDaysMask(63)}>
+                                        {t('calendar.weekly.sixDay')}
+                                    </Button>
+                                </div>
+                            </fieldset>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
+                                    <Input
+                                        id={`${id}-start`}
+                                        type="date"
+                                        value={effectiveFrom}
+                                        min={`${academicYear.slice(0, 4)}-09-01`}
+                                        max={`${academicYear.slice(5)}-08-31`}
+                                        onChange={(event) => setEffectiveFrom(event.target.value)}
+                                        required
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-end`} label={t('membership.endDate')}>
+                                    <Input
+                                        id={`${id}-end`}
+                                        type="date"
+                                        value={effectiveTo}
+                                        min={effectiveFrom}
+                                        max={`${academicYear.slice(5)}-08-31`}
+                                        onChange={(event) => setEffectiveTo(event.target.value)}
+                                    />
+                                </Field>
+                            </div>
+                        </fieldset>
+
+                        {error && <ErrorState message={error} />}
+                        {success && <SuccessNotice>{success}</SuccessNotice>}
+
+                        <Button type="submit" disabled={busy} className="w-full sm:w-auto">
+                            {busy ? t('common.saving') : t('calendar.weekly.submit')}
                         </Button>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => setWorkingDaysMask(63)}
-                        >
-                            6 kunlik
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="space-y-2 text-sm font-medium">
-                        Boshlanish sanasi
-                        <Input
-                            type="date"
-                            value={effectiveFrom}
-                            min={`${academicYear.slice(0, 4)}-09-01`}
-                            max={`${academicYear.slice(5)}-08-31`}
-                            onChange={(event) =>
-                                setEffectiveFrom(event.target.value)
-                            }
-                            disabled={busy}
-                            required
-                        />
-                    </label>
-
-                    <label className="space-y-2 text-sm font-medium">
-                        Tugash sanasi
-                        <Input
-                            type="date"
-                            value={effectiveTo}
-                            min={effectiveFrom}
-                            max={`${academicYear.slice(5)}-08-31`}
-                            onChange={(event) =>
-                                setEffectiveTo(event.target.value)
-                            }
-                            disabled={busy}
-                        />
-                    </label>
-                </div>
-
-                {error && (
-                    <p role="alert" className="text-sm text-destructive">
-                        {error}
-                    </p>
-                )}
-
-                {success && (
-                    <p role="status" className="text-sm text-green-600">
-                        {success}
-                    </p>
-                )}
-
-                <Button type="submit" disabled={busy}>
-                    {busy ? 'Saqlanmoqda…' : 'Rejani saqlash'}
-                </Button>
-            </form>
+                    </form>
+                </CardContent>
+            </Card>
 
             <section className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-lg font-semibold">
-                        Mavjud haftalik rejalar
-                    </h2>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={query.retry}
-                    >
-                        <RefreshCw className="size-4" />
-                        Yangilash
+                <div className="flex items-center justify-between gap-3">
+                    <h2 className="font-heading text-lg font-semibold">{t('calendar.weekly.listTitle')}</h2>
+                    <Button type="button" variant="outline" size="sm" onClick={query.retry}>
+                        <RotateCw aria-hidden="true" />
+                        {t('common.refresh')}
                     </Button>
                 </div>
 
                 {query.loading ? (
-                    <p className="text-sm text-muted-foreground">
-                        Rejalar yuklanmoqda…
-                    </p>
+                    <LoadingState rows={3} />
                 ) : query.error ? (
-                    <p role="alert" className="text-sm text-destructive">
-                        {query.error}
-                    </p>
+                    <ErrorState message={query.error} onRetry={query.retry} />
                 ) : query.data?.length ? (
-                    <div className="overflow-x-auto rounded-xl border">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50">
-                                <tr>
-                                    <th className="px-4 py-3">Kimlar uchun?</th>
-                                    <th className="px-4 py-3">Sinflar</th>
-                                    <th className="px-4 py-3">Ish kunlari</th>
-                                    <th className="px-4 py-3">Amal qilish davri</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <Card className="py-0">
+                        <Table>
+                            <TableHeader className="bg-muted/50">
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="pl-5">{t('calendar.audience')}</TableHead>
+                                    <TableHead>{t('calendar.weekly.grades')}</TableHead>
+                                    <TableHead>{t('calendar.weekly.workingDays')}</TableHead>
+                                    <TableHead className="pr-5">{t('calendar.weekly.period')}</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {query.data.map((schedule) => (
-                                    <tr key={schedule.id} className="border-t">
-                                        <td className="px-4 py-3">
-                                            {schedule.membershipType === 'STUDENT'
-                                                ? 'O‘quvchilar'
-                                                : 'O‘qituvchilar'}
-                                        </td>
-                                        <td className="px-4 py-3">
+                                    <TableRow key={schedule.id}>
+                                        <TableCell className="pl-5">
+                                            <StatusBadge tone={schedule.membershipType === 'STUDENT' ? 'primary' : 'info'} dot={false}>
+                                                {t(`calendar.audiences.${schedule.membershipType}`)}
+                                            </StatusBadge>
+                                        </TableCell>
+                                        <TableCell>
                                             {schedule.classId !== null
-                                                ? `Sinf ID: ${schedule.classId}`
-                                                : schedule.gradeFrom !== null &&
-                                                    schedule.gradeTo !== null
+                                                ? t('calendar.classId', { id: schedule.classId })
+                                                : schedule.gradeFrom !== null && schedule.gradeTo !== null
                                                     ? `${schedule.gradeFrom}–${schedule.gradeTo}`
-                                                    : 'Barcha'}
-                                        </td>
-                                        <td className="min-w-52 px-4 py-3">
-                                            {formatDays(schedule.workingDaysMask)}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {schedule.effectiveFrom}
-                                            {' — '}
-                                            {schedule.effectiveTo ?? 'Cheklanmagan'}
-                                        </td>
-                                    </tr>
+                                                    : t('common.all')}
+                                        </TableCell>
+                                        <TableCell className="min-w-40 whitespace-normal">{formatDays(schedule.workingDaysMask)}</TableCell>
+                                        <TableCell className="pr-5 tabular-nums">
+                                            {formatDate(schedule.effectiveFrom)} — {schedule.effectiveTo ? formatDate(schedule.effectiveTo) : t('calendar.unlimited')}
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </TableBody>
+                        </Table>
+                    </Card>
                 ) : (
-                    <p className="rounded-xl border p-4 text-sm text-muted-foreground">
-                        Hozircha haftalik rejalar yaratilmagan.
-                    </p>
+                    <EmptyState icon={CalendarRange} title={t('calendar.weekly.emptyTitle')} description={t('calendar.weekly.empty')} />
                 )}
             </section>
         </div>
@@ -437,130 +257,67 @@ function WeeklySchedules({
 }
 
 export function AttendanceCalendarPage() {
+    const { t } = useTranslation();
+    const id = useId();
     const { session } = useAuth();
     const schoolsQuery = useApiQuery<School[]>('/schools');
-    const [activeTab, setActiveTab] =
-        useState<'weekly' | 'special'>('weekly');
     const [selectedSchoolId, setSelectedSchoolId] = useState('');
-    const [academicYear, setAcademicYear] =
-        useState(getAcademicYear);
+    const [academicYear, setAcademicYear] = useState(() => academicYearFor(todayInTashkent()));
 
-    const schoolId =
-        selectedSchoolId ||
-        (session?.profile.schoolId
-            ? String(session.profile.schoolId)
-            : '');
-
-    const [start, end] = academicYear.split('-').map(Number);
-
-    const validYear =
-        /^\d{4}-\d{4}$/.test(academicYear) &&
-        end === start + 1 &&
-        start >= 2000 &&
-        end <= 2100;
-
-    const selectedSchool = (schoolsQuery.data ?? []).find(
-        (school) => String(school.id) === schoolId,
-    );
+    const schoolId = selectedSchoolId || (session?.profile.schoolId ? String(session.profile.schoolId) : '');
+    const validYear = isValidAcademicYear(academicYear);
+    const selectedSchool = (schoolsQuery.data ?? []).find((school) => String(school.id) === schoolId);
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                eyebrow="Davomat boshqaruvi"
-                title="O‘quv kalendari"
-                description="Maktablarning haftalik o‘quv va ish kunlarini boshqarish."
-                actions={<CalendarDays className="size-7 text-primary" />}
-            />
+            <PageHeader eyebrow={t('nav.groups.attendance')} title={t('calendar.title')} description={t('calendar.subtitle')} />
 
-            <div className="grid gap-4 rounded-2xl border bg-card p-5 md:grid-cols-2">
-                <label className="space-y-2 text-sm font-medium">
-                    Maktab
-                    <select
+            <div className="grid gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <Field htmlFor={`${id}-school`} label={t('common.school')} error={schoolsQuery.error || undefined}>
+                    <SelectField
+                        id={`${id}-school`}
                         value={schoolId}
-                        onChange={(event) =>
-                            setSelectedSchoolId(event.target.value)
-                        }
+                        onValueChange={setSelectedSchoolId}
                         disabled={schoolsQuery.loading}
-                        className={inputStyle}
-                    >
-                        <option value="">Maktabni tanlang</option>
-
-                        {(schoolsQuery.data ?? []).map((school) => (
-                            <option key={school.id} value={school.id}>
-                                {school.name} — {school.district.name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-
-                <label className="space-y-2 text-sm font-medium">
-                    O‘quv yili
-                    <Input
-                        value={academicYear}
-                        onChange={(event) =>
-                            setAcademicYear(event.target.value)
-                        }
-                        placeholder="2026-2027"
-                        maxLength={9}
+                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
+                        options={(schoolsQuery.data ?? []).map((school) => ({
+                            value: String(school.id),
+                            label: `${school.name} — ${school.district.name}`,
+                        }))}
                     />
-                </label>
+                </Field>
+                <Field htmlFor={`${id}-year`} label={t('members.academicYear')}>
+                    <SelectField
+                        id={`${id}-year`}
+                        value={academicYear}
+                        onValueChange={setAcademicYear}
+                        options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
+                    />
+                </Field>
             </div>
 
-            {schoolsQuery.error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {schoolsQuery.error}
-                </p>
-            )}
-
-            {!validYear && (
-                <p className="text-sm text-destructive">
-                    O‘quv yilini 2026-2027 shaklida kiriting.
-                </p>
-            )}
-
-
             {selectedSchool && validYear ? (
-                <div className="space-y-5">
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            type="button"
-                            variant={activeTab === 'weekly' ? 'default' : 'outline'}
-                            aria-pressed={activeTab === 'weekly'}
-                            onClick={() => setActiveTab('weekly')}
-                        >
-                            Haftalik o‘quv rejasi
-                        </Button>
-
-                        <Button
-                            type="button"
-                            variant={activeTab === 'special' ? 'default' : 'outline'}
-                            aria-pressed={activeTab === 'special'}
-                            onClick={() => setActiveTab('special')}
-                        >
-                            Bayram va ta’tillar
-                        </Button>
-                    </div>
-
-                    {activeTab === 'weekly' ? (
-                        <WeeklySchedules
-                            key={`${selectedSchool.id}-${academicYear}`}
-                            schoolId={selectedSchool.id}
-                            academicYear={academicYear}
-                        />
-                    ) : (
-                        <CalendarSpecialDays
-                            key={`${selectedSchool.id}-${academicYear}`}
-                            school={selectedSchool}
-                            academicYear={academicYear}
-                        />
-                    )}
-                </div>
+                <Tabs defaultValue="weekly">
+                    <TabsList className="w-full sm:w-fit">
+                        <TabsTrigger value="weekly">
+                            <CalendarRange aria-hidden="true" />
+                            {t('calendar.tabs.weekly')}
+                        </TabsTrigger>
+                        <TabsTrigger value="special">
+                            <PartyPopper aria-hidden="true" />
+                            {t('calendar.tabs.special')}
+                        </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="weekly" className="pt-2">
+                        <WeeklySchedules key={`${selectedSchool.id}-${academicYear}`} schoolId={selectedSchool.id} academicYear={academicYear} />
+                    </TabsContent>
+                    <TabsContent value="special" className="pt-2">
+                        <CalendarSpecialDays key={`${selectedSchool.id}-${academicYear}`} school={selectedSchool} academicYear={academicYear} />
+                    </TabsContent>
+                </Tabs>
             ) : (
-                <p className="text-sm text-muted-foreground">
-                    Davom etish uchun maktab va o‘quv yilini tanlang.
-                </p>
+                <EmptyState icon={CalendarDays} title={t('calendar.chooseTitle')} description={t('calendar.choose')} />
             )}
-
         </div>
     );
 }

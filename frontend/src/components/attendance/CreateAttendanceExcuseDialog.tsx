@@ -1,41 +1,34 @@
-
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Dialog } from 'radix-ui';
-import { FilePlus2, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, FilePlus2, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
+import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/useAuth';
-import { useApiQuery } from '@/hooks/useApiQuery';
-
 import {
-    AttendanceExcuseForm,
-    type ExcuseStudentSelection,
-} from './AttendanceExcuseForm';
-
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { todayInTashkent } from '@/lib/date';
+import { personFullName } from '@/lib/person';
 import type { School } from '@/types/school';
-import type {
-    SchoolMembership,
-    SchoolMembershipsPage,
-} from '@/types/school-membership';
+import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-membership';
+
+import { AttendanceExcuseForm } from './AttendanceExcuseForm';
+import type { ExcuseStudentSelection } from './AttendanceExcuseForm';
 
 interface Props {
     onSaved: () => void;
-}
-
-function todayInTashkent(): string {
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Tashkent',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).formatToParts(new Date());
-
-    const part = (name: string) =>
-        parts.find((item) => item.type === name)?.value ?? '';
-
-    return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 function StudentSearchResults({
@@ -47,114 +40,65 @@ function StudentSearchResults({
     query: string;
     onSelect: (membership: SchoolMembership) => void;
 }) {
-    const params = new URLSearchParams({
-        schoolId: String(schoolId),
-        type: 'STUDENT',
-        q: query,
-        page: '1',
-        limit: '50',
-    });
+    const { t } = useTranslation();
+    const params = new URLSearchParams({ schoolId: String(schoolId), type: 'STUDENT', q: query, page: '1', limit: '50' });
+    const { data, loading, error, retry } = useApiQuery<SchoolMembershipsPage>(`/school-memberships?${params.toString()}`);
 
-    const { data, loading, error, retry } =
-        useApiQuery<SchoolMembershipsPage>(
-            `/school-memberships?${params.toString()}`,
-        );
-
-    // Bir o‘quvchi sinf almashtirgan bo‘lishi mumkin.
-    // Qidiruv ro‘yxatida uni takror ko‘rsatmaymiz.
-    const uniqueStudents = new Map<number, SchoolMembership>();
-
+    // O‘quvchi sinf almashtirgan bo‘lishi mumkin — ro‘yxatda takrorlamaymiz.
+    const unique = new Map<number, SchoolMembership>();
     for (const membership of data?.data ?? []) {
-        if (
-            membership.person &&
-            !uniqueStudents.has(membership.person.id)
-        ) {
-            uniqueStudents.set(membership.person.id, membership);
-        }
+        if (membership.person && !unique.has(membership.person.id)) unique.set(membership.person.id, membership);
     }
+
+    if (loading) {
+        return (
+            <div role="status" className="space-y-2">
+                <span className="sr-only">{t('excuses.create.searching')}</span>
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+        );
+    }
+    if (error) return <ErrorState message={error} onRetry={retry} />;
+    if (unique.size === 0) return <p className="text-sm text-muted-foreground">{t('excuses.create.noStudents')}</p>;
 
     return (
         <div className="space-y-2">
-            {loading && (
-                <p role="status" className="text-sm text-muted-foreground">
-                    O‘quvchilar qidirilmoqda…
-                </p>
-            )}
-
-            {error && (
-                <div className="flex items-center gap-2">
-                    <p role="alert" className="text-sm text-destructive">
-                        {error}
-                    </p>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={retry}
-                    >
-                        Takrorlash
-                    </Button>
-                </div>
-            )}
-
-            {!loading && !error && uniqueStudents.size === 0 && (
-                <p className="text-sm text-muted-foreground">
-                    O‘quvchi topilmadi.
-                </p>
-            )}
-
-            {uniqueStudents.size > 0 && (
-                <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border p-2">
-                    {[...uniqueStudents.values()].map((membership) => {
-                        const person = membership.person!;
-
-                        const name = [
-                            person.lastName,
-                            person.firstName,
-                            person.middleName,
-                        ].filter(Boolean).join(' ');
-
-                        return (
-                            <button
-                                key={person.id}
+            <ul className="max-h-72 space-y-1.5 overflow-y-auto rounded-xl border p-1.5">
+                {[...unique.values()].map((membership) => {
+                    const person = membership.person!;
+                    return (
+                        <li key={person.id}>
+                            <Button
                                 type="button"
+                                variant="ghost"
                                 onClick={() => onSelect(membership)}
-                                className="flex w-full items-center justify-between gap-3 rounded-lg border border-transparent p-3 text-left transition-colors hover:border-primary/30 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="h-auto w-full justify-between gap-3 rounded-lg px-3 py-2.5 text-left whitespace-normal"
                             >
                                 <span className="min-w-0">
-                                    <span className="block font-medium">{name}</span>
-
-                                    <span className="mt-1 block text-xs text-muted-foreground">
-                                        PNFL: {person.pnfl}
-                                        {membership.schoolClass
-                                            ? ` · ${membership.schoolClass.name}`
-                                            : ''}
+                                    <span className="block font-semibold">{personFullName(person)}</span>
+                                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground tabular-nums">
+                                        {t('common.pnfl')}: {person.pnfl}
+                                        {membership.schoolClass ? ` · ${membership.schoolClass.name}` : ''}
                                     </span>
                                 </span>
-
-                                <span className="shrink-0 text-xs font-semibold text-primary">
-                                    Tanlash
+                                <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
+                                    {t('excuses.create.select')}
+                                    <ChevronRight aria-hidden="true" className="size-4" />
                                 </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-
-            {data && data.total > 50 && (
-                <p className="text-xs text-muted-foreground">
-                    Birinchi 50 ta bog‘lanish tekshirildi.
-                    Qidiruvni aniqlashtiring.
-                </p>
-            )}
+                            </Button>
+                        </li>
+                    );
+                })}
+            </ul>
+            {data && data.total > 50 && <p className="text-xs text-muted-foreground">{t('excuses.create.first50')}</p>}
         </div>
     );
 }
 
-export function CreateAttendanceExcuseDialog({
-    onSaved,
-}: Props) {
+export function CreateAttendanceExcuseDialog({ onSaved }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
     const { session } = useAuth();
 
     const [open, setOpen] = useState(false);
@@ -162,23 +106,13 @@ export function CreateAttendanceExcuseDialog({
     const [searchText, setSearchText] = useState('');
     const [appliedSearch, setAppliedSearch] = useState('');
     const [searchError, setSearchError] = useState('');
+    const [student, setStudent] = useState<ExcuseStudentSelection | null>(null);
 
-    const [student, setStudent] =
-        useState<ExcuseStudentSelection | null>(null);
-
-    const { data: schools, loading: schoolsLoading, error: schoolsError } =
-        useApiQuery<School[]>('/schools');
+    const { data: schools, loading: schoolsLoading, error: schoolsError } = useApiQuery<School[]>('/schools');
 
     const profile = session?.profile;
-
-    const schoolId =
-        profile?.role === 'SCHOOL_ADMIN'
-            ? String(profile.schoolId ?? '')
-            : chosenSchoolId;
-
-    const selectedSchool = (schools ?? []).find(
-        (school) => String(school.id) === schoolId,
-    );
+    const schoolId = profile?.role === 'SCHOOL_ADMIN' ? String(profile.schoolId ?? '') : chosenSchoolId;
+    const selectedSchool = (schools ?? []).find((school) => String(school.id) === schoolId);
 
     function resetSelection() {
         setStudent(null);
@@ -189,15 +123,12 @@ export function CreateAttendanceExcuseDialog({
 
     function handleSearch(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         const value = searchText.trim().replace(/\s+/g, ' ');
-
         if (value.length < 2) {
-            setSearchError('Kamida 2 ta belgi kiriting.');
+            setSearchError(t('excuses.create.minChars'));
             setAppliedSearch('');
             return;
         }
-
         setSearchError('');
         setStudent(null);
         setAppliedSearch(value);
@@ -205,17 +136,10 @@ export function CreateAttendanceExcuseDialog({
 
     function handleSelect(membership: SchoolMembership) {
         if (!membership.person || !selectedSchool) return;
-
-        const person = membership.person;
-
         setStudent({
-            personId: person.id,
+            personId: membership.person.id,
             schoolId: selectedSchool.id,
-            name: [
-                person.lastName,
-                person.firstName,
-                person.middleName,
-            ].filter(Boolean).join(' '),
+            name: personFullName(membership.person),
             schoolName: selectedSchool.name,
             className: membership.schoolClass?.name ?? null,
             defaultDate: todayInTashkent(),
@@ -227,172 +151,93 @@ export function CreateAttendanceExcuseDialog({
         resetSelection();
     }
 
-    function handleSaved() {
-        closeDialog();
-        onSaved();
-    }
-
     return (
-        <Dialog.Root
-            open={open}
-            onOpenChange={(next) => {
-                if (next) {
-                    setOpen(true);
-                } else {
-                    closeDialog();
-                }
-            }}
-        >
-            <Dialog.Trigger asChild>
+        <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : closeDialog())}>
+            <DialogTrigger asChild>
                 <Button type="button">
-                    <FilePlus2 className="size-4" />
-                    Yangi ariza
+                    <FilePlus2 aria-hidden="true" />
+                    {t('excuses.create.button')}
                 </Button>
-            </Dialog.Trigger>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{t('excuses.create.title')}</DialogTitle>
+                    <DialogDescription>{t('excuses.create.description')}</DialogDescription>
+                </DialogHeader>
 
-            <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" />
-
-                <Dialog.Content
-                    className="fixed left-1/2 top-1/2 z-50 max-h-[90dvh] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-background p-5 shadow-2xl outline-none sm:p-6"
-                >
-                    <div className="mb-5 flex items-start justify-between gap-4">
-                        <div>
-                            <Dialog.Title className="text-xl font-bold">
-                                Yangi sababli ariza
-                            </Dialog.Title>
-
-                            <Dialog.Description className="mt-2 text-sm text-muted-foreground">
-                                O‘quvchini tanlang va asoslovchi PDF hujjatni yuklang.
-                            </Dialog.Description>
-                        </div>
-
-                        <Dialog.Close asChild>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label="Yopish"
-                            >
-                                <X className="size-5" />
-                            </Button>
-                        </Dialog.Close>
+                {student ? (
+                    <div className="space-y-4">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setStudent(null)}>
+                            <ArrowLeft aria-hidden="true" />
+                            {t('excuses.create.another')}
+                        </Button>
+                        <AttendanceExcuseForm
+                            selection={student}
+                            onSaved={() => {
+                                closeDialog();
+                                onSaved();
+                            }}
+                            onCancel={closeDialog}
+                        />
                     </div>
-
-                    {student ? (
-                        <div className="space-y-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setStudent(null)}
-                            >
-                                Boshqa o‘quvchini tanlash
-                            </Button>
-
-                            <AttendanceExcuseForm
-                                selection={student}
-                                onSaved={handleSaved}
-                                onCancel={closeDialog}
+                ) : (
+                    <div className="space-y-5">
+                        <Field htmlFor={`${id}-school`} label={t('common.school')} required error={schoolsError || undefined}>
+                            <SelectField
+                                id={`${id}-school`}
+                                value={schoolId}
+                                disabled={schoolsLoading || profile?.role === 'SCHOOL_ADMIN'}
+                                placeholder={schoolsLoading ? t('common.loading') : t('members.chooseSchool')}
+                                searchable
+                                onValueChange={(value) => {
+                                    setChosenSchoolId(value);
+                                    resetSelection();
+                                }}
+                                options={(schools ?? []).map((school) => ({
+                                    value: String(school.id),
+                                    label: `${school.district.name} / ${school.name}`,
+                                }))}
                             />
-                        </div>
-                    ) : (
-                        <div className="space-y-5">
-                            <div className="space-y-2">
-                                <label
-                                    htmlFor="new-excuse-school"
-                                    className="text-sm font-semibold"
-                                >
-                                    Maktab *
-                                </label>
+                        </Field>
 
-                                <select
-                                    id="new-excuse-school"
-                                    value={schoolId}
-                                    disabled={
-                                        schoolsLoading ||
-                                        profile?.role === 'SCHOOL_ADMIN'
-                                    }
-                                    onChange={(event) => {
-                                        setChosenSchoolId(event.target.value);
-                                        resetSelection();
-                                    }}
-                                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm disabled:opacity-60"
-                                >
-                                    <option value="">Maktabni tanlang</option>
-
-                                    {(schools ?? []).map((school) => (
-                                        <option key={school.id} value={school.id}>
-                                            {school.district.name} / {school.name}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                {schoolsError && (
-                                    <p role="alert" className="text-sm text-destructive">
-                                        {schoolsError}
-                                    </p>
-                                )}
-                            </div>
-
-                            {selectedSchool && (
-                                <form
-                                    onSubmit={handleSearch}
-                                    className="space-y-2"
-                                >
-                                    <label
-                                        htmlFor="new-excuse-student-search"
-                                        className="text-sm font-semibold"
-                                    >
-                                        O‘quvchini F.I.Sh. yoki PNFL orqali qidirish
-                                    </label>
-
+                        {selectedSchool && (
+                            <form onSubmit={handleSearch}>
+                                <Field htmlFor={`${id}-search`} label={t('excuses.create.searchLabel')} error={searchError || undefined}>
                                     <div className="flex gap-2">
                                         <Input
-                                            id="new-excuse-student-search"
+                                            id={`${id}-search`}
                                             type="search"
                                             value={searchText}
                                             maxLength={100}
-                                            placeholder="Familiya, ism yoki PNFL"
+                                            placeholder={t('excuses.create.searchPlaceholder')}
                                             onChange={(event) => {
                                                 setSearchText(event.target.value);
                                                 setAppliedSearch('');
                                                 setSearchError('');
                                             }}
                                         />
-
-                                        <Button type="submit" variant="secondary">
-                                            <Search className="size-4" />
-                                            Qidirish
+                                        <Button type="submit" variant="secondary" className="h-11 shrink-0">
+                                            <Search aria-hidden="true" />
+                                            <span className="max-sm:sr-only">{t('common.search')}</span>
                                         </Button>
                                     </div>
+                                </Field>
+                            </form>
+                        )}
 
-                                    {searchError && (
-                                        <p role="alert" className="text-sm text-destructive">
-                                            {searchError}
-                                        </p>
-                                    )}
-                                </form>
-                            )}
+                        {selectedSchool && appliedSearch && (
+                            <StudentSearchResults
+                                key={`${schoolId}|${appliedSearch}`}
+                                schoolId={selectedSchool.id}
+                                query={appliedSearch}
+                                onSelect={handleSelect}
+                            />
+                        )}
 
-                            {selectedSchool && appliedSearch && (
-                                <StudentSearchResults
-                                    key={`${schoolId}|${appliedSearch}`}
-                                    schoolId={selectedSchool.id}
-                                    query={appliedSearch}
-                                    onSelect={handleSelect}
-                                />
-                            )}
-
-                            <p className="text-xs text-muted-foreground">
-                                Tarixiy o‘quvchilik bog‘lanishlari ham qidiruvda
-                                ko‘rinishi mumkin. Ariza sanasi o‘quvchining
-                                shu maktabdagi o‘qish davriga mos bo‘lishi kerak.
-                            </p>
-                        </div>
-                    )}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                        <p className="text-xs leading-5 text-muted-foreground">{t('excuses.create.note')}</p>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }

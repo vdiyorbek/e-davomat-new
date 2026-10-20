@@ -1,0 +1,24 @@
+{
+  "title": "Teacher — subject — class",
+  "subtitle": "Assign subjects and classes to teachers for the academic year.",
+  "choose": "Choose a school and an academic year to see assignments.",
+  "createTitle": "New assignment",
+  "createHint": "Find a teacher, then choose the class and subject.",
+  "searchTeacher": "Find a teacher",
+  "teacher": "Teacher",
+  "chooseTeacher": "Choose a teacher",
+  "noTeachers": "No matching active teachers at this school.",
+  "subject": "Subject",
+  "subjects": "Subjects",
+  "chooseSubject": "Choose a subject",
+  "submit": "Assign",
+  "created": "The teacher was assigned to the subject and class.",
+  "createFailed": "Could not save the assignment.",
+  "listTitle": "Existing assignments",
+  "emptyTitle": "No assignments",
+  "empty": "There are no assignments yet.",
+  "ongoing": "Ongoing",
+  "errors": {
+    "required": "Choose the teacher, class, subject and start date."
+  }
+}

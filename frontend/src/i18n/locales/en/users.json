@@ -1,0 +1,75 @@
+{
+  "title": "Users",
+  "subtitle": "System users, their roles and permissions.",
+  "add": "Add user",
+  "loading": "Loading users…",
+  "emptyTitle": "No users found",
+  "empty": "Try changing the filters.",
+  "role": "Role",
+  "active": "Active",
+  "blocked": "Blocked",
+  "createTitle": "New user",
+  "createHint": "You can assign a role and permissions after the account is created.",
+  "create": "Create user",
+  "created": "User created.",
+  "editTitle": "Edit user",
+  "updated": "User updated.",
+  "saveChanges": "Save changes",
+  "loginHint": "Latin letters, digits, dots and underscores. 3–50 characters.",
+  "loginPlaceholder": "e.g. school.admin",
+  "passwordHint": "At least 12 characters.",
+  "confirmPassword": "Confirm password",
+  "changePassword": "Change password",
+  "changePasswordHint": "Leave these fields empty to keep the current password.",
+  "newPassword": "New password",
+  "filters": {
+    "search": "Name or login",
+    "allRoles": "All roles",
+    "assignedRegion": "Assigned region",
+    "assignedDistrict": "Assigned district",
+    "assignedSchool": "Assigned school",
+    "chooseRegionFirst": "Choose a region first"
+  },
+  "errors": {
+    "login": "Login must be 3–50 Latin letters, digits, dots or underscores.",
+    "password": "The password must be 12–128 characters.",
+    "passwordMismatch": "The passwords do not match.",
+    "nameLength": "First and last name must be at least 2 characters.",
+    "middleNameClear": "The patronymic cannot be cleared completely.",
+    "noChanges": "Nothing has changed.",
+    "uncertain": "Could not confirm the server response. Check the list before trying again.",
+    "createFailed": "Failed to create the user.",
+    "updateFailed": "Failed to save the changes."
+  },
+  "status": {
+    "block": "Block",
+    "activate": "Activate",
+    "blockTitle": "Block this account?",
+    "activateTitle": "Activate this account?",
+    "blockText": "All of the user’s active sessions will be ended.",
+    "activateText": "The user will be able to sign in again.",
+    "blocked": "User blocked.",
+    "activated": "User activated.",
+    "failed": "Failed to change the status."
+  },
+  "access": {
+    "title": "Role & scope",
+    "hint": "Choose the scope for the role: region, district or school.",
+    "user": "User",
+    "userScope": "Regular user scope",
+    "scopes": {
+      "NONE": "No scope",
+      "REGION": "Region",
+      "DISTRICT": "District / city",
+      "SCHOOL": "School"
+    },
+    "save": "Save permissions",
+    "updated": "User permissions updated.",
+    "notAllowed": "You cannot change this user’s permissions, or the account is inactive.",
+    "errors": {
+      "roleNotAllowed": "You are not allowed to assign this role.",
+      "scope": "Choose the full scope for the role.",
+      "saveFailed": "Failed to save the permissions."
+    }
+  }
+}
