@@ -217,4 +217,18 @@ export class TextbooksController {
       length: pdf.length,
     });
   }
+
+  @Patch(':id/topics/approve-all')
+  approveAllTopics(
+    @Param('id', ParseIntPipe) textbookId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.textbookTopicsService.approveAllTopics(textbookId, actor);
+  }
 }

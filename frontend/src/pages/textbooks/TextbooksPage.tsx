@@ -19,6 +19,10 @@ import type { TextbookTopic } from './TextbookTopicRow';
 import { TextbookUploadForm } from './TextbookUploadForm';
 import { TextbookArchiveButton } from './TextbookArchiveButton';
 import { TextbookPdfViewer } from './TextbookPdfViewer';
+import { CheckCheck } from 'lucide-react';
+import { useConfirm } from '@/components/common/ConfirmDialog';
+import { authorizedPatch } from '@/lib/auth-session';
+
 interface Textbook {
     id: number;
     subjectId: number;
@@ -65,8 +69,69 @@ function TopicsList({ textbookId, onUpdated }: { textbookId: number; onUpdated: 
     const { t } = useTranslation();
     const query = useApiQuery<TopicsResponse>(`/textbooks/${textbookId}/topics`);
 
+    const { confirm, dialog } = useConfirm();
+    const [approving, setApproving] = useState(false);
+    const [approveError, setApproveError] = useState('');
+
+    const pendingCount = (query.data?.topics ?? []).filter(
+        (topic) => topic.reviewStatus === 'PENDING_REVIEW'
+    ).length;
+
+    async function approveAll() {
+        if (approving || pendingCount === 0) return;
+
+        const confirmed = await confirm({
+            title: 'Barcha mavzularni tasdiqlash',
+            description:
+                `${pendingCount} ta mavzu tasdiqlanadi. ` +
+                'Davom etishdan oldin mavzularni tekshiring.',
+            confirmLabel: 'Barchasini tasdiqlash',
+        });
+
+        if (!confirmed) return;
+
+        setApproving(true);
+        setApproveError('');
+
+        try {
+            await authorizedPatch(
+                `/textbooks/${textbookId}/topics/approve-all`,
+                {},
+            );
+
+            query.retry();
+            onUpdated();
+        } catch (error: unknown) {
+            setApproveError(
+                error instanceof Error
+                    ? error.message
+                    : 'Mavzularni tasdiqlashda xatolik yuz berdi.'
+            );
+        } finally {
+            setApproving(false);
+        }
+    }
+
     return (
         <div className="space-y-4">
+            {dialog}
+
+            {approveError && (
+                <ErrorState message={approveError} />
+            )}
+
+            {pendingCount > 0 && (
+                <Button
+                    type="button"
+                    disabled={approving}
+                    onClick={() => void approveAll()}
+                >
+                    <CheckCheck aria-hidden="true" />
+                    {approving
+                        ? 'Tasdiqlanmoqda...'
+                        : `Barchasini tasdiqlash (${pendingCount})`}
+                </Button>
+            )}
             <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">{t('textbooks.topics.total', { count: query.data?.total ?? 0 })}</p>
                 <Button type="button" variant="outline" size="sm" onClick={query.retry} disabled={query.loading}>

@@ -348,4 +348,42 @@ export class TextbookTopicsService {
       return repository.save(topic);
     });
   }
+
+  async approveAllTopics(textbookId: number, actor: AuthenticatedUser) {
+    this.requireSuperAdmin(actor);
+
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      const textbook = await manager.findOne(Textbook, {
+        where: { id: textbookId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!textbook) {
+        throw new NotFoundException('Darslik topilmadi');
+      }
+
+      if (!textbook.isActive) {
+        throw new ConflictException(
+          'Arxivlangan darslik mavzularini tasdiqlash mumkin emas',
+        );
+      }
+
+      const repository = manager.getRepository(TextbookTopic);
+
+      const result = await repository.update(
+        {
+          textbookId,
+          reviewStatus: TopicReviewStatus.PENDING_REVIEW,
+        },
+        {
+          reviewStatus: TopicReviewStatus.APPROVED,
+        },
+      );
+
+      return {
+        textbookId,
+        approvedCount: result.affected ?? 0,
+      };
+    });
+  }
 }
