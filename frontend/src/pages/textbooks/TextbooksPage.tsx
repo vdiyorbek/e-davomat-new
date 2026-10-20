@@ -12,11 +12,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { localizedName } from '@/lib/localized';
-
+import { TextbookEditForm } from './TextbookEditForm';
 import { TextbookExtractButton } from './TextbookExtractButton';
 import { TextbookTopicRow } from './TextbookTopicRow';
 import type { TextbookTopic } from './TextbookTopicRow';
 import { TextbookUploadForm } from './TextbookUploadForm';
+import { TextbookArchiveButton } from './TextbookArchiveButton';
 
 interface Textbook {
     id: number;
@@ -26,6 +27,23 @@ interface Textbook {
     languageCode: string;
     processingStatus: 'DRAFT' | 'PROCESSING' | 'READY' | 'FAILED';
     isVerified: boolean;
+}
+
+interface Textbook {
+    id: number;
+    subjectId: number;
+    gradeLevel: number;
+    title: string;
+    languageCode: string;
+
+    publisher: string | null;
+    publicationYear: number | null;
+    approvalReference: string | null;
+
+    processingStatus: 'DRAFT' | 'PROCESSING' | 'READY' | 'FAILED';
+    isVerified: boolean;
+    isActive: boolean;
+    updatedAt?: string;
 }
 
 interface Subject {
@@ -95,8 +113,17 @@ export function TextbooksPage() {
     const subjectsQuery = useApiQuery<Subject[]>('/subjects');
     const [selected, setSelected] = useState<Textbook | null>(null);
 
+    const [statusFilter, setStatusFilter] = useState<
+        'all' | 'active' | 'archived'
+    >('active');
     const textbooks = textbooksQuery.data ?? [];
     const subjects = subjectsQuery.data ?? [];
+    const visibleTextbooks = textbooks.filter((textbook) => {
+        if (statusFilter === 'active') return textbook.isActive;
+        if (statusFilter === 'archived') return !textbook.isActive;
+        return true;
+    });
+
 
     function subjectName(subjectId: number): string {
         const subject = subjects.find((item) => item.id === subjectId);
@@ -104,12 +131,44 @@ export function TextbooksPage() {
     }
 
     function statusBadge(textbook: Textbook) {
+        if (!textbook.isActive) {
+            return (
+                <StatusBadge tone="neutral">
+                    Arxivlangan
+                </StatusBadge>
+            );
+        }
+
         return (
             <StatusBadge tone={PROCESSING_TONE[textbook.processingStatus]}>
                 {t(`textbooks.processing.${textbook.processingStatus}`)}
             </StatusBadge>
         );
     }
+
+
+    function textbookActions(textbook: Textbook) {
+        return (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {textbook.isActive && (
+                    <TextbookEditForm
+                        key={textbook.id}
+                        textbook={textbook}
+                        subjects={subjects}
+                        onUpdated={textbooksQuery.retry}
+                    />
+                )}
+
+                {textbook.isActive && topicsButton(textbook)}
+
+                <TextbookArchiveButton
+                    textbook={textbook}
+                    onUpdated={textbooksQuery.retry}
+                />
+            </div>
+        );
+    }
+
 
     function topicsButton(textbook: Textbook) {
         return (
@@ -140,16 +199,34 @@ export function TextbooksPage() {
                     </Button>
                 </div>
 
+                <div className="flex flex-wrap gap-2">
+                    {([
+                        ['active', 'Faol'],
+                        ['archived', 'Arxivlangan'],
+                        ['all', 'Barchasi'],
+                    ] as const).map(([value, label]) => (
+                        <Button
+                            key={value}
+                            type="button"
+                            size="sm"
+                            variant={statusFilter === value ? 'default' : 'outline'}
+                            onClick={() => setStatusFilter(value)}
+                        >
+                            {label}
+                        </Button>
+                    ))}
+                </div>
+
                 {textbooksQuery.loading ? (
                     <LoadingState />
                 ) : textbooksQuery.error ? (
                     <ErrorState message={textbooksQuery.error} onRetry={textbooksQuery.retry} />
-                ) : textbooks.length === 0 ? (
+                ) : visibleTextbooks.length === 0 ? (
                     <EmptyState icon={BookOpen} title={t('textbooks.emptyTitle')} description={t('textbooks.empty')} />
                 ) : (
                     <>
                         <ul className="grid list-none gap-3 sm:grid-cols-2 xl:hidden">
-                            {textbooks.map((textbook) => (
+                            {visibleTextbooks.map((textbook) => (
                                 <li key={textbook.id}>
                                     <Card size="sm" className="h-full gap-3 px-4">
                                         <div className="flex items-start justify-between gap-2">
@@ -163,7 +240,9 @@ export function TextbooksPage() {
                                                 {t(`textbooks.languages.${textbook.languageCode}`, { defaultValue: textbook.languageCode })}
                                             </DetailItem>
                                         </DetailList>
-                                        <div className="mt-auto border-t pt-3">{topicsButton(textbook)}</div>
+                                        <div className="mt-auto border-t pt-3">
+                                            {textbookActions(textbook)}
+                                        </div>
                                     </Card>
                                 </li>
                             ))}
@@ -188,7 +267,9 @@ export function TextbooksPage() {
                                             <TableCell>{t('calendar.gradeN', { grade: textbook.gradeLevel })}</TableCell>
                                             <TableCell>{t(`textbooks.languages.${textbook.languageCode}`, { defaultValue: textbook.languageCode })}</TableCell>
                                             <TableCell>{statusBadge(textbook)}</TableCell>
-                                            <TableCell className="pr-5 text-right">{topicsButton(textbook)}</TableCell>
+                                            <TableCell className="pr-5 text-right">
+                                                {textbookActions(textbook)}
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
