@@ -305,19 +305,13 @@ export function LessonScheduleActions({
                             <Input
                                 id={`${id}-number`}
                                 type="number"
-                                min={(() => {
-                                    const date = new Date(`${lesson.startDate}T00:00:00Z`);
-                                    date.setUTCDate(date.getUTCDate() + 1);
-                                    return date.toISOString().slice(0, 10);
-                                })()}
+                                min={1}
                                 max={20}
                                 value={lessonNumber}
-                                onChange={(event) =>
-                                    setLessonNumber(event.target.value)
-                                }
+                                onChange={(event) => setLessonNumber(event.target.value)}
                                 disabled={busy}
                                 required
-                            />
+                            />F
                         </Field>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -334,6 +328,11 @@ export function LessonScheduleActions({
                                         setStartTime(event.target.value)
                                     }
                                     disabled={busy}
+                                    min={(() => {
+                                        const date = new Date(`${lesson.startDate}T00:00:00Z`);
+                                        date.setUTCDate(date.getUTCDate() + 1);
+                                        return date.toISOString().slice(0, 10);
+                                    })()}
                                     required
                                 />
                             </Field>

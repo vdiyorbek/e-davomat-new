@@ -21,6 +21,7 @@ import { CreateLessonScheduleDto } from './dto/create-lesson-schedule.dto';
 import { ListLessonSchedulesDto } from './dto/list-lesson-schedules.dto';
 import { CancelLessonScheduleDto } from './dto/cancel-lesson-schedule.dto';
 import { UpdateLessonScheduleDto } from './dto/update-lesson-schedule.dto';
+
 @Controller('lesson-schedules')
 @Roles(
   UserRole.SUPER_ADMIN,
