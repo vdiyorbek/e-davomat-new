@@ -25,6 +25,8 @@ const UUID_PATTERN =
 
 const ROLE_RANK: Record<UserRole, number> = {
   [UserRole.USER]: 0,
+  [UserRole.STUDENT]: 0,
+  [UserRole.TEACHER]: 0,
   [UserRole.SCHOOL_ADMIN]: 1,
   [UserRole.DISTRICT_ADMIN]: 2,
   [UserRole.REGION_ADMIN]: 3,

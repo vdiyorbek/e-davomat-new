@@ -3,7 +3,9 @@ export type UserRole =
   | "SUPER_ADMIN"
   | "REGION_ADMIN"
   | "DISTRICT_ADMIN"
-  | "SCHOOL_ADMIN";
+  | "SCHOOL_ADMIN"
+  | "TEACHER"
+  | "STUDENT";
 
 export interface LoginResponse {
   accessToken: string;
