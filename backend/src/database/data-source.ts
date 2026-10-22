@@ -22,6 +22,7 @@ import { Subject } from '../modules/subjects/subject.entity';
 import { TeacherClassSubject } from '../modules/teacher-assignments/teacher-class-subject.entity';
 import { Textbook } from '../modules/textbooks/textbook.entity';
 import { TextbookTopic } from '../modules/textbooks/textbook-topic.entity';
+import { LessonSchedule } from '../modules/lesson-schedules/lesson-schedule.entity';
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -68,6 +69,7 @@ export default new DataSource({
     TeacherClassSubject,
     Textbook,
     TextbookTopic,
+    LessonSchedule,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],

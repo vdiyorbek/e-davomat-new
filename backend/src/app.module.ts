@@ -24,6 +24,7 @@ import { AttendanceCalendarModule } from './modules/attendance-calendar/attendan
 import { SubjectsModule } from './modules/subjects/subjects.module';
 import { TeacherAssignmentsModule } from './modules/teacher-assignments/teacher-assignments.module';
 import { TextbooksModule } from './modules/textbooks/textbooks.module';
+import { LessonSchedulesModule } from './modules/lesson-schedules/lesson-schedules.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { TextbooksModule } from './modules/textbooks/textbooks.module';
     SubjectsModule,
     TeacherAssignmentsModule,
     TextbooksModule,
+    LessonSchedulesModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
