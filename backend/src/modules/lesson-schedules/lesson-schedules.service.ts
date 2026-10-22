@@ -256,25 +256,36 @@ export class LessonSchedulesService {
 
     await this.checkSchoolAccess(dto.schoolId, user, this.dataSource.manager);
 
-    const rows = await this.dataSource.getRepository(LessonSchedule).find({
-      where: {
+    const repository = this.dataSource.getRepository(LessonSchedule);
+
+    const query = repository
+      .createQueryBuilder('lesson')
+      .innerJoinAndSelect('lesson.teacherAssignment', 'assignment')
+      .innerJoinAndSelect('assignment.subject', 'subject')
+      .innerJoinAndSelect('assignment.teacherMembership', 'membership')
+      .innerJoinAndSelect('membership.person', 'person')
+      .where('lesson.classId = :classId', {
         classId: dto.classId,
-        isActive: true,
-      },
-      relations: {
-        teacherAssignment: {
-          subject: true,
-          teacherMembership: {
-            person: true,
-          },
-        },
-      },
-      order: {
-        dayOfWeek: 'ASC',
-        lessonNumber: 'ASC',
-        startTime: 'ASC',
-      },
-    });
+      })
+      .andWhere('lesson.isActive = :active', {
+        active: true,
+      });
+
+    if (dto.date) {
+      query
+        .andWhere('lesson.startDate <= :date', {
+          date: dto.date,
+        })
+        .andWhere('(lesson.endDate IS NULL OR lesson.endDate > :date)', {
+          date: dto.date,
+        });
+    }
+
+    const rows = await query
+      .orderBy('lesson.dayOfWeek', 'ASC')
+      .addOrderBy('lesson.lessonNumber', 'ASC')
+      .addOrderBy('lesson.startTime', 'ASC')
+      .getMany();
 
     return rows.map((lesson) => ({
       id: lesson.id,

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, Matches, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, Matches, Min } from 'class-validator';
 
 export class ListLessonSchedulesDto {
   @Type(() => Number)
@@ -14,4 +14,10 @@ export class ListLessonSchedulesDto {
   @IsInt()
   @Min(1)
   classId!: number;
+
+  // Muayyan sanada amal qilgan dars jadvali
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  @IsDateString({ strict: true })
+  date?: string;
 }

@@ -41,7 +41,7 @@ interface SchoolClass {
     academicYear: string;
     gradeLevel: number | null;
 }
-
+import { LessonScheduleActions } from './LessonScheduleActions';
 interface TeacherAssignment {
     id: number;
     teacherMembershipId: number;
@@ -540,6 +540,11 @@ function ClassSchedule({
                                                                 {' → '}
                                                                 {lesson.endDate ?? 'Muddatsiz'}
                                                             </p>
+
+                                                            <LessonScheduleActions
+                                                                lesson={lesson}
+                                                                onUpdated={query.retry}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>

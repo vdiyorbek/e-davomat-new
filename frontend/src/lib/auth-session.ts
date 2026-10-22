@@ -7,6 +7,7 @@ import {
   logoutAuth,
   refreshAuth,
   apiPatch,
+  apiDelete,
 } from "@/lib/api";
 import type { LoginResponse, Session, Profile } from "@/types/auth";
 import i18n from "@/i18n";
@@ -443,4 +444,61 @@ export async function reloadCurrentProfile(): Promise<void> {
       profile,
     },
   });
+}
+
+export async function authorizedDelete<T>(path: string): Promise<T> {
+  const requestGeneration = generation;
+
+  let current = state.session;
+
+  if (!current) {
+    throw new ApiError(i18n.t("common.session.signInFirst"), 401);
+  }
+
+  if (current.expiresAt <= Date.now() + 30_000) {
+    current = await refreshCurrentSession();
+  }
+
+  function checkSession(): void {
+    if (requestGeneration !== generation || !state.session) {
+      throw new DOMException(i18n.t("common.session.changed"), "AbortError");
+    }
+  }
+
+  checkSession();
+
+  try {
+    const result = await apiDelete<T>(path, current.token);
+
+    checkSession();
+    return result;
+  } catch (error: unknown) {
+    checkSession();
+
+    if (!(error instanceof ApiError) || error.status !== 401) {
+      throw error;
+    }
+
+    current = await refreshCurrentSession(current.token);
+
+    checkSession();
+
+    try {
+      const result = await apiDelete<T>(path, current.token);
+
+      checkSession();
+      return result;
+    } catch (retryError: unknown) {
+      if (
+        retryError instanceof ApiError &&
+        retryError.status === 401 &&
+        state.session?.token === current.token &&
+        requestGeneration === generation
+      ) {
+        clearSession(i18n.t("common.session.expired"));
+      }
+
+      throw retryError;
+    }
+  }
 }

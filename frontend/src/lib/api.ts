@@ -144,3 +144,13 @@ export function apiGet<T>(
     },
   });
 }
+
+export function apiDelete<T>(path: string, token: string): Promise<T> {
+  return request<T>({
+    method: "DELETE",
+    url: path,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
