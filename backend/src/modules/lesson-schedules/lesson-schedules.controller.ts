@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -19,6 +20,7 @@ import { LessonSchedulesService } from './lesson-schedules.service';
 import { CreateLessonScheduleDto } from './dto/create-lesson-schedule.dto';
 import { ListLessonSchedulesDto } from './dto/list-lesson-schedules.dto';
 import { CancelLessonScheduleDto } from './dto/cancel-lesson-schedule.dto';
+import { UpdateLessonScheduleDto } from './dto/update-lesson-schedule.dto';
 @Controller('lesson-schedules')
 @Roles(
   UserRole.SUPER_ADMIN,
@@ -64,5 +66,18 @@ export class LessonSchedulesController {
     }
 
     return this.service.remove(id, dto.effectiveDate, request.authUser);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateLessonScheduleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.service.update(id, dto, request.authUser);
   }
 }
