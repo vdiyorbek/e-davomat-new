@@ -1,8 +1,7 @@
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Check, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
+import { BookOpen, Check, Pencil } from 'lucide-react';
 import { useConfirm } from '@/components/common/ConfirmDialog';
 import { Field } from '@/components/common/Field';
 import { ErrorState } from '@/components/common/states';
@@ -25,6 +24,7 @@ export interface TextbookTopic {
 interface Props {
     topic: TextbookTopic;
     onUpdated: () => void;
+    onOpenPage?: (page: number) => void;
 }
 
 const REVIEW_TONE = { PENDING_REVIEW: 'warning', APPROVED: 'success', REJECTED: 'danger' } as const;
@@ -37,7 +37,11 @@ function parsePage(value: string, message: string): number | null {
 }
 
 /** Darslik mavzusi: ro‘yxat elementi, tahrirlash oynasi va tasdiqlash. */
-export function TextbookTopicRow({ topic, onUpdated }: Props) {
+export function TextbookTopicRow({
+    topic,
+    onUpdated,
+    onOpenPage,
+}: Props) {
     const { t } = useTranslation();
     const id = useId();
     const { confirm, dialog } = useConfirm();
@@ -128,9 +132,23 @@ export function TextbookTopicRow({ topic, onUpdated }: Props) {
                         {topic.title}
                     </p>
 
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        {t('textbooks.topics.pagesValue', { pages })}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                            {t('textbooks.topics.pagesValue', { pages })}
+                        </span>
+
+                        {topic.pageStart !== null && onOpenPage && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="xs"
+                                onClick={() => onOpenPage(topic.pageStart!)}
+                            >
+                                <BookOpen aria-hidden="true" />
+                                PDFda ochish
+                            </Button>
+                        )}
+                    </div>
 
                     {!editing && error && (
                         <p role="alert" className="mt-2 text-sm text-destructive">

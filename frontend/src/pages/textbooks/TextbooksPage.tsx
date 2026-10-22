@@ -65,7 +65,15 @@ interface TopicsResponse {
 
 const PROCESSING_TONE = { DRAFT: 'neutral', PROCESSING: 'warning', READY: 'success', FAILED: 'danger' } as const;
 
-function TopicsList({ textbookId, onUpdated }: { textbookId: number; onUpdated: () => void }) {
+function TopicsList({
+    textbookId,
+    onUpdated,
+    onOpenPage,
+}: {
+    textbookId: number;
+    onUpdated: () => void;
+    onOpenPage: (page: number) => void;
+}) {
     const { t } = useTranslation();
     const query = useApiQuery<TopicsResponse>(`/textbooks/${textbookId}/topics`);
 
@@ -163,7 +171,12 @@ function TopicsList({ textbookId, onUpdated }: { textbookId: number; onUpdated: 
                 <Card className="py-0">
                     <ul className="divide-y">
                         {query.data.topics.map((topic) => (
-                            <TextbookTopicRow key={topic.id} topic={topic} onUpdated={query.retry} />
+                            <TextbookTopicRow
+                                key={topic.id}
+                                topic={topic}
+                                onUpdated={query.retry}
+                                onOpenPage={onOpenPage}
+                            />
                         ))}
                     </ul>
                 </Card>
@@ -177,7 +190,11 @@ export function TextbooksPage() {
     const textbooksQuery = useApiQuery<Textbook[]>('/textbooks');
     const subjectsQuery = useApiQuery<Subject[]>('/subjects');
     const [selected, setSelected] = useState<Textbook | null>(null);
-
+    const [pdfTarget, setPdfTarget] = useState<{
+        textbookId: number;
+        title: string;
+        page: number;
+    } | null>(null);
     const [statusFilter, setStatusFilter] = useState<
         'all' | 'active' | 'archived'
     >('active');
@@ -361,10 +378,40 @@ export function TextbooksPage() {
                         <SheetDescription>{t('textbooks.topics.sheetHint')}</SheetDescription>
                     </SheetHeader>
                     <div className="p-4 sm:p-5">
-                        {selected && <TopicsList key={selected.id} textbookId={selected.id} onUpdated={textbooksQuery.retry} />}
+                        {selected && (
+                            <TopicsList
+                                key={selected.id}
+                                textbookId={selected.id}
+                                onUpdated={textbooksQuery.retry}
+                                onOpenPage={(page) => {
+                                    setPdfTarget({
+                                        textbookId: selected.id,
+                                        title: selected.title,
+                                        page,
+                                    });
+
+                                    setSelected(null);
+                                }}
+                            />
+                        )}
                     </div>
                 </SheetContent>
             </Sheet>
+            {pdfTarget && (
+                <TextbookPdfViewer
+                    key={`${pdfTarget.textbookId}-${pdfTarget.page}`}
+                    textbookId={pdfTarget.textbookId}
+                    title={pdfTarget.title}
+                    page={pdfTarget.page}
+                    open={true}
+                    showTrigger={false}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setPdfTarget(null);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }

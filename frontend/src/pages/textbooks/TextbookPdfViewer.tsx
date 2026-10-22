@@ -16,16 +16,33 @@ import { authorizedGet } from '@/lib/auth-session';
 interface Props {
     textbookId: number;
     title: string;
+    page?: number | null;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    showTrigger?: boolean;
 }
 
 export function TextbookPdfViewer({
     textbookId,
     title,
+    page,
+    open: controlledOpen,
+    onOpenChange,
+    showTrigger = true,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
     const [url, setUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const open = controlledOpen ?? internalOpen;
+
+    function changeOpen(value: boolean) {
+        if (controlledOpen === undefined) {
+            setInternalOpen(value);
+        }
+        onOpenChange?.(value);
+    }
 
     useEffect(() => {
         if (!open) return;
@@ -48,7 +65,10 @@ export function TextbookPdfViewer({
 
                 if (controller.signal.aborted) return;
 
-                if (blob.type && !blob.type.includes('pdf')) {
+                if (
+                    blob.type &&
+                    !blob.type.toLowerCase().includes('pdf')
+                ) {
                     throw new Error(
                         'Server PDF formatida javob qaytarmadi.',
                     );
@@ -87,19 +107,31 @@ export function TextbookPdfViewer({
         };
     }, [open, textbookId]);
 
+    const validPage =
+        page !== null &&
+        page !== undefined &&
+        Number.isSafeInteger(page) &&
+        page > 0;
+
+    const pdfUrl = url
+        ? `${url}#page=${validPage ? page : 1}&zoom=page-width`
+        : null;
+
     return (
         <>
-            <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setOpen(true)}
-            >
-                <Eye aria-hidden="true" />
-                Kitobni ko‘rish
-            </Button>
+            {showTrigger && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => changeOpen(true)}
+                >
+                    <Eye aria-hidden="true" />
+                    Kitobni ko‘rish
+                </Button>
+            )}
 
-            <Dialog open={open} onOpenChange={setOpen}>
+            <Dialog open={open} onOpenChange={changeOpen}>
                 <DialogContent className="flex h-[94dvh] w-[96vw] max-w-none flex-col gap-3 overflow-hidden sm:max-w-[1100px]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
@@ -108,7 +140,9 @@ export function TextbookPdfViewer({
                         </DialogTitle>
 
                         <DialogDescription>
-                            Yuklangan darslikning PDF ko‘rinishi
+                            {validPage
+                                ? `Darslikning ${page}-sahifasi`
+                                : 'Yuklangan darslikning PDF ko‘rinishi'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -124,10 +158,10 @@ export function TextbookPdfViewer({
                             >
                                 {error}
                             </div>
-                        ) : url ? (
+                        ) : pdfUrl ? (
                             <iframe
                                 title={`${title} PDF`}
-                                src={url}
+                                src={pdfUrl}
                                 className="h-full w-full border-0"
                             />
                         ) : null}
