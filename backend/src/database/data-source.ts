@@ -24,7 +24,7 @@ import { Textbook } from '../modules/textbooks/textbook.entity';
 import { TextbookTopic } from '../modules/textbooks/textbook-topic.entity';
 import { LessonSchedule } from '../modules/lesson-schedules/lesson-schedule.entity';
 import { LessonSession } from '../modules/lesson-sessions/lesson-session.entity';
-
+import { UserPersonLink } from '../modules/user-person-links/user-person-link.entity';
 function requiredEnv(name: string): string {
   const value = process.env[name];
 
@@ -72,6 +72,7 @@ export default new DataSource({
     TextbookTopic,
     LessonSchedule,
     LessonSession,
+    UserPersonLink,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],
