@@ -108,6 +108,12 @@ export const NAV_GROUPS: NavGroup[] = [
         roles: ADMIN_ROLES,
       },
       {
+        to: "/journal",
+        key: "journal",
+        icon: BookOpenCheck,
+        roles: ADMIN_ROLES,
+      },
+      {
         to: "/textbooks",
         key: "textbooks",
         icon: LibraryBig,

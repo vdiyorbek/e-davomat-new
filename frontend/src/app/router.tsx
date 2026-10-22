@@ -29,6 +29,11 @@ const LessonSchedulesPage = lazy(() =>
         .then((m) => ({ default: m.LessonSchedulesPage }))
 );
 
+const JournalPage = lazy(() =>
+    import('@/pages/journal/JournalPage')
+        .then((m) => ({ default: m.JournalPage }))
+);
+
 export const router = createBrowserRouter([
     {
         element: <AuthLayout />,
@@ -76,6 +81,10 @@ export const router = createBrowserRouter([
                                 element: <AttendanceCalendarPage />,
                             },
                             { path: '/classes', element: <ClassesPage /> },
+                            {
+                                path: '/journal',
+                                element: <JournalPage />,
+                            },
                             { path: '/users', element: <UsersPage /> },
                             {
                                 element: (

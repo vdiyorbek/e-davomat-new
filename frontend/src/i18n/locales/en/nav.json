@@ -29,7 +29,8 @@
     "users": "Users",
     "person": "Person details",
     "forbidden": "Access restricted",
-    "lessonSchedules": "Lesson schedule"
+    "lessonSchedules": "Lesson schedule",
+    "journal": "Electronic journal"
   },
   "short": {
     "profile": "Profile",
