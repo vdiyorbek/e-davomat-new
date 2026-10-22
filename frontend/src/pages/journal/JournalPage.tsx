@@ -74,6 +74,7 @@ interface LessonSession {
     homework: string | null;
     teacherNotes: string | null;
     status: SessionStatus;
+    textbookTopicId: number | null;
     subject: {
         id: number;
         nameUz: string;
@@ -84,6 +85,21 @@ interface LessonSession {
         middleName: string | null;
     };
 }
+interface AvailableTextbookTopic {
+    id: number;
+    title: string;
+    chapterTitle: string | null;
+    orderIndex: number;
+    pageStart: number | null;
+    pageEnd: number | null;
+    textbook: {
+        id: number;
+        title: string;
+        languageCode: string;
+        gradeLevel: number;
+    };
+}
+
 
 const STATUS_OPTIONS = [
     { value: 'PLANNED', label: 'Rejalashtirilgan' },
@@ -113,6 +129,22 @@ function SessionEditor({
 }) {
     const id = useId();
 
+    const topicsQuery = useApiQuery<AvailableTextbookTopic[]>(
+        `/lesson-sessions/${session.id}/available-topics`,
+    );
+
+    const [selectedTopicId, setSelectedTopicId] = useState(
+        session.textbookTopicId == null
+            ? ''
+            : String(session.textbookTopicId),
+    );
+
+    const availableTopics = topicsQuery.data ?? [];
+
+    const selectedTopic = availableTopics.find(
+        (topic) => String(topic.id) === selectedTopicId,
+    );
+
     const [topicTitle, setTopicTitle] = useState(
         session.topicTitle ?? '',
     );
@@ -141,7 +173,16 @@ function SessionEditor({
             await authorizedPatch(
                 `/lesson-sessions/${session.id}`,
                 {
-                    topicTitle: topicTitle.trim() || null,
+                    textbookTopicId: selectedTopicId
+                        ? Number(selectedTopicId)
+                        : null,
+
+                    ...(selectedTopicId
+                        ? {}
+                        : {
+                            topicTitle: topicTitle.trim() || null,
+                        }),
+
                     homework: homework.trim() || null,
                     teacherNotes: teacherNotes.trim() || null,
                     status,
@@ -191,9 +232,96 @@ function SessionEditor({
                         }
                         maxLength={255}
                         placeholder="Mavzuni kiriting"
-                        disabled={saving}
+                        disabled={saving || Boolean(selectedTopicId)}
                     />
                 </Field>
+
+                <div className="space-y-2">
+                    <Field
+                        htmlFor={`${id}-textbook-topic`}
+                        label="Darslikdagi mavzu"
+                    >
+                        <SelectField
+                            id={`${id}-textbook-topic`}
+                            value={selectedTopicId}
+                            onValueChange={(value) => {
+                                setSelectedTopicId(value);
+
+                                if (!value) {
+                                    return;
+                                }
+
+                                const topic = availableTopics.find(
+                                    (item) => String(item.id) === value,
+                                );
+
+                                if (topic) {
+                                    setTopicTitle(topic.title);
+                                }
+                            }}
+                            emptyOption="Qo‘lda kiritish"
+                            placeholder={
+                                topicsQuery.loading
+                                    ? 'Mavzular yuklanmoqda...'
+                                    : 'Darslik mavzusini tanlang'
+                            }
+                            searchable
+                            disabled={
+                                saving ||
+                                topicsQuery.loading ||
+                                Boolean(topicsQuery.error)
+                            }
+                            options={availableTopics.map((topic) => ({
+                                value: String(topic.id),
+                                label: `${topic.orderIndex}. ${topic.title}`,
+                                keywords: [
+                                    topic.title,
+                                    topic.chapterTitle,
+                                    topic.textbook.title,
+                                ].filter(Boolean).join(' '),
+                            }))}
+                        />
+                    </Field>
+
+                    {topicsQuery.error && (
+                        <ErrorState
+                            message={topicsQuery.error}
+                            onRetry={topicsQuery.retry}
+                        />
+                    )}
+
+                    {!topicsQuery.loading &&
+                        !topicsQuery.error &&
+                        availableTopics.length === 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                Ushbu fan va sinf uchun tasdiqlangan
+                                darslik mavzulari topilmadi.
+                                Mavzuni qo‘lda kiritish mumkin.
+                            </p>
+                        )}
+
+                    {selectedTopic && (
+                        <div className="rounded-xl border p-3 text-sm">
+                            <p className="font-medium">
+                                {selectedTopic.textbook.title}
+                            </p>
+
+                            {selectedTopic.chapterTitle && (
+                                <p className="text-muted-foreground">
+                                    Bob: {selectedTopic.chapterTitle}
+                                </p>
+                            )}
+
+                            <p className="text-muted-foreground">
+                                Sahifa: {selectedTopic.pageStart ?? '—'}
+                                {selectedTopic.pageEnd != null &&
+                                    selectedTopic.pageEnd !== selectedTopic.pageStart
+                                    ? `–${selectedTopic.pageEnd}`
+                                    : ''}
+                            </p>
+                        </div>
+                    )}
+                </div>
 
                 <Field
                     htmlFor={`${id}-homework`}

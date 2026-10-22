@@ -54,6 +54,18 @@ export class LessonSessionsController {
     return this.service.findAll(dto, request.authUser);
   }
 
+  @Get(':id/available-topics')
+  availableTopics(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.service.availableTopics(id, request.authUser);
+  }
+
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,

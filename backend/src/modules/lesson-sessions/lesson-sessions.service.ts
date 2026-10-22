@@ -17,7 +17,10 @@ import {
   TopicReviewStatus,
 } from '../textbooks/textbook-topic.entity';
 import { UserRole } from '../users/enums/user-role.enum';
-
+import {
+  Textbook,
+  TextbookProcessingStatus,
+} from '../textbooks/textbook.entity';
 import { LessonSession, LessonSessionStatus } from './lesson-session.entity';
 import { CreateLessonSessionDto } from './dto/create-lesson-session.dto';
 import { ListLessonSessionsDto } from './dto/list-lesson-sessions.dto';
@@ -363,6 +366,27 @@ export class LessonSessionsService {
             );
           }
 
+          const schoolClass = await manager
+            .getRepository(SchoolClass)
+            .findOneBy({
+              id: session.classId,
+            });
+
+          if (!schoolClass) {
+            throw new NotFoundException('Sinf topilmadi');
+          }
+
+          if (
+            topic.textbook.gradeLevel !== schoolClass.gradeLevel ||
+            !topic.textbook.isActive ||
+            !topic.textbook.isVerified ||
+            topic.textbook.processingStatus !== TextbookProcessingStatus.READY
+          ) {
+            throw new BadRequestException(
+              'Tanlangan darslik ushbu sinf uchun tasdiqlanmagan',
+            );
+          }
+
           session.textbookTopicId = topic.id;
           session.topicTitle = topic.title;
         }
@@ -385,6 +409,83 @@ export class LessonSessionsService {
       }
 
       return repo.save(session);
+    });
+  }
+
+  async availableTopics(sessionId: number, user: AuthenticatedUser) {
+    const session = await this.dataSource.getRepository(LessonSession).findOne({
+      where: { id: sessionId },
+      relations: {
+        schoolClass: true,
+        teacherAssignment: true,
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Dars topilmadi');
+    }
+
+    await this.checkSchoolAccess(session.schoolClass.schoolId, user);
+
+    const subjectId = session.teacherAssignment.subjectId;
+    const gradeLevel = session.schoolClass.gradeLevel;
+
+    if (gradeLevel == null) {
+      throw new BadRequestException('Sinfning darajasi belgilanmagan');
+    }
+
+    const textbooks = await this.dataSource.getRepository(Textbook).find({
+      where: {
+        subjectId,
+        gradeLevel,
+        isActive: true,
+        isVerified: true,
+        processingStatus: TextbookProcessingStatus.READY,
+      },
+      order: {
+        id: 'DESC',
+      },
+      take: 100,
+    });
+
+    if (!textbooks.length) {
+      return [];
+    }
+
+    const textbookIds = textbooks.map((book) => book.id);
+
+    const topics = await this.dataSource
+      .getRepository(TextbookTopic)
+      .createQueryBuilder('topic')
+      .where('topic.textbookId IN (:...textbookIds)', {
+        textbookIds,
+      })
+      .andWhere('topic.reviewStatus = :status', {
+        status: TopicReviewStatus.APPROVED,
+      })
+      .orderBy('topic.textbookId', 'DESC')
+      .addOrderBy('topic.orderIndex', 'ASC')
+      .getMany();
+
+    const textbooksById = new Map(textbooks.map((book) => [book.id, book]));
+
+    return topics.map((topic) => {
+      const textbook = textbooksById.get(topic.textbookId);
+
+      return {
+        id: topic.id,
+        title: topic.title,
+        chapterTitle: topic.chapterTitle,
+        orderIndex: topic.orderIndex,
+        pageStart: topic.pageStart,
+        pageEnd: topic.pageEnd,
+        textbook: {
+          id: topic.textbookId,
+          title: textbook?.title ?? '',
+          languageCode: textbook?.languageCode ?? '',
+          gradeLevel: textbook?.gradeLevel ?? gradeLevel,
+        },
+      };
     });
   }
 }
