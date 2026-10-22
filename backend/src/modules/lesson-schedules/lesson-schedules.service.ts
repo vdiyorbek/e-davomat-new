@@ -16,7 +16,7 @@ import {
 } from '../school-memberships/school-membership.entity';
 import { TeacherClassSubject } from '../teacher-assignments/teacher-class-subject.entity';
 import { UserRole } from '../users/enums/user-role.enum';
-
+import { UpdateLessonScheduleDto } from './dto/update-lesson-schedule.dto';
 import { LessonSchedule } from './lesson-schedule.entity';
 import { CreateLessonScheduleDto } from './dto/create-lesson-schedule.dto';
 import { ListLessonSchedulesDto } from './dto/list-lesson-schedules.dto';
@@ -308,5 +308,296 @@ export class LessonSchedulesService {
           lesson.teacherAssignment.teacherMembership.person.middleName,
       },
     }));
+  }
+
+  async update(
+    id: number,
+    dto: UpdateLessonScheduleDto,
+    user: AuthenticatedUser,
+  ) {
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      const repository = manager.getRepository(LessonSchedule);
+
+      const existing = await repository.findOneBy({ id });
+
+      if (!existing) {
+        throw new NotFoundException('Dars jadvali topilmadi');
+      }
+
+      // Avval sinfni qulflaymiz.
+      const schoolClass = await manager.findOne(SchoolClass, {
+        where: { id: existing.classId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!schoolClass) {
+        throw new NotFoundException('Sinf topilmadi');
+      }
+
+      await this.checkSchoolAccess(schoolClass.schoolId, user, manager);
+
+      const assignment = await manager.findOneBy(TeacherClassSubject, {
+        id: existing.teacherAssignmentId,
+      });
+
+      if (!assignment || assignment.classId !== schoolClass.id) {
+        throw new BadRequestException(
+          'Darsning o‘qituvchi biriktirmasi noto‘g‘ri',
+        );
+      }
+
+      const membership = await manager.findOne(SchoolMembership, {
+        where: { id: assignment.teacherMembershipId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (
+        !membership ||
+        membership.type !== MembershipType.TEACHER ||
+        membership.schoolId !== schoolClass.schoolId
+      ) {
+        throw new BadRequestException(
+          'O‘qituvchining maktab biriktirmasi noto‘g‘ri',
+        );
+      }
+
+      const lesson = await repository.findOne({
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!lesson) {
+        throw new NotFoundException('Dars topilmadi');
+      }
+
+      if (!lesson.isActive) {
+        throw new ConflictException(
+          'Faolsizlantirilgan darsni o‘zgartirib bo‘lmaydi',
+        );
+      }
+
+      const effectiveDate = dto.effectiveDate;
+
+      // Versioning uchun eski davr kamida
+      // bitta kunni qamrab olishi kerak.
+      if (effectiveDate <= lesson.startDate) {
+        throw new BadRequestException(
+          'O‘zgarish sanasi eski dars boshlanishidan keyin bo‘lishi kerak',
+        );
+      }
+
+      if (lesson.endDate !== null && effectiveDate >= lesson.endDate) {
+        throw new BadRequestException(
+          'O‘zgarish sanasi darsning amal qilish davridan tashqarida',
+        );
+      }
+
+      const dayOfWeek = dto.dayOfWeek ?? lesson.dayOfWeek;
+
+      const lessonNumber = dto.lessonNumber ?? lesson.lessonNumber;
+
+      const startTime = dto.startTime ?? lesson.startTime.slice(0, 5);
+
+      const endTime = dto.endTime ?? lesson.endTime.slice(0, 5);
+
+      if (startTime >= endTime) {
+        throw new BadRequestException(
+          'Dars tugash vaqti boshlanish vaqtidan keyin bo‘lishi kerak',
+        );
+      }
+
+      const originalEndDate = lesson.endDate;
+
+      this.checkAcademicYear(
+        schoolClass.academicYear,
+        effectiveDate,
+        originalEndDate,
+      );
+
+      // Yangi davr o‘qituvchi biriktirmasiga
+      // va maktabdagi faoliyat davriga mos bo‘lsin.
+      const within = (from: string, to: string | null) =>
+        effectiveDate >= from &&
+        (to === null || (originalEndDate !== null && originalEndDate <= to));
+
+      if (
+        !within(assignment.startDate, assignment.endDate) ||
+        !within(membership.startDate, membership.endDate)
+      ) {
+        throw new BadRequestException(
+          'Yangi dars sanalari o‘qituvchining biriktirilgan davridan tashqarida',
+        );
+      }
+
+      // Boshqa sinf yoki o‘qituvchining
+      // shu davrdagi darsiga to‘qnashmasin.
+      const overlap = await repository
+        .createQueryBuilder('other')
+        .innerJoin('other.teacherAssignment', 'otherAssignment')
+        .where('other.id != :id', { id })
+        .andWhere('other.isActive = :active', {
+          active: true,
+        })
+        .andWhere('other.dayOfWeek = :day', {
+          day: dayOfWeek,
+        })
+        .andWhere(
+          '(other.classId = :classId OR ' +
+            'otherAssignment.teacherMembershipId = :teacherId)',
+          {
+            classId: schoolClass.id,
+            teacherId: assignment.teacherMembershipId,
+          },
+        )
+        .andWhere('other.startDate < :newEnd', {
+          newEnd: originalEndDate ?? '9999-12-31',
+        })
+        .andWhere('(other.endDate IS NULL OR other.endDate > :newStart)', {
+          newStart: effectiveDate,
+        })
+        .andWhere('other.startTime < :newEndTime', {
+          newEndTime: endTime,
+        })
+        .andWhere('other.endTime > :newStartTime', {
+          newStartTime: startTime,
+        })
+        .getOne();
+
+      if (overlap) {
+        throw new ConflictException(
+          'Yangi davrda sinf yoki o‘qituvchining boshqa darsi mavjud',
+        );
+      }
+
+      const numberConflict = await repository
+        .createQueryBuilder('other')
+        .where('other.id != :id', { id })
+        .andWhere('other.classId = :classId', {
+          classId: schoolClass.id,
+        })
+        .andWhere('other.dayOfWeek = :day', {
+          day: dayOfWeek,
+        })
+        .andWhere('other.lessonNumber = :number', {
+          number: lessonNumber,
+        })
+        .andWhere('other.isActive = :active', {
+          active: true,
+        })
+        .andWhere('other.startDate < :newEnd', {
+          newEnd: originalEndDate ?? '9999-12-31',
+        })
+        .andWhere('(other.endDate IS NULL OR other.endDate > :newStart)', {
+          newStart: effectiveDate,
+        })
+        .getOne();
+
+      if (numberConflict) {
+        throw new ConflictException('Yangi davrda shu raqamli dars mavjud');
+      }
+
+      // 1. Eski versiya tarixda qoladi.
+      lesson.endDate = effectiveDate;
+
+      await repository.save(lesson);
+
+      // 2. Yangi versiya alohida ID bilan yaratiladi.
+      const newVersion = repository.create({
+        classId: lesson.classId,
+        teacherAssignmentId: lesson.teacherAssignmentId,
+        dayOfWeek,
+        lessonNumber,
+        startTime,
+        endTime,
+        startDate: effectiveDate,
+        endDate: originalEndDate,
+        isActive: true,
+      });
+
+      const saved = await repository.save(newVersion);
+
+      return {
+        message: 'Dars jadvalining yangi versiyasi yaratildi',
+        previousVersionId: lesson.id,
+        newVersionId: saved.id,
+        effectiveDate,
+        previousVersionEndDate: lesson.endDate,
+        newVersion: saved,
+      };
+    });
+  }
+
+  async remove(id: number, effectiveDate: string, user: AuthenticatedUser) {
+    return this.dataSource.transaction('READ COMMITTED', async (manager) => {
+      const repository = manager.getRepository(LessonSchedule);
+
+      const existing = await repository.findOneBy({ id });
+
+      if (!existing) {
+        throw new NotFoundException('Dars topilmadi');
+      }
+
+      const schoolClass = await manager.findOne(SchoolClass, {
+        where: { id: existing.classId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!schoolClass) {
+        throw new NotFoundException('Sinf topilmadi');
+      }
+
+      await this.checkSchoolAccess(schoolClass.schoolId, user, manager);
+
+      const assignment = await manager.findOneBy(TeacherClassSubject, {
+        id: existing.teacherAssignmentId,
+      });
+
+      if (!assignment) {
+        throw new NotFoundException('O‘qituvchi biriktirmasi topilmadi');
+      }
+
+      await manager.findOne(SchoolMembership, {
+        where: { id: assignment.teacherMembershipId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const lesson = await repository.findOne({
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!lesson) {
+        throw new NotFoundException('Dars topilmadi');
+      }
+
+      if (!lesson.isActive) {
+        throw new ConflictException('Dars allaqachon faolsizlantirilgan');
+      }
+
+      if (effectiveDate <= lesson.startDate) {
+        throw new BadRequestException(
+          'Bekor qilish sanasi dars boshlanishidan keyin bo‘lishi kerak',
+        );
+      }
+
+      if (lesson.endDate !== null && effectiveDate >= lesson.endDate) {
+        throw new BadRequestException(
+          'Bekor qilish sanasi dars davridan tashqarida',
+        );
+      }
+
+      // Eski davr saqlanadi.
+      // effectiveDate dan boshlab bu jadval amal qilmaydi.
+      lesson.endDate = effectiveDate;
+
+      await repository.save(lesson);
+
+      return {
+        id: lesson.id,
+        isActive: true,
+        endDate: lesson.endDate,
+        message: 'Dars belgilangan sanadan boshlab to‘xtatildi',
+      };
+    });
   }
 }

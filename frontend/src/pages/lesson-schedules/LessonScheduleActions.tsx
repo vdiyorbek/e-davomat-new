@@ -54,7 +54,7 @@ export function LessonScheduleActions({
     onUpdated,
 }: Props) {
     const id = useId();
-
+    const [cancelDate, setCancelDate] = useState('');
     const { confirm, dialog } = useConfirm();
 
     const [editing, setEditing] = useState(false);
@@ -90,7 +90,7 @@ export function LessonScheduleActions({
         setLessonNumber(String(lesson.lessonNumber));
         setStartTime(lesson.startTime.slice(0, 5));
         setEndTime(lesson.endTime.slice(0, 5));
-        setStartDate(lesson.startDate);
+        setStartDate('');
         setEndDate(lesson.endDate ?? '');
         setError('');
 
@@ -133,12 +133,11 @@ export function LessonScheduleActions({
             await authorizedPatch(
                 `/lesson-schedules/${lesson.id}`,
                 {
+                    effectiveDate: startDate,
                     dayOfWeek: Number(dayOfWeek),
                     lessonNumber: Number(lessonNumber),
                     startTime,
                     endTime,
-                    startDate,
-                    endDate: endDate || null,
                 },
             );
 
@@ -176,8 +175,13 @@ export function LessonScheduleActions({
         setError('');
 
         try {
+            if (!cancelDate) {
+                setError('Bekor qilish sanasini tanlang.');
+                return;
+            }
+
             await authorizedDelete(
-                `/lesson-schedules/${lesson.id}`,
+                `/lesson-schedules/${lesson.id}?effectiveDate=${encodeURIComponent(cancelDate)}`,
             );
 
             onUpdated();
@@ -218,6 +222,27 @@ export function LessonScheduleActions({
                         Tahrirlash
                     </Button>
 
+                    <div className="w-full space-y-1">
+                        <label
+                            htmlFor={`${id}-cancel-date`}
+                            className="text-xs font-medium"
+                        >
+                            Dars qaysi sanadan to‘xtatilsin?
+                        </label>
+                        <Input
+                            id={`${id}-cancel-date`}
+                            type="date"
+                            value={cancelDate}
+                            onChange={(event) => setCancelDate(event.target.value)}
+                            min={(() => {
+                                const date = new Date(`${lesson.startDate}T00:00:00Z`);
+                                date.setUTCDate(date.getUTCDate() + 1);
+                                return date.toISOString().slice(0, 10);
+                            })()}
+                            max={lesson.endDate ?? undefined}
+                            disabled={busy}
+                        />
+                    </div>
                     <Button
                         type="button"
                         size="sm"
@@ -229,6 +254,7 @@ export function LessonScheduleActions({
                         <Trash2 aria-hidden="true" />
                         Bekor qilish
                     </Button>
+
                 </div>
             </div>
 
@@ -279,7 +305,11 @@ export function LessonScheduleActions({
                             <Input
                                 id={`${id}-number`}
                                 type="number"
-                                min={1}
+                                min={(() => {
+                                    const date = new Date(`${lesson.startDate}T00:00:00Z`);
+                                    date.setUTCDate(date.getUTCDate() + 1);
+                                    return date.toISOString().slice(0, 10);
+                                })()}
                                 max={20}
                                 value={lessonNumber}
                                 onChange={(event) =>

@@ -25,7 +25,7 @@ import { SubjectsModule } from './modules/subjects/subjects.module';
 import { TeacherAssignmentsModule } from './modules/teacher-assignments/teacher-assignments.module';
 import { TextbooksModule } from './modules/textbooks/textbooks.module';
 import { LessonSchedulesModule } from './modules/lesson-schedules/lesson-schedules.module';
-
+import { LessonSessionsModule } from './modules/lesson-sessions/lesson-sessions.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -55,6 +55,7 @@ import { LessonSchedulesModule } from './modules/lesson-schedules/lesson-schedul
     TeacherAssignmentsModule,
     TextbooksModule,
     LessonSchedulesModule,
+    LessonSessionsModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

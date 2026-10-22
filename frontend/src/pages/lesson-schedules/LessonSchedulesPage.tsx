@@ -191,12 +191,24 @@ function ClassSchedule({
     assignmentsError: string;
 }) {
     const id = useId();
+    const [viewMode, setViewMode] = useState<
+        'date' | 'all'
+    >('date');
+
+    const [selectedDate, setSelectedDate] = useState(
+        todayInTashkent,
+    );
+
 
     const params = new URLSearchParams({
         schoolId: String(schoolId),
         academicYear,
         classId: String(schoolClass.id),
     });
+
+    if (viewMode === 'date' && selectedDate) {
+        params.set('date', selectedDate);
+    }
 
     const query = useApiQuery<LessonSchedule[]>(
         `/lesson-schedules?${params.toString()}`,
@@ -454,6 +466,65 @@ function ClassSchedule({
             </Card>
 
             <section className="min-w-0 space-y-4">
+
+                <Card>
+                    <CardContent className="space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h3 className="font-semibold">
+                                    Dars jadvali tarixi
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Jadvalni tanlangan sana bo‘yicha tekshiring.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant={
+                                    viewMode === 'date' ? 'default' : 'outline'
+                                }
+                                onClick={() => setViewMode('date')}
+                            >
+                                <CalendarDays aria-hidden="true" />
+                                Sana bo‘yicha
+                            </Button>
+
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant={
+                                    viewMode === 'all' ? 'default' : 'outline'
+                                }
+                                onClick={() => setViewMode('all')}
+                            >
+                                Barcha versiyalar
+                            </Button>
+                        </div>
+
+                        {viewMode === 'date' && (
+                            <Field
+                                htmlFor={`${id}-history-date`}
+                                label="Jadval amal qilgan sana"
+                            >
+                                <Input
+                                    id={`${id}-history-date`}
+                                    type="date"
+                                    min={`${Number(academicYear.slice(0, 4))}-09-01`}
+                                    max={`${Number(academicYear.slice(0, 4)) + 1}-08-31`}
+                                    value={selectedDate}
+                                    onChange={(event) =>
+                                        setSelectedDate(event.target.value)
+                                    }
+                                />
+                            </Field>
+                        )}
+                    </CardContent>
+                </Card>
+
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-lg font-semibold">
@@ -541,10 +612,15 @@ function ClassSchedule({
                                                                 {lesson.endDate ?? 'Muddatsiz'}
                                                             </p>
 
-                                                            <LessonScheduleActions
-                                                                lesson={lesson}
-                                                                onUpdated={query.retry}
-                                                            />
+                                                            {viewMode === 'date' &&
+                                                                selectedDate >= todayInTashkent() &&
+                                                                (!lesson.endDate ||
+                                                                    lesson.endDate > todayInTashkent()) && (
+                                                                    <LessonScheduleActions
+                                                                        lesson={lesson}
+                                                                        onUpdated={query.retry}
+                                                                    />
+                                                                )}
                                                         </div>
                                                     </div>
                                                 </div>

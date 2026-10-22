@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -15,7 +18,7 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { LessonSchedulesService } from './lesson-schedules.service';
 import { CreateLessonScheduleDto } from './dto/create-lesson-schedule.dto';
 import { ListLessonSchedulesDto } from './dto/list-lesson-schedules.dto';
-
+import { CancelLessonScheduleDto } from './dto/cancel-lesson-schedule.dto';
 @Controller('lesson-schedules')
 @Roles(
   UserRole.SUPER_ADMIN,
@@ -48,5 +51,18 @@ export class LessonSchedulesController {
     }
 
     return this.service.findAll(dto, request.authUser);
+  }
+
+  @Delete(':id')
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() dto: CancelLessonScheduleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.service.remove(id, dto.effectiveDate, request.authUser);
   }
 }
