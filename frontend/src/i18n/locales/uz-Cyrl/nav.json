@@ -28,13 +28,15 @@
     "terminals": "Терминаллар",
     "users": "Фойдаланувчилар",
     "person": "Шахс маълумотлари",
-    "forbidden": "Кириш чекланган"
+    "forbidden": "Кириш чекланган",
+    "lessonSchedules": "Дарс жадвали"
   },
   "short": {
     "profile": "Профил",
     "studentAttendance": "Ўқувчилар",
     "teacherAttendance": "Ўқитувчилар",
     "schools": "Мактаблар",
-    "more": "Меню"
+    "more": "Меню",
+    "lessonSchedules": "Жадвал"
   }
 }

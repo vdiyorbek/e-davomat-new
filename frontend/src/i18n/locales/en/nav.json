@@ -28,13 +28,15 @@
     "terminals": "Terminals",
     "users": "Users",
     "person": "Person details",
-    "forbidden": "Access restricted"
+    "forbidden": "Access restricted",
+    "lessonSchedules": "Lesson schedule"
   },
   "short": {
     "profile": "Profile",
     "studentAttendance": "Students",
     "teacherAttendance": "Teachers",
     "schools": "Schools",
-    "more": "Menu"
+    "more": "Menu",
+    "lessonSchedules": "Schedule"
   }
 }

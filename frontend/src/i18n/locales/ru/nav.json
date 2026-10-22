@@ -28,13 +28,15 @@
     "terminals": "Терминалы",
     "users": "Пользователи",
     "person": "Карточка человека",
-    "forbidden": "Доступ ограничен"
+    "forbidden": "Доступ ограничен",
+    "lessonSchedules": "Расписание уроков"
   },
   "short": {
     "profile": "Профиль",
     "studentAttendance": "Ученики",
     "teacherAttendance": "Учителя",
     "schools": "Школы",
-    "more": "Меню"
+    "more": "Меню",
+    "lessonSchedules": "Расписание"
   }
 }

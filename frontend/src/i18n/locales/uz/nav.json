@@ -28,13 +28,15 @@
     "terminals": "Terminallar",
     "users": "Foydalanuvchilar",
     "person": "Shaxs ma’lumotlari",
-    "forbidden": "Kirish cheklangan"
+    "forbidden": "Kirish cheklangan",
+    "lessonSchedules": "Dars jadvali"
   },
   "short": {
     "profile": "Profil",
     "studentAttendance": "O‘quvchilar",
     "teacherAttendance": "O‘qituvchilar",
     "schools": "Maktablar",
-    "more": "Menyu"
+    "more": "Menyu",
+    "lessonSchedules": "Jadval"
   }
 }

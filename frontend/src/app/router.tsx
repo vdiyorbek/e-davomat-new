@@ -24,6 +24,10 @@ const TeacherAttendancePage = lazy(() => import('@/pages/attendance/TeacherAtten
 const AttendanceCalendarPage = lazy(() => import('@/pages/attendance/AttendanceCalendarPage').then((m) => ({ default: m.AttendanceCalendarPage })));
 const TeacherAssignmentsPage = lazy(() => import('@/pages/teacher-assignments/TeacherAssignmentsPage').then((m) => ({ default: m.TeacherAssignmentsPage })));
 const TextbooksPage = lazy(() => import('@/pages/textbooks/TextbooksPage').then((m) => ({ default: m.TextbooksPage })));
+const LessonSchedulesPage = lazy(() =>
+    import('@/pages/lesson-schedules/LessonSchedulesPage')
+        .then((m) => ({ default: m.LessonSchedulesPage }))
+);
 
 export const router = createBrowserRouter([
     {
@@ -87,6 +91,10 @@ export const router = createBrowserRouter([
                             {
                                 path: '/teacher-assignments',
                                 element: <TeacherAssignmentsPage />,
+                            },
+                            {
+                                path: '/lesson-schedules',
+                                element: <LessonSchedulesPage />,
                             },
                             {
                                 element: <RequireRole roles={['SUPER_ADMIN']} />,
