@@ -31,7 +31,8 @@
     "terminals": "Terminallar",
     "users": "Foydalanuvchilar",
     "person": "Shaxs ma’lumotlari",
-    "forbidden": "Kirish cheklangan"
+    "forbidden": "Kirish cheklangan",
+    "teacherDashboard":"O'qituvchi kabineti"
   },
   "short": {
     "profile": "Profil",

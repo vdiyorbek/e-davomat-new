@@ -31,7 +31,8 @@
     "terminals": "Терминалы",
     "users": "Пользователи",
     "person": "Карточка человека",
-    "forbidden": "Доступ ограничен"
+    "forbidden": "Доступ ограничен",
+    "teacherDashboard": "Кабинет учителя"
   },
   "short": {
     "profile": "Профиль",

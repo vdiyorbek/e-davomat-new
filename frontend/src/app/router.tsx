@@ -27,6 +27,10 @@ const TextbooksPage = lazy(() => import('@/pages/textbooks/TextbooksPage').then(
 const LessonSchedulesPage = lazy(() => import('@/pages/lesson-schedules/LessonSchedulesPage').then((m) => ({ default: m.LessonSchedulesPage })));
 const JournalPage = lazy(() => import('@/pages/journal/JournalPage').then((m) => ({ default: m.JournalPage })));
 const SubjectsPage = lazy(() => import('@/pages/subjects/SubjectsPage').then((m) => ({ default: m.SubjectsPage })));
+const TeacherDashboardPage = lazy(() =>
+    import('@/pages/teacher-dashboard/TeacherDashboardPage')
+        .then((m) => ({ default: m.TeacherDashboardPage }))
+);
 
 export const router = createBrowserRouter([
     {
@@ -44,6 +48,15 @@ export const router = createBrowserRouter([
                     { path: '/', element: <Navigate to="/me" replace /> },
                     { path: '/me', element: <ProfilePage /> },
                     { path: '/forbidden', element: <ForbiddenPage /> },
+                    {
+                        element: <RequireRole roles={['TEACHER']} />,
+                        children: [
+                            {
+                                path: '/teacher/dashboard',
+                                element: <TeacherDashboardPage />,
+                            },
+                        ],
+                    },
                     {
                         element: <RequireRole roles={ADMIN_ROLES} />,
                         children: [
