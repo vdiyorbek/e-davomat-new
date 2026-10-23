@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { BookOpen, ListTree, RotateCw } from 'lucide-react';
+import { BookOpen, CheckCheck, ListTree, RotateCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { useConfirm } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
@@ -11,27 +12,16 @@ import { Card } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { authorizedPatch } from '@/lib/auth-session';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { localizedName } from '@/lib/localized';
 import { TextbookEditForm } from './TextbookEditForm';
 import { TextbookExtractButton } from './TextbookExtractButton';
 import { TextbookTopicRow } from './TextbookTopicRow';
 import type { TextbookTopic } from './TextbookTopicRow';
-import { TextbookUploadForm } from './TextbookUploadForm';
 import { TextbookArchiveButton } from './TextbookArchiveButton';
 import { TextbookPdfViewer } from './TextbookPdfViewer';
-import { CheckCheck } from 'lucide-react';
-import { useConfirm } from '@/components/common/ConfirmDialog';
-import { authorizedPatch } from '@/lib/auth-session';
-
-interface Textbook {
-    id: number;
-    subjectId: number;
-    gradeLevel: number;
-    title: string;
-    languageCode: string;
-    processingStatus: 'DRAFT' | 'PROCESSING' | 'READY' | 'FAILED';
-    isVerified: boolean;
-}
+import { TextbookUploadForm } from './TextbookUploadForm';
 
 interface Textbook {
     id: number;
@@ -89,11 +79,9 @@ function TopicsList({
         if (approving || pendingCount === 0) return;
 
         const confirmed = await confirm({
-            title: 'Barcha mavzularni tasdiqlash',
-            description:
-                `${pendingCount} ta mavzu tasdiqlanadi. ` +
-                'Davom etishdan oldin mavzularni tekshiring.',
-            confirmLabel: 'Barchasini tasdiqlash',
+            title: t('textbooks.topics.approveAllTitle'),
+            description: t('textbooks.topics.approveAllConfirm', { count: pendingCount }),
+            confirmLabel: t('textbooks.topics.approveAll'),
         });
 
         if (!confirmed) return;
@@ -113,7 +101,7 @@ function TopicsList({
             setApproveError(
                 error instanceof Error
                     ? error.message
-                    : 'Mavzularni tasdiqlashda xatolik yuz berdi.'
+                    : t('textbooks.topics.errors.approveAllFailed')
             );
         } finally {
             setApproving(false);
@@ -124,29 +112,23 @@ function TopicsList({
         <div className="space-y-4">
             {dialog}
 
-            {approveError && (
-                <ErrorState message={approveError} />
-            )}
-
-            {pendingCount > 0 && (
-                <Button
-                    type="button"
-                    disabled={approving}
-                    onClick={() => void approveAll()}
-                >
-                    <CheckCheck aria-hidden="true" />
-                    {approving
-                        ? 'Tasdiqlanmoqda...'
-                        : `Barchasini tasdiqlash (${pendingCount})`}
-                </Button>
-            )}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">{t('textbooks.topics.total', { count: query.data?.total ?? 0 })}</p>
-                <Button type="button" variant="outline" size="sm" onClick={query.retry} disabled={query.loading}>
-                    <RotateCw aria-hidden="true" />
-                    {t('common.refresh')}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    {pendingCount > 0 && (
+                        <Button type="button" size="sm" disabled={approving} onClick={() => void approveAll()}>
+                            <CheckCheck aria-hidden="true" />
+                            {approving ? t('textbooks.topics.approving') : t('textbooks.topics.approveAllN', { count: pendingCount })}
+                        </Button>
+                    )}
+                    <Button type="button" variant="outline" size="sm" onClick={query.retry} disabled={query.loading}>
+                        <RotateCw aria-hidden="true" />
+                        {t('common.refresh')}
+                    </Button>
+                </div>
             </div>
+
+            {approveError && <ErrorState message={approveError} />}
 
             {query.loading ? (
                 <LoadingState rows={5} />
@@ -206,7 +188,6 @@ export function TextbooksPage() {
         return true;
     });
 
-
     function subjectName(subjectId: number): string {
         const subject = subjects.find((item) => item.id === subjectId);
         return subject ? localizedName(subject) : t('textbooks.subjectN', { id: subjectId });
@@ -214,11 +195,7 @@ export function TextbooksPage() {
 
     function statusBadge(textbook: Textbook) {
         if (!textbook.isActive) {
-            return (
-                <StatusBadge tone="neutral">
-                    Arxivlangan
-                </StatusBadge>
-            );
+            return <StatusBadge tone="neutral">{t('textbooks.archived')}</StatusBadge>;
         }
 
         return (
@@ -227,7 +204,6 @@ export function TextbooksPage() {
             </StatusBadge>
         );
     }
-
 
 
     function textbookActions(textbook: Textbook) {
@@ -258,7 +234,6 @@ export function TextbooksPage() {
     }
 
 
-
     function topicsButton(textbook: Textbook) {
         return (
             <Button type="button" variant="outline" size="sm" onClick={() => setSelected(textbook)}>
@@ -280,7 +255,7 @@ export function TextbooksPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="font-heading text-lg font-semibold">{t('textbooks.listTitle')}</h2>
-                        <p className="text-sm text-muted-foreground">{t('common.total', { count: textbooks.length })}</p>
+                        <p className="text-sm text-muted-foreground">{t('common.total', { count: visibleTextbooks.length })}</p>
                     </div>
                     <Button type="button" variant="outline" size="sm" onClick={textbooksQuery.retry} disabled={textbooksQuery.loading}>
                         <RotateCw aria-hidden="true" />
@@ -288,23 +263,13 @@ export function TextbooksPage() {
                     </Button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    {([
-                        ['active', 'Faol'],
-                        ['archived', 'Arxivlangan'],
-                        ['all', 'Barchasi'],
-                    ] as const).map(([value, label]) => (
-                        <Button
-                            key={value}
-                            type="button"
-                            size="sm"
-                            variant={statusFilter === value ? 'default' : 'outline'}
-                            onClick={() => setStatusFilter(value)}
-                        >
-                            {label}
-                        </Button>
-                    ))}
-                </div>
+                <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
+                    <TabsList>
+                        <TabsTrigger value="active">{t('textbooks.active')}</TabsTrigger>
+                        <TabsTrigger value="archived">{t('textbooks.archived')}</TabsTrigger>
+                        <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
+                    </TabsList>
+                </Tabs>
 
                 {textbooksQuery.loading ? (
                     <LoadingState />

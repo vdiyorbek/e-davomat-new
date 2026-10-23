@@ -1,0 +1,53 @@
+{
+  "title": "Dars jadvali",
+  "subtitle": "Sinflarning haftalik dars jadvalini tuzish va o‘zgartirish.",
+  "chooseSchool": "Dars jadvalini ko‘rish uchun maktabni tanlang.",
+  "chooseClass": "Jadvalni ko‘rish uchun sinfni tanlang.",
+  "createTitle": "Jadvalga dars qo‘shish",
+  "createHint": "{{name}} sinfi uchun yangi dars.",
+  "assignment": "Fan va o‘qituvchi",
+  "chooseAssignment": "Biriktirishni tanlang",
+  "noAssignments": "Bu sinfga hali fan biriktirilmagan.",
+  "weekday": "Hafta kuni",
+  "lessonNumber": "Dars raqami",
+  "startTime": "Boshlanish vaqti",
+  "endTime": "Tugash vaqti",
+  "validFrom": "Boshlanish sanasi",
+  "validTo": "Tugash sanasi",
+  "openEnded": "muddatsiz",
+  "add": "Jadvalga qo‘shish",
+  "created": "Dars jadvalga qo‘shildi.",
+  "weekTitle": "{{name}} sinfining haftalik jadvali",
+  "total": "Jami darslar: {{count}}",
+  "lessonsCount": "{{count}} ta dars",
+  "noLessons": "Dars yo‘q",
+  "lessonLabel": "{{n}}-dars: {{subject}}",
+  "emptyTitle": "Jadval bo‘sh",
+  "empty": "Bu sinf uchun hali dars qo‘shilmagan.",
+  "view": {
+    "date": "Sana bo‘yicha",
+    "all": "Barcha yozuvlar",
+    "dateLabel": "Qaysi sanadagi jadval"
+  },
+  "edit": {
+    "title": "Darsni o‘zgartirish",
+    "effectiveDate": "O‘zgarish kuchga kiradigan sana",
+    "effectiveHint": "Shu sanadan oldingi darslar o‘zgarmaydi."
+  },
+  "cancel": {
+    "button": "Bekor qilish",
+    "title": "Darsni jadvaldan olib tashlash",
+    "date": "Qaysi sanadan boshlab",
+    "hint": "Shu sanadan boshlab dars o‘tilmaydi. Oldingi yozuvlar saqlanadi.",
+    "confirm": "Olib tashlash"
+  },
+  "errors": {
+    "assignment": "Fan va o‘qituvchini tanlang.",
+    "lessonNumber": "Dars raqami 1 dan 20 gacha bo‘lishi kerak.",
+    "time": "Tugash vaqti boshlanish vaqtidan keyin bo‘lishi kerak.",
+    "effectiveDate": "Sana {{date}} dan oldin bo‘lmasligi va dars muddati ichida bo‘lishi kerak.",
+    "createFailed": "Darsni qo‘shib bo‘lmadi.",
+    "updateFailed": "Darsni o‘zgartirib bo‘lmadi.",
+    "cancelFailed": "Darsni bekor qilib bo‘lmadi."
+  }
+}

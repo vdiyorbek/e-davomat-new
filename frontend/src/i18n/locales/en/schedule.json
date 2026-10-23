@@ -1,0 +1,53 @@
+{
+  "title": "Lesson schedule",
+  "subtitle": "Build and change the weekly timetable of classes.",
+  "chooseSchool": "Choose a school to see its timetable.",
+  "chooseClass": "Choose a class to see its timetable.",
+  "createTitle": "Add a lesson to the timetable",
+  "createHint": "A new lesson for class {{name}}.",
+  "assignment": "Subject and teacher",
+  "chooseAssignment": "Choose an assignment",
+  "noAssignments": "No subjects are assigned to this class yet.",
+  "weekday": "Weekday",
+  "lessonNumber": "Lesson number",
+  "startTime": "Start time",
+  "endTime": "End time",
+  "validFrom": "Valid from",
+  "validTo": "Valid until",
+  "openEnded": "open-ended",
+  "add": "Add to timetable",
+  "created": "The lesson was added to the timetable.",
+  "weekTitle": "Weekly timetable of class {{name}}",
+  "total": "Lessons in total: {{count}}",
+  "lessonsCount": "{{count}} lessons",
+  "noLessons": "No lessons",
+  "lessonLabel": "Lesson {{n}}: {{subject}}",
+  "emptyTitle": "The timetable is empty",
+  "empty": "No lessons have been added for this class yet.",
+  "view": {
+    "date": "On a date",
+    "all": "All records",
+    "dateLabel": "Timetable on date"
+  },
+  "edit": {
+    "title": "Change the lesson",
+    "effectiveDate": "Effective from",
+    "effectiveHint": "Lessons before this date stay unchanged."
+  },
+  "cancel": {
+    "button": "Cancel lesson",
+    "title": "Remove the lesson from the timetable",
+    "date": "Starting from",
+    "hint": "From this date the lesson is no longer held. Earlier records are kept.",
+    "confirm": "Remove"
+  },
+  "errors": {
+    "assignment": "Choose a subject and teacher.",
+    "lessonNumber": "The lesson number must be between 1 and 20.",
+    "time": "The end time must be after the start time.",
+    "effectiveDate": "The date must be no earlier than {{date}} and within the lesson’s validity period.",
+    "createFailed": "Could not add the lesson.",
+    "updateFailed": "Could not change the lesson.",
+    "cancelFailed": "Could not cancel the lesson."
+  }
+}

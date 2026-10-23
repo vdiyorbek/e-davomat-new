@@ -65,7 +65,53 @@
       "page": "The page number must be a positive whole number.",
       "range": "The first page is after the last page.",
       "saveFailed": "Failed to save the topic.",
-      "approveFailed": "Could not approve the topic."
+      "approveFailed": "Could not approve the topic.",
+      "approveAllFailed": "Could not approve the topics."
+    },
+    "approveAll": "Approve all",
+    "approveAllN": "Approve all ({{count}})",
+    "approveAllTitle": "Approve all topics?",
+    "approveAllConfirm": "{{count}} topics will be approved. Please review them before continuing.",
+    "approving": "Approving…",
+    "openInPdf": "Open in PDF"
+  },
+  "active": "Active",
+  "archived": "Archived",
+  "archive": {
+    "archive": "Archive",
+    "restore": "Restore",
+    "archiveTitle": "Archive this textbook?",
+    "archiveConfirm": "The textbook “{{title}}” will be archived. Its data and PDF file are kept.",
+    "restoreTitle": "Restore this textbook?",
+    "restoreConfirm": "The textbook “{{title}}” will become active again.",
+    "failed": "Could not complete the action."
+  },
+  "edit": {
+    "title": "Edit textbook",
+    "hint": "Changes the textbook’s main details. The PDF file stays the same.",
+    "year": "Publication year",
+    "publisher": "Publisher",
+    "publisherPlaceholder": "Publisher name",
+    "approval": "Approval document",
+    "approvalPlaceholder": "Order number or document details",
+    "errors": {
+      "title": "The textbook title must be 2–255 characters.",
+      "subjectGrade": "The subject or grade is invalid.",
+      "year": "The publication year must be between 1900 and 2100.",
+      "publisher": "The publisher name must not exceed 200 characters.",
+      "approval": "The approval document must not exceed 300 characters.",
+      "saveFailed": "Could not save the textbook."
     }
+  },
+  "pdf": {
+    "view": "View book",
+    "description": "PDF view of the uploaded textbook.",
+    "pageN": "Page {{page}} of the textbook",
+    "loading": "Loading PDF…",
+    "notPdf": "The server did not return a PDF.",
+    "failed": "Could not open the PDF file.",
+    "openTab": "Open in new tab",
+    "download": "Download",
+    "frameTitle": "“{{title}}” PDF"
   }
 }

@@ -25,12 +25,13 @@
     "teachers": "Teachers",
     "assignments": "Subject & class assignments",
     "textbooks": "Textbook library",
+    "subjects": "Subjects",
+    "lessonSchedules": "Lesson schedule",
+    "journal": "Electronic journal",
     "terminals": "Terminals",
     "users": "Users",
     "person": "Person details",
-    "forbidden": "Access restricted",
-    "lessonSchedules": "Lesson schedule",
-    "journal": "Electronic journal"
+    "forbidden": "Access restricted"
   },
   "short": {
     "profile": "Profile",

@@ -1,38 +1,25 @@
-
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import {
-    CalendarDays,
-    Plus,
-    RotateCw,
-} from 'lucide-react';
+import { CalendarClock, CalendarDays, History, Plus, RotateCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { PageHeader } from '@/components/common/PageHeader';
 import { Field } from '@/components/common/Field';
+import { PageHeader } from '@/components/common/PageHeader';
 import { SelectField } from '@/components/common/SelectField';
-import {
-    EmptyState,
-    ErrorState,
-    LoadingState,
-    SuccessNotice,
-} from '@/components/common/states';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPost } from '@/lib/auth-session';
-import {
-    academicYearFor,
-    academicYearOptions,
-    todayInTashkent,
-} from '@/lib/date';
+import { academicYearFor, academicYearOptions, formatDate, todayInTashkent, weekdayName } from '@/lib/date';
+import { localizedName } from '@/lib/localized';
+import { personFullName } from '@/lib/person';
 import type { School } from '@/types/school';
+
+import { LessonScheduleActions } from './LessonScheduleActions';
+import { SCHOOL_DAYS, shortTime } from './schedule-utils';
 
 interface SchoolClass {
     id: number;
@@ -41,23 +28,19 @@ interface SchoolClass {
     academicYear: string;
     gradeLevel: number | null;
 }
-import { LessonScheduleActions } from './LessonScheduleActions';
+
+interface PersonName {
+    firstName: string;
+    lastName: string;
+    middleName: string | null;
+}
+
 interface TeacherAssignment {
     id: number;
     teacherMembershipId: number;
-    class: {
-        id: number;
-        name: string;
-    };
-    subject: {
-        id: number;
-        nameUz: string;
-    };
-    teacher: {
-        firstName: string;
-        lastName: string;
-        middleName: string | null;
-    };
+    class: { id: number; name: string };
+    subject: { id: number; nameUz: string };
+    teacher: PersonName;
     startDate: string;
     endDate: string | null;
 }
@@ -72,107 +55,8 @@ interface LessonSchedule {
     endTime: string;
     startDate: string;
     endDate: string | null;
-    subject: {
-        id: number;
-        nameUz: string;
-    };
-    teacher: {
-        firstName: string;
-        lastName: string;
-        middleName: string | null;
-    };
-}
-
-const DAYS = [
-    'Dushanba',
-    'Seshanba',
-    'Chorshanba',
-    'Payshanba',
-    'Juma',
-    'Shanba',
-];
-
-function teacherName(person: {
-    firstName: string;
-    lastName: string;
-    middleName: string | null;
-}) {
-    return [
-        person.lastName,
-        person.firstName,
-        person.middleName,
-    ]
-        .filter(Boolean)
-        .join(' ');
-}
-
-function SchoolSchedule({
-    schoolId,
-    academicYear,
-}: {
-    schoolId: number;
-    academicYear: string;
-}) {
-    const id = useId();
-
-    const [classId, setClassId] = useState('');
-
-    const classesQuery = useApiQuery<SchoolClass[]>(
-        `/classes?schoolId=${schoolId}&academicYear=${academicYear}`,
-    );
-
-    const assignmentsQuery = useApiQuery<TeacherAssignment[]>(
-        `/teacher-assignments?schoolId=${schoolId}&academicYear=${academicYear}`,
-    );
-
-    const classes = classesQuery.data ?? [];
-    const selectedClass = classes.find(
-        (item) => String(item.id) === classId,
-    );
-
-    return (
-        <div className="space-y-5">
-            <Card>
-                <CardContent>
-                    <Field
-                        htmlFor={`${id}-class`}
-                        label="Sinfni tanlang"
-                    >
-                        <SelectField
-                            id={`${id}-class`}
-                            value={classId}
-                            onValueChange={setClassId}
-                            placeholder="Sinfni tanlang"
-                            disabled={classesQuery.loading}
-                            options={classes.map((item) => ({
-                                value: String(item.id),
-                                label: item.name,
-                            }))}
-                        />
-                    </Field>
-
-                    {classesQuery.error && (
-                        <ErrorState
-                            message={classesQuery.error}
-                            onRetry={classesQuery.retry}
-                        />
-                    )}
-                </CardContent>
-            </Card>
-
-            {selectedClass && (
-                <ClassSchedule
-                    key={selectedClass.id}
-                    schoolId={schoolId}
-                    academicYear={academicYear}
-                    schoolClass={selectedClass}
-                    assignments={assignmentsQuery.data ?? []}
-                    assignmentsLoading={assignmentsQuery.loading}
-                    assignmentsError={assignmentsQuery.error}
-                />
-            )}
-        </div>
-    );
+    subject: { id: number; nameUz: string };
+    teacher: PersonName;
 }
 
 function ClassSchedule({
@@ -190,440 +74,246 @@ function ClassSchedule({
     assignmentsLoading: boolean;
     assignmentsError: string;
 }) {
+    const { t } = useTranslation();
     const id = useId();
-    const [viewMode, setViewMode] = useState<
-        'date' | 'all'
-    >('date');
+    const today = todayInTashkent();
+    const startYear = Number(academicYear.slice(0, 4));
+    const yearMin = `${startYear}-09-01`;
+    const yearMax = `${startYear + 1}-08-31`;
 
-    const [selectedDate, setSelectedDate] = useState(
-        todayInTashkent,
-    );
+    const [viewMode, setViewMode] = useState<'date' | 'all'>('date');
+    const [selectedDate, setSelectedDate] = useState(() => (today >= yearMin && today <= yearMax ? today : yearMin));
 
-
-    const params = new URLSearchParams({
-        schoolId: String(schoolId),
-        academicYear,
-        classId: String(schoolClass.id),
-    });
-
-    if (viewMode === 'date' && selectedDate) {
-        params.set('date', selectedDate);
-    }
-
-    const query = useApiQuery<LessonSchedule[]>(
-        `/lesson-schedules?${params.toString()}`,
-    );
+    const params = new URLSearchParams({ schoolId: String(schoolId), academicYear, classId: String(schoolClass.id) });
+    if (viewMode === 'date' && selectedDate) params.set('date', selectedDate);
+    const query = useApiQuery<LessonSchedule[]>(`/lesson-schedules?${params.toString()}`);
 
     const [assignmentId, setAssignmentId] = useState('');
     const [dayOfWeek, setDayOfWeek] = useState('1');
     const [lessonNumber, setLessonNumber] = useState('1');
-
     const [startTime, setStartTime] = useState('08:00');
     const [endTime, setEndTime] = useState('08:45');
-
-    const startYear = Number(academicYear.slice(0, 4));
-    const endYear = startYear + 1;
-
-    const [startDate, setStartDate] = useState(
-        `${startYear}-09-01`,
-    );
-
-    const [endDate, setEndDate] = useState(
-        `${endYear}-06-01`,
-    );
-
+    const [startDate, setStartDate] = useState(yearMin);
+    const [endDate, setEndDate] = useState(`${startYear + 1}-06-01`);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const availableAssignments = assignments.filter(
-        (item) => item.class.id === schoolClass.id,
-    );
-
+    const availableAssignments = assignments.filter((item) => item.class.id === schoolClass.id);
     const lessons = query.data ?? [];
+    const editable = viewMode === 'date' && selectedDate >= today;
 
-    async function handleCreate(
-        event: FormEvent<HTMLFormElement>,
-    ) {
+    async function handleCreate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         if (busy) return;
-
         setError('');
         setSuccess('');
 
-        if (!assignmentId) {
-            setError('Fan va o‘qituvchini tanlang.');
-            return;
-        }
-
-        if (startTime >= endTime) {
-            setError('Dars tugash vaqti noto‘g‘ri.');
-            return;
-        }
-
-        if (endDate && endDate <= startDate) {
-            setError('Tugash sanasi noto‘g‘ri.');
-            return;
-        }
+        const number = Number(lessonNumber);
+        if (!assignmentId) return setError(t('schedule.errors.assignment'));
+        if (!Number.isInteger(number) || number < 1 || number > 20) return setError(t('schedule.errors.lessonNumber'));
+        if (startTime >= endTime) return setError(t('schedule.errors.time'));
+        if (endDate && endDate <= startDate) return setError(t('members.end.errorBeforeStart'));
 
         setBusy(true);
-
         try {
             await authorizedPost('/lesson-schedules', {
                 classId: schoolClass.id,
                 teacherAssignmentId: Number(assignmentId),
                 dayOfWeek: Number(dayOfWeek),
-                lessonNumber: Number(lessonNumber),
+                lessonNumber: number,
                 startTime,
                 endTime,
                 startDate,
                 ...(endDate ? { endDate } : {}),
             });
-
-            setSuccess('Dars jadvalga muvaffaqiyatli qo‘shildi.');
-
+            setSuccess(t('schedule.created'));
             setAssignmentId('');
-            setLessonNumber(String(Number(lessonNumber) + 1));
-
+            setLessonNumber(String(Math.min(number + 1, 20)));
             query.retry();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : 'Darsni qo‘shishda xatolik yuz berdi.',
-            );
+            setError(caught instanceof Error ? caught.message : t('schedule.errors.createFailed'));
         } finally {
             setBusy(false);
         }
     }
 
     return (
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <Card className="h-fit">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <Card className="h-fit xl:sticky xl:top-24">
                 <CardHeader>
-                    <CardTitle className="text-lg">
-                        Yangi dars qo‘shish
-                    </CardTitle>
+                    <CardTitle className="text-lg font-semibold">{t('schedule.createTitle')}</CardTitle>
+                    <CardDescription>{t('schedule.createHint', { name: schoolClass.name })}</CardDescription>
                 </CardHeader>
-
                 <CardContent>
-                    <form
-                        onSubmit={(event) => void handleCreate(event)}
-                        className="space-y-4"
-                    >
-                        <Field
-                            htmlFor={`${id}-assignment`}
-                            label="Fan va o‘qituvchi"
-                            required
-                        >
-                            <SelectField
-                                id={`${id}-assignment`}
-                                value={assignmentId}
-                                onValueChange={setAssignmentId}
-                                placeholder="Tanlang"
-                                required
-                                disabled={busy || assignmentsLoading}
-                                options={availableAssignments.map((item) => ({
-                                    value: String(item.id),
-                                    label: `${item.subject.nameUz} — ${teacherName(item.teacher)}`,
-                                }))}
-                            />
-                        </Field>
-
-                        <Field
-                            htmlFor={`${id}-day`}
-                            label="Hafta kuni"
-                            required
-                        >
-                            <SelectField
-                                id={`${id}-day`}
-                                value={dayOfWeek}
-                                onValueChange={setDayOfWeek}
-                                options={DAYS.map((day, index) => ({
-                                    value: String(index + 1),
-                                    label: day,
-                                }))}
-                            />
-                        </Field>
-
-                        <Field
-                            htmlFor={`${id}-number`}
-                            label="Dars raqami"
-                            required
-                        >
-                            <Input
-                                id={`${id}-number`}
-                                type="number"
-                                min={1}
-                                max={20}
-                                value={lessonNumber}
-                                onChange={(event) =>
-                                    setLessonNumber(event.target.value)
-                                }
-                                required
-                            />
-                        </Field>
-
-                        <div className="grid grid-cols-2 gap-3">
+                    <form onSubmit={(event) => void handleCreate(event)} className="space-y-4">
+                        <fieldset disabled={busy} className="space-y-4">
                             <Field
-                                htmlFor={`${id}-start-time`}
-                                label="Boshlanish"
+                                htmlFor={`${id}-assignment`}
+                                label={t('schedule.assignment')}
                                 required
+                                error={assignmentsError || undefined}
+                                hint={!assignmentsLoading && !assignmentsError && availableAssignments.length === 0 ? t('schedule.noAssignments') : undefined}
                             >
-                                <Input
-                                    id={`${id}-start-time`}
-                                    type="time"
-                                    value={startTime}
-                                    onChange={(event) =>
-                                        setStartTime(event.target.value)
-                                    }
+                                <SelectField
+                                    id={`${id}-assignment`}
+                                    value={assignmentId}
+                                    onValueChange={setAssignmentId}
+                                    placeholder={assignmentsLoading ? t('common.loading') : t('schedule.chooseAssignment')}
                                     required
+                                    disabled={assignmentsLoading || availableAssignments.length === 0}
+                                    options={availableAssignments.map((item) => ({
+                                        value: String(item.id),
+                                        label: `${localizedName(item.subject)} — ${personFullName(item.teacher)}`,
+                                    }))}
                                 />
                             </Field>
 
-                            <Field
-                                htmlFor={`${id}-end-time`}
-                                label="Tugash"
-                                required
-                            >
-                                <Input
-                                    id={`${id}-end-time`}
-                                    type="time"
-                                    value={endTime}
-                                    onChange={(event) =>
-                                        setEndTime(event.target.value)
-                                    }
-                                    required
-                                />
-                            </Field>
-                        </div>
-
-                        <Field
-                            htmlFor={`${id}-start-date`}
-                            label="Amal qilish boshlanishi"
-                            required
-                        >
-                            <Input
-                                id={`${id}-start-date`}
-                                type="date"
-                                value={startDate}
-                                onChange={(event) =>
-                                    setStartDate(event.target.value)
-                                }
-                                required
-                            />
-                        </Field>
-
-                        <Field
-                            htmlFor={`${id}-end-date`}
-                            label="Amal qilish tugashi (ixtiyoriy)"
-                        >
-                            <Input
-                                id={`${id}-end-date`}
-                                type="date"
-                                value={endDate}
-                                onChange={(event) =>
-                                    setEndDate(event.target.value)
-                                }
-                            />
-                        </Field>
-
-                        {assignmentsError && (
-                            <ErrorState message={assignmentsError} />
-                        )}
-
-                        {!assignmentsLoading &&
-                            !assignmentsError &&
-                            availableAssignments.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    Bu sinfga hali fan va o‘qituvchi
-                                    biriktirilmagan.
-                                </p>
-                            )}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field htmlFor={`${id}-day`} label={t('schedule.weekday')} required>
+                                    <SelectField
+                                        id={`${id}-day`}
+                                        value={dayOfWeek}
+                                        onValueChange={setDayOfWeek}
+                                        options={SCHOOL_DAYS.map((day) => ({ value: String(day), label: weekdayName(day - 1) }))}
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-number`} label={t('schedule.lessonNumber')} required>
+                                    <Input
+                                        id={`${id}-number`}
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={1}
+                                        max={20}
+                                        value={lessonNumber}
+                                        onChange={(event) => setLessonNumber(event.target.value)}
+                                        required
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-start-time`} label={t('schedule.startTime')} required>
+                                    <Input id={`${id}-start-time`} type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} required />
+                                </Field>
+                                <Field htmlFor={`${id}-end-time`} label={t('schedule.endTime')} required>
+                                    <Input id={`${id}-end-time`} type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} required />
+                                </Field>
+                                <Field htmlFor={`${id}-start-date`} label={t('schedule.validFrom')} required>
+                                    <Input
+                                        id={`${id}-start-date`}
+                                        type="date"
+                                        min={yearMin}
+                                        max={yearMax}
+                                        value={startDate}
+                                        onChange={(event) => setStartDate(event.target.value)}
+                                        required
+                                    />
+                                </Field>
+                                <Field htmlFor={`${id}-end-date`} label={`${t('schedule.validTo')} (${t('common.optional')})`}>
+                                    <Input
+                                        id={`${id}-end-date`}
+                                        type="date"
+                                        min={startDate}
+                                        max={yearMax}
+                                        value={endDate}
+                                        onChange={(event) => setEndDate(event.target.value)}
+                                    />
+                                </Field>
+                            </div>
+                        </fieldset>
 
                         {error && <ErrorState message={error} />}
+                        {success && <SuccessNotice>{success}</SuccessNotice>}
 
-                        {success && (
-                            <SuccessNotice>{success}</SuccessNotice>
-                        )}
-
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={
-                                busy ||
-                                assignmentsLoading ||
-                                Boolean(assignmentsError) ||
-                                !assignmentId
-                            }
-                        >
+                        <Button type="submit" className="w-full" disabled={busy || assignmentsLoading || Boolean(assignmentsError) || !assignmentId}>
                             <Plus aria-hidden="true" />
-                            {busy ? 'Saqlanmoqda...' : 'Dars qo‘shish'}
+                            {busy ? t('common.saving') : t('schedule.add')}
                         </Button>
                     </form>
                 </CardContent>
             </Card>
 
             <section className="min-w-0 space-y-4">
-
-                <Card>
-                    <CardContent className="space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                                <h3 className="font-semibold">
-                                    Dars jadvali tarixi
-                                </h3>
-                                <p className="text-xs text-muted-foreground">
-                                    Jadvalni tanlangan sana bo‘yicha tekshiring.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={
-                                    viewMode === 'date' ? 'default' : 'outline'
-                                }
-                                onClick={() => setViewMode('date')}
-                            >
-                                <CalendarDays aria-hidden="true" />
-                                Sana bo‘yicha
-                            </Button>
-
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={
-                                    viewMode === 'all' ? 'default' : 'outline'
-                                }
-                                onClick={() => setViewMode('all')}
-                            >
-                                Barcha versiyalar
-                            </Button>
-                        </div>
-
-                        {viewMode === 'date' && (
-                            <Field
-                                htmlFor={`${id}-history-date`}
-                                label="Jadval amal qilgan sana"
-                            >
-                                <Input
-                                    id={`${id}-history-date`}
-                                    type="date"
-                                    min={`${Number(academicYear.slice(0, 4))}-09-01`}
-                                    max={`${Number(academicYear.slice(0, 4)) + 1}-08-31`}
-                                    value={selectedDate}
-                                    onChange={(event) =>
-                                        setSelectedDate(event.target.value)
-                                    }
-                                />
-                            </Field>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h2 className="text-lg font-semibold">
-                            {schoolClass.name} — Haftalik dars jadvali
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            Jami: {lessons.length} ta jadval yozuvi
-                        </p>
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div className="min-w-0">
+                        <h2 className="font-heading text-lg font-bold">{t('schedule.weekTitle', { name: schoolClass.name })}</h2>
+                        <p className="text-sm text-muted-foreground">{t('schedule.total', { count: lessons.length })}</p>
                     </div>
-
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={query.retry}
-                        disabled={query.loading}
-                    >
+                    <Button type="button" size="sm" variant="outline" onClick={query.retry} disabled={query.loading}>
                         <RotateCw aria-hidden="true" />
-                        Yangilash
+                        {t('common.refresh')}
                     </Button>
+                </div>
+
+                <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+                    <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'date' | 'all')}>
+                        <TabsList className="w-full sm:w-fit">
+                            <TabsTrigger value="date">
+                                <CalendarDays aria-hidden="true" />
+                                {t('schedule.view.date')}
+                            </TabsTrigger>
+                            <TabsTrigger value="all">
+                                <History aria-hidden="true" />
+                                {t('schedule.view.all')}
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    {viewMode === 'date' && (
+                        <Field htmlFor={`${id}-history-date`} label={t('schedule.view.dateLabel')} className="sm:w-56">
+                            <Input
+                                id={`${id}-history-date`}
+                                type="date"
+                                min={yearMin}
+                                max={yearMax}
+                                value={selectedDate}
+                                onChange={(event) => setSelectedDate(event.target.value)}
+                            />
+                        </Field>
+                    )}
                 </div>
 
                 {query.loading ? (
                     <LoadingState rows={6} />
                 ) : query.error ? (
-                    <ErrorState
-                        message={query.error}
-                        onRetry={query.retry}
-                    />
+                    <ErrorState message={query.error} onRetry={query.retry} />
                 ) : lessons.length === 0 ? (
-                    <EmptyState
-                        icon={CalendarDays}
-                        title="Dars jadvali bo‘sh"
-                        description="Ushbu sinf uchun darslar qo‘shilmagan."
-                    />
+                    <EmptyState icon={CalendarClock} title={t('schedule.emptyTitle')} description={t('schedule.empty')} />
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                        {DAYS.map((day, index) => {
-                            const dayLessons = lessons.filter(
-                                (lesson) => lesson.dayOfWeek === index + 1,
-                            );
+                        {SCHOOL_DAYS.map((day) => {
+                            const dayLessons = lessons
+                                .filter((lesson) => lesson.dayOfWeek === day)
+                                .sort((a, b) => a.lessonNumber - b.lessonNumber || a.startDate.localeCompare(b.startDate));
 
                             return (
-                                <Card key={day} className="min-w-0">
-                                    <CardHeader>
-                                        <CardTitle className="text-base">
-                                            {day}
-                                        </CardTitle>
+                                <Card key={day} size="sm" className="min-w-0 gap-3">
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <CardTitle className="text-base font-semibold">{weekdayName(day - 1)}</CardTitle>
+                                        <span className="text-xs text-muted-foreground">{t('schedule.lessonsCount', { count: dayLessons.length })}</span>
                                     </CardHeader>
-
-                                    <CardContent className="space-y-3">
+                                    <CardContent className="space-y-2.5">
                                         {dayLessons.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">
-                                                Dars yo‘q
+                                            <p className="rounded-xl border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
+                                                {t('schedule.noLessons')}
                                             </p>
                                         ) : (
                                             dayLessons.map((lesson) => (
-                                                <div
-                                                    key={lesson.id}
-                                                    className="rounded-xl border p-3"
-                                                >
-                                                    <div className="flex items-start gap-3">
-                                                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold">
-                                                            {lesson.lessonNumber}
-                                                        </span>
-
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="font-semibold break-words">
-                                                                {lesson.subject.nameUz}
-                                                            </p>
-
-                                                            <p className="mt-1 text-xs text-muted-foreground break-words">
-                                                                {teacherName(lesson.teacher)}
-                                                            </p>
-
-                                                            <p className="mt-2 text-sm font-medium tabular-nums">
-                                                                {lesson.startTime.slice(0, 5)}
-                                                                {' – '}
-                                                                {lesson.endTime.slice(0, 5)}
-                                                            </p>
-
-                                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                                {lesson.startDate}
-                                                                {' → '}
-                                                                {lesson.endDate ?? 'Muddatsiz'}
-                                                            </p>
-
-                                                            {viewMode === 'date' &&
-                                                                selectedDate >= todayInTashkent() &&
-                                                                (!lesson.endDate ||
-                                                                    lesson.endDate > todayInTashkent()) && (
-                                                                    <LessonScheduleActions
-                                                                        lesson={lesson}
-                                                                        onUpdated={query.retry}
-                                                                    />
-                                                                )}
-                                                        </div>
+                                                <article key={lesson.id} className="flex items-start gap-3 rounded-xl border bg-muted/30 p-3">
+                                                    <span className="bg-brand-gradient grid size-8 shrink-0 place-items-center rounded-lg text-xs font-bold text-white">
+                                                        {lesson.lessonNumber}
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-semibold [overflow-wrap:anywhere]">{localizedName(lesson.subject)}</p>
+                                                        <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">{personFullName(lesson.teacher)}</p>
+                                                        <p className="mt-2 text-sm font-medium tabular-nums">
+                                                            {shortTime(lesson.startTime)} – {shortTime(lesson.endTime)}
+                                                        </p>
+                                                        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                                                            {formatDate(lesson.startDate)} → {lesson.endDate ? formatDate(lesson.endDate) : t('schedule.openEnded')}
+                                                        </p>
+                                                        {editable && (!lesson.endDate || lesson.endDate > today) && (
+                                                            <LessonScheduleActions lesson={lesson} onUpdated={query.retry} />
+                                                        )}
                                                     </div>
-                                                </div>
+                                                </article>
                                             ))
                                         )}
                                     </CardContent>
@@ -637,85 +327,93 @@ function ClassSchedule({
     );
 }
 
-export function LessonSchedulesPage() {
+function SchoolSchedule({ schoolId, academicYear }: { schoolId: number; academicYear: string }) {
+    const { t } = useTranslation();
     const id = useId();
+    const [classId, setClassId] = useState('');
+    const classesQuery = useApiQuery<SchoolClass[]>(`/classes?schoolId=${schoolId}&academicYear=${academicYear}`);
+    const assignmentsQuery = useApiQuery<TeacherAssignment[]>(`/teacher-assignments?schoolId=${schoolId}&academicYear=${academicYear}`);
 
-    const schoolsQuery = useApiQuery<School[]>('/schools');
+    const classes = classesQuery.data ?? [];
+    const selectedClass = classes.find((item) => String(item.id) === classId);
 
-    const [schoolId, setSchoolId] = useState('');
-    const [academicYear, setAcademicYear] = useState(
-        () => academicYearFor(todayInTashkent()),
+    return (
+        <div className="space-y-5">
+            <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
+                <Field
+                    htmlFor={`${id}-class`}
+                    label={t('common.class')}
+                    error={classesQuery.error || undefined}
+                    hint={!classesQuery.loading && !classesQuery.error && classes.length === 0 ? t('classes.empty') : undefined}
+                    className="sm:max-w-sm"
+                >
+                    <SelectField
+                        id={`${id}-class`}
+                        value={classId}
+                        onValueChange={setClassId}
+                        placeholder={classesQuery.loading ? t('common.loading') : t('members.chooseClass')}
+                        disabled={classesQuery.loading || Boolean(classesQuery.error)}
+                        options={classes.map((item) => ({ value: String(item.id), label: item.name }))}
+                    />
+                </Field>
+            </div>
+
+            {selectedClass ? (
+                <ClassSchedule
+                    key={selectedClass.id}
+                    schoolId={schoolId}
+                    academicYear={academicYear}
+                    schoolClass={selectedClass}
+                    assignments={assignmentsQuery.data ?? []}
+                    assignmentsLoading={assignmentsQuery.loading}
+                    assignmentsError={assignmentsQuery.error}
+                />
+            ) : (
+                !classesQuery.loading && <EmptyState icon={CalendarClock} title={t('members.chooseClass')} description={t('schedule.chooseClass')} />
+            )}
+        </div>
     );
+}
 
+export function LessonSchedulesPage() {
+    const { t } = useTranslation();
+    const id = useId();
+    const schoolsQuery = useApiQuery<School[]>('/schools');
+    const [pickedSchoolId, setSchoolId] = useState('');
+    const [academicYear, setAcademicYear] = useState(() => academicYearFor(todayInTashkent()));
     const schools = schoolsQuery.data ?? [];
+    // Bitta maktab bo‘lsa (masalan, maktab administratori), u avtomatik tanlanadi.
+    const schoolId = pickedSchoolId || (schools.length === 1 ? String(schools[0].id) : '');
 
     return (
         <div className="w-full min-w-0 space-y-6">
-            <PageHeader
-                eyebrow="Professional ta’lim"
-                title="Dars jadvali"
-                description="Sinflarning haftalik dars jadvalini boshqarish"
-            />
+            <PageHeader eyebrow={t('nav.groups.education')} title={t('schedule.title')} description={t('schedule.subtitle')} />
 
-            <Card>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <Field
-                            htmlFor={`${id}-school`}
-                            label="Maktab"
-                        >
-                            <SelectField
-                                id={`${id}-school`}
-                                value={schoolId}
-                                onValueChange={setSchoolId}
-                                placeholder="Maktabni tanlang"
-                                disabled={schoolsQuery.loading}
-                                options={schools.map((school) => ({
-                                    value: String(school.id),
-                                    label: school.name,
-                                }))}
-                            />
-                        </Field>
-
-                        <Field
-                            htmlFor={`${id}-year`}
-                            label="O‘quv yili"
-                        >
-                            <SelectField
-                                id={`${id}-year`}
-                                value={academicYear}
-                                onValueChange={setAcademicYear}
-                                options={academicYearOptions(academicYear).map(
-                                    (year) => ({
-                                        value: year,
-                                        label: year,
-                                    }),
-                                )}
-                            />
-                        </Field>
-                    </div>
-
-                    {schoolsQuery.error && (
-                        <ErrorState
-                            message={schoolsQuery.error}
-                            onRetry={schoolsQuery.retry}
-                        />
-                    )}
-                </CardContent>
-            </Card>
+            <div className="grid gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <Field htmlFor={`${id}-school`} label={t('common.school')} error={schoolsQuery.error || undefined}>
+                    <SelectField
+                        id={`${id}-school`}
+                        value={schoolId}
+                        onValueChange={setSchoolId}
+                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
+                        disabled={schoolsQuery.loading || Boolean(schoolsQuery.error)}
+                        options={schools.map((school) => ({ value: String(school.id), label: `${school.name} — ${school.district.name}` }))}
+                    />
+                </Field>
+                <Field htmlFor={`${id}-year`} label={t('members.academicYear')}>
+                    <SelectField
+                        id={`${id}-year`}
+                        value={academicYear}
+                        onValueChange={setAcademicYear}
+                        options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
+                    />
+                </Field>
+            </div>
 
             {schoolId ? (
-                <SchoolSchedule
-                    key={`${schoolId}-${academicYear}`}
-                    schoolId={Number(schoolId)}
-                    academicYear={academicYear}
-                />
+                <SchoolSchedule key={`${schoolId}-${academicYear}`} schoolId={Number(schoolId)} academicYear={academicYear} />
             ) : (
-                <EmptyState
-                    icon={CalendarDays}
-                    title="Dars jadvalini tanlang"
-                    description="Avval maktab va o‘quv yilini tanlang."
-                />
+                <EmptyState icon={CalendarClock} title={t('calendar.chooseTitle')} description={t('schedule.chooseSchool')} />
             )}
         </div>
     );

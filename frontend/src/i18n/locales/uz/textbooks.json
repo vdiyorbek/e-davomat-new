@@ -65,7 +65,53 @@
       "page": "Sahifa raqami musbat butun son bo‘lishi kerak.",
       "range": "Boshlanish sahifasi tugash sahifasidan katta.",
       "saveFailed": "Mavzuni saqlashda xatolik yuz berdi.",
-      "approveFailed": "Mavzuni tasdiqlab bo‘lmadi."
+      "approveFailed": "Mavzuni tasdiqlab bo‘lmadi.",
+      "approveAllFailed": "Mavzularni tasdiqlab bo‘lmadi."
+    },
+    "approveAll": "Barchasini tasdiqlash",
+    "approveAllN": "Barchasini tasdiqlash ({{count}})",
+    "approveAllTitle": "Barcha mavzularni tasdiqlaysizmi?",
+    "approveAllConfirm": "{{count}} ta mavzu tasdiqlanadi. Davom etishdan oldin ularni tekshirib chiqing.",
+    "approving": "Tasdiqlanmoqda…",
+    "openInPdf": "PDFda ochish"
+  },
+  "active": "Faol",
+  "archived": "Arxivlangan",
+  "archive": {
+    "archive": "Arxivlash",
+    "restore": "Qayta tiklash",
+    "archiveTitle": "Darslikni arxivlaysizmi?",
+    "archiveConfirm": "«{{title}}» darsligi arxivga o‘tkaziladi. Ma’lumotlar va PDF fayl o‘chirilmaydi.",
+    "restoreTitle": "Darslikni qayta tiklaysizmi?",
+    "restoreConfirm": "«{{title}}» darsligi yana faol bo‘ladi.",
+    "failed": "Amalni bajarib bo‘lmadi."
+  },
+  "edit": {
+    "title": "Darslikni tahrirlash",
+    "hint": "Darslikning asosiy ma’lumotlari o‘zgaradi. PDF fayl o‘zgarmaydi.",
+    "year": "Nashr yili",
+    "publisher": "Nashriyot",
+    "publisherPlaceholder": "Nashriyot nomi",
+    "approval": "Tasdiqlash hujjati",
+    "approvalPlaceholder": "Buyruq raqami yoki hujjat ma’lumoti",
+    "errors": {
+      "title": "Darslik nomi 2–255 ta belgidan iborat bo‘lishi kerak.",
+      "subjectGrade": "Fan yoki sinf noto‘g‘ri tanlangan.",
+      "year": "Nashr yili 1900–2100 oralig‘ida bo‘lishi kerak.",
+      "publisher": "Nashriyot nomi 200 belgidan oshmasligi kerak.",
+      "approval": "Tasdiqlash hujjati 300 belgidan oshmasligi kerak.",
+      "saveFailed": "Darslikni saqlab bo‘lmadi."
     }
+  },
+  "pdf": {
+    "view": "Kitobni ko‘rish",
+    "description": "Yuklangan darslikning PDF ko‘rinishi.",
+    "pageN": "Darslikning {{page}}-sahifasi",
+    "loading": "PDF yuklanmoqda…",
+    "notPdf": "Server PDF formatida javob qaytarmadi.",
+    "failed": "PDF faylni ochib bo‘lmadi.",
+    "openTab": "Yangi oynada ochish",
+    "download": "Yuklab olish",
+    "frameTitle": "«{{title}}» PDF"
   }
 }

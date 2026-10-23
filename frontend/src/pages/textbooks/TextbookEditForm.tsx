@@ -110,9 +110,7 @@ export function TextbookEditForm({
         const cleanTitle = title.trim();
 
         if (cleanTitle.length < 2 || cleanTitle.length > 255) {
-            setError(
-                'Darslik nomi 2–255 ta belgidan iborat bo‘lishi kerak.',
-            );
+            setError(t('textbooks.edit.errors.title'));
             return;
         }
 
@@ -126,7 +124,7 @@ export function TextbookEditForm({
             nextGradeLevel < 1 ||
             nextGradeLevel > 12
         ) {
-            setError('Fan yoki sinf noto‘g‘ri tanlangan.');
+            setError(t('textbooks.edit.errors.subjectGrade'));
             return;
         }
 
@@ -137,7 +135,7 @@ export function TextbookEditForm({
             year !== null &&
             (!Number.isInteger(year) || year < 1900 || year > 2100)
         ) {
-            setError('Nashr yili 1900–2100 oralig‘ida bo‘lishi kerak.');
+            setError(t('textbooks.edit.errors.year'));
             return;
         }
 
@@ -145,12 +143,12 @@ export function TextbookEditForm({
         const cleanApproval = approvalReference.trim();
 
         if (cleanPublisher.length > 200) {
-            setError('Nashriyot nomi 200 belgidan oshmasligi kerak.');
+            setError(t('textbooks.edit.errors.publisher'));
             return;
         }
 
         if (cleanApproval.length > 300) {
-            setError('Tasdiqlash hujjati 300 belgidan oshmasligi kerak.');
+            setError(t('textbooks.edit.errors.approval'));
             return;
         }
 
@@ -173,7 +171,7 @@ export function TextbookEditForm({
             setError(
                 caught instanceof Error
                     ? caught.message
-                    : 'Darslikni saqlashda xatolik yuz berdi.',
+                    : t('textbooks.edit.errors.saveFailed'),
             );
         } finally {
             setBusy(false);
@@ -211,14 +209,9 @@ export function TextbookEditForm({
             >
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>
-                            Darslikni tahrirlash
-                        </DialogTitle>
+                        <DialogTitle>{t('textbooks.edit.title')}</DialogTitle>
 
-                        <DialogDescription>
-                            Darslikning asosiy ma'lumotlarini o‘zgartirish.
-                            PDF fayl o‘zgartirilmaydi.
-                        </DialogDescription>
+                        <DialogDescription>{t('textbooks.edit.hint')}</DialogDescription>
                     </DialogHeader>
 
                     <form
@@ -232,7 +225,7 @@ export function TextbookEditForm({
                             <div className="sm:col-span-2">
                                 <Field
                                     htmlFor={`${id}-title`}
-                                    label="Darslik nomi"
+                                    label={t('textbooks.upload.name')}
                                     required
                                 >
                                     <Input
@@ -284,7 +277,7 @@ export function TextbookEditForm({
 
                             <Field
                                 htmlFor={`${id}-language`}
-                                label="Darslik tili"
+                                label={t('textbooks.upload.language')}
                                 required
                             >
                                 <SelectField
@@ -301,7 +294,7 @@ export function TextbookEditForm({
 
                             <Field
                                 htmlFor={`${id}-year`}
-                                label="Nashr yili"
+                                label={t('textbooks.edit.year')}
                             >
                                 <Input
                                     id={`${id}-year`}
@@ -320,7 +313,7 @@ export function TextbookEditForm({
                             <div className="sm:col-span-2">
                                 <Field
                                     htmlFor={`${id}-publisher`}
-                                    label="Nashriyot"
+                                    label={t('textbooks.edit.publisher')}
                                 >
                                     <Input
                                         id={`${id}-publisher`}
@@ -329,7 +322,7 @@ export function TextbookEditForm({
                                             setPublisher(event.target.value)
                                         }
                                         maxLength={200}
-                                        placeholder="Nashriyot nomi"
+                                        placeholder={t('textbooks.edit.publisherPlaceholder')}
                                     />
                                 </Field>
                             </div>
@@ -337,7 +330,7 @@ export function TextbookEditForm({
                             <div className="sm:col-span-2">
                                 <Field
                                     htmlFor={`${id}-approval`}
-                                    label="Tasdiqlash hujjati"
+                                    label={t('textbooks.edit.approval')}
                                 >
                                     <Input
                                         id={`${id}-approval`}
@@ -346,7 +339,7 @@ export function TextbookEditForm({
                                             setApprovalReference(event.target.value)
                                         }
                                         maxLength={300}
-                                        placeholder="Buyruq raqami yoki hujjat ma'lumoti"
+                                        placeholder={t('textbooks.edit.approvalPlaceholder')}
                                     />
                                 </Field>
                             </div>

@@ -3,5 +3,7 @@
   "SUPER_ADMIN": "Bosh administrator",
   "REGION_ADMIN": "Viloyat administratori",
   "DISTRICT_ADMIN": "Tuman administratori",
-  "SCHOOL_ADMIN": "Maktab administratori"
+  "SCHOOL_ADMIN": "Maktab administratori",
+  "TEACHER": "O‘qituvchi",
+  "STUDENT": "O‘quvchi"
 }

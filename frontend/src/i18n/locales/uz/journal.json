@@ -1,0 +1,35 @@
+{
+  "title": "Sinf jurnali",
+  "subtitle": "Kunlik darslar, o‘tilgan mavzular va uy vazifalari.",
+  "chooseTitle": "Sinfni tanlang",
+  "choose": "Jurnalni ko‘rish uchun maktab va sinfni tanlang.",
+  "lessonDate": "Dars sanasi",
+  "entries": "Jurnal yozuvlari: {{count}}",
+  "missingTitle": "Jadvaldagi, lekin jurnalga kiritilmagan darslar",
+  "addToJournal": "Jurnalga qo‘shish",
+  "sessionCreated": "Dars jurnalga qo‘shildi.",
+  "emptyTitle": "Bu kunda dars yo‘q",
+  "empty": "Tanlangan sana uchun jadvalda ham, jurnalda ham dars topilmadi.",
+  "statusLabel": "Dars holati",
+  "status": {
+    "PLANNED": "Rejalashtirilgan",
+    "IN_PROGRESS": "O‘tilmoqda",
+    "COMPLETED": "O‘tildi",
+    "CANCELLED": "Bekor qilingan"
+  },
+  "textbookTopic": "Darslikdagi mavzu",
+  "manualTopic": "Mavzuni qo‘lda yozish",
+  "noTopics": "Bu fan uchun tasdiqlangan darslik mavzulari yo‘q.",
+  "chapter": "Bob: {{title}}",
+  "topic": "Dars mavzusi",
+  "topicPlaceholder": "Masalan: Kasrlarni qo‘shish",
+  "homework": "Uy vazifasi",
+  "homeworkPlaceholder": "Masalan: 45-bet, 3–5-mashqlar",
+  "notes": "Izoh",
+  "saved": "Jurnal yozuvi saqlandi.",
+  "errors": {
+    "dateOutOfYear": "Sana tanlangan o‘quv yili ichida bo‘lishi kerak.",
+    "createFailed": "Darsni jurnalga qo‘shib bo‘lmadi.",
+    "saveFailed": "Jurnal yozuvini saqlab bo‘lmadi."
+  }
+}

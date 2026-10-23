@@ -25,12 +25,13 @@
     "teachers": "O‘qituvchilar",
     "assignments": "Fan va sinf biriktirish",
     "textbooks": "Darsliklar kutubxonasi",
+    "subjects": "Fanlar",
+    "lessonSchedules": "Dars jadvali",
+    "journal": "Elektron jurnal",
     "terminals": "Terminallar",
     "users": "Foydalanuvchilar",
     "person": "Shaxs ma’lumotlari",
-    "forbidden": "Kirish cheklangan",
-    "lessonSchedules": "Dars jadvali",
-    "journal": "Elektron jurnal"
+    "forbidden": "Kirish cheklangan"
   },
   "short": {
     "profile": "Profil",

@@ -40,3 +40,19 @@ npm run build      # tsc + vite build
 `PageHeader`, `Field`, `SelectField` (12 tadan ko‘p variant bo‘lsa, avtomatik qidiruvli bo‘ladi), `FileInput`, `Pagination`,
 `StatusBadge`, `LoadingState` / `ErrorState` / `EmptyState` / `SuccessNotice`, `useConfirm` (AlertDialog),
 `DetailList`, `LanguageSwitcher`, `ThemeToggle`. Menyu bitta manbadan olinadi: `src/layouts/nav-config.ts`.
+
+## Ta’lim bo‘limlari
+
+| Sahifa | Yo‘l | Kim uchun |
+|---|---|---|
+| Dars jadvali | `/lesson-schedules` | administratorlar |
+| Elektron jurnal | `/journal` | administratorlar |
+| Fanlar | `/subjects` | bosh administrator |
+| Darsliklar kutubxonasi | `/textbooks` | bosh administrator |
+
+Dars jadvali va jurnalda foydalanuvchiga bitta maktab biriktirilgan bo‘lsa, u avtomatik tanlanadi.
+Darslik PDF’i dialogda ochiladi; telefonda «Yangi oynada ochish» / «Yuklab olish» tugmalaridan foydalaning.
+
+## Paket menejeri
+
+Loyihada bitta lock-fayl bo‘lishi kerak. `npm` ishlatilsa — `package-lock.json`, `yarn` ishlatilsa — `yarn.lock`. Ikkalasini birga saqlamang.

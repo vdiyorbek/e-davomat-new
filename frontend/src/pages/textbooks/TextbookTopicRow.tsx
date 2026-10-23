@@ -145,7 +145,7 @@ export function TextbookTopicRow({
                                 onClick={() => onOpenPage(topic.pageStart!)}
                             >
                                 <BookOpen aria-hidden="true" />
-                                PDFda ochish
+                                {t('textbooks.topics.openInPdf')}
                             </Button>
                         )}
                     </div>

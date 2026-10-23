@@ -1,0 +1,35 @@
+{
+  "title": "Class journal",
+  "subtitle": "Daily lessons, covered topics and homework.",
+  "chooseTitle": "Choose a class",
+  "choose": "Choose a school and class to open the journal.",
+  "lessonDate": "Lesson date",
+  "entries": "Journal entries: {{count}}",
+  "missingTitle": "Scheduled lessons not yet in the journal",
+  "addToJournal": "Add to journal",
+  "sessionCreated": "The lesson was added to the journal.",
+  "emptyTitle": "No lessons on this day",
+  "empty": "No lessons were found in the timetable or the journal for this date.",
+  "statusLabel": "Lesson status",
+  "status": {
+    "PLANNED": "Planned",
+    "IN_PROGRESS": "In progress",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled"
+  },
+  "textbookTopic": "Textbook topic",
+  "manualTopic": "Enter the topic manually",
+  "noTopics": "There are no approved textbook topics for this subject.",
+  "chapter": "Chapter: {{title}}",
+  "topic": "Lesson topic",
+  "topicPlaceholder": "E.g. Adding fractions",
+  "homework": "Homework",
+  "homeworkPlaceholder": "E.g. page 45, exercises 3–5",
+  "notes": "Notes",
+  "saved": "The journal entry was saved.",
+  "errors": {
+    "dateOutOfYear": "The date must be within the selected academic year.",
+    "createFailed": "Could not add the lesson to the journal.",
+    "saveFailed": "Could not save the journal entry."
+  }
+}

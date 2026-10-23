@@ -1,0 +1,33 @@
+{
+  "title": "Fanlar",
+  "subtitle": "Tizimdagi o‘quv fanlari ma’lumotnomasi.",
+  "createTitle": "Yangi fan qo‘shish",
+  "createHint": "Kod lotin bosh harflari, raqam va pastki chiziqdan iborat bo‘ladi.",
+  "code": "Kod",
+  "codeHint": "Masalan: MATEMATIKA, ONA_TILI",
+  "nameUz": "Nomi (o‘zbekcha)",
+  "nameRu": "Nomi (ruscha)",
+  "add": "Fan qo‘shish",
+  "created": "«{{name}}» fani qo‘shildi.",
+  "listTitle": "Fanlar ro‘yxati",
+  "active": "Faol",
+  "archived": "Arxivlangan",
+  "emptyTitle": "Fanlar topilmadi",
+  "empty": "Bu bo‘limda fan yo‘q.",
+  "editTitle": "Fanni tahrirlash",
+  "archive": "Arxivlash",
+  "restore": "Tiklash",
+  "archiveTitle": "Fanni arxivlaysizmi?",
+  "archiveConfirm": "«{{name}}» fani yangi biriktirish va darsliklar ro‘yxatida ko‘rinmaydi. Mavjud ma’lumotlar o‘chirilmaydi.",
+  "errors": {
+    "code": "Kod lotin bosh harfi bilan boshlanib, 2–40 ta belgi (A–Z, 0–9, _) bo‘lishi kerak.",
+    "name": "Fan nomi 2–150 ta belgidan iborat bo‘lishi kerak.",
+    "createFailed": "Fanni qo‘shib bo‘lmadi.",
+    "updateFailed": "Fanni saqlab bo‘lmadi.",
+    "statusFailed": "Fan holatini o‘zgartirib bo‘lmadi."
+  },
+  "status": {
+    "active": "Faol",
+    "archived": "Arxivda"
+  }
+}

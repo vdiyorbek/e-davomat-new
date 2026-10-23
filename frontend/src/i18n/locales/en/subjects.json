@@ -1,0 +1,33 @@
+{
+  "title": "Subjects",
+  "subtitle": "The system’s directory of school subjects.",
+  "createTitle": "Add a subject",
+  "createHint": "The code consists of capital Latin letters, digits and underscores.",
+  "code": "Code",
+  "codeHint": "E.g. MATEMATIKA, ONA_TILI",
+  "nameUz": "Name (Uzbek)",
+  "nameRu": "Name (Russian)",
+  "add": "Add subject",
+  "created": "Subject “{{name}}” was added.",
+  "listTitle": "Subject list",
+  "active": "Active",
+  "archived": "Archived",
+  "emptyTitle": "No subjects found",
+  "empty": "There are no subjects in this section.",
+  "editTitle": "Edit subject",
+  "archive": "Archive",
+  "restore": "Restore",
+  "archiveTitle": "Archive this subject?",
+  "archiveConfirm": "Subject “{{name}}” will no longer be offered for new assignments and textbooks. Existing data is kept.",
+  "errors": {
+    "code": "The code must start with a capital Latin letter and have 2–40 characters (A–Z, 0–9, _).",
+    "name": "The subject name must be 2–150 characters long.",
+    "createFailed": "Could not add the subject.",
+    "updateFailed": "Could not save the subject.",
+    "statusFailed": "Could not change the subject’s status."
+  },
+  "status": {
+    "active": "Active",
+    "archived": "Archived"
+  }
+}

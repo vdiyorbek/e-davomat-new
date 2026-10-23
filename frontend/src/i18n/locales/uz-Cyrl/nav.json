@@ -25,12 +25,13 @@
     "teachers": "Ўқитувчилар",
     "assignments": "Фан ва синф бириктириш",
     "textbooks": "Дарсликлар кутубхонаси",
+    "subjects": "Фанлар",
+    "lessonSchedules": "Дарс жадвали",
+    "journal": "Электрон журнал",
     "terminals": "Терминаллар",
     "users": "Фойдаланувчилар",
     "person": "Шахс маълумотлари",
-    "forbidden": "Кириш чекланган",
-    "lessonSchedules": "Дарс жадвали",
-    "journal": "Электрон журнал"
+    "forbidden": "Кириш чекланган"
   },
   "short": {
     "profile": "Профил",

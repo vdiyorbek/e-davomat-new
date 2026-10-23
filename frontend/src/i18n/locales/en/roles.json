@@ -3,5 +3,7 @@
   "SUPER_ADMIN": "Super administrator",
   "REGION_ADMIN": "Region administrator",
   "DISTRICT_ADMIN": "District administrator",
-  "SCHOOL_ADMIN": "School administrator"
+  "SCHOOL_ADMIN": "School administrator",
+  "TEACHER": "Teacher",
+  "STUDENT": "Student"
 }
