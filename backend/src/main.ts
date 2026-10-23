@@ -1,11 +1,18 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Server faqat 127.0.0.1 da tinglaydi, ya'ni oldida reverse proxy turadi.
+  // Proxy yuborgan X-Forwarded-For orqali mijozning haqiqiy IP manzilini
+  // olamiz, aks holda login limiti barcha foydalanuvchilar uchun umumiy bo'ladi.
+  app.set('trust proxy', 1);
+
   app.use(cookieParser());
   const config = app.get(ConfigService);
   const port = Number(config.get<string>('PORT') ?? '3000');

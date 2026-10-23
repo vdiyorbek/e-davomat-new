@@ -109,11 +109,18 @@ export class TerminalSyncService {
           `takror=${result.duplicates}`,
       );
 
-      if (result.skippedInvalidPnfl > 0 || result.skippedOtherEvents > 0) {
+      if (
+        result.skippedInvalidPnfl > 0 ||
+        result.skippedOtherEvents > 0 ||
+        result.skippedInvalidFormat > 0 ||
+        result.skippedOutOfRange > 0
+      ) {
         this.logger.warn(
           `Terminal ${terminalId}: ` +
             `yaroqsiz PNFL=${result.skippedInvalidPnfl}, ` +
-            `boshqa event=${result.skippedOtherEvents}`,
+            `boshqa event=${result.skippedOtherEvents}, ` +
+            `buzuq format=${result.skippedInvalidFormat}, ` +
+            `oraliqdan tashqari=${result.skippedOutOfRange}`,
         );
       }
     }

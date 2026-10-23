@@ -25,6 +25,8 @@ interface SyncStatistics {
   duplicates: number;
   skippedOtherEvents: number;
   skippedInvalidPnfl: number;
+  skippedInvalidFormat: number;
+  skippedOutOfRange: number;
   photosQueued: number;
 }
 
@@ -107,11 +109,16 @@ export class AttendanceEventsService {
         duplicates: 0,
         skippedOtherEvents: 0,
         skippedInvalidPnfl: 0,
+        skippedInvalidFormat: 0,
+        skippedOutOfRange: 0,
         photosQueued: 0,
       };
 
       try {
-        for await (const events of this.hikvisionEvents.readEvents(
+        for await (const {
+          events,
+          invalidCount,
+        } of this.hikvisionEvents.readEvents(
           terminal,
           password,
           dto.startTime,
@@ -123,11 +130,13 @@ export class AttendanceEventsService {
               const repository = manager.getRepository(AttendanceEvent);
 
               const counts: SyncStatistics = {
-                fetched: events.length,
+                fetched: events.length + invalidCount,
                 inserted: 0,
                 duplicates: 0,
                 skippedOtherEvents: 0,
                 skippedInvalidPnfl: 0,
+                skippedInvalidFormat: invalidCount,
+                skippedOutOfRange: 0,
                 photosQueued: 0,
               };
 
@@ -152,15 +161,16 @@ export class AttendanceEventsService {
                 const eventMs = eventAt.getTime();
 
                 // MySQL DATETIME chegarasi va qidiruv oralig‘i.
+                // Bunday eventni saqlamaymiz, lekin sinxronlashni ham
+                // to‘xtatmaymiz: aks holda kursor shu oynada qotib qoladi.
                 if (
                   eventAt.getUTCFullYear() < 1000 ||
                   eventAt.getUTCFullYear() > 9999 ||
                   eventMs < startMs ||
                   eventMs > endMs
                 ) {
-                  throw new Error(
-                    'Terminal so‘ralgan vaqt oralig‘iga mos kelmaydigan event qaytardi',
-                  );
+                  counts.skippedOutOfRange++;
+                  continue;
                 }
 
                 const pictureUrl = event.pictureURL?.trim() || null;
@@ -216,6 +226,9 @@ export class AttendanceEventsService {
           statistics.duplicates += pageStatistics.duplicates;
           statistics.skippedOtherEvents += pageStatistics.skippedOtherEvents;
           statistics.skippedInvalidPnfl += pageStatistics.skippedInvalidPnfl;
+          statistics.skippedInvalidFormat +=
+            pageStatistics.skippedInvalidFormat;
+          statistics.skippedOutOfRange += pageStatistics.skippedOutOfRange;
           statistics.photosQueued += pageStatistics.photosQueued;
         }
       } catch (error: unknown) {

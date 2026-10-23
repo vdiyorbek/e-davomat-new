@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import axios from 'axios';
 import { isISO8601 } from 'class-validator';
@@ -9,6 +9,7 @@ import { createDigestAuthorization } from './helpers/digest-auth';
 
 import type {
   HikvisionEvent,
+  HikvisionEventsBatch,
   HikvisionEventsPage,
 } from './interfaces/hikvision-event.interface';
 
@@ -62,7 +63,7 @@ export class HikvisionEventsService {
     password: string,
     startTime: string,
     endTime: string,
-  ): AsyncGenerator<HikvisionEvent[]> {
+  ): AsyncGenerator<HikvisionEventsBatch> {
     const startMs = Date.parse(startTime);
     const endMs = Date.parse(endTime);
 
@@ -99,7 +100,9 @@ export class HikvisionEventsService {
         picEnable: true,
       });
 
-      if (page.events.length === 0) {
+      const returnedCount = page.events.length + page.invalidCount;
+
+      if (returnedCount === 0) {
         if (page.hasMore) {
           throw new Error(
             'Terminal MORE qaytardi, lekin eventlar ro‘yxati bo‘sh',
@@ -110,26 +113,17 @@ export class HikvisionEventsService {
       }
 
       // Serial raqamlari ketma-ket kelishiga tayanmaymiz.
-      const fingerprint = JSON.stringify(
-        page.events
-          .map(
-            (event) =>
-              `${event.serialNo}|${event.time}|${event.major}|${event.minor}`,
-          )
-          .sort(),
-      );
-
-      if (seenPages.has(fingerprint)) {
+      if (seenPages.has(page.fingerprint)) {
         throw new Error('Terminal bir xil event sahifasini takroran qaytardi');
       }
 
-      seenPages.add(fingerprint);
+      seenPages.add(page.fingerprint);
 
-      yield page.events;
+      yield { events: page.events, invalidCount: page.invalidCount };
 
-      // Filtrdan o‘tkazilganlar soniga emas,
-      // terminal qaytargan eventlar soniga siljitamiz.
-      position += page.events.length;
+      // Filtrdan o‘tkazilganlar soniga emas, terminal qaytargan
+      // eventlar soniga (yaroqsizlarini ham qo‘shib) siljitamiz.
+      position += returnedCount;
 
       if (!page.hasMore) {
         return;
@@ -269,18 +263,26 @@ export class HikvisionEventsService {
       }
 
       const events: HikvisionEvent[] = [];
+      let invalidCount = 0;
 
+      // Bitta buzuq event butun sinxronlashni to‘xtatib qo‘ymasligi uchun
+      // uni tashlab yuboramiz va sonini hisobga olamiz.
       for (const item of list) {
         if (!isEvent(item)) {
-          throw new Error('Terminal eventining formati noto‘g‘ri');
+          invalidCount++;
+          continue;
         }
 
         events.push(item);
       }
 
+      const fingerprint = createHash('sha256')
+        .update(JSON.stringify(list.map((item) => JSON.stringify(item)).sort()))
+        .digest('hex');
+
       if (
         status === 'NO MATCH' &&
-        (events.length !== 0 || result.totalMatches !== 0)
+        (list.length !== 0 || result.totalMatches !== 0)
       ) {
         throw new Error(
           'Terminal NO MATCH natijasi bilan zid ma’lumot qaytardi',
@@ -289,8 +291,10 @@ export class HikvisionEventsService {
 
       return {
         events,
+        invalidCount,
         hasMore: status === 'MORE',
         totalMatches: result.totalMatches,
+        fingerprint,
       };
     } catch (error: unknown) {
       if (controller.signal.aborted) {

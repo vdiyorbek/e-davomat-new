@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -27,6 +28,30 @@ export class PersonPhotosService {
 
     private readonly personsService: PersonsService,
   ) {}
+
+  // Diskdagi fayl nomini faqat o‘zimiz yaratgan URLdan olamiz.
+  private getVersion(personId: number, photoUrl: string | null): string | null {
+    if (!photoUrl) return null;
+
+    const pattern = new RegExp(
+      `^/api/persons/${personId}/photo\\?v=` +
+        '([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-' +
+        '[0-9a-f]{4}-[0-9a-f]{12})$',
+    );
+
+    return pattern.exec(photoUrl)?.[1] ?? null;
+  }
+
+  private async removeOldPhoto(
+    personId: number,
+    oldUrl: string | null,
+  ): Promise<void> {
+    const version = this.getVersion(personId, oldUrl);
+
+    if (!version) return;
+
+    await unlink(join(this.directory, `${version}.jpg`)).catch(() => undefined);
+  }
 
   async upload(
     personId: number,
@@ -106,21 +131,36 @@ export class PersonPhotosService {
     try {
       // Faqat photoUrl yangilanadi.
       // Boshqa shaxsiy ma’lumotlar o‘zgarmaydi.
-      const result = await this.personsRepository
+      const update = this.personsRepository
         .createQueryBuilder()
         .update(Person)
         .set({ photoUrl })
         .where('id = :personId', { personId })
-        .andWhere('deletedAt IS NULL')
-        .execute();
+        .andWhere('deletedAt IS NULL');
+
+      // Bir vaqtda kelgan ikki so‘rov bir-birining
+      // yangilanishini tasodifan bosib ketmasin.
+      if (person.photoUrl) {
+        update.andWhere('photoUrl = :oldPhotoUrl', {
+          oldPhotoUrl: person.photoUrl,
+        });
+      } else {
+        update.andWhere('photoUrl IS NULL');
+      }
+
+      const result = await update.execute();
 
       if (result.affected !== 1) {
-        throw new NotFoundException('Shaxs topilmadi yoki arxivlangan');
+        throw new ConflictException(
+          'Shaxs arxivlangan yoki rasmi boshqa so‘rov bilan o‘zgargan. Qayta urinib ko‘ring',
+        );
       }
     } catch (error: unknown) {
       await unlink(filePath).catch(() => undefined);
       throw error;
     }
+
+    await this.removeOldPhoto(personId, person.photoUrl);
 
     return {
       id: personId,
@@ -135,23 +175,16 @@ export class PersonPhotosService {
       throw new NotFoundException('Profil rasmi mavjud emas');
     }
 
-    // Diskdagi fayl yo‘lini faqat o‘zimiz yaratgan URLdan olamiz.
-    const pattern = new RegExp(
-      `^/api/persons/${personId}/photo\\?v=` +
-        '([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-' +
-        '[0-9a-f]{4}-[0-9a-f]{12})$',
-    );
+    const version = this.getVersion(personId, person.photoUrl);
 
-    const match = pattern.exec(person.photoUrl);
-
-    if (!match) {
+    if (!version) {
       throw new NotFoundException(
         'Rasm manzili mos emas. Rasmni qayta yuklang.',
       );
     }
 
     try {
-      return await readFile(join(this.directory, `${match[1]}.jpg`));
+      return await readFile(join(this.directory, `${version}.jpg`));
     } catch (error: unknown) {
       if (
         error instanceof Error &&

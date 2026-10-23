@@ -1,3 +1,13 @@
 .env
 .env.*
 !.env.example
+
+# Paketlar va build natijalari
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Yuklangan shaxsiy fayllar (rasmlar, darsliklar, hujjatlar)
+uploads/
+private_uploads/
