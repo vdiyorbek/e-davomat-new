@@ -66,7 +66,7 @@ function PersonDetails({ personId }: { personId: number }) {
     ];
 
     return (
-        <div className="mx-auto w-full max-w-5xl space-y-6">
+        <div className="w-full min-w-0 space-y-6">
             <PageHeader title={t('persons.title')} description={t('persons.subtitle')} actions={backButton} />
 
             {success && <SuccessNotice>{success}</SuccessNotice>}

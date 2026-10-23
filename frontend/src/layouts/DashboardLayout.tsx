@@ -60,7 +60,7 @@ export function DashboardLayout() {
                         <main
                             id="main-content"
                             tabIndex={-1}
-                            className="mx-auto w-full max-w-[1600px] min-w-0 flex-1 px-3 py-5 outline-none sm:px-6 sm:py-6 lg:px-8 lg:py-8"
+                            className="w-full min-w-0 flex-1 px-3 py-5 outline-none sm:px-6 sm:py-6 lg:px-8 lg:py-8"
                         >
                             <Suspense fallback={<LoadingState rows={6} />}>
                                 <Outlet />

@@ -338,7 +338,7 @@ function JournalForClass({ schoolId, academicYear, classId, date }: { schoolId: 
                     {success && <SuccessNotice>{success}</SuccessNotice>}
 
                     {sessions.length > 0 ? (
-                        <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="grid gap-4 lg:grid-cols-2 min-[1800px]:grid-cols-3">
                             {sessions.map((session) => (
                                 <SessionEditor key={session.id} session={session} onSaved={sessionsQuery.retry} />
                             ))}
