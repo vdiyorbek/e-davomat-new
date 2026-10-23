@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { Plus, Users, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { FilePenLine } from 'lucide-react';
+import { MembershipDetailsForm } from './MembershipDetailsForm';
 
-import { MembershipDetailsForm } from
-    './MembershipDetailsForm';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
@@ -134,6 +132,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         onEnd: open(setEnding),
         onChangeClass: open(setChangingClass),
         onTransferSchool: open(setTransferring),
+        onDetails: open(setDetailsMember),
     };
 
     return (
@@ -286,6 +285,49 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                     )}
                 </DialogContent>
             </Dialog>
+
+            <Dialog
+                open={detailsMember !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDetailsMember(null);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {type === 'STUDENT'
+                                ? 'O‘quvchi qo‘shimcha ma’lumotlari'
+                                : 'O‘qituvchi qo‘shimcha ma’lumotlari'}
+                        </DialogTitle>
+
+                        <DialogDescription>
+                            Ushbu shaxsning maktabga a’zoligiga
+                            tegishli qo‘shimcha ma’lumotlarni
+                            kiritish va tahrirlash.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {detailsMember && (
+                        <MembershipDetailsForm
+                            key={detailsMember.id}
+                            membership={detailsMember}
+                            onCancel={() => {
+                                setDetailsMember(null);
+                            }}
+                            onSaved={() => {
+                                setDetailsMember(null);
+                                setSuccess(
+                                    'Qo‘shimcha ma’lumotlar muvaffaqiyatli saqlandi.',
+                                );
+                                retry();
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 }
@@ -415,38 +457,7 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
                                 setRefreshVersion((value) => value + 1);
                             }}
                         />
-                        <SchoolMemberActions
-                            membership={item}
-                            layout="labels"
-                            {...actionProps}
-                        />
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={actionsDisabled}
-                            onClick={() => {
-                                setSuccess('');
-                                setDetailsMember(item);
-                            }}
-                        >
-                            <FilePenLine aria-hidden="true" />
-                            Qo‘shimcha ma’lumotlar
-                        </Button>
 
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={actionsDisabled}
-                            onClick={() => {
-                                setSuccess('');
-                                setDetailsMember(item);
-                            }}
-                        >
-                            <FilePenLine aria-hidden="true" />
-                            Ma’lumotlar
-                        </Button>
                     </DialogContent>
                 </Dialog>
             )}

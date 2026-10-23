@@ -2,7 +2,7 @@ import { ArrowRightLeft, CalendarX2, Eye, GraduationCap, Pencil } from 'lucide-r
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-
+import { FilePenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { SchoolMembership } from '@/types/school-membership';
@@ -19,6 +19,7 @@ interface Props {
     onTransferSchool: (membership: SchoolMembership) => void;
     /** `labels` — telefondagi kartalarda yozuvli tugmalar; `icons` — jadvalda faqat ikonka. */
     layout?: 'labels' | 'icons';
+    onDetails: (membership: SchoolMembership) => void;
 }
 
 interface Action {
@@ -39,6 +40,7 @@ export function SchoolMemberActions({
     onEnd,
     onChangeClass,
     onTransferSchool,
+    onDetails,
     layout = 'icons',
 }: Props) {
     const { t } = useTranslation();
@@ -46,7 +48,14 @@ export function SchoolMemberActions({
     const isActiveStudent = membership.type === 'STUDENT' && membership.endDate === null;
 
     const actions: Action[] = [];
-
+    actions.push({
+        key: 'details',
+        label: t('members.actions.details', {
+            defaultValue: 'Qo‘shimcha ma’lumotlar',
+        }),
+        icon: FilePenLine,
+        onClick: () => onDetails(membership),
+    });
     if (personId) {
         actions.push({ key: 'view', label: t('members.actions.view'), icon: Eye, to: `/persons/${personId}` });
         if (canEdit) {
