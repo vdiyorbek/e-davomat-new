@@ -6,8 +6,9 @@ import {
     RefreshCw,
     School,
     Search,
+    NotebookPen
 } from 'lucide-react';
-
+import { Link } from 'react-router';
 import { PageHeader } from '@/components/common/PageHeader';
 import {
     EmptyState,
@@ -191,6 +192,7 @@ export function TeacherDashboardPage() {
                                 <CardTitle className="text-base">
                                     Fan va sinflarni qidirish
                                 </CardTitle>
+
                             </CardHeader>
 
                             <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -206,6 +208,7 @@ export function TeacherDashboardPage() {
                                         onChange={(event) => setSearch(event.target.value)}
                                         placeholder="Fan, sinf yoki maktab..."
                                     />
+
                                 </div>
 
                                 <select
@@ -276,6 +279,12 @@ export function TeacherDashboardPage() {
                                                         {item.subject.nameUz}
                                                     </p>
                                                 </div>
+                                                <Button asChild className="w-full">
+                                                    <Link to={`/teacher/journal/${item.id}`}>
+                                                        <NotebookPen aria-hidden="true" />
+                                                        Elektron jurnal
+                                                    </Link>
+                                                </Button>
                                             </div>
 
                                             <div className="space-y-1 text-sm text-muted-foreground">

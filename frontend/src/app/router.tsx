@@ -32,6 +32,11 @@ const TeacherDashboardPage = lazy(() =>
         .then((m) => ({ default: m.TeacherDashboardPage }))
 );
 
+const TeacherJournalPage = lazy(() =>
+    import('@/pages/teacher-dashboard/TeacherJournalPage')
+        .then((m) => ({ default: m.TeacherJournalPage }))
+);
+
 export const router = createBrowserRouter([
     {
         element: <AuthLayout />,
@@ -54,6 +59,10 @@ export const router = createBrowserRouter([
                             {
                                 path: '/teacher/dashboard',
                                 element: <TeacherDashboardPage />,
+                            },
+                            {
+                                path: '/teacher/journal/:assignmentId',
+                                element: <TeacherJournalPage />,
                             },
                         ],
                     },
