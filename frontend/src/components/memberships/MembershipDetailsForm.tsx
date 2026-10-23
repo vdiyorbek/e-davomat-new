@@ -15,7 +15,14 @@ import { authorizedPut } from '@/lib/auth-session';
 
 import type { SchoolMembership } from
     '@/types/school-membership';
+import { SelectField } from
+    '@/components/common/SelectField';
 
+import {
+    MEMBERSHIP_OPTIONS,
+    membershipOptions,
+    type MembershipSelectKey,
+} from './membership-detail-options';
 type FieldKey =
     | 'studentNumber'
     | 'admissionOrderNumber'
@@ -30,7 +37,11 @@ type FieldKey =
     | 'hireOrderNumber';
 
 type FieldValues = Record<FieldKey, string>;
-
+function isSelectField(
+    key: FieldKey,
+): key is MembershipSelectKey {
+    return key in MEMBERSHIP_OPTIONS;
+}
 interface FieldDefinition {
     key: FieldKey;
     label: string;
@@ -255,19 +266,38 @@ export function MembershipDetailsForm({
                                     htmlFor={`detail-${field.key}`}
                                     label={field.label}
                                 >
-                                    <Input
-                                        id={`detail-${field.key}`}
-                                        value={values[field.key]}
-                                        placeholder={field.placeholder}
-                                        maxLength={field.maxLength}
-                                        disabled={saving}
-                                        onChange={(event) =>
-                                            changeValue(
+
+                                    {isSelectField(field.key) ? (
+                                        <SelectField
+                                            id={`detail-${field.key}`}
+                                            value={values[field.key]}
+                                            onValueChange={(value) =>
+                                                changeValue(field.key, value)
+                                            }
+                                            options={membershipOptions(
                                                 field.key,
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
+                                                values[field.key],
+                                            )}
+                                            emptyOption="Ko‘rsatilmagan"
+                                            placeholder="Tanlang"
+                                            disabled={saving}
+                                        />
+                                    ) : (
+                                        <Input
+                                            id={`detail-${field.key}`}
+                                            value={values[field.key]}
+                                            placeholder={field.placeholder}
+                                            maxLength={field.maxLength}
+                                            disabled={saving}
+                                            onChange={(event) =>
+                                                changeValue(
+                                                    field.key,
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                    )}
+
                                 </Field>
                             ))}
                         </div>

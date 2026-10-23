@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatDate, todayInTashkent } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-membership';
-
+import { MemberAccountForm } from './MemberAccountForm';
 import { ChangeClassForm } from './ChangeClassForm';
 import { CreateMemberForm } from './CreateMemberForm';
 import { EndMembershipForm } from './EndMembershipForm';
@@ -72,8 +72,15 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
     const [detailsMember, setDetailsMember] =
         useState<SchoolMembership | null>(null);
     const [success, setSuccess] = useState('');
-
+    const [accountMember, setAccountMember] =
+        useState<SchoolMembership | null>(null);
     const role = session?.profile.role;
+    const canManageAccounts = [
+        'SUPER_ADMIN',
+        'REGION_ADMIN',
+        'DISTRICT_ADMIN',
+        'SCHOOL_ADMIN',
+    ].includes(role ?? '');
     const canEnd = role === 'SUPER_ADMIN';
     const canEdit = role === 'SUPER_ADMIN';
     const canChangeClass =
@@ -84,7 +91,8 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         ending !== null ||
         changingClass !== null ||
         transferring !== null ||
-        detailsMember !== null;
+        detailsMember !== null ||
+        accountMember !== null;
 
     function open(setter: (m: SchoolMembership) => void) {
         return (membership: SchoolMembership) => {
@@ -128,11 +136,14 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         canEnd,
         canChangeClass,
         canTransferSchool,
+        canManageAccounts,
         actionsDisabled,
+
         onEnd: open(setEnding),
         onChangeClass: open(setChangingClass),
         onTransferSchool: open(setTransferring),
         onDetails: open(setDetailsMember),
+        onAccount: open(setAccountMember),
     };
 
     return (
@@ -168,6 +179,50 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                                 <div className="border-t pt-3">
                                     <SchoolMemberActions membership={item} layout="labels" {...actionProps} />
                                 </div>
+
+                                <Dialog
+                                    open={accountMember !== null}
+                                    onOpenChange={(open) => {
+                                        if (!open) {
+                                            setAccountMember(null);
+                                        }
+                                    }}
+                                >
+                                    <DialogContent className="sm:max-w-xl">
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                {type === 'STUDENT'
+                                                    ? 'O‘quvchi akkaunti'
+                                                    : 'O‘qituvchi akkaunti'}
+                                            </DialogTitle>
+
+                                            <DialogDescription>
+                                                Foydalanuvchining akkaunt holatini
+                                                tekshirish yoki yangi akkaunt yaratish.
+                                            </DialogDescription>
+                                        </DialogHeader>
+
+                                        {accountMember && (
+                                            <MemberAccountForm
+                                                key={accountMember.id}
+                                                membership={accountMember}
+                                                onCancel={() => {
+                                                    setAccountMember(null);
+                                                }}
+                                                onSaved={() => {
+                                                    setAccountMember(null);
+
+                                                    setSuccess(
+                                                        'Foydalanuvchi akkaunti muvaffaqiyatli yaratildi.',
+                                                    );
+
+                                                    retry();
+                                                }}
+                                            />
+                                        )}
+                                    </DialogContent>
+                                </Dialog>
+
                             </Card>
                         </li>
                     );

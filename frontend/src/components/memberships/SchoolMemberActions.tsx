@@ -1,12 +1,19 @@
-import { ArrowRightLeft, CalendarX2, Eye, GraduationCap, Pencil } from 'lucide-react';
+import {
+    ArrowRightLeft,
+    CalendarX2,
+    Eye,
+    FilePenLine,
+    GraduationCap,
+    Pencil,
+    UserRoundPlus,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { FilePenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { SchoolMembership } from '@/types/school-membership';
-
+import { todayInTashkent } from '@/lib/date';
 interface Props {
     membership: SchoolMembership;
     canEdit: boolean;
@@ -20,6 +27,8 @@ interface Props {
     /** `labels` — telefondagi kartalarda yozuvli tugmalar; `icons` — jadvalda faqat ikonka. */
     layout?: 'labels' | 'icons';
     onDetails: (membership: SchoolMembership) => void;
+    canManageAccounts: boolean;
+    onAccount: (membership: SchoolMembership) => void;
 }
 
 interface Action {
@@ -42,12 +51,37 @@ export function SchoolMemberActions({
     onTransferSchool,
     onDetails,
     layout = 'icons',
+    canManageAccounts,
+    onAccount,
 }: Props) {
     const { t } = useTranslation();
     const personId = membership.person?.id;
     const isActiveStudent = membership.type === 'STUDENT' && membership.endDate === null;
 
     const actions: Action[] = [];
+
+    const today = todayInTashkent();
+
+    const isCurrentMembership =
+        membership.startDate <= today &&
+        (
+            membership.endDate === null ||
+            membership.endDate > today
+        );
+
+    if (
+        canManageAccounts &&
+        isCurrentMembership &&
+        personId != null
+    ) {
+        actions.push({
+            key: 'account',
+            label: 'Akkaunt',
+            icon: UserRoundPlus,
+            onClick: () => onAccount(membership),
+        });
+    }
+
     actions.push({
         key: 'details',
         label: t('members.actions.details', {
