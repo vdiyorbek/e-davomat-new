@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Plus, Users, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { FilePenLine } from 'lucide-react';
 
+import { MembershipDetailsForm } from
+    './MembershipDetailsForm';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
@@ -68,6 +71,8 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
     const [ending, setEnding] = useState<SchoolMembership | null>(null);
     const [changingClass, setChangingClass] = useState<SchoolMembership | null>(null);
     const [transferring, setTransferring] = useState<SchoolMembership | null>(null);
+    const [detailsMember, setDetailsMember] =
+        useState<SchoolMembership | null>(null);
     const [success, setSuccess] = useState('');
 
     const role = session?.profile.role;
@@ -77,7 +82,11 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         type === 'STUDENT' && ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN', 'SCHOOL_ADMIN'].includes(role ?? '');
     const canTransferSchool =
         type === 'STUDENT' && ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN'].includes(role ?? '');
-    const actionsDisabled = ending !== null || changingClass !== null || transferring !== null;
+    const actionsDisabled =
+        ending !== null ||
+        changingClass !== null ||
+        transferring !== null ||
+        detailsMember !== null;
 
     function open(setter: (m: SchoolMembership) => void) {
         return (membership: SchoolMembership) => {
@@ -406,6 +415,38 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
                                 setRefreshVersion((value) => value + 1);
                             }}
                         />
+                        <SchoolMemberActions
+                            membership={item}
+                            layout="labels"
+                            {...actionProps}
+                        />
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={actionsDisabled}
+                            onClick={() => {
+                                setSuccess('');
+                                setDetailsMember(item);
+                            }}
+                        >
+                            <FilePenLine aria-hidden="true" />
+                            Qo‘shimcha ma’lumotlar
+                        </Button>
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={actionsDisabled}
+                            onClick={() => {
+                                setSuccess('');
+                                setDetailsMember(item);
+                            }}
+                        >
+                            <FilePenLine aria-hidden="true" />
+                            Ma’lumotlar
+                        </Button>
                     </DialogContent>
                 </Dialog>
             )}

@@ -154,3 +154,18 @@ export function apiDelete<T>(path: string, token: string): Promise<T> {
     },
   });
 }
+
+export function apiPut<T>(
+  path: string,
+  token: string,
+  body: unknown,
+): Promise<T> {
+  return request<T>({
+    method: "PUT",
+    url: path,
+    data: body,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
