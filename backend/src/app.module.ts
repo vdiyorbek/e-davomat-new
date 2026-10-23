@@ -28,6 +28,7 @@ import { LessonSchedulesModule } from './modules/lesson-schedules/lesson-schedul
 import { LessonSessionsModule } from './modules/lesson-sessions/lesson-sessions.module';
 import { UserPersonLinksModule } from './modules/user-person-links/user-person-links.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
+import { MembershipDetailsModule } from './modules/membership-details/membership-details.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -60,6 +61,7 @@ import { TeacherModule } from './modules/teacher/teacher.module';
     LessonSessionsModule,
     UserPersonLinksModule,
     TeacherModule,
+    MembershipDetailsModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
