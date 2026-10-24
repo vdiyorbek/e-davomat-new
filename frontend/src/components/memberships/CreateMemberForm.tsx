@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
 import { FileInput } from '@/components/common/FileInput';
-import { validateImage } from '@/lib/files';
+import { validateFacePhoto } from '@/lib/face-photo-validation';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState } from '@/components/common/states';
 import { PersonFields } from '@/components/persons/PersonFields';
@@ -42,7 +42,8 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
 
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoError, setPhotoError] = useState('');
-
+    const photoSelectionId = useRef(0);
+    const [photoChecking, setPhotoChecking] = useState(false);
     const [pnfl, setPnfl] = useState('');
     const [checked, setChecked] = useState(false);
     const [person, setPerson] = useState<Person | null>(null);
@@ -76,6 +77,39 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
         setNotice('');
     }
 
+    async function handlePhotoSelect(selected: File | null) {
+        const currentSelection = ++photoSelectionId.current;
+
+        setPhotoError('');
+        setPhotoFile(null);
+
+        if (!selected) {
+            setPhotoChecking(false);
+            return;
+        }
+
+        setPhotoChecking(true);
+
+        try {
+            const result = await validateFacePhoto(selected);
+
+            if (currentSelection !== photoSelectionId.current) return;
+
+            if (!result.valid) {
+                setPhotoError(
+                    result.error ?? 'Rasm talabga javob bermaydi.',
+                );
+                return;
+            }
+
+            setPhotoFile(selected);
+        } finally {
+            if (currentSelection === photoSelectionId.current) {
+                setPhotoChecking(false);
+            }
+        }
+    }
+
     async function handleLookup(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (operationBusy.current) return;
@@ -107,7 +141,7 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
 
     async function handleSave(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (operationBusy.current || !checked) return;
+        if (operationBusy.current || !checked || photoChecking) return;
 
         setError('');
         setNotice('');
@@ -241,7 +275,7 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                         autoComplete="off"
                         placeholder="00000000000000"
                         required
-                        disabled={busy}
+                        disabled={photoChecking || busy}
                         className="font-mono tracking-wider tabular-nums"
                     />
                 </Field>
@@ -323,21 +357,11 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                             id={`${id}-photo`}
                             accept="image/jpeg,image/png,image/webp"
                             file={photoFile}
-                            disabled={busy}
+                            disabled={busy || photoChecking}
                             icon={<ImageUp aria-hidden="true" />}
                             buttonLabel={t('photo.choose')}
                             onFileChange={(selected) => {
-                                setPhotoError('');
-                                if (!selected) {
-                                    setPhotoFile(null);
-                                    return;
-                                }
-                                const invalid = validateImage(selected);
-                                if (invalid) {
-                                    setPhotoError(t(invalid, { size: 5 }));
-                                    return;
-                                }
-                                setPhotoFile(selected);
+                                void handlePhotoSelect(selected);
                             }}
                         />
                         <p className="text-xs leading-5 text-muted-foreground">{t('members.create.photoUploadNote')}</p>

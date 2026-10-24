@@ -5,11 +5,11 @@ import { PersonsController } from './persons.controller';
 import { PersonsService } from './persons.service';
 import { PersonPhotosService } from './person-photos.service';
 import { Mahalla } from '../mahallas/mahalla.entity';
-
+import { FacePhotoQualityService } from './face-photo-quality.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Person, Mahalla])],
   controllers: [PersonsController],
-  providers: [PersonsService, PersonPhotosService],
+  providers: [PersonsService, PersonPhotosService, FacePhotoQualityService],
   exports: [PersonsService],
 })
 export class PersonsModule {}

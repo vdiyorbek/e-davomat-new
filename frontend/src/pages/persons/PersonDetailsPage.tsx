@@ -147,7 +147,7 @@ function PersonDetails({ personId }: { personId: number }) {
                     </Dialog>
 
                     <Dialog open={changingPhoto} onOpenChange={setChangingPhoto}>
-                        <DialogContent>
+                        <DialogContent className="w-[calc(100vw-2rem)] max-w-[680px] overflow-x-hidden sm:max-w-[680px]">
                             <DialogHeader>
                                 <DialogTitle>{t('photo.change')}</DialogTitle>
                                 <DialogDescription>{fullName}</DialogDescription>

@@ -3,7 +3,7 @@ import { ImageUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { FileInput } from '@/components/common/FileInput';
-import { validateImage } from '@/lib/files';
+import { validateFacePhoto } from '@/lib/face-photo-validation';
 import { ErrorState } from '@/components/common/states';
 import { PersonPhoto } from '@/components/persons/PersonPhoto';
 import { Button } from '@/components/ui/button';
@@ -25,17 +25,37 @@ export function ChangePersonPhoto({ personId, photoUrl, name, onSaved, onCancel 
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
-    function handleSelect(selected: File | null) {
+
+    const selectionId = useRef(0);
+
+    async function handleSelect(selected: File | null) {
+        const currentSelection = ++selectionId.current;
+
         setError('');
         setFile(null);
+
         if (!selected) return;
-        const invalid = validateImage(selected);
-        if (invalid) {
-            setError(t(invalid, { size: 5 }));
-            return;
+
+        setBusy(true);
+
+        try {
+            const result = await validateFacePhoto(selected);
+
+            if (currentSelection !== selectionId.current) return;
+
+            if (!result.valid) {
+                setError(result.error ?? 'Rasm talabga javob bermaydi.');
+                return;
+            }
+
+            setFile(selected);
+        } finally {
+            if (currentSelection === selectionId.current) {
+                setBusy(false);
+            }
         }
-        setFile(selected);
     }
+
 
     async function handleSave() {
         if (!file || savingRef.current) return;
@@ -55,11 +75,12 @@ export function ChangePersonPhoto({ personId, photoUrl, name, onSaved, onCancel 
     }
 
     return (
-        <div className="space-y-5">
+        <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-                <PersonPhoto personId={personId} photoUrl={photoUrl} file={file} name={name} />
+                <PersonPhoto personId={personId} photoUrl={photoUrl} file={file} name={name} className="shrink-0" />
                 <div className="w-full min-w-0 flex-1 space-y-2">
                     <FileInput
+                        className="w-full max-w-full"
                         accept="image/jpeg,image/png,image/webp"
                         file={file}
                         onFileChange={handleSelect}
