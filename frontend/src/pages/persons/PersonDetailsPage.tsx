@@ -73,7 +73,12 @@ function PersonDetails({ personId }: { personId: number }) {
 
             <Card className="gap-0 py-0">
                 <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
-                    <PersonPhoto personId={person.id} photoUrl={person.photoUrl} name={fullName} />
+                    <PersonPhoto
+                        personId={person.id}
+                        photoUrl={person.photoUrl}
+                        name={fullName}
+                        enlargeOnClick
+                    />
                     <div className="min-w-0 flex-1">
                         <h2 className="font-heading text-xl font-bold [overflow-wrap:anywhere] sm:text-2xl">{fullName}</h2>
                         <p className="mt-2 text-sm text-muted-foreground tabular-nums">
