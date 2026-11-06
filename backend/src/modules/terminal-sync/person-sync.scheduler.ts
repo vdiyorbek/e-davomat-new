@@ -77,13 +77,44 @@ export class PersonSyncScheduler {
     this.enqueueing = true;
 
     try {
+      const rawLimit = this.configService.get<string>(
+        'PERSON_SYNC_AUTO_CHECK_LIMIT',
+        '1',
+      );
+
+      const limit = Number(rawLimit);
+
+      if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+        throw new Error('PERSON_SYNC_AUTO_CHECK_LIMIT noto‘g‘ri');
+      }
+
+      const rawIds = this.configService.get<string>(
+        'PERSON_SYNC_AUTO_CHECK_TERMINAL_IDS',
+        '',
+      );
+
+      const ids = rawIds
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .map(Number);
+
+      if (
+        ids.length === 0 ||
+        ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+      ) {
+        throw new Error('PERSON_SYNC_AUTO_CHECK_TERMINAL_IDS noto‘g‘ri');
+      }
+
       const terminals = await this.terminalsRepository
         .createQueryBuilder('terminal')
         .select(['terminal.id'])
         .where('terminal.isActive = :active', {
           active: true,
         })
+        .andWhere('terminal.id IN (:...ids)', { ids })
         .orderBy('terminal.id', 'ASC')
+        .limit(limit)
         .getMany();
 
       const slot = this.getTashkentSlot();

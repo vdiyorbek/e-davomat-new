@@ -40,17 +40,33 @@ export class PersonSyncProcessor extends WorkerHost {
 
     switch (job.name) {
       case PERSON_SYNC_JOB.CHECK_TERMINAL: {
-        const result = await this.personSyncService.scanMissingTeachersForQueue(
-          job.data.terminalId,
-        );
+        const startedAt = Date.now();
 
-        this.logger.log(
-          `Terminal ${result.terminalId}: ` +
-            `o‘qituvchilar=${result.databaseTeachers}, ` +
-            `yetishmaydi=${result.missingCount}`,
-        );
+        try {
+          const result =
+            await this.personSyncService.scanMissingTeachersForQueue(
+              job.data.terminalId,
+            );
 
-        return result;
+          this.logger.log(
+            `PersonSync SUCCESS: ` +
+              `terminal=${result.terminalId}, ` +
+              `durationMs=${Date.now() - startedAt}, ` +
+              `missing=${result.missingCount}`,
+          );
+
+          return result;
+        } catch (error) {
+          this.logger.error(
+            `PersonSync FAILED: ` +
+              `terminal=${job.data.terminalId}, ` +
+              `durationMs=${Date.now() - startedAt}, ` +
+              `pid=${process.pid}, ` +
+              `error=${error instanceof Error ? error.message : String(error)}`,
+          );
+
+          throw error;
+        }
       }
 
       case PERSON_SYNC_JOB.SYNC_PERSON:

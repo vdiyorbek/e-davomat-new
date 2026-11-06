@@ -1333,10 +1333,25 @@ export class PersonSyncService {
 
     const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
 
+    const startedAt = Date.now();
+
+    console.log('PERSON SYNC SCAN START', {
+      terminalId,
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+    });
+
     const terminalUsers = await this.hikvision.getAllTerminalUsers(
       terminal,
       password,
     );
+
+    console.log('PERSON SYNC SCAN FINISHED', {
+      terminalId,
+      pid: process.pid,
+      durationMs: Date.now() - startedAt,
+      count: terminalUsers.length,
+    });
 
     const employeeNos = new Set(terminalUsers.map((item) => item.employeeNo));
 
