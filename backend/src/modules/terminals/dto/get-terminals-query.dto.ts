@@ -1,6 +1,14 @@
 import { Type } from 'class-transformer';
 
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+  IsDateString,
+  Matches,
+} from 'class-validator';
 
 import { TerminalDirection } from '../enums/terminal-direction.enum';
 
@@ -41,4 +49,9 @@ export class GetTerminalsQueryDto {
   @IsOptional()
   @IsEnum(TerminalDirection)
   direction?: TerminalDirection;
+
+  @IsOptional()
+  @Matches(/^20\d{2}-\d{2}-\d{2}$/)
+  @IsDateString({ strict: true })
+  date?: string;
 }

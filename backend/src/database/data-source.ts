@@ -27,7 +27,7 @@ import { LessonSession } from '../modules/lesson-sessions/lesson-session.entity'
 import { UserPersonLink } from '../modules/user-person-links/user-person-link.entity';
 import { StudentMembershipDetail } from 'src/modules/membership-details/student-membership-detail.entity';
 import { TeacherMembershipDetail } from 'src/modules/membership-details/teacher-membership-detail.entity';
-
+import { TerminalPersonSync } from '../modules/terminals/terminal-person-sync.entity';
 function requiredEnv(name: string): string {
   const value = process.env[name];
 
@@ -78,6 +78,7 @@ export default new DataSource({
     UserPersonLink,
     StudentMembershipDetail,
     TeacherMembershipDetail,
+    TerminalPersonSync,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],

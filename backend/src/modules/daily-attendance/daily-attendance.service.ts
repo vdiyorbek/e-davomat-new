@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -9,7 +10,7 @@ import {
   AttendanceExcuse,
   AttendanceExcuseStatus,
 } from '../attendance-excuses/attendance-excuse.entity';
-
+import { groupAttendanceEvents } from './attendance-event-groups';
 import { School } from '../schools/school.entity';
 import { District } from '../districts/district.entity';
 import { AttendanceEvent } from '../attendance-events/attendance-event.entity';
@@ -29,6 +30,7 @@ interface PersonDayEvents {
 
 @Injectable()
 export class DailyAttendanceService {
+  private readonly logger = new Logger(DailyAttendanceService.name);
   constructor(private readonly dataSource: DataSource) {}
 
   async rebuild(dto: RebuildDailyAttendanceDto) {
@@ -125,6 +127,20 @@ export class DailyAttendanceService {
         .getMany();
       let ignoredEvents = 0;
 
+      // Diagnostika: qisqa vaqt oralig‘ida takroriy
+      // yuz tanish eventlarini guruhlaymiz.
+      // Asosiy firstIn/lastOut hisobiga ta'sir qilmaydi.
+      const eventGroups = groupAttendanceEvents(events, 5);
+
+      const repeatedRecognitionEvents = eventGroups.reduce(
+        (total, group) => total + group.eventCount - 1,
+        0,
+      );
+
+      const repeatedRecognitionGroups = eventGroups.filter(
+        (group) => group.eventCount > 1,
+      ).length;
+
       for (const event of events) {
         const studentDay = people.get(
           makeKey(MembershipType.STUDENT, event.pnfl),
@@ -170,6 +186,18 @@ export class DailyAttendanceService {
         existingRows.map((row) => [makeKey(row.membershipType, row.pnfl), row]),
       );
 
+      const staleRows = existingRows.filter(
+        (row) => !people.has(makeKey(row.membershipType, row.pnfl)),
+      );
+      const staleRowCount = staleRows.length;
+      if (staleRowCount > 0) {
+        this.logger.warn(
+          `Daily attendance mismatch: ` +
+            `schoolId=${school.id}, ` +
+            `date=${dto.date}, ` +
+            `staleRows=${staleRowCount}`,
+        );
+      }
       for (const [key, personDay] of people) {
         const existing = existingByKey.get(key);
 
@@ -293,6 +321,9 @@ export class DailyAttendanceService {
         date: dto.date,
 
         sourceEvents: events.length,
+        recognitionGroups: eventGroups.length,
+        repeatedRecognitionEvents,
+        repeatedRecognitionGroups,
         ignoredEvents,
 
         calculatedPersons: people.size,
@@ -338,6 +369,7 @@ export class DailyAttendanceService {
         withLastOut: students.withLastOut + teachers.withLastOut,
 
         onlyOut: students.anomaly + teachers.anomaly,
+        staleRowCount,
       };
     });
   }
