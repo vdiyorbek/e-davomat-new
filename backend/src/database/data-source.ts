@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import 'dotenv/config';
-
+import { TerminalPersonSyncCheck } from '../modules/terminal-sync/terminal-person-sync-check.entity';
 import { join } from 'node:path';
 import { DataSource } from 'typeorm';
 import { Region } from 'src/modules/regions/region.entity';
@@ -79,6 +79,7 @@ export default new DataSource({
     StudentMembershipDetail,
     TeacherMembershipDetail,
     TerminalPersonSync,
+    TerminalPersonSyncCheck,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],

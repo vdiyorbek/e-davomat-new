@@ -6,12 +6,14 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  BadRequestException,
+  Body,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
-
+import { PersonSyncScheduler } from './person-sync.scheduler';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from '../terminals/terminal.entity';
@@ -35,6 +37,7 @@ export class PersonSyncQueueController {
 
     @InjectRepository(Terminal)
     private readonly terminalsRepository: Repository<Terminal>,
+    private readonly personSyncScheduler: PersonSyncScheduler,
   ) {}
 
   @Post('terminals/:id/check')
@@ -123,5 +126,30 @@ export class PersonSyncQueueController {
         ? new Date(job.finishedOn).toISOString()
         : null,
     };
+  }
+
+  @Get('scheduler/preview')
+  previewScheduler() {
+    return this.personSyncScheduler.previewChecks();
+  }
+
+  @Post('scheduler/run')
+  @HttpCode(202)
+  runScheduler(@Body() body: unknown) {
+    const input =
+      body !== null && typeof body === 'object' && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+
+    if (input.confirm !== 'QUEUE_ALL_TERMINALS') {
+      throw new BadRequestException(
+        'confirm: QUEUE_ALL_TERMINALS talab etiladi',
+      );
+    }
+
+    // force=true faqat qo‘lda ruxsat berilgan
+    // diagnostikani ishga tushiradi.
+    // Avtomatik yuklashga ruxsat bermaydi.
+    return this.personSyncScheduler.enqueueChecks(true);
   }
 }

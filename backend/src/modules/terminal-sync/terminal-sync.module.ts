@@ -5,7 +5,7 @@ import { BullModule } from '@nestjs/bullmq';
 
 import { Terminal } from '../terminals/terminal.entity';
 import { TerminalsModule } from '../terminals/terminals.module';
-
+import { TerminalPersonSyncCheck } from './terminal-person-sync-check.entity';
 import { AttendanceEventsModule } from '../attendance-events/attendance-events.module';
 import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.module';
 
@@ -22,7 +22,7 @@ import { PersonSyncQueueController } from './person-sync-queue.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Terminal]),
+    TypeOrmModule.forFeature([Terminal, TerminalPersonSyncCheck]),
 
     // PersonSyncService shu moduldan export qilinadi.
     TerminalsModule,

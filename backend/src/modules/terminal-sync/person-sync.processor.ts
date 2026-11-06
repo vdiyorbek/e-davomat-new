@@ -14,7 +14,7 @@ interface PersonSyncQueueJob {
 }
 
 @Processor(PERSON_SYNC_QUEUE, {
-  concurrency: 1,
+  concurrency: 3,
 })
 export class PersonSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(PersonSyncProcessor.name);

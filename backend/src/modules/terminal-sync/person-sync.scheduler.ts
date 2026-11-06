@@ -8,6 +8,7 @@ import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 
 import { Terminal } from '../terminals/terminal.entity';
+
 import {
   PERSON_SYNC_JOB,
   PERSON_SYNC_QUEUE,
@@ -15,12 +16,14 @@ import {
 
 interface PersonSyncCheckJob {
   terminalId: number;
+  personId?: number;
 }
 
 @Injectable()
 export class PersonSyncScheduler {
   private readonly logger = new Logger(PersonSyncScheduler.name);
 
+  private readonly pageSize = 100;
   private enqueueing = false;
 
   constructor(
@@ -35,8 +38,10 @@ export class PersonSyncScheduler {
 
   private isEnabled(): boolean {
     return (
-      this.configService.get<string>('PERSON_SYNC_AUTO_CHECK_ENABLED') ===
-      'true'
+      this.configService.get<string>(
+        'PERSON_SYNC_AUTO_CHECK_ENABLED',
+        'false',
+      ) === 'true'
     );
   }
 
@@ -50,12 +55,10 @@ export class PersonSyncScheduler {
       hourCycle: 'h23',
     }).formatToParts(new Date());
 
-    const get = (type: string) =>
+    const get = (type: string): string =>
       parts.find((part) => part.type === type)?.value ?? '';
 
     const hour = Number(get('hour'));
-
-    // 00, 06, 12 yoki 18 soatlik interval.
     const slotHour = String(Math.floor(hour / 6) * 6).padStart(2, '0');
 
     return `${get('year')}${get('month')}${get('day')}` + `-${slotHour}`;
@@ -65,112 +68,142 @@ export class PersonSyncScheduler {
     name: 'person-sync-auto-check',
     timeZone: 'Asia/Tashkent',
   })
-  async enqueueChecks(): Promise<void> {
-    if (!this.isEnabled()) {
-      return;
+  async enqueueChecks(force = false) {
+    if (!force && !this.isEnabled()) {
+      return {
+        status: 'DISABLED',
+        message: 'Avtomatik tekshiruv o‘chirilgan',
+      };
     }
 
     if (this.enqueueing) {
-      return;
+      return {
+        status: 'ALREADY_RUNNING',
+        message: 'Scheduler allaqachon ishlamoqda',
+      };
     }
 
     this.enqueueing = true;
 
+    const startedAt = Date.now();
+    const slot = this.getTashkentSlot();
+
+    let lastTerminalId = 0;
+    let totalTerminals = 0;
+    let enqueued = 0;
+    let failed = 0;
+
     try {
-      const rawLimit = this.configService.get<string>(
-        'PERSON_SYNC_AUTO_CHECK_LIMIT',
-        '1',
-      );
+      this.logger.log(`PersonSync scheduler START: slot=${slot}`);
 
-      const limit = Number(rawLimit);
+      while (true) {
+        // Terminallarni ID bo‘yicha sahifalab olamiz.
+        // Barcha jadvalni xotiraga yuklamaymiz.
+        const terminals = await this.terminalsRepository
+          .createQueryBuilder('terminal')
+          .select(['terminal.id'])
+          .where('terminal.isActive = :active', {
+            active: true,
+          })
+          .andWhere('terminal.id > :lastTerminalId', {
+            lastTerminalId,
+          })
+          .orderBy('terminal.id', 'ASC')
+          .take(this.pageSize)
+          .getMany();
 
-      if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
-        throw new Error('PERSON_SYNC_AUTO_CHECK_LIMIT noto‘g‘ri');
-      }
+        if (terminals.length === 0) {
+          break;
+        }
 
-      const rawIds = this.configService.get<string>(
-        'PERSON_SYNC_AUTO_CHECK_TERMINAL_IDS',
-        '',
-      );
+        for (const terminal of terminals) {
+          totalTerminals++;
 
-      const ids = rawIds
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean)
-        .map(Number);
+          try {
+            const jobId = `person-check-${terminal.id}-${slot}`;
 
-      if (
-        ids.length === 0 ||
-        ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
-      ) {
-        throw new Error('PERSON_SYNC_AUTO_CHECK_TERMINAL_IDS noto‘g‘ri');
-      }
-
-      const terminals = await this.terminalsRepository
-        .createQueryBuilder('terminal')
-        .select(['terminal.id'])
-        .where('terminal.isActive = :active', {
-          active: true,
-        })
-        .andWhere('terminal.id IN (:...ids)', { ids })
-        .orderBy('terminal.id', 'ASC')
-        .limit(limit)
-        .getMany();
-
-      const slot = this.getTashkentSlot();
-
-      let enqueued = 0;
-      let failed = 0;
-
-      for (const terminal of terminals) {
-        try {
-          await this.queue.add(
-            PERSON_SYNC_JOB.CHECK_TERMINAL,
-            {
-              terminalId: terminal.id,
-            },
-            {
-              jobId: `person-check-${terminal.id}-${slot}`,
-
-              // Diagnostika avtomatik takrorlanmaydi.
-              attempts: 1,
-
-              removeOnComplete: {
-                age: 24 * 60 * 60,
-                count: 1000,
+            await this.queue.add(
+              PERSON_SYNC_JOB.CHECK_TERMINAL,
+              {
+                terminalId: terminal.id,
               },
+              {
+                jobId,
 
-              removeOnFail: {
-                age: 7 * 24 * 60 * 60,
-                count: 1000,
+                // Bir job uchun avtomatik qayta
+                // urinish yo‘q.
+                attempts: 1,
+
+                // Tekshiruv natijalarini vaqtincha
+                // Redis'da saqlaymiz.
+                removeOnComplete: {
+                  age: 24 * 60 * 60,
+                  count: 5000,
+                },
+
+                removeOnFail: {
+                  age: 7 * 24 * 60 * 60,
+                  count: 5000,
+                },
               },
-            },
-          );
+            );
 
-          enqueued++;
-        } catch {
-          failed++;
+            enqueued++;
+          } catch (error: unknown) {
+            failed++;
 
-          this.logger.warn(
-            `Terminal ${terminal.id}: ` +
-              'tekshirish vazifasini navbatga ' +
-              'joylash muvaffaqiyatsiz',
-          );
+            this.logger.warn(
+              `Terminal ${terminal.id}: ` +
+                'navbatga joylashda xatolik. ' +
+                (error instanceof Error ? error.message : 'Unknown error'),
+            );
+          }
+
+          lastTerminalId = terminal.id;
+        }
+
+        if (terminals.length < this.pageSize) {
+          break;
         }
       }
 
       this.logger.log(
-        `PersonSync: terminal=${terminals.length}, ` +
-          `navbatga yuborildi=${enqueued}, ` +
-          `xatolik=${failed}, interval=${slot}`,
+        `PersonSync scheduler FINISHED: ` +
+          `slot=${slot}, ` +
+          `terminals=${totalTerminals}, ` +
+          `enqueueCalls=${enqueued}, ` +
+          `failed=${failed}, ` +
+          `durationMs=${Date.now() - startedAt}`,
       );
-    } catch {
+      return {
+        status: failed === 0 ? 'QUEUED' : 'PARTIAL',
+        slot,
+        totalTerminals,
+        enqueueCalls: enqueued,
+        failed,
+        durationMs: Date.now() - startedAt,
+      };
+    } catch (error: unknown) {
       this.logger.error(
-        'PersonSync scheduler xatosi. ' +
-          'MySQL va Redis ulanishlarini tekshiring.',
+        'PersonSync scheduler umumiy xatosi: ' +
+          (error instanceof Error ? error.message : 'Unknown error'),
       );
+      throw error;
     } finally {
       this.enqueueing = false;
     }
+  }
+
+  async previewChecks() {
+    const activeTerminals = await this.terminalsRepository.count({
+      where: { isActive: true },
+    });
+
+    return {
+      activeTerminals,
+      autoCheckEnabled: this.isEnabled(),
+      mode: 'PREVIEW',
+      willWriteToTerminal: false,
+    };
   }
 }
