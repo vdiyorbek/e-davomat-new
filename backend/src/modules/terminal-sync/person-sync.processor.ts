@@ -24,6 +24,12 @@ export class PersonSyncProcessor extends WorkerHost {
   }
 
   async process(job: Job<PersonSyncQueueJob>): Promise<unknown> {
+    this.logger.log(
+      `PersonSync START: jobId=${job.id}, ` +
+        `terminalId=${job.data.terminalId}, ` +
+        `pid=${process.pid}, ` +
+        `startedAt=${new Date().toISOString()}`,
+    );
     if (
       !job.data ||
       !Number.isInteger(job.data.terminalId) ||

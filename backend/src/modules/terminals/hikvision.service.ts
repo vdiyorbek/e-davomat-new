@@ -557,7 +557,7 @@ export class HikvisionService {
     const request = (authorization?: string) =>
       axios.post<unknown>(url, body, {
         responseType: 'json',
-        timeout: 15000,
+        timeout: 25000,
         maxRedirects: 0,
         maxContentLength: 1024 * 1024,
         maxBodyLength: 4096,
@@ -669,14 +669,67 @@ export class HikvisionService {
     let position = 0;
     let expectedTotal: number | null = null;
 
+    const startedAt = Date.now();
+
     for (let page = 0; page < maxPages; page++) {
-      const result = await this.getTerminalUsersPage(
-        terminal,
-        password,
-        position,
-        pageSize,
-        searchID,
-      );
+      let result: HikvisionUsersPage | null = null;
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const pageStartedAt = Date.now();
+
+        try {
+          result = await this.getTerminalUsersPage(
+            terminal,
+            password,
+            position,
+            pageSize,
+            searchID,
+          );
+
+          console.log('HIKVISION USER SEARCH:', {
+            terminalId: terminal.id,
+            page: page + 1,
+            position,
+            attempt,
+            durationMs: Date.now() - pageStartedAt,
+            received: result.users.length,
+            total: result.totalMatches,
+          });
+
+          break;
+        } catch (error: unknown) {
+          const code = axios.isAxiosError(error) ? (error.code ?? null) : null;
+
+          const retryable =
+            code === 'ECONNABORTED' ||
+            code === 'ETIMEDOUT' ||
+            code === 'ECONNRESET';
+
+          console.warn('HIKVISION USER SEARCH ERROR:', {
+            terminalId: terminal.id,
+            page: page + 1,
+            position,
+            attempt,
+            durationMs: Date.now() - pageStartedAt,
+            code,
+            message: error instanceof Error ? error.message : 'Unknown error',
+          });
+
+          if (!retryable || attempt === 2) {
+            throw error;
+          }
+
+          // Vaqtinchalik tarmoq xatosidan keyin
+          // terminalga kichik tanaffus beramiz.
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 1000);
+          });
+        }
+      }
+
+      if (!result) {
+        throw new Error('Terminal foydalanuvchilar sahifasini qaytarmadi');
+      }
 
       if (expectedTotal === null) {
         expectedTotal = result.totalMatches;
@@ -686,19 +739,26 @@ export class HikvisionService {
         throw new Error('Qidiruv davomida terminaldagi yozuvlar soni o‘zgardi');
       }
 
-      for (const user of result.users) {
-        if (employeeNumbers.has(user.employeeNo)) {
+      for (const item of result.users) {
+        if (employeeNumbers.has(item.employeeNo)) {
           throw new Error('Terminal takroriy employeeNo qaytardi');
         }
 
-        employeeNumbers.add(user.employeeNo);
-        users.push(user);
+        employeeNumbers.add(item.employeeNo);
+        users.push(item);
       }
 
       if (result.nextPosition === null) {
         if (users.length !== expectedTotal) {
           throw new Error('Terminal foydalanuvchilari to‘liq olinmadi');
         }
+
+        console.log('HIKVISION USER SEARCH COMPLETED:', {
+          terminalId: terminal.id,
+          totalUsers: users.length,
+          pagesRead: page + 1,
+          durationMs: Date.now() - startedAt,
+        });
 
         return users;
       }
