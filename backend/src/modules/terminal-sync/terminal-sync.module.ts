@@ -4,17 +4,28 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 
 import { Terminal } from '../terminals/terminal.entity';
+import { TerminalsModule } from '../terminals/terminals.module';
+
 import { AttendanceEventsModule } from '../attendance-events/attendance-events.module';
 import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.module';
 
 import { TERMINAL_SYNC_QUEUE } from './terminal-sync.constants';
+import { PERSON_SYNC_QUEUE } from '../terminals/person-sync.constants';
+
 import { TerminalSyncService } from './terminal-sync.service';
 import { TerminalSyncProcessor } from './terminal-sync.processor';
 import { TerminalSyncScheduler } from './terminal-sync.scheduler';
 
+import { PersonSyncProcessor } from './person-sync.processor';
+import { PersonSyncScheduler } from './person-sync.scheduler';
+import { PersonSyncQueueController } from './person-sync-queue.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Terminal]),
+
+    // PersonSyncService shu moduldan export qilinadi.
+    TerminalsModule,
 
     AttendanceEventsModule,
     DailyAttendanceModule,
@@ -42,14 +53,25 @@ import { TerminalSyncScheduler } from './terminal-sync.scheduler';
       },
     }),
 
-    BullModule.registerQueue({
-      name: TERMINAL_SYNC_QUEUE,
-    }),
+    BullModule.registerQueue(
+      {
+        name: TERMINAL_SYNC_QUEUE,
+      },
+      {
+        name: PERSON_SYNC_QUEUE,
+      },
+    ),
   ],
+
+  controllers: [PersonSyncQueueController],
+
   providers: [
     TerminalSyncService,
     TerminalSyncProcessor,
     TerminalSyncScheduler,
+
+    PersonSyncProcessor,
+    PersonSyncScheduler,
   ],
 })
 export class TerminalSyncModule {}

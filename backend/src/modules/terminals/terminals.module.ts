@@ -37,6 +37,7 @@ import { PersonSyncService } from './person-sync.service';
     TerminalCryptoService,
     HikvisionEventsService,
     HikvisionPhotoService,
+    PersonSyncService,
   ],
 })
 export class TerminalsModule {}

@@ -1278,4 +1278,94 @@ export class PersonSyncService {
       checkedAt: new Date().toISOString(),
     };
   }
+
+  async scanMissingTeachersForQueue(terminalId: number) {
+    if (!Number.isInteger(terminalId) || terminalId <= 0) {
+      throw new BadRequestException('Terminal ID noto‘g‘ri');
+    }
+
+    const terminal = await this.terminalsRepository
+      .createQueryBuilder('terminal')
+      .addSelect('terminal.passwordEncrypted')
+      .where('terminal.id = :terminalId', { terminalId })
+      .getOne();
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (!terminal.isActive) {
+      return {
+        terminalId,
+        schoolId: terminal.schoolId,
+        skipped: true,
+        reason: 'TERMINAL_INACTIVE',
+        databaseTeachers: 0,
+        terminalUsers: 0,
+        missingCount: 0,
+        missingPersonIds: [] as number[],
+      };
+    }
+
+    const today = this.todayInTashkent();
+
+    const memberships = await this.membershipsRepository
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.person', 'person')
+      .where('membership.schoolId = :schoolId', {
+        schoolId: terminal.schoolId,
+      })
+      .andWhere('membership.type = :type', {
+        type: MembershipType.TEACHER,
+      })
+      .andWhere('membership.startDate <= :today', { today })
+      .andWhere('(membership.endDate IS NULL OR membership.endDate > :today)', {
+        today,
+      })
+      .andWhere('person.deletedAt IS NULL')
+      .getMany();
+
+    const persons = new Map<number, Person>();
+
+    for (const membership of memberships) {
+      persons.set(membership.personId, membership.person);
+    }
+
+    const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
+
+    const terminalUsers = await this.hikvision.getAllTerminalUsers(
+      terminal,
+      password,
+    );
+
+    const employeeNos = new Set(terminalUsers.map((item) => item.employeeNo));
+
+    const missingPersonIds: number[] = [];
+    let invalidPnfl = 0;
+
+    for (const person of persons.values()) {
+      if (!/^\d{14}$/.test(person.pnfl)) {
+        invalidPnfl++;
+        continue;
+      }
+
+      if (!employeeNos.has(person.pnfl)) {
+        missingPersonIds.push(person.id);
+      }
+    }
+
+    missingPersonIds.sort((a, b) => a - b);
+
+    return {
+      terminalId,
+      schoolId: terminal.schoolId,
+      skipped: false,
+      databaseTeachers: persons.size,
+      terminalUsers: terminalUsers.length,
+      missingCount: missingPersonIds.length,
+      missingPersonIds,
+      invalidPnfl,
+      checkedAt: new Date().toISOString(),
+    };
+  }
 }
