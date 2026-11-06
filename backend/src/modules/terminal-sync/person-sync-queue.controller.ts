@@ -49,6 +49,10 @@ export class PersonSyncQueueController {
   @Post('terminals/:id/check')
   @HttpCode(202)
   async enqueueCheck(@Param('id', ParseIntPipe) terminalId: number) {
+    if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
+      throw new BadRequestException('terminalId noto‘g‘ri');
+    }
+
     const terminal = await this.terminalsRepository.findOneBy({
       id: terminalId,
     });
@@ -61,14 +65,35 @@ export class PersonSyncQueueController {
       return {
         terminalId,
         queued: false,
+        reused: false,
         reason: 'TERMINAL_INACTIVE',
       };
     }
 
-    // Bir terminal uchun 5 daqiqalik vaqt
-    // oralig‘ida bir xil jobId ishlatiladi.
     const slot = Math.floor(Date.now() / (5 * 60 * 1000));
+
     const jobId = `manual-check-${terminalId}-${slot}`;
+
+    // Shu 5 daqiqalik oraliqda job bormi?
+    const existingJob = await this.queue.getJob(jobId);
+
+    if (existingJob) {
+      const state = await existingJob.getState();
+
+      return {
+        terminalId,
+        queued: state !== 'completed' && state !== 'failed',
+        reused: true,
+        jobId: existingJob.id,
+        state,
+        reason:
+          state === 'completed'
+            ? 'RECENT_JOB_COMPLETED'
+            : state === 'failed'
+              ? 'RECENT_JOB_FAILED'
+              : 'JOB_ALREADY_EXISTS',
+      };
+    }
 
     const job = await this.queue.add(
       PERSON_SYNC_JOB.CHECK_TERMINAL,
@@ -87,12 +112,21 @@ export class PersonSyncQueueController {
       },
     );
 
+    const savedJob = await this.queue.getJob(String(job.id));
+
+    if (!savedJob) {
+      throw new Error('Redis navbatidagi vazifa topilmadi');
+    }
+
+    const state = await savedJob.getState();
+
     return {
       terminalId,
       queued: true,
-      jobId: job.id,
-      jobName: job.name,
-      message: 'Terminalni tekshirish vazifasi Redis navbatiga yuborildi',
+      reused: false,
+      jobId: savedJob.id,
+      state,
+      message: 'Diagnostika vazifasi qabul qilindi',
     };
   }
 
