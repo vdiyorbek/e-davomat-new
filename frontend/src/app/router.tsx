@@ -37,6 +37,12 @@ const TeacherJournalPage = lazy(() =>
         .then((m) => ({ default: m.TeacherJournalPage }))
 );
 
+const PersonSyncMonitoringPage = lazy(() =>
+    import("@/pages/terminals/PersonSyncMonitoringPage").then(
+        (m) => ({ default: m.PersonSyncMonitoringPage }),
+    ),
+);
+
 export const router = createBrowserRouter([
     {
         element: <AuthLayout />,
@@ -110,6 +116,10 @@ export const router = createBrowserRouter([
                                     {
                                         path: '/attendance-excuses',
                                         element: <AttendanceExcusesPage />,
+                                    },
+                                    {
+                                        path: "/terminals/person-sync-monitoring",
+                                        element: <PersonSyncMonitoringPage />,
                                     },
                                 ],
                             },

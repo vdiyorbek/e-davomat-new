@@ -32,7 +32,8 @@
     "users": "Пользователи",
     "person": "Карточка человека",
     "forbidden": "Доступ ограничен",
-    "teacherDashboard": "Кабинет учителя"
+    "teacherDashboard": "Кабинет учителя",
+    "personSyncMonitoring": "Мониторинг терминалов"
   },
   "short": {
     "profile": "Профиль",

@@ -9,6 +9,7 @@ import {
   BadRequestException,
   Body,
   Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,7 +19,10 @@ import { PersonSyncScheduler } from './person-sync.scheduler';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from '../terminals/terminal.entity';
-import { MonitoringStatus, PersonSyncMonitoringService } from './person-sync-monitoring.service';
+import {
+  MonitoringStatus,
+  PersonSyncMonitoringService,
+} from './person-sync-monitoring.service';
 import {
   PERSON_SYNC_JOB,
   PERSON_SYNC_QUEUE,
@@ -162,6 +166,7 @@ export class PersonSyncQueueController {
     @Query('limit') limitRaw?: string,
     @Query('status') statusRaw?: string,
     @Query('schoolId') schoolIdRaw?: string,
+    @Query('search') searchRaw?: string,
   ) {
     const parsePositiveInteger = (
       value: string | undefined,
@@ -215,12 +220,46 @@ export class PersonSyncQueueController {
       schoolIdRaw === undefined
         ? undefined
         : parsePositiveInteger(schoolIdRaw, 1, 'schoolId', 4294967295);
+    if (
+      searchRaw !== undefined &&
+      (typeof searchRaw !== 'string' || searchRaw.trim().length > 100)
+    ) {
+      throw new BadRequestException('search 100 ta belgidan oshmasligi kerak');
+    }
 
+    const search = searchRaw?.trim() || undefined;
     return this.monitoringService.getMonitoring({
       page,
       limit,
       status: status as MonitoringStatus,
       schoolId,
+      search,
     });
+  }
+
+  @Get('monitoring/terminals/:terminalId/history')
+  getTerminalHistory(
+    @Param('terminalId', ParseIntPipe)
+    terminalId: number,
+
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe)
+    page: number,
+
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe)
+    limit: number,
+  ) {
+    if (terminalId <= 0 || !Number.isSafeInteger(terminalId)) {
+      throw new BadRequestException('terminalId noto‘g‘ri');
+    }
+
+    if (!Number.isSafeInteger(page) || page < 1 || page > 1_000_000) {
+      throw new BadRequestException('page noto‘g‘ri');
+    }
+
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
+      throw new BadRequestException('limit 1 dan 50 gacha bo‘lishi kerak');
+    }
+
+    return this.monitoringService.getTerminalHistory(terminalId, page, limit);
   }
 }

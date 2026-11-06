@@ -32,7 +32,8 @@
     "users": "Users",
     "person": "Person details",
     "forbidden": "Access restricted",
-    "teacherDashboard": "Teacher dashboard"
+    "teacherDashboard": "Teacher dashboard",
+    "personSyncMonitoring": "Terminal Monitoring"
   },
   "short": {
     "profile": "Profile",

@@ -32,7 +32,8 @@
     "users": "Foydalanuvchilar",
     "person": "Shaxs ma’lumotlari",
     "forbidden": "Kirish cheklangan",
-    "teacherDashboard":"O'qituvchi kabineti"
+    "teacherDashboard":"O'qituvchi kabineti",
+    "personSyncMonitoring": "Terminallar monitoringi"
   },
   "short": {
     "profile": "Profil",

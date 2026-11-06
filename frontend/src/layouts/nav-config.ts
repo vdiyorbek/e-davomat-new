@@ -16,6 +16,7 @@ import {
   UserCog,
   UserRound,
   LayoutDashboard,
+  Activity,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -145,7 +146,18 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: ScanFace,
         roles: ADMIN_ROLES,
       },
-      { to: "/users", key: "users", icon: UserCog, roles: ADMIN_ROLES },
+      {
+        to: "/terminals/person-sync-monitoring",
+        key: "personSyncMonitoring",
+        icon: Activity,
+        roles: ["SUPER_ADMIN"],
+      },
+      {
+        to: "/users",
+        key: "users",
+        icon: UserCog,
+        roles: ADMIN_ROLES,
+      },
     ],
   },
 ];
