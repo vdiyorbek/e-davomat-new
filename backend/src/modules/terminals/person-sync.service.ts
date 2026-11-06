@@ -1149,4 +1149,133 @@ export class PersonSyncService {
       }
     }
   }
+
+  async syncMissingTeachersBatch(
+    terminalId: number,
+    user: AuthenticatedUser,
+    options: {
+      dryRun: boolean;
+      limit: number;
+    },
+  ) {
+    // Ommaviy amallar hozircha faqat SUPER_ADMIN uchun.
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Guruhli sinxronlash uchun SUPER_ADMIN kerak',
+      );
+    }
+
+    if (
+      !Number.isInteger(options.limit) ||
+      options.limit < 1 ||
+      options.limit > 5
+    ) {
+      throw new BadRequestException('Limit 1 dan 5 gacha bo‘lishi kerak');
+    }
+
+    // Maktabdagi faol o‘qituvchilarni terminal
+    // bilan bir marta solishtiramiz.
+    const comparison = await this.getMissingTeachers(terminalId, user);
+
+    const selected = comparison.missing.slice(0, options.limit);
+
+    const results: Array<{
+      personId: number;
+      action: string;
+      status: string;
+      reason?: string;
+    }> = [];
+
+    for (const item of selected) {
+      // Har bir shaxsning haqiqiy holati,
+      // shu jumladan yuz yozuvi va rasm fayli tekshiriladi.
+      let preparation;
+
+      try {
+        preparation = await this.checkPersonPhoto(
+          terminalId,
+          item.personId,
+          user,
+        );
+      } catch {
+        results.push({
+          personId: item.personId,
+          action: 'MANUAL_REVIEW',
+          status: 'CHECK_FAILED',
+        });
+
+        // Noaniq tekshiruvdan keyin davom etmaymiz.
+        break;
+      }
+
+      if (!preparation.uploadReady) {
+        results.push({
+          personId: item.personId,
+          action: preparation.action,
+          status: 'SKIPPED',
+          reason: preparation.photoStatus ?? preparation.reason,
+        });
+
+        continue;
+      }
+
+      if (preparation.action !== 'CREATE_USER_AND_FACE') {
+        results.push({
+          personId: item.personId,
+          action: preparation.action,
+          status: 'SKIPPED',
+          reason: 'EXPECTED_CREATE_USER_AND_FACE',
+        });
+
+        continue;
+      }
+
+      if (options.dryRun) {
+        results.push({
+          personId: item.personId,
+          action: preparation.action,
+          status: 'READY',
+        });
+
+        continue;
+      }
+
+      try {
+        // Bu metod ichida terminal holati qayta
+        // tekshiriladi va MySQL lock olinadi.
+        const result = await this.syncPerson(terminalId, item.personId, user);
+
+        results.push({
+          personId: item.personId,
+          action: result.action,
+          status: result.status,
+        });
+      } catch {
+        results.push({
+          personId: item.personId,
+          action: preparation.action,
+          status: 'FAILED_OR_UNCERTAIN',
+        });
+
+        // Xatolikdan keyin qolgan yozuvlarga
+        // avtomatik o‘tmaymiz.
+        break;
+      }
+    }
+
+    return {
+      terminalId,
+      schoolId: comparison.schoolId,
+      dryRun: options.dryRun,
+      limit: options.limit,
+      databaseTeachers: comparison.databaseTeachers,
+      missingBefore: comparison.missingCount,
+      selectedCount: selected.length,
+      results,
+      stoppedEarly: results.length < selected.length,
+      // Bu maydon dastlabki solishtirish natijasi.
+      // Yakuniy mavjudlik uchun API qayta chaqiriladi.
+      checkedAt: new Date().toISOString(),
+    };
+  }
 }

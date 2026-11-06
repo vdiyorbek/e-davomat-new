@@ -9,6 +9,7 @@ import {
   HttpCode,
   Param,
   ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -410,5 +411,56 @@ export class TerminalsController {
     }
 
     return this.personSyncService.syncPerson(id, personId, request.authUser);
+  }
+
+  @Post(':id/person-sync/teachers/batch')
+  @Roles(UserRole.SUPER_ADMIN)
+  syncTeachersBatch(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+    @Body() body: unknown,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    const input =
+      body !== null && typeof body === 'object' && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+
+    if (input.dryRun !== undefined && typeof input.dryRun !== 'boolean') {
+      throw new BadRequestException('dryRun boolean bo‘lishi kerak');
+    }
+
+    if (
+      input.limit !== undefined &&
+      (typeof input.limit !== 'number' ||
+        !Number.isInteger(input.limit) ||
+        input.limit < 1 ||
+        input.limit > 5)
+    ) {
+      throw new BadRequestException('limit 1 dan 5 gacha bo‘lishi kerak');
+    }
+
+    const dryRun = input.dryRun !== false;
+    const limit = typeof input.limit === 'number' ? input.limit : 1;
+
+    // Haqiqiy guruhli yuklash faqat
+    // aniq tasdiqlash qiymati bilan ruxsat etiladi.
+    if (!dryRun && input.confirm !== 'SYNC_TEACHERS') {
+      throw new BadRequestException(
+        'Yuklash uchun confirm: SYNC_TEACHERS kerak',
+      );
+    }
+
+    return this.personSyncService.syncMissingTeachersBatch(
+      id,
+      request.authUser,
+      {
+        dryRun,
+        limit,
+      },
+    );
   }
 }
