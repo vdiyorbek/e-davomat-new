@@ -3,7 +3,7 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Job } from 'bullmq';
 import { Repository } from 'typeorm';
-
+import { PersonSyncTerminalLockService } from './person-sync-terminal-lock.service';
 import { Terminal } from '../terminals/terminal.entity';
 import { PersonSyncService } from '../terminals/person-sync.service';
 
@@ -48,6 +48,7 @@ export class PersonSyncProcessor extends WorkerHost {
 
     @InjectRepository(Terminal)
     private readonly terminalsRepository: Repository<Terminal>,
+    private readonly terminalLock: PersonSyncTerminalLockService,
   ) {
     super();
   }
@@ -62,8 +63,30 @@ export class PersonSyncProcessor extends WorkerHost {
     }
 
     switch (job.name) {
-      case PERSON_SYNC_JOB.CHECK_TERMINAL:
-        return this.processTerminalCheck(job);
+      case PERSON_SYNC_JOB.CHECK_TERMINAL: {
+        const terminalId = job.data.terminalId;
+
+        const locked = await this.terminalLock.run(terminalId, (assertOwned) =>
+          this.processTerminalCheck(job, assertOwned),
+        );
+
+        if (!locked.acquired) {
+          this.logger.warn(
+            `PersonSync SKIPPED: terminal=${terminalId}, ` +
+              `reason=CHECK_ALREADY_RUNNING`,
+          );
+
+          // Redis job completed bo‘ladi, lekin
+          // monitoringga SUCCESS yozilmaydi.
+          return {
+            terminalId,
+            skipped: true,
+            reason: 'CHECK_ALREADY_RUNNING',
+          };
+        }
+
+        return locked.result;
+      }
 
       case PERSON_SYNC_JOB.SYNC_PERSON:
         throw new Error('SYNC_PERSON navbat orqali hali yoqilmagan');
@@ -75,6 +98,7 @@ export class PersonSyncProcessor extends WorkerHost {
 
   private async processTerminalCheck(
     job: Job<PersonSyncQueueJob>,
+    assertOwned: () => Promise<void>,
   ): Promise<unknown> {
     const terminalId = job.data.terminalId;
     const startedAt = Date.now();
@@ -93,6 +117,10 @@ export class PersonSyncProcessor extends WorkerHost {
       result =
         await this.personSyncService.scanMissingTeachersForQueue(terminalId);
     } catch (error: unknown) {
+      // Terminalni tekshirish tugadi.
+      // MySQL'ga SUCCESS yozishdan avval
+      // lock hali bizga tegishli ekanini tekshiramiz.
+      await assertOwned();
       const durationMs = Date.now() - startedAt;
       const errorCode = this.classifyError(error);
 

@@ -11,7 +11,7 @@ import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.modu
 
 import { TERMINAL_SYNC_QUEUE } from './terminal-sync.constants';
 import { PERSON_SYNC_QUEUE } from '../terminals/person-sync.constants';
-
+import { PersonSyncTerminalLockService } from './person-sync-terminal-lock.service';
 import { TerminalSyncService } from './terminal-sync.service';
 import { TerminalSyncProcessor } from './terminal-sync.processor';
 import { TerminalSyncScheduler } from './terminal-sync.scheduler';
@@ -72,6 +72,7 @@ import { PersonSyncQueueController } from './person-sync-queue.controller';
     PersonSyncMonitoringService,
     PersonSyncProcessor,
     PersonSyncScheduler,
+    PersonSyncTerminalLockService,
   ],
 })
 export class TerminalSyncModule {}

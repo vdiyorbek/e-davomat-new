@@ -8,8 +8,11 @@ import { authorizedGet, authorizedPost } from "@/lib/auth-session";
 interface EnqueueResponse {
     terminalId: number;
     queued: boolean;
+    reused: boolean;
     jobId?: string;
+    state?: string;
     reason?: string;
+    message?: string;
 }
 
 interface JobResponse {
@@ -176,18 +179,55 @@ export function PersonSyncRecheckButton({
                 {},
             );
 
+
+            if (response.reused) {
+                if (response.state === "completed") {
+                    setState("completed");
+                    setMessage(
+                        "Ushbu 5 daqiqalik oraliqda terminal " +
+                        "allaqachon tekshirilgan. Yangi vazifa yaratilmadi.",
+                    );
+                    onFinishedRef.current();
+                    return;
+                }
+
+                if (response.state === "failed") {
+                    setState("failed");
+                    setMessage(
+                        "Ushbu oraliqdagi oldingi tekshiruv " +
+                        "xatolik bilan tugagan. Yangi vazifa yaratilmadi.",
+                    );
+                    onFinishedRef.current();
+                    return;
+                }
+
+                if (response.queued && response.jobId) {
+                    setJobId(response.jobId);
+                    setState("waiting");
+                    setMessage(
+                        "Terminal uchun mavjud Redis vazifasi kuzatilmoqda.",
+                    );
+                    return;
+                }
+            }
+
             if (!response.queued || !response.jobId) {
                 setState("failed");
                 setMessage(
                     response.reason === "TERMINAL_INACTIVE"
                         ? "Terminal nofaol."
-                        : response.reason ?? "Vazifa navbatga qo‘shilmadi.",
+                        : response.reason ??
+                        "Vazifa navbatga qo‘shilmadi.",
                 );
                 return;
             }
 
             setJobId(response.jobId);
-            setMessage("Diagnostika vazifasi navbatga yuborildi.");
+            setState("waiting");
+            setMessage(
+                "Yangi diagnostika vazifasi navbatga yuborildi.",
+            );
+
         } catch (error: unknown) {
             setState("failed");
             setMessage(
