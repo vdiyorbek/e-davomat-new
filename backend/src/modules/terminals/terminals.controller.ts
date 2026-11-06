@@ -374,4 +374,27 @@ export class TerminalsController {
 
     return this.personSyncService.getMissingTeachers(id, request.authUser);
   }
+
+  @Get(':id/person-sync/persons/:personId/photo-ready')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  checkPersonPhoto(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.checkPersonPhoto(
+      id,
+      personId,
+      request.authUser,
+    );
+  }
 }
