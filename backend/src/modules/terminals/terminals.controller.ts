@@ -287,4 +287,73 @@ export class TerminalsController {
 
     return this.personSyncService.previewPerson(id, personId, request.authUser);
   }
+
+  @Get(':id/person-sync/persons/:personId/check')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  checkTerminalPerson(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.checkTerminalPerson(
+      id,
+      personId,
+      request.authUser,
+    );
+  }
+
+  @Get(':id/person-sync/persons/:personId/face-check')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  checkPersonFace(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.checkTerminalPersonFace(
+      id,
+      personId,
+      request.authUser,
+    );
+  }
+
+  @Get(':id/person-sync/persons/:personId/plan')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  getPersonSyncPlan(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.getPersonSyncPlan(
+      id,
+      personId,
+      request.authUser,
+    );
+  }
 }

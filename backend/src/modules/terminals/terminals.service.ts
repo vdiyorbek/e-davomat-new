@@ -12,7 +12,10 @@ import { QueryFailedError, Repository } from 'typeorm';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
 import { School } from '../schools/school.entity';
-import { SchoolMembership } from '../school-memberships/school-membership.entity';
+import {
+  MembershipType,
+  SchoolMembership,
+} from '../school-memberships/school-membership.entity';
 import { Terminal } from './terminal.entity';
 import { TerminalCryptoService } from './terminal-crypto.service';
 import { CreateTerminalDto } from './dto/create-terminal.dto';
@@ -904,7 +907,7 @@ export class TerminalsService {
       })
       .andWhere('person.deletedAt IS NULL')
       .andWhere('membership.type IN (:...types)', {
-        types: ['STUDENT', 'TEACHER'],
+        types: [MembershipType.STUDENT, MembershipType.TEACHER],
       })
       .getRawMany<{ pnfl: string }>();
 

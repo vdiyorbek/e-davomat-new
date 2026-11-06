@@ -1308,4 +1308,193 @@ export class HikvisionService {
       responseFields: Object.keys(settings),
     };
   }
+
+  async searchTerminalFace(
+    terminal: Terminal,
+    password: string,
+    employeeNo: string,
+    fdId = '1',
+  ): Promise<{
+    checked: boolean;
+    exists: boolean | null;
+    status: 'FACE_EXISTS' | 'MISSING_FACE' | 'UNKNOWN';
+    fdId: string;
+    responseStatus: string | null;
+    totalMatches: number | null;
+    responseFields: string[];
+    matchFields: string[];
+  }> {
+    if (!/^\d{14}$/.test(employeeNo)) {
+      throw new Error('EmployeeNo noto‘g‘ri');
+    }
+
+    if (!/^\d{1,10}$/.test(fdId)) {
+      throw new Error('FDID noto‘g‘ri');
+    }
+
+    const path = '/ISAPI/Intelligent/FDLib/FDSearch?format=json';
+
+    const host = terminal.host.includes(':')
+      ? `[${terminal.host}]`
+      : terminal.host;
+
+    const url =
+      `${terminal.protocol.toLowerCase()}://` +
+      `${host}:${terminal.port}${path}`;
+
+    const searchID = randomUUID();
+
+    const body = JSON.stringify({
+      searchID,
+      searchResultPosition: 0,
+      maxResults: 10,
+      faceLibType: 'blackFD',
+      FDID: fdId,
+      FPID: employeeNo,
+    });
+
+    const request = (authorization?: string) =>
+      axios.post<unknown>(url, body, {
+        timeout: 15000,
+        responseType: 'json',
+        maxRedirects: 0,
+        maxContentLength: 256 * 1024,
+        maxBodyLength: 4096,
+        proxy: false,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(authorization ? { Authorization: authorization } : {}),
+        },
+        validateStatus: () => true,
+      });
+
+    let response = await request();
+
+    if (response.status === 401) {
+      const challenge: unknown = response.headers['www-authenticate'];
+
+      if (typeof challenge !== 'string') {
+        throw new Error('Terminal Digest challenge qaytarmadi');
+      }
+
+      const authorization = createDigestAuthorization(
+        challenge,
+        terminal.username,
+        password,
+        'POST',
+        path,
+      );
+
+      response = await request(authorization);
+    }
+
+    if (response.status !== 200) {
+      throw new Error(`FDSearch HTTP ${response.status}`);
+    }
+
+    let data: unknown = response.data;
+
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch {
+        throw new Error('FDSearch JSON javobi noto‘g‘ri');
+      }
+    }
+
+    if (!isRecord(data)) {
+      throw new Error('FDSearch javobi obyekt emas');
+    }
+
+    const result = isRecord(data.FDSearchResult) ? data.FDSearchResult : data;
+
+    const responseFields = Object.keys(result);
+
+    const responseStatus =
+      typeof result.responseStatusStrg === 'string'
+        ? result.responseStatusStrg
+        : null;
+
+    const totalMatches =
+      typeof result.totalMatches === 'number'
+        ? result.totalMatches
+        : typeof result.totalMatches === 'string' &&
+            /^\d+$/.test(result.totalMatches)
+          ? Number(result.totalMatches)
+          : null;
+
+    const matchList = result.MatchList;
+
+    let matches: unknown[] = [];
+
+    if (Array.isArray(matchList)) {
+      matches = matchList;
+    } else if (isRecord(matchList)) {
+      if (Array.isArray(matchList.MatchElement)) {
+        matches = matchList.MatchElement;
+      } else if (isRecord(matchList.MatchElement)) {
+        matches = [matchList.MatchElement];
+      }
+    }
+
+    const matchFields = [
+      ...new Set(matches.filter(isRecord).flatMap((item) => Object.keys(item))),
+    ];
+
+    // Faqat aynan shu employeeNo/FPID bo‘yicha
+    // aniqlangan yozuvni mavjud deb hisoblaymiz.
+    const exactMatch = matches.some((item) => {
+      if (!isRecord(item)) return false;
+
+      const recordId = item.FPID ?? item.employeeNo;
+
+      return (
+        String(recordId ?? '') === employeeNo &&
+        String(item.FDID ?? fdId) === fdId
+      );
+    });
+
+    const base = {
+      fdId,
+      responseStatus,
+      totalMatches,
+      responseFields,
+      matchFields,
+    };
+
+    if (exactMatch) {
+      return {
+        ...base,
+        checked: true,
+        exists: true,
+        status: 'FACE_EXISTS',
+      };
+    }
+
+    // Manfiy natijani faqat qidiruv
+    // yakunlanganida qabul qilamiz.
+    const normalizedStatus = responseStatus?.trim().toUpperCase();
+
+    const noMatches =
+      normalizedStatus === 'NO MATCH' || normalizedStatus === 'NO MATCHES';
+
+    if (noMatches && totalMatches === 0 && matches.length === 0) {
+      return {
+        ...base,
+        checked: true,
+        exists: false,
+        status: 'MISSING_FACE',
+      };
+    }
+
+    // Javob formati yoki qidiruv yakuni
+    // noaniq bo‘lsa, yuz yo‘q deb hisoblamaymiz.
+    return {
+      ...base,
+      checked: true,
+      exists: null,
+      status: 'UNKNOWN',
+    };
+  }
 }

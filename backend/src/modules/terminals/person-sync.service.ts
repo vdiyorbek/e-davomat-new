@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import { HikvisionService } from './hikvision.service';
+import { TerminalCryptoService } from './terminal-crypto.service';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Person } from '../persons/person.entity';
@@ -33,6 +34,9 @@ export class PersonSyncService {
 
     @InjectRepository(TerminalPersonSync)
     private readonly syncRepository: Repository<TerminalPersonSync>,
+
+    private readonly hikvision: HikvisionService,
+    private readonly terminalCrypto: TerminalCryptoService,
   ) {}
 
   private todayInTashkent(): string {
@@ -227,6 +231,176 @@ export class PersonSyncService {
           },
 
       issues,
+      checkedAt: new Date().toISOString(),
+    };
+  }
+
+  async checkTerminalPerson(
+    terminalId: number,
+    personId: number,
+    user: AuthenticatedUser,
+  ) {
+    // Hududiy vakolat va maktab a'zoligini tekshirish.
+    const preview = await this.previewPerson(terminalId, personId, user);
+
+    if (!preview.databaseReady) {
+      return {
+        ...preview,
+        terminalUserChecked: false,
+        terminalUserExists: null,
+        message: 'Shaxs dastlabki tekshiruvdan o‘tmadi',
+      };
+    }
+
+    const person = await this.personsRepository.findOneByOrFail({
+      id: personId,
+    });
+
+    const terminal = await this.terminalsRepository
+      .createQueryBuilder('terminal')
+      .addSelect('terminal.passwordEncrypted')
+      .where('terminal.id = :terminalId', { terminalId })
+      .getOneOrFail();
+
+    const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
+
+    // Terminaldagi barcha foydalanuvchilarni o‘qiymiz.
+    const terminalUsers = await this.hikvision.getAllTerminalUsers(
+      terminal,
+      password,
+    );
+
+    const existingUser = terminalUsers.find(
+      (item) => item.employeeNo === person.pnfl,
+    );
+
+    return {
+      ...preview,
+      terminalUserChecked: true,
+      terminalUserExists: Boolean(existingUser),
+      terminalUserStatus: existingUser ? 'USER_EXISTS' : 'MISSING_USER',
+      terminalFaceChecked: false,
+      photoFileChecked: false,
+      checkedAt: new Date().toISOString(),
+    };
+  }
+
+  async checkTerminalPersonFace(
+    terminalId: number,
+    personId: number,
+    user: AuthenticatedUser,
+  ) {
+    // Avval mavjud foydalanuvchini tekshiramiz.
+    const preview = await this.checkTerminalPerson(terminalId, personId, user);
+
+    if (!preview.databaseReady || preview.terminalUserExists !== true) {
+      return {
+        ...preview,
+        terminalFaceChecked: false,
+        terminalFaceExists: null,
+        terminalFaceStatus: 'NOT_CHECKED',
+      };
+    }
+
+    const person = await this.personsRepository.findOneByOrFail({
+      id: personId,
+    });
+
+    const terminal = await this.terminalsRepository
+      .createQueryBuilder('terminal')
+      .addSelect('terminal.passwordEncrypted')
+      .where('terminal.id = :terminalId', { terminalId })
+      .getOneOrFail();
+
+    const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
+
+    const faceResult = await this.hikvision.searchTerminalFace(
+      terminal,
+      password,
+      person.pnfl,
+      '1',
+    );
+
+    return {
+      ...preview,
+
+      terminalFaceChecked: faceResult.checked,
+      terminalFaceExists: faceResult.exists,
+      terminalFaceStatus: faceResult.status,
+
+      faceLibrary: {
+        fdId: faceResult.fdId,
+        faceLibType: 'blackFD',
+      },
+
+      faceSearch: {
+        responseStatus: faceResult.responseStatus,
+        totalMatches: faceResult.totalMatches,
+        responseFields: faceResult.responseFields,
+        matchFields: faceResult.matchFields,
+      },
+
+      checkedAt: new Date().toISOString(),
+    };
+  }
+
+  async getPersonSyncPlan(
+    terminalId: number,
+    personId: number,
+    user: AuthenticatedUser,
+  ) {
+    const result = await this.checkTerminalPersonFace(
+      terminalId,
+      personId,
+      user,
+    );
+
+    type SyncAction =
+      | 'NONE'
+      | 'CREATE_USER_AND_FACE'
+      | 'UPLOAD_FACE'
+      | 'BLOCKED'
+      | 'MANUAL_REVIEW';
+
+    let action: SyncAction = 'MANUAL_REVIEW';
+    let reason = 'TERMINAL_STATUS_UNKNOWN';
+
+    if (!result.databaseReady) {
+      action = 'BLOCKED';
+      reason = 'DATABASE_NOT_READY';
+    } else if (!result.terminalUserChecked) {
+      action = 'MANUAL_REVIEW';
+      reason = 'USER_NOT_CHECKED';
+    } else if (result.terminalUserExists === false) {
+      action = 'CREATE_USER_AND_FACE';
+      reason = 'USER_MISSING';
+    } else if (
+      result.terminalUserExists === true &&
+      result.terminalFaceStatus === 'FACE_EXISTS'
+    ) {
+      action = 'NONE';
+      reason = 'ALREADY_EXISTS';
+    } else if (
+      result.terminalUserExists === true &&
+      result.terminalFaceStatus === 'MISSING_FACE'
+    ) {
+      action = 'UPLOAD_FACE';
+      reason = 'FACE_MISSING';
+    }
+
+    return {
+      terminalId,
+      personId,
+      action,
+      reason,
+      databaseReady: result.databaseReady,
+      terminalUserExists: result.terminalUserExists,
+      terminalFaceStatus: result.terminalFaceStatus,
+      photoFileChecked: false,
+      uploadReady: false,
+      requiresPhotoValidation:
+        action === 'CREATE_USER_AND_FACE' || action === 'UPLOAD_FACE',
+      storedSyncStatus: result.sync.status,
       checkedAt: new Date().toISOString(),
     };
   }
