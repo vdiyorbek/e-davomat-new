@@ -893,6 +893,31 @@ export class PersonSyncService {
 
       lockAcquired = true;
 
+      const previousSync = await this.syncRepository.findOneBy({
+        terminalId,
+        personId,
+      });
+
+      if (
+        previousSync &&
+        (previousSync.status === PersonSyncStatus.PARTIAL ||
+          previousSync.status === PersonSyncStatus.FAILED ||
+          previousSync.status === PersonSyncStatus.USER_CREATED ||
+          previousSync.status === PersonSyncStatus.FACE_UPLOADED ||
+          previousSync.status === PersonSyncStatus.VALIDATING)
+      ) {
+        throw new ConflictException({
+          code: 'SYNC_RECONCILIATION_REQUIRED',
+          message:
+            'Oldingi sinxronlash yakunlanmagan. ' +
+            'Terminaldagi haqiqiy holat tekshirilmasdan ' +
+            'qayta yuborishga ruxsat berilmaydi.',
+          terminalId,
+          personId,
+          storedStatus: previousSync.status,
+        });
+      }
+
       // Har safar terminalning haqiqiy holatini
       // qayta o‘qiymiz.
       const plan = await this.getPersonSyncPlan(terminalId, personId, user);

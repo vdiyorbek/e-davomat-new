@@ -397,4 +397,18 @@ export class TerminalsController {
       request.authUser,
     );
   }
+
+  @Post(':id/person-sync/persons/:personId/sync')
+  @Roles(UserRole.SUPER_ADMIN)
+  syncTerminalPerson(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.syncPerson(id, personId, request.authUser);
+  }
 }
