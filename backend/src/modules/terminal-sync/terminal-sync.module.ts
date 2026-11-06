@@ -15,7 +15,7 @@ import { PERSON_SYNC_QUEUE } from '../terminals/person-sync.constants';
 import { TerminalSyncService } from './terminal-sync.service';
 import { TerminalSyncProcessor } from './terminal-sync.processor';
 import { TerminalSyncScheduler } from './terminal-sync.scheduler';
-
+import { PersonSyncMonitoringService } from './person-sync-monitoring.service';
 import { PersonSyncProcessor } from './person-sync.processor';
 import { PersonSyncScheduler } from './person-sync.scheduler';
 import { PersonSyncQueueController } from './person-sync-queue.controller';
@@ -69,7 +69,7 @@ import { PersonSyncQueueController } from './person-sync-queue.controller';
     TerminalSyncService,
     TerminalSyncProcessor,
     TerminalSyncScheduler,
-
+    PersonSyncMonitoringService,
     PersonSyncProcessor,
     PersonSyncScheduler,
   ],

@@ -8,6 +8,7 @@ import {
   Post,
   BadRequestException,
   Body,
+  Query,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,7 +18,7 @@ import { PersonSyncScheduler } from './person-sync.scheduler';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from '../terminals/terminal.entity';
-
+import { MonitoringStatus, PersonSyncMonitoringService } from './person-sync-monitoring.service';
 import {
   PERSON_SYNC_JOB,
   PERSON_SYNC_QUEUE,
@@ -38,6 +39,7 @@ export class PersonSyncQueueController {
     @InjectRepository(Terminal)
     private readonly terminalsRepository: Repository<Terminal>,
     private readonly personSyncScheduler: PersonSyncScheduler,
+    private readonly monitoringService: PersonSyncMonitoringService,
   ) {}
 
   @Post('terminals/:id/check')
@@ -119,6 +121,7 @@ export class PersonSyncQueueController {
       name: job.name,
       state,
       attemptsMade: job.attemptsMade,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       result: state === 'completed' ? job.returnvalue : null,
       error: state === 'failed' ? job.failedReason : null,
       createdAt: new Date(job.timestamp).toISOString(),
@@ -151,5 +154,73 @@ export class PersonSyncQueueController {
     // diagnostikani ishga tushiradi.
     // Avtomatik yuklashga ruxsat bermaydi.
     return this.personSyncScheduler.enqueueChecks(true);
+  }
+
+  @Get('monitoring')
+  getMonitoring(
+    @Query('page') pageRaw?: string,
+    @Query('limit') limitRaw?: string,
+    @Query('status') statusRaw?: string,
+    @Query('schoolId') schoolIdRaw?: string,
+  ) {
+    const parsePositiveInteger = (
+      value: string | undefined,
+      fallback: number,
+      field: string,
+      max: number,
+    ): number => {
+      if (value === undefined) {
+        return fallback;
+      }
+
+      if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
+        throw new BadRequestException(
+          `${field} musbat butun son bo‘lishi kerak`,
+        );
+      }
+
+      const parsed = Number(value);
+
+      if (!Number.isSafeInteger(parsed) || parsed > max) {
+        throw new BadRequestException(
+          `${field} 1 dan ${max} gacha bo‘lishi kerak`,
+        );
+      }
+
+      return parsed;
+    };
+
+    const page = parsePositiveInteger(pageRaw, 1, 'page', 1000000);
+
+    const limit = parsePositiveInteger(limitRaw, 20, 'limit', 100);
+
+    const allowedStatuses: MonitoringStatus[] = [
+      'ALL',
+      'SUCCESS',
+      'TIMEOUT',
+      'ERROR',
+      'NOT_CHECKED',
+    ];
+
+    const status = statusRaw ?? 'ALL';
+
+    if (
+      typeof status !== 'string' ||
+      !allowedStatuses.includes(status as MonitoringStatus)
+    ) {
+      throw new BadRequestException('status qiymati noto‘g‘ri');
+    }
+
+    const schoolId =
+      schoolIdRaw === undefined
+        ? undefined
+        : parsePositiveInteger(schoolIdRaw, 1, 'schoolId', 4294967295);
+
+    return this.monitoringService.getMonitoring({
+      page,
+      limit,
+      status: status as MonitoringStatus,
+      schoolId,
+    });
   }
 }
