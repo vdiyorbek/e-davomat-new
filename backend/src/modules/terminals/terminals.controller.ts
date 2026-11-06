@@ -356,4 +356,22 @@ export class TerminalsController {
       request.authUser,
     );
   }
+
+  @Get(':id/person-sync/missing-teachers')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  getMissingTeachers(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.getMissingTeachers(id, request.authUser);
+  }
 }

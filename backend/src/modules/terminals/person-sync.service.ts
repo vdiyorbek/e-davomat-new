@@ -290,10 +290,11 @@ export class PersonSyncService {
     personId: number,
     user: AuthenticatedUser,
   ) {
-    // Avval mavjud foydalanuvchini tekshiramiz.
     const preview = await this.checkTerminalPerson(terminalId, personId, user);
 
-    if (!preview.databaseReady || preview.terminalUserExists !== true) {
+    // Bazadagi ma'lumotlar noto‘g‘ri yoki terminal
+    // foydalanuvchilari tekshirilmagan bo‘lsa, to‘xtaymiz.
+    if (!preview.databaseReady || preview.terminalUserChecked !== true) {
       return {
         ...preview,
         terminalFaceChecked: false,
@@ -309,11 +310,15 @@ export class PersonSyncService {
     const terminal = await this.terminalsRepository
       .createQueryBuilder('terminal')
       .addSelect('terminal.passwordEncrypted')
-      .where('terminal.id = :terminalId', { terminalId })
+      .where('terminal.id = :terminalId', {
+        terminalId,
+      })
       .getOneOrFail();
 
     const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
 
+    // Endi USER_EXISTS bo‘lmasa ham,
+    // yuz kutubxonasini mustaqil tekshiramiz.
     const faceResult = await this.hikvision.searchTerminalFace(
       terminal,
       password,
@@ -323,23 +328,19 @@ export class PersonSyncService {
 
     return {
       ...preview,
-
       terminalFaceChecked: faceResult.checked,
       terminalFaceExists: faceResult.exists,
       terminalFaceStatus: faceResult.status,
-
       faceLibrary: {
         fdId: faceResult.fdId,
         faceLibType: 'blackFD',
       },
-
       faceSearch: {
         responseStatus: faceResult.responseStatus,
         totalMatches: faceResult.totalMatches,
         responseFields: faceResult.responseFields,
         matchFields: faceResult.matchFields,
       },
-
       checkedAt: new Date().toISOString(),
     };
   }
@@ -369,11 +370,9 @@ export class PersonSyncService {
       action = 'BLOCKED';
       reason = 'DATABASE_NOT_READY';
     } else if (!result.terminalUserChecked) {
-      action = 'MANUAL_REVIEW';
       reason = 'USER_NOT_CHECKED';
-    } else if (result.terminalUserExists === false) {
-      action = 'CREATE_USER_AND_FACE';
-      reason = 'USER_MISSING';
+    } else if (!result.terminalFaceChecked) {
+      reason = 'FACE_NOT_CHECKED';
     } else if (
       result.terminalUserExists === true &&
       result.terminalFaceStatus === 'FACE_EXISTS'
@@ -381,12 +380,30 @@ export class PersonSyncService {
       action = 'NONE';
       reason = 'ALREADY_EXISTS';
     } else if (
+      result.terminalUserExists === false &&
+      result.terminalFaceStatus === 'MISSING_FACE'
+    ) {
+      action = 'CREATE_USER_AND_FACE';
+      reason = 'USER_AND_FACE_MISSING';
+    } else if (
       result.terminalUserExists === true &&
       result.terminalFaceStatus === 'MISSING_FACE'
     ) {
       action = 'UPLOAD_FACE';
       reason = 'FACE_MISSING';
+    } else if (
+      result.terminalUserExists === false &&
+      result.terminalFaceStatus === 'FACE_EXISTS'
+    ) {
+      action = 'MANUAL_REVIEW';
+      reason = 'ORPHAN_FACE_RECORD';
+    } else {
+      action = 'MANUAL_REVIEW';
+      reason = 'FACE_STATUS_UNKNOWN';
     }
+
+    const requiresPhotoValidation =
+      action === 'CREATE_USER_AND_FACE' || action === 'UPLOAD_FACE';
 
     return {
       terminalId,
@@ -395,12 +412,142 @@ export class PersonSyncService {
       reason,
       databaseReady: result.databaseReady,
       terminalUserExists: result.terminalUserExists,
+      terminalFaceExists: result.terminalFaceExists,
       terminalFaceStatus: result.terminalFaceStatus,
+      faceLibrary: 'faceLibrary' in result ? result.faceLibrary : null,
       photoFileChecked: false,
       uploadReady: false,
-      requiresPhotoValidation:
-        action === 'CREATE_USER_AND_FACE' || action === 'UPLOAD_FACE',
+      requiresPhotoValidation,
       storedSyncStatus: result.sync.status,
+      checkedAt: new Date().toISOString(),
+    };
+  }
+
+  async getMissingTeachers(terminalId: number, user: AuthenticatedUser) {
+    if (!Number.isInteger(terminalId) || terminalId <= 0) {
+      throw new BadRequestException('Terminal ID noto‘g‘ri');
+    }
+
+    const terminal = await this.terminalsRepository
+      .createQueryBuilder('terminal')
+      .addSelect('terminal.passwordEncrypted')
+      .innerJoinAndSelect('terminal.school', 'school')
+      .innerJoinAndSelect('school.district', 'district')
+      .innerJoinAndSelect('district.region', 'region')
+      .where('terminal.id = :terminalId', { terminalId })
+      .getOne();
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    // Administratorning hududiy vakolatlarini tekshiramiz.
+    switch (user.role) {
+      case UserRole.SUPER_ADMIN:
+        break;
+
+      case UserRole.REGION_ADMIN:
+        if (
+          !user.regionId ||
+          terminal.school.district.region.id !== user.regionId
+        ) {
+          throw new ForbiddenException('Viloyatga ruxsat yo‘q');
+        }
+        break;
+
+      case UserRole.DISTRICT_ADMIN:
+        if (
+          !user.districtId ||
+          terminal.school.district.id !== user.districtId
+        ) {
+          throw new ForbiddenException('Tumanga ruxsat yo‘q');
+        }
+        break;
+
+      case UserRole.SCHOOL_ADMIN:
+        if (!user.schoolId || terminal.schoolId !== user.schoolId) {
+          throw new ForbiddenException('Maktabga ruxsat yo‘q');
+        }
+        break;
+
+      default:
+        throw new ForbiddenException('Ruxsat yo‘q');
+    }
+
+    if (!terminal.isActive) {
+      throw new BadRequestException('Terminal faol emas');
+    }
+
+    const today = this.todayInTashkent();
+
+    const memberships = await this.membershipsRepository
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.person', 'person')
+      .where('membership.schoolId = :schoolId', {
+        schoolId: terminal.schoolId,
+      })
+      .andWhere('membership.type = :type', {
+        type: MembershipType.TEACHER,
+      })
+      .andWhere('membership.startDate <= :today', {
+        today,
+      })
+      .andWhere('(membership.endDate IS NULL OR membership.endDate > :today)', {
+        today,
+      })
+      .andWhere('person.deletedAt IS NULL')
+      .getMany();
+
+    const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
+
+    // Terminaldagi foydalanuvchilarni bir marta o‘qiymiz.
+    const terminalUsers = await this.hikvision.getAllTerminalUsers(
+      terminal,
+      password,
+    );
+
+    const employeeNos = new Set(terminalUsers.map((item) => item.employeeNo));
+
+    const uniquePersons = new Map<number, Person>();
+
+    for (const membership of memberships) {
+      uniquePersons.set(membership.person.id, membership.person);
+    }
+
+    const missing: Array<{
+      personId: number;
+      hasPhotoUrl: boolean;
+      status: string;
+    }> = [];
+
+    let invalidPnfl = 0;
+
+    for (const person of uniquePersons.values()) {
+      if (!/^\d{14}$/.test(person.pnfl)) {
+        invalidPnfl++;
+        continue;
+      }
+
+      if (!employeeNos.has(person.pnfl)) {
+        missing.push({
+          personId: person.id,
+          hasPhotoUrl: Boolean(person.photoUrl?.trim()),
+          status: 'MISSING_USER',
+        });
+      }
+    }
+
+    missing.sort((a, b) => a.personId - b.personId);
+
+    return {
+      terminalId: terminal.id,
+      terminalName: terminal.name,
+      schoolId: terminal.schoolId,
+      databaseTeachers: uniquePersons.size,
+      terminalUsers: terminalUsers.length,
+      missingCount: missing.length,
+      invalidPnfl,
+      missing,
       checkedAt: new Date().toISOString(),
     };
   }
