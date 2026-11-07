@@ -1,11 +1,10 @@
 /** Mahalla uchastkavoyi moduli uchun sof qoidalar (DB'siz, unit testlanadi). */
 
 export type InspectorDayStatus =
-  'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT' | 'PENDING' | 'DAY_OFF';
+  'PRESENT' | 'EXCUSED' | 'ABSENT' | 'PENDING' | 'DAY_OFF';
 
 export const DAY_STATUSES: InspectorDayStatus[] = [
   'PRESENT',
-  'LATE',
   'EXCUSED',
   'ABSENT',
   'PENDING',
@@ -19,8 +18,6 @@ export interface DayStatusInput {
   excused: boolean;
   /** Birinchi kirish (turniket) */
   firstIn: Date | null;
-  /** Kirish kechikkan deb topilganmi */
-  late: boolean;
   /** Tekshirilayotgan sana bugunmi */
   isToday: boolean;
   /** Hozirgi vaqt HH:mm (Toshkent) */
@@ -35,7 +32,7 @@ export interface DayStatusInput {
  * o'quv kuni bo'lmasa dam olish; bugun va tekshiruv vaqtigacha kutilmoqda.
  */
 export function dayStatus(input: DayStatusInput): InspectorDayStatus {
-  if (input.firstIn) return input.late ? 'LATE' : 'PRESENT';
+  if (input.firstIn) return 'PRESENT';
   if (input.excused) return 'EXCUSED';
   if (!input.workDay) return 'DAY_OFF';
   if (input.isToday && input.nowTime < input.absentCheckTime.slice(0, 5))
