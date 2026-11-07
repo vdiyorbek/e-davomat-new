@@ -182,6 +182,9 @@ export class UsersService {
         selectedCount === 1) ||
       (dto.role === UserRole.SCHOOL_ADMIN &&
         schoolId !== null &&
+        selectedCount === 1) ||
+      (dto.role === UserRole.MAHALLA_INSPECTOR &&
+        districtId !== null &&
         selectedCount === 1);
 
     if (!validScope) {
