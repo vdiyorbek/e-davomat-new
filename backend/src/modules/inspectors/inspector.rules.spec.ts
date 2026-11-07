@@ -24,12 +24,6 @@ describe('dayStatus', () => {
     expect(dayStatus({ ...base, firstIn: new Date() })).toBe('PRESENT');
   });
 
-  it('kechikib kirgan bo‘lsa LATE', () => {
-    expect(dayStatus({ ...base, firstIn: new Date(), late: true })).toBe(
-      'LATE',
-    );
-  });
-
   it('dam olish kunida kirgan bo‘lsa ham PRESENT', () => {
     expect(dayStatus({ ...base, workDay: false, firstIn: new Date() })).toBe(
       'PRESENT',
@@ -138,7 +132,6 @@ describe('countStatuses', () => {
   it('holatlarni sanaydi, bo‘sh holatlar 0 bo‘ladi', () => {
     expect(countStatuses(['ABSENT', 'ABSENT', 'PRESENT'])).toEqual({
       PRESENT: 1,
-      LATE: 0,
       EXCUSED: 0,
       ABSENT: 2,
       PENDING: 0,
