@@ -18,10 +18,11 @@ import {
   LayoutDashboard,
   Activity,
   UsersRound,
+  MessagesSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { ADMIN_ROLES } from "@/lib/roles";
+import { ADMIN_ROLES, TALK_VIEW_ROLES } from "@/lib/roles";
 import type { UserRole } from "@/types/auth";
 
 export interface NavItem {
@@ -65,6 +66,12 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: UsersRound,
         roles: ["MAHALLA_INSPECTOR"],
         mobilePriority: 1,
+      },
+      {
+        to: "/inspector/talks",
+        key: "inspectorTalks",
+        icon: MessagesSquare,
+        roles: TALK_VIEW_ROLES,
       },
     ],
   },

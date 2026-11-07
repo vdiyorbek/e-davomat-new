@@ -35,7 +35,8 @@
     "forbidden": "Доступ ограничен",
     "teacherDashboard": "Кабинет учителя",
     "personSyncMonitoring": "Мониторинг терминалов",
-    "inspectorStudents": "Ученики махалли"
+    "inspectorStudents": "Ученики махалли",
+    "inspectorTalks": "Профилактические беседы"
   },
   "short": {
     "profile": "Профиль",

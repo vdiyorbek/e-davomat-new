@@ -75,5 +75,36 @@
       "fileType": "Faqat PDF formati qabul qilinadi.",
       "saveFailed": "Suhbatni saqlab bo‘lmadi."
     }
+  },
+  "talks": {
+    "title": "Profilaktik suhbatlar",
+    "description": "Mahalla uchastkavoylari o‘tkazgan suhbatlar va ularning bayonnomalari.",
+    "dateFrom": "Sanadan",
+    "dateTo": "Sanagacha",
+    "result": "Natija",
+    "allResults": "Barcha natijalar",
+    "student": "O‘quvchi",
+    "date": "Sana",
+    "spokeWith": "Kim bilan",
+    "reason": "Sabab",
+    "inspector": "Uchastkavoy",
+    "followUp": "Keyingi nazorat",
+    "emptyTitle": "Suhbatlar topilmadi",
+    "empty": "Filtrlarni o‘zgartirib ko‘ring.",
+    "editHint": "Suhbatni yozilganidan keyin faqat 24 soat ichida o‘zgartirish yoki o‘chirish mumkin.",
+    "edit": "Tahrirlash",
+    "editTitle": "Suhbatni tahrirlash",
+    "updated": "Suhbat yangilandi.",
+    "delete": "O‘chirish",
+    "deleteTitle": "Suhbat o‘chirilsinmi?",
+    "deleteDescription": "Suhbat va unga biriktirilgan PDF bayonnoma butunlay o‘chiriladi.",
+    "deleted": "Suhbat o‘chirildi.",
+    "pdf": {
+      "title": "Suhbat bayonnomasi",
+      "description": "Fayl serverda yopiq saqlanadi va faqat ruxsati borlarga ko‘rinadi.",
+      "frameTitle": "Suhbat bayonnomasi (PDF)",
+      "download": "Yuklab olish",
+      "failed": "PDF faylni ochib bo‘lmadi."
+    }
   }
 }

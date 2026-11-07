@@ -75,5 +75,36 @@
       "fileType": "Only PDF files are accepted.",
       "saveFailed": "Could not save the talk."
     }
+  },
+  "talks": {
+    "title": "Preventive talks",
+    "description": "Talks held by neighbourhood inspectors and their records.",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "result": "Outcome",
+    "allResults": "All outcomes",
+    "student": "Student",
+    "date": "Date",
+    "spokeWith": "Spoke with",
+    "reason": "Reason",
+    "inspector": "Inspector",
+    "followUp": "Follow-up",
+    "emptyTitle": "No talks found",
+    "empty": "Try changing the filters.",
+    "editHint": "A talk can be edited or deleted only within 24 hours of recording it.",
+    "edit": "Edit",
+    "editTitle": "Edit talk",
+    "updated": "Talk updated.",
+    "delete": "Delete",
+    "deleteTitle": "Delete this talk?",
+    "deleteDescription": "The talk and its attached PDF record will be permanently deleted.",
+    "deleted": "Talk deleted.",
+    "pdf": {
+      "title": "Talk record",
+      "description": "The file is stored privately and visible only to authorised users.",
+      "frameTitle": "Talk record (PDF)",
+      "download": "Download",
+      "failed": "Could not open the PDF file."
+    }
   }
 }

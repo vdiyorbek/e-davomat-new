@@ -35,7 +35,8 @@
     "forbidden": "Access restricted",
     "teacherDashboard": "Teacher dashboard",
     "personSyncMonitoring": "Terminal Monitoring",
-    "inspectorStudents": "Neighbourhood students"
+    "inspectorStudents": "Neighbourhood students",
+    "inspectorTalks": "Preventive talks"
   },
   "short": {
     "profile": "Profile",

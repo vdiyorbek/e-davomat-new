@@ -35,7 +35,8 @@
     "forbidden": "Kirish cheklangan",
     "teacherDashboard": "O'qituvchi kabineti",
     "personSyncMonitoring": "Terminallar monitoringi",
-    "inspectorStudents": "Mahalla o‘quvchilari"
+    "inspectorStudents": "Mahalla o‘quvchilari",
+    "inspectorTalks": "Profilaktik suhbatlar"
   },
   "short": {
     "profile": "Profil",

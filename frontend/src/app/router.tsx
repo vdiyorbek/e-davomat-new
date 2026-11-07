@@ -8,7 +8,7 @@ import { LoginPage } from '@/pages/auth/LoginPage';
 import { ProfilePage } from '@/pages/cabinet/ProfilePage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { ADMIN_ROLES } from '@/lib/roles';
+import { ADMIN_ROLES, TALK_VIEW_ROLES } from '@/lib/roles';
 
 const SchoolsPage = lazy(() => import('@/pages/schools/SchoolsPage').then((m) => ({ default: m.SchoolsPage })));
 const StudentsPage = lazy(() => import('@/pages/students/StudentsPage').then((m) => ({ default: m.StudentsPage })));
@@ -30,6 +30,10 @@ const SubjectsPage = lazy(() => import('@/pages/subjects/SubjectsPage').then((m)
 const TeacherDashboardPage = lazy(() =>
     import('@/pages/teacher-dashboard/TeacherDashboardPage')
         .then((m) => ({ default: m.TeacherDashboardPage }))
+);
+const InspectorTalksPage = lazy(() =>
+    import('@/pages/inspector/InspectorTalksPage')
+        .then((m) => ({ default: m.InspectorTalksPage }))
 );
 const InspectorStudentsPage = lazy(() =>
     import('@/pages/inspector/InspectorStudentsPage')
@@ -81,6 +85,15 @@ export const router = createBrowserRouter([
                             {
                                 path: '/inspector/students',
                                 element: <InspectorStudentsPage />,
+                            },
+                            {
+                                element: <RequireRole roles={TALK_VIEW_ROLES} />,
+                                children: [
+                                    {
+                                        path: '/inspector/talks',
+                                        element: <InspectorTalksPage />,
+                                    },
+                                ],
                             },
                         ],
                     },
