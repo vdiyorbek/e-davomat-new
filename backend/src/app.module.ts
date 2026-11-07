@@ -30,6 +30,7 @@ import { UserPersonLinksModule } from './modules/user-person-links/user-person-l
 import { TeacherModule } from './modules/teacher/teacher.module';
 import { MembershipDetailsModule } from './modules/membership-details/membership-details.module';
 import { MemberAccountsModule } from './modules/member-accounts/member-accounts.module';
+import { InspectorsModule } from './modules/inspectors/inspectors.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -54,6 +55,7 @@ import { MemberAccountsModule } from './modules/member-accounts/member-accounts.
     MahallasModule,
     ClassesModule,
     AttendanceExcusesModule,
+    InspectorsModule,
     AttendanceCalendarModule,
     SubjectsModule,
     TeacherAssignmentsModule,
