@@ -31,7 +31,7 @@ interface Option {
     name: string;
 }
 
-const ROLES: UserRole[] = ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN', 'SCHOOL_ADMIN', 'USER'];
+const ROLES: UserRole[] = ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN', 'SCHOOL_ADMIN', 'MAHALLA_INSPECTOR', 'USER'];
 
 function DistrictFilter({
     regionId,

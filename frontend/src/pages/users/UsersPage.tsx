@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Ban, CheckCircle2, MoreHorizontal, Pencil, Plus, ShieldCheck, UserCog } from 'lucide-react';
+import { Ban, CheckCircle2, MoreHorizontal, Pencil, Plus, ShieldCheck, UserCog, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components/common/PageHeader';
@@ -11,6 +11,7 @@ import { CreateUserForm } from '@/components/users/CreateUserForm';
 import { EditUserForm } from '@/components/users/EditUserForm';
 import type { EditableUser } from '@/components/users/EditUserForm';
 import { UserAccessForm } from '@/components/users/UserAccessForm';
+import { InspectorMahallasForm } from '@/components/users/InspectorMahallasForm';
 import type { AccessUser } from '@/components/users/UserAccessForm';
 import { UsersFilters } from '@/components/users/UsersFilters';
 import type { UsersFilterValues } from '@/components/users/UsersFilters';
@@ -77,6 +78,7 @@ export function UsersPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [editingUser, setEditingUser] = useState<EditableUser | null>(null);
     const [accessUser, setAccessUser] = useState<AccessUser | null>(null);
+    const [mahallasUser, setMahallasUser] = useState<AccessUser | null>(null);
     const [statusUser, setStatusUser] = useState<StatusUser | null>(null);
     const [loadingId, setLoadingId] = useState<number | null>(null);
 
@@ -111,8 +113,15 @@ export function UsersPage() {
             user.id !== profile?.id &&
             user.isActive &&
             !(profile?.role === 'REGION_ADMIN' && ['REGION_ADMIN', 'SUPER_ADMIN'].includes(user.role)) &&
-            !(profile?.role === 'DISTRICT_ADMIN' && !['USER', 'SCHOOL_ADMIN'].includes(user.role))
+            !(
+                profile?.role === 'DISTRICT_ADMIN' &&
+                !['USER', 'SCHOOL_ADMIN', 'MAHALLA_INSPECTOR'].includes(user.role)
+            )
         );
+    }
+
+    function canAssignMahallas(user: UserItem) {
+        return canManageAccess && user.isActive && user.role === 'MAHALLA_INSPECTOR';
     }
 
     function canChangeStatus(user: UserItem) {
@@ -120,7 +129,7 @@ export function UsersPage() {
     }
 
     function actionsMenu(user: UserItem) {
-        const items = [isSuperAdmin, canEditAccess(user), canChangeStatus(user)];
+        const items = [isSuperAdmin, canEditAccess(user), canAssignMahallas(user), canChangeStatus(user)];
         if (!items.some(Boolean)) return null;
 
         return (
@@ -147,6 +156,12 @@ export function UsersPage() {
                         <DropdownMenuItem onSelect={() => void load<AccessUser>(user.id, setAccessUser)}>
                             <ShieldCheck aria-hidden="true" />
                             {t('users.access.title')}
+                        </DropdownMenuItem>
+                    )}
+                    {canAssignMahallas(user) && (
+                        <DropdownMenuItem onSelect={() => void load<AccessUser>(user.id, setMahallasUser)}>
+                            <MapPin aria-hidden="true" />
+                            {t('inspectors.mahallas.title')}
                         </DropdownMenuItem>
                     )}
                     {canChangeStatus(user) && (
@@ -358,7 +373,25 @@ export function UsersPage() {
                     )}
                 </DialogContent>
             </Dialog>
-
+            <Dialog open={mahallasUser !== null} onOpenChange={(open) => !open && setMahallasUser(null)}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{t('inspectors.mahallas.title')}</DialogTitle>
+                        <DialogDescription>@{mahallasUser?.login}</DialogDescription>
+                    </DialogHeader>
+                    {mahallasUser && (
+                        <InspectorMahallasForm
+                            key={mahallasUser.id}
+                            user={mahallasUser}
+                            onCancel={() => setMahallasUser(null)}
+                            onUpdated={() => {
+                                setMahallasUser(null);
+                                setNotice(t('inspectors.mahallas.saved'));
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
             <UserStatusDialog
                 user={statusUser}
                 onClose={() => setStatusUser(null)}
