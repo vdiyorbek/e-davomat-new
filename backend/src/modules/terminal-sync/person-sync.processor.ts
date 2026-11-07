@@ -1,12 +1,14 @@
 import { Logger } from '@nestjs/common';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Job } from 'bullmq';
 import { Repository } from 'typeorm';
 import { PersonSyncTerminalLockService } from './person-sync-terminal-lock.service';
 import { Terminal } from '../terminals/terminal.entity';
 import { PersonSyncService } from '../terminals/person-sync.service';
-
+import { Job, UnrecoverableError } from 'bullmq';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
+import { User } from '../users/user.entity';
+import { UserRole } from '../users/enums/user-role.enum';
 import {
   PERSON_SYNC_JOB,
   PERSON_SYNC_QUEUE,
@@ -20,6 +22,7 @@ import {
 interface PersonSyncQueueJob {
   terminalId: number;
   personId?: number;
+  requestedByUserId?: number;
 }
 
 interface CheckRecordInput {
@@ -49,6 +52,8 @@ export class PersonSyncProcessor extends WorkerHost {
     @InjectRepository(Terminal)
     private readonly terminalsRepository: Repository<Terminal>,
     private readonly terminalLock: PersonSyncTerminalLockService,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
   ) {
     super();
   }
@@ -88,12 +93,65 @@ export class PersonSyncProcessor extends WorkerHost {
         return locked.result;
       }
 
-      case PERSON_SYNC_JOB.SYNC_PERSON:
-        throw new Error('SYNC_PERSON navbat orqali hali yoqilmagan');
+      case PERSON_SYNC_JOB.SYNC_PERSON: {
+        const terminalId = job.data.terminalId;
+        const personId = job.data.personId;
+        const requestedBy = job.data.requestedByUserId;
+
+        if (
+          typeof personId !== 'number' ||
+          !Number.isInteger(personId) ||
+          personId <= 0 ||
+          typeof requestedBy !== 'number' ||
+          !Number.isInteger(requestedBy) ||
+          requestedBy <= 0
+        ) {
+          throw new UnrecoverableError(
+            'SYNC_PERSON uchun personId va requestedByUserId kerak',
+          );
+        }
+
+        const actor = await this.loadSyncActor(requestedBy);
+
+        const locked = await this.terminalLock.run(terminalId, () =>
+          this.personSyncService.syncPerson(terminalId, personId, actor),
+        );
+
+        if (!locked.acquired) {
+          // Terminal band: BullMQ keyinroq qayta uradi.
+          throw new Error('TERMINAL_BUSY');
+        }
+
+        return locked.result;
+      }
 
       default:
         throw new Error('Noma’lum PersonSync vazifasi');
     }
+  }
+
+  /** Vazifani yuborgan foydalanuvchi hali ham faol SUPER_ADMIN bo'lishi shart. */
+  private async loadSyncActor(userId: number): Promise<AuthenticatedUser> {
+    const user = await this.usersRepository.findOneBy({ id: userId });
+
+    if (!user || !user.isActive || user.role !== UserRole.SUPER_ADMIN) {
+      throw new UnrecoverableError(
+        'Vazifani yuborgan foydalanuvchi endi faol SUPER_ADMIN emas',
+      );
+    }
+
+    return {
+      id: user.id,
+      login: user.login,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      middleName: user.middleName,
+      role: user.role,
+      regionId: user.regionId,
+      districtId: user.districtId,
+      schoolId: user.schoolId,
+      photoUrl: null,
+    };
   }
 
   private async processTerminalCheck(

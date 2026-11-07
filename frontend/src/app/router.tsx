@@ -142,10 +142,7 @@ export const router = createBrowserRouter([
                                         path: '/attendance-excuses',
                                         element: <AttendanceExcusesPage />,
                                     },
-                                    {
-                                        path: "/terminals/person-sync-monitoring",
-                                        element: <PersonSyncMonitoringPage />,
-                                    },
+
                                 ],
                             },
                             {
@@ -166,6 +163,10 @@ export const router = createBrowserRouter([
                                     {
                                         path: '/subjects',
                                         element: <SubjectsPage />,
+                                    },
+                                    {
+                                        path: "/terminals/person-sync-monitoring",
+                                        element: <PersonSyncMonitoringPage />,
                                     },
                                 ],
                             },

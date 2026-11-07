@@ -10,7 +10,10 @@ import {
   Body,
   Query,
   DefaultValuePipe,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
+import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
@@ -31,6 +34,7 @@ import {
 interface PersonSyncCheckJob {
   terminalId: number;
   personId?: number;
+  requestedByUserId?: number;
 }
 
 @Controller('person-sync-queue')
@@ -130,13 +134,93 @@ export class PersonSyncQueueController {
     };
   }
 
+  @Post('terminals/:id/persons/:personId/sync')
+  @HttpCode(202)
+  async enqueuePersonSync(
+    @Param('id', ParseIntPipe) terminalId: number,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    if (
+      !Number.isSafeInteger(terminalId) ||
+      terminalId <= 0 ||
+      !Number.isSafeInteger(personId) ||
+      personId <= 0
+    ) {
+      throw new BadRequestException('terminalId yoki personId noto‘g‘ri');
+    }
+
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (!terminal.isActive) {
+      return {
+        terminalId,
+        personId,
+        queued: false,
+        reason: 'TERMINAL_INACTIVE',
+      };
+    }
+
+    const jobId = `sync-person-${terminalId}-${personId}`;
+    const existing = await this.queue.getJob(jobId);
+
+    if (existing) {
+      const state = await existing.getState();
+
+      if (state !== 'completed' && state !== 'failed') {
+        return {
+          terminalId,
+          personId,
+          queued: true,
+          reused: true,
+          jobId,
+          state,
+        };
+      }
+
+      // Tugagan vazifa bir xil jobId bilan yangisini bloklaydi.
+      await existing.remove();
+    }
+
+    await this.queue.add(
+      PERSON_SYNC_JOB.SYNC_PERSON,
+      { terminalId, personId, requestedByUserId: actor.id },
+      {
+        jobId,
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 15_000 },
+        removeOnComplete: { age: 3600, count: 1000 },
+        removeOnFail: { age: 86400, count: 1000 },
+      },
+    );
+
+    return {
+      terminalId,
+      personId,
+      queued: true,
+      reused: false,
+      jobId,
+      message: 'Sinxronlash vazifasi qabul qilindi',
+    };
+  }
+
   @Get('jobs/:jobId')
   async getJobStatus(@Param('jobId') jobId: string) {
     // Faqat ushbu controller yaratadigan
     // diagnostika vazifalarini ko‘rsatamiz.
     if (
       !/^manual-check-[1-9]\d*-\d+$/.test(jobId) &&
-      !/^person-check-[1-9]\d*-\d{8}-\d{2}$/.test(jobId)
+      !/^person-check-[1-9]\d*-\d{8}-\d{2}$/.test(jobId) &&
+      !/^sync-person-[1-9]\d*-[1-9]\d*$/.test(jobId)
     ) {
       throw new NotFoundException('Vazifa topilmadi');
     }
@@ -147,7 +231,10 @@ export class PersonSyncQueueController {
       throw new NotFoundException('Vazifa topilmadi yoki Redisdan tozalangan');
     }
 
-    if (job.name !== PERSON_SYNC_JOB.CHECK_TERMINAL) {
+    if (
+      job.name !== PERSON_SYNC_JOB.CHECK_TERMINAL &&
+      job.name !== PERSON_SYNC_JOB.SYNC_PERSON
+    ) {
       throw new NotFoundException('Vazifa topilmadi');
     }
 
@@ -156,6 +243,7 @@ export class PersonSyncQueueController {
     return {
       jobId: job.id,
       terminalId: job.data.terminalId,
+      personId: job.data.personId ?? null,
       name: job.name,
       state,
       attemptsMade: job.attemptsMade,
