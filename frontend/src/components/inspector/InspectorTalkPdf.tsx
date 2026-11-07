@@ -18,25 +18,32 @@ import { authorizedGet } from '@/lib/auth-session';
 export function InspectorTalkPdf({ talkId }: { talkId: number }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
-    const [url, setUrl] = useState('');
-    const [error, setError] = useState('');
-
+    const [result, setResult] = useState<{
+        talkId: number;
+        url: string;
+        error: string;
+    } | null>(null);
+    const current = open && result?.talkId === talkId ? result : null;
+    const url = current?.url ?? '';
+    const error = current?.error ?? '';
     useEffect(() => {
         if (!open) return;
         const controller = new AbortController();
         let objectUrl: string | null = null;
-        setUrl('');
-        setError('');
 
         void authorizedGet<Blob>(`/inspectors/talks/${talkId}/pdf`, controller.signal, 'blob')
             .then((blob) => {
                 if (controller.signal.aborted) return;
                 objectUrl = URL.createObjectURL(blob);
-                setUrl(objectUrl);
+                setResult({ talkId, url: objectUrl, error: '' });
             })
             .catch((err: unknown) => {
                 if (controller.signal.aborted) return;
-                setError(err instanceof Error ? err.message : t('inspectors.talks.pdf.failed'));
+                setResult({
+                    talkId,
+                    url: '',
+                    error: err instanceof Error ? err.message : t('inspectors.talks.pdf.failed'),
+                });
             });
 
         return () => {
@@ -46,7 +53,13 @@ export function InspectorTalkPdf({ talkId }: { talkId: number }) {
     }, [open, talkId, t]);
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                setOpen(next);
+                if (!next) setResult(null);
+            }}
+        >
             <DialogTrigger asChild>
                 <Button type="button" variant="outline" size="sm">
                     <FileText aria-hidden="true" />
