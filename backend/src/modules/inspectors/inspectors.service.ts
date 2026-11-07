@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { CreateInspectorTalkDto } from './dto/create-inspector-talk.dto';
@@ -29,6 +29,7 @@ import {
   normalizeIds,
   talkDateValid,
   tashkentToday,
+  canModifyTalk,
 } from './inspector.rules';
 import {
   AttendanceExcuse,
@@ -45,9 +46,11 @@ import {
 } from '../school-memberships/school-membership.entity';
 import { Person } from '../persons/person.entity';
 import { GetInspectorStudentsQueryDto } from './dto/get-inspector-students-query.dto';
-
+import { GetInspectorTalksQueryDto } from './dto/get-inspector-talks-query.dto';
+import { UpdateInspectorTalkDto } from './dto/update-inspector-talk.dto';
 const MAX_TALK_PDF_SIZE = 10 * 1024 * 1024;
-
+const TALK_PDF_PATH =
+  /^uploads\/inspector-talks\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.pdf$/;
 @Injectable()
 export class InspectorsService {
   private readonly talksDirectory = join(
@@ -404,6 +407,273 @@ export class InspectorsService {
       await unlink(filePath).catch(() => undefined);
       throw error;
     }
+  }
+
+  /** Aktyor ko'ra oladigan suhbatlar so'rovi (hudud/maktab/mahalla bo'yicha). */
+  private async scopedTalks(actor: AuthenticatedUser) {
+    const builder = this.talksRepository
+      .createQueryBuilder('t')
+      .innerJoin('t.person', 'p')
+      .innerJoin('t.inspector', 'u')
+      .select([
+        't',
+        'p.id',
+        'p.pnfl',
+        'p.firstName',
+        'p.lastName',
+        'p.middleName',
+        'u.id',
+        'u.firstName',
+        'u.lastName',
+      ]);
+
+    switch (actor.role) {
+      case UserRole.SUPER_ADMIN:
+        break;
+
+      case UserRole.REGION_ADMIN:
+        if (!actor.regionId) {
+          throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
+        }
+        builder
+          .innerJoin('p.mahalla', 'm')
+          .innerJoin('m.district', 'dist')
+          .andWhere('dist.regionId = :scopeRegionId', {
+            scopeRegionId: actor.regionId,
+          });
+        break;
+
+      case UserRole.DISTRICT_ADMIN:
+        if (!actor.districtId) {
+          throw new ForbiddenException('Hisobga tuman biriktirilmagan');
+        }
+        builder
+          .innerJoin('p.mahalla', 'm')
+          .andWhere('m.districtId = :scopeDistrictId', {
+            scopeDistrictId: actor.districtId,
+          });
+        break;
+
+      case UserRole.SCHOOL_ADMIN:
+        if (!actor.schoolId) {
+          throw new ForbiddenException('Hisobga maktab biriktirilmagan');
+        }
+        builder.andWhere(
+          `EXISTS (
+            SELECT 1 FROM school_memberships sm
+            WHERE sm.personId = t.personId
+              AND sm.schoolId = :scopeSchoolId
+              AND sm.type = :studentType
+              AND sm.startDate <= :scopeToday
+              AND (sm.endDate IS NULL OR sm.endDate > :scopeToday)
+          )`,
+          {
+            scopeSchoolId: actor.schoolId,
+            studentType: MembershipType.STUDENT,
+            scopeToday: tashkentToday(),
+          },
+        );
+        break;
+
+      case UserRole.MAHALLA_INSPECTOR: {
+        const assigned = await this.assignmentsRepository.find({
+          where: { userId: actor.id },
+          select: { mahallaId: true },
+        });
+        const ids = assigned.map((row) => row.mahallaId);
+
+        if (ids.length === 0) {
+          builder.andWhere('1 = 0');
+        } else {
+          builder.andWhere('p.mahallaId IN (:...scopeMahallaIds)', {
+            scopeMahallaIds: ids,
+          });
+        }
+        break;
+      }
+
+      default:
+        throw new ForbiddenException('Suhbatlarni ko‘rishga ruxsat yo‘q');
+    }
+
+    return builder;
+  }
+
+  async listTalks(query: GetInspectorTalksQueryDto, actor: AuthenticatedUser) {
+    const builder = await this.scopedTalks(actor);
+
+    if (query.personId !== undefined) {
+      builder.andWhere('t.personId = :personId', { personId: query.personId });
+    }
+    if (query.result) {
+      builder.andWhere('t.result = :result', { result: query.result });
+    }
+    if (query.dateFrom) {
+      builder.andWhere('t.talkDate >= :dateFrom', { dateFrom: query.dateFrom });
+    }
+    if (query.dateTo) {
+      builder.andWhere('t.talkDate <= :dateTo', { dateTo: query.dateTo });
+    }
+
+    const [rows, total] = await builder
+      .orderBy('t.talkDate', 'DESC')
+      .addOrderBy('t.id', 'DESC')
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit)
+      .getManyAndCount();
+
+    return {
+      total,
+      page: query.page,
+      limit: query.limit,
+      items: rows.map((row) => ({
+        id: row.id,
+        talkDate: row.talkDate,
+        spokeWith: row.spokeWith,
+        reason: row.reason,
+        result: row.result,
+        note: row.note,
+        followUpDate: row.followUpDate,
+        pdfOriginalName: row.pdfOriginalName,
+        pdfSize: row.pdfSize,
+        createdAt: row.createdAt,
+        person: {
+          id: row.person.id,
+          pnfl: row.person.pnfl,
+          firstName: row.person.firstName,
+          lastName: row.person.lastName,
+          middleName: row.person.middleName,
+        },
+        inspector: {
+          id: row.inspector.id,
+          firstName: row.inspector.firstName,
+          lastName: row.inspector.lastName,
+        },
+        // Faqat o'z suhbatini, yozilganidan 24 soat ichida.
+        canModify:
+          actor.role === UserRole.MAHALLA_INSPECTOR &&
+          row.inspectorUserId === actor.id &&
+          canModifyTalk(row.createdAt),
+      })),
+    };
+  }
+
+  /** Suhbat PDF'ini o'qiydi; ko'rish huquqi ro'yxat bilan bir xil. */
+  async readTalkPdf(id: number, actor: AuthenticatedUser): Promise<Buffer> {
+    const builder = await this.scopedTalks(actor);
+    const talk = await builder
+      .addSelect('t.pdfPath')
+      .andWhere('t.id = :id', { id })
+      .getOne();
+
+    if (!talk) {
+      throw new NotFoundException('Suhbat topilmadi');
+    }
+
+    const match =
+      /^private_uploads\/inspector-talks\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.pdf$/.exec(
+        talk.pdfPath,
+      );
+
+    if (!match) {
+      throw new NotFoundException('PDF fayl manzili noto‘g‘ri');
+    }
+
+    try {
+      return await readFile(join(this.talksDirectory, `${match[1]}.pdf`));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new NotFoundException('PDF fayl serverda topilmadi');
+      }
+      throw error;
+    }
+  }
+
+  /** Faqat o'zining va 24 soatdan oshmagan suhbat. */
+  private async loadOwnTalk(
+    id: number,
+    actor: AuthenticatedUser,
+  ): Promise<InspectorTalk> {
+    const talk = await this.talksRepository
+      .createQueryBuilder('t')
+      .addSelect('t.pdfPath')
+      .where('t.id = :id', { id })
+      .andWhere('t.inspectorUserId = :userId', { userId: actor.id })
+      .getOne();
+
+    if (!talk) {
+      throw new NotFoundException('Suhbat topilmadi');
+    }
+
+    if (!canModifyTalk(talk.createdAt)) {
+      throw new ForbiddenException(
+        'Suhbatni yozilganidan keyin faqat 24 soat ichida o‘zgartirish mumkin',
+      );
+    }
+
+    return talk;
+  }
+
+  async updateTalk(
+    id: number,
+    dto: UpdateInspectorTalkDto,
+    actor: AuthenticatedUser,
+  ) {
+    const talk = await this.loadOwnTalk(id, actor);
+
+    if (dto.talkDate && !talkDateValid(dto.talkDate, tashkentToday())) {
+      throw new BadRequestException(
+        'Suhbat sanasi kelajakda yoki 1 yildan eski bo‘lishi mumkin emas',
+      );
+    }
+
+    const talkDate = dto.talkDate ?? talk.talkDate;
+    const followUp =
+      dto.followUpDate !== undefined ? dto.followUpDate : talk.followUpDate;
+
+    if (followUp && !followUpValid(talkDate, followUp)) {
+      throw new BadRequestException(
+        'Keyingi nazorat sanasi suhbatdan keyin va 6 oydan oshmagan bo‘lishi kerak',
+      );
+    }
+
+    talk.talkDate = talkDate;
+    talk.followUpDate = followUp ?? null;
+    if (dto.spokeWith) talk.spokeWith = dto.spokeWith;
+    if (dto.reason) talk.reason = dto.reason.trim();
+    if (dto.result) talk.result = dto.result;
+    if (dto.note !== undefined) talk.note = dto.note?.trim() || null;
+
+    const saved = await this.talksRepository.save(talk);
+
+    return {
+      id: saved.id,
+      personId: saved.personId,
+      talkDate: saved.talkDate,
+      spokeWith: saved.spokeWith,
+      reason: saved.reason,
+      result: saved.result,
+      note: saved.note,
+      followUpDate: saved.followUpDate,
+      pdfOriginalName: saved.pdfOriginalName,
+      pdfSize: saved.pdfSize,
+      updatedAt: saved.updatedAt,
+    };
+  }
+
+  async deleteTalk(id: number, actor: AuthenticatedUser) {
+    const talk = await this.loadOwnTalk(id, actor);
+
+    await this.talksRepository.delete({ id: talk.id });
+
+    const match = TALK_PDF_PATH.exec(talk.pdfPath);
+    if (match) {
+      await unlink(join(this.talksDirectory, `${match[1]}.pdf`)).catch(
+        () => undefined,
+      );
+    }
+
+    return { id: talk.id };
   }
 
   private async loadInspector(userId: number): Promise<User> {
