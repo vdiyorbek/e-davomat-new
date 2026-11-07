@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { InspectorTalkForm } from '@/components/inspector/InspectorTalkForm';
+import type { TalkStudent } from '@/components/inspector/InspectorTalkForm';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import type { StatusTone } from '@/components/common/StatusBadge';
-import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,6 +43,8 @@ export function InspectorStudentsPage() {
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [talkStudent, setTalkStudent] = useState<TalkStudent | null>(null);
+    const [notice, setNotice] = useState('');
 
     const mahallas = useApiQuery<InspectorMahalla[]>('/inspectors/me/mahallas');
 
@@ -69,7 +73,7 @@ export function InspectorStudentsPage() {
     return (
         <div className="space-y-6">
             <PageHeader title={t('inspectors.students.title')} description={t('inspectors.students.description')} />
-
+            {notice && <SuccessNotice>{notice}</SuccessNotice>}
             {noMahallas && <ErrorState message={t('inspectors.students.noMahallas')} />}
 
             <Card className="p-4 sm:p-5">
@@ -172,7 +176,9 @@ export function InspectorStudentsPage() {
                                     <TableHead className="pl-5">{t('inspectors.students.name')}</TableHead>
                                     <TableHead>{t('inspectors.students.school')}</TableHead>
                                     <TableHead>{t('inspectors.students.mahalla')}</TableHead>
-                                    <TableHead className="pr-5">{t('inspectors.students.status')}</TableHead>
+                                    <TableHead>{t('inspectors.students.status')}</TableHead>                                    <TableHead className="pr-5 text-right">
+                                        <span className="sr-only">{t('common.actions')}</span>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -184,10 +190,28 @@ export function InspectorStudentsPage() {
                                             {student.schoolClass?.name ? `, ${student.schoolClass.name}` : ''}
                                         </TableCell>
                                         <TableCell>{student.mahalla.name}</TableCell>
-                                        <TableCell className="pr-5">
+                                        <TableCell>
                                             <StatusBadge tone={TONES[student.status]}>
                                                 {t(`inspectors.status.${student.status}`)}
                                             </StatusBadge>
+                                        </TableCell>
+                                        <TableCell className="pr-5 text-right">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setNotice('');
+                                                    setTalkStudent({
+                                                        personId: student.personId,
+                                                        name: fullName(student),
+                                                        schoolName: student.school.name,
+                                                        className: student.schoolClass?.name ?? null,
+                                                    });
+                                                }}
+                                            >
+                                                {t('inspectors.talk.add')}
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -205,6 +229,26 @@ export function InspectorStudentsPage() {
                     />
                 </>
             )}
+            <Dialog open={talkStudent !== null} onOpenChange={(open) => !open && setTalkStudent(null)}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('inspectors.talk.title')}</DialogTitle>
+                        <DialogDescription>{t('inspectors.talk.fileHint', { size: 10 })}</DialogDescription>
+                    </DialogHeader>
+                    {talkStudent && (
+                        <InspectorTalkForm
+                            key={talkStudent.personId}
+                            student={talkStudent}
+                            defaultDate={date}
+                            onCancel={() => setTalkStudent(null)}
+                            onSaved={() => {
+                                setTalkStudent(null);
+                                setNotice(t('inspectors.talk.saved'));
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
