@@ -1,0 +1,13 @@
+{
+  "mahallas": {
+    "title": "Assign neighbourhoods",
+    "hint": "Select the neighbourhoods this inspector monitors (up to {{max}}).",
+    "search": "Search by neighbourhood name",
+    "selected": "Selected: {{count}} / {{max}}",
+    "noDistrict": "Assign a district to the user first.",
+    "empty": "No active neighbourhoods in this district.",
+    "limit": "You can select up to {{max}} neighbourhoods.",
+    "save": "Save",
+    "saved": "Neighbourhoods saved."
+  }
+}

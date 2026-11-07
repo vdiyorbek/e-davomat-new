@@ -1,0 +1,13 @@
+{
+  "mahallas": {
+    "title": "Mahallalarni biriktirish",
+    "hint": "Uchastkavoy nazorat qiladigan mahallalarni tanlang (ko‘pi bilan {{max}} ta).",
+    "search": "Mahalla nomi bo‘yicha qidirish",
+    "selected": "Tanlangan: {{count}} / {{max}}",
+    "noDistrict": "Avval foydalanuvchiga tuman biriktiring.",
+    "empty": "Bu tumanda faol mahalla topilmadi.",
+    "limit": "Ko‘pi bilan {{max}} ta mahalla tanlash mumkin.",
+    "save": "Saqlash",
+    "saved": "Mahallalar saqlandi."
+  }
+}
