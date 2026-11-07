@@ -9,7 +9,8 @@ import { InspectorMahalla } from './inspector-mahalla.entity';
 import { InspectorTalk } from './inspector-talk.entity';
 import { InspectorsController } from './inspectors.controller';
 import { InspectorsService } from './inspectors.service';
-
+import { AttendanceCalendarModule } from '../attendance-calendar/attendance-calendar.module';
+import { AttendanceExcuse } from '../attendance-excuses/attendance-excuse.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -18,7 +19,9 @@ import { InspectorsService } from './inspectors.service';
       Mahalla,
       InspectorMahalla,
       InspectorTalk,
+      AttendanceExcuse,
     ]),
+    AttendanceCalendarModule,
   ],
   controllers: [InspectorsController],
   providers: [InspectorsService],

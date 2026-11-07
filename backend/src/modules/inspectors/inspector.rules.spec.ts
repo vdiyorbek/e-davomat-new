@@ -13,7 +13,6 @@ const base: DayStatusInput = {
   workDay: true,
   excused: false,
   firstIn: null,
-  late: false,
   isToday: false,
   nowTime: '12:00',
   absentCheckTime: '09:00:00',
