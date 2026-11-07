@@ -38,6 +38,7 @@ export class CreateMahallaInspectors1794000000000 implements MigrationInterface 
         \`note\` text NULL,
         \`followUpDate\` date NULL,
         \`pdfPath\` varchar(255) NOT NULL,
+        \`pdfOriginalName\` varchar(255) NOT NULL,
         \`pdfSha256\` char(64) NOT NULL,
         \`pdfSize\` int UNSIGNED NOT NULL,
         \`createdAt\` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
