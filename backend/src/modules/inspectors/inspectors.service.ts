@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
+import { CreateInspectorTalkDto } from './dto/create-inspector-talk.dto';
+import { InspectorTalk } from './inspector-talk.entity';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { District } from '../districts/district.entity';
 import { Mahalla } from '../mahallas/mahalla.entity';
@@ -16,11 +21,13 @@ import { User } from '../users/user.entity';
 import { SetInspectorMahallasDto } from './dto/set-inspector-mahallas.dto';
 import { InspectorMahalla } from './inspector-mahalla.entity';
 import {
-  MAX_MAHALLAS_PER_INSPECTOR,
-  normalizeIds,
   countStatuses,
   dayStatus,
+  followUpValid,
   InspectorDayStatus,
+  MAX_MAHALLAS_PER_INSPECTOR,
+  normalizeIds,
+  talkDateValid,
   tashkentToday,
 } from './inspector.rules';
 import {
@@ -38,10 +45,16 @@ import {
 } from '../school-memberships/school-membership.entity';
 import { Person } from '../persons/person.entity';
 import { GetInspectorStudentsQueryDto } from './dto/get-inspector-students-query.dto';
-import {} from './inspector.rules';
+
+const MAX_TALK_PDF_SIZE = 10 * 1024 * 1024;
 
 @Injectable()
 export class InspectorsService {
+  private readonly talksDirectory = join(
+    process.cwd(),
+    'uploads',
+    'inspector-talks',
+  );
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(User)
@@ -55,6 +68,9 @@ export class InspectorsService {
     @InjectRepository(AttendanceExcuse)
     private readonly excusesRepository: Repository<AttendanceExcuse>,
     private readonly calendarResolver: CalendarResolverService,
+
+    @InjectRepository(InspectorTalk)
+    private readonly talksRepository: Repository<InspectorTalk>,
   ) {}
 
   /** Uchastkavoyga biriktirilgan mahallalar (admin ko'rinishi). */
@@ -288,6 +304,106 @@ export class InspectorsService {
       counts,
       items: filtered.slice(start, start + query.limit),
     };
+  }
+
+  /** Profilaktik suhbat natijasini PDF bilan saqlaydi. */
+  async createTalk(
+    dto: CreateInspectorTalkDto,
+    file: Express.Multer.File | undefined,
+    actor: AuthenticatedUser,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Suhbat natijasi PDF faylini tanlang');
+    }
+
+    if (
+      file.size > MAX_TALK_PDF_SIZE ||
+      file.buffer.length > MAX_TALK_PDF_SIZE
+    ) {
+      throw new BadRequestException('PDF hajmi 10 MB dan oshmasligi kerak');
+    }
+
+    if (
+      file.mimetype !== 'application/pdf' ||
+      file.buffer.subarray(0, 5).toString('ascii') !== '%PDF-'
+    ) {
+      throw new BadRequestException('Faqat PDF formati qabul qilinadi');
+    }
+
+    if (!talkDateValid(dto.talkDate, tashkentToday())) {
+      throw new BadRequestException(
+        'Suhbat sanasi kelajakda yoki 1 yildan eski bo‘lishi mumkin emas',
+      );
+    }
+
+    if (dto.followUpDate && !followUpValid(dto.talkDate, dto.followUpDate)) {
+      throw new BadRequestException(
+        'Keyingi nazorat sanasi suhbatdan keyin va 6 oydan oshmagan bo‘lishi kerak',
+      );
+    }
+
+    // O'quvchi uchastkavoyga biriktirilgan mahallalardan birida yashashi shart.
+    const person = await this.dataSource.getRepository(Person).findOne({
+      where: { id: dto.personId },
+      select: { id: true, mahallaId: true, deletedAt: true },
+      withDeleted: true,
+    });
+
+    if (!person || person.deletedAt !== null || person.mahallaId === null) {
+      throw new NotFoundException('O‘quvchi topilmadi');
+    }
+
+    const assigned = await this.assignmentsRepository.exists({
+      where: { userId: actor.id, mahallaId: person.mahallaId },
+    });
+
+    if (!assigned) {
+      throw new ForbiddenException('Bu o‘quvchi sizning mahallangizda emas');
+    }
+
+    const filename = `${randomUUID()}.pdf`;
+    const filePath = join(this.talksDirectory, filename);
+    const originalName =
+      file.originalname.split(/[\\/]/).pop()?.slice(0, 255) || 'suhbat.pdf';
+
+    await mkdir(this.talksDirectory, { recursive: true });
+    await writeFile(filePath, file.buffer, { flag: 'wx', mode: 0o600 });
+
+    try {
+      const saved = await this.talksRepository.save(
+        this.talksRepository.create({
+          inspectorUserId: actor.id,
+          personId: person.id,
+          talkDate: dto.talkDate,
+          spokeWith: dto.spokeWith,
+          reason: dto.reason.trim(),
+          result: dto.result,
+          note: dto.note?.trim() || null,
+          followUpDate: dto.followUpDate ?? null,
+          pdfPath: `private_uploads/inspector-talks/${filename}`,
+          pdfOriginalName: originalName,
+          pdfSize: file.buffer.length,
+          pdfSha256: createHash('sha256').update(file.buffer).digest('hex'),
+        }),
+      );
+
+      return {
+        id: saved.id,
+        personId: saved.personId,
+        talkDate: saved.talkDate,
+        spokeWith: saved.spokeWith,
+        reason: saved.reason,
+        result: saved.result,
+        note: saved.note,
+        followUpDate: saved.followUpDate,
+        pdfOriginalName: saved.pdfOriginalName,
+        pdfSize: saved.pdfSize,
+        createdAt: saved.createdAt,
+      };
+    } catch (error) {
+      await unlink(filePath).catch(() => undefined);
+      throw error;
+    }
   }
 
   private async loadInspector(userId: number): Promise<User> {
