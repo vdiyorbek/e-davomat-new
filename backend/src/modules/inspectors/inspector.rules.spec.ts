@@ -111,3 +111,14 @@ describe('followUpValid', () => {
     expect(followUpValid('2026-11-08', '2027-05-09')).toBe(false);
   });
 });
+
+describe('countStatuses', () => {
+  it('holatlarni sanaydi, bo‘sh holatlar 0 bo‘ladi', () => {
+    expect(countStatuses(['ABSENT', 'ABSENT', 'PRESENT'])).toEqual({
+      PRESENT: 1,
+      EXCUSED: 0,
+      ABSENT: 2,
+      DAY_OFF: 0,
+    });
+  });
+});

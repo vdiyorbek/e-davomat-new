@@ -29,7 +29,7 @@ interface Props {
 async function loadAllOptions(districtId: number, signal: AbortSignal) {
     const all: MahallaOption[] = [];
     let page = 1;
-    let totalPages = 1;
+    let totalPages: number;
 
     do {
         const res = await authorizedGet<OptionsPage>(

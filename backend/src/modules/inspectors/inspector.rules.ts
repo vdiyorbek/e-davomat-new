@@ -7,7 +7,6 @@ export const DAY_STATUSES: InspectorDayStatus[] = [
   'PRESENT',
   'EXCUSED',
   'ABSENT',
-  'PENDING',
   'DAY_OFF',
 ];
 
