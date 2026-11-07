@@ -18,7 +18,6 @@ export const INSPECTOR_STATUS_FILTERS: readonly InspectorDayStatus[] = [
   'PRESENT',
   'EXCUSED',
   'ABSENT',
-  'PENDING',
   'DAY_OFF',
 ];
 

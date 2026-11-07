@@ -20,9 +20,7 @@ import {
   normalizeIds,
   countStatuses,
   dayStatus,
-  DEFAULT_ABSENT_CHECK_TIME,
   InspectorDayStatus,
-  tashkentTime,
   tashkentToday,
 } from './inspector.rules';
 import {
@@ -250,8 +248,6 @@ export class InspectorsService {
       : [];
     const excusedIds = new Set(excuses.map((row) => Number(row.personId)));
 
-    const nowTime = tashkentTime();
-
     const all = rows.map((row) => {
       const classId = row.classId === null ? null : Number(row.classId);
       const status: InspectorDayStatus = dayStatus({
@@ -260,9 +256,6 @@ export class InspectorsService {
           'WORK_DAY',
         excused: excusedIds.has(Number(row.personId)),
         firstIn: row.firstInTime ? new Date(row.firstInTime) : null,
-        isToday: date === today,
-        nowTime,
-        absentCheckTime: DEFAULT_ABSENT_CHECK_TIME,
       });
 
       return {

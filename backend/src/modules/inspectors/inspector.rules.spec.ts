@@ -13,9 +13,6 @@ const base: DayStatusInput = {
   workDay: true,
   excused: false,
   firstIn: null,
-  isToday: false,
-  nowTime: '12:00',
-  absentCheckTime: '09:00:00',
 };
 
 describe('dayStatus', () => {
@@ -35,18 +32,6 @@ describe('dayStatus', () => {
 
   it('o‘quv kuni bo‘lmasa DAY_OFF', () => {
     expect(dayStatus({ ...base, workDay: false })).toBe('DAY_OFF');
-  });
-
-  it('bugun tekshiruv vaqtigacha PENDING', () => {
-    expect(dayStatus({ ...base, isToday: true, nowTime: '08:30' })).toBe(
-      'PENDING',
-    );
-  });
-
-  it('bugun tekshiruv vaqtidan keyin ABSENT', () => {
-    expect(dayStatus({ ...base, isToday: true, nowTime: '09:00' })).toBe(
-      'ABSENT',
-    );
   });
 
   it('o‘tgan kunda kirmagan bo‘lsa ABSENT', () => {
@@ -124,17 +109,5 @@ describe('followUpValid', () => {
 
   it('6 oydan oshsa yaroqsiz', () => {
     expect(followUpValid('2026-11-08', '2027-05-09')).toBe(false);
-  });
-});
-
-describe('countStatuses', () => {
-  it('holatlarni sanaydi, bo‘sh holatlar 0 bo‘ladi', () => {
-    expect(countStatuses(['ABSENT', 'ABSENT', 'PRESENT'])).toEqual({
-      PRESENT: 1,
-      EXCUSED: 0,
-      ABSENT: 2,
-      PENDING: 0,
-      DAY_OFF: 0,
-    });
   });
 });

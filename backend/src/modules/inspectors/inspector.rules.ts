@@ -18,25 +18,12 @@ export interface DayStatusInput {
   excused: boolean;
   /** Birinchi kirish (turniket) */
   firstIn: Date | null;
-  /** Tekshirilayotgan sana bugunmi */
-  isToday: boolean;
-  /** Hozirgi vaqt HH:mm (Toshkent) */
-  nowTime: string;
-  /** Maktabning "kelmaganlar" tekshiruv vaqti HH:mm */
-  absentCheckTime: string;
 }
 
-/**
- * O'quvchining kun holati.
- * Kelgan bo'lsa kelgan (dam olish kunida ham); keyin sababnoma;
- * o'quv kuni bo'lmasa dam olish; bugun va tekshiruv vaqtigacha kutilmoqda.
- */
 export function dayStatus(input: DayStatusInput): InspectorDayStatus {
   if (input.firstIn) return 'PRESENT';
   if (input.excused) return 'EXCUSED';
   if (!input.workDay) return 'DAY_OFF';
-  if (input.isToday && input.nowTime < input.absentCheckTime.slice(0, 5))
-    return 'PENDING';
   return 'ABSENT';
 }
 
