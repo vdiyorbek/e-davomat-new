@@ -10,7 +10,7 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { Repository } from 'typeorm';
-
+import { UserRole } from '../users/enums/user-role.enum';
 import { Person } from './person.entity';
 import { PersonsService } from './persons.service';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
@@ -139,7 +139,11 @@ export class PersonPhotosService {
   async upload(
     personId: number,
     file: Express.Multer.File | undefined,
+    user: AuthenticatedUser,
   ): Promise<{ id: number; photoUrl: string }> {
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      await this.personsService.findOne(personId, user);
+    }
     if (!file?.buffer?.length) {
       throw new BadRequestException('Rasm faylini tanlang');
     }

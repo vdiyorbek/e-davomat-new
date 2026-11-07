@@ -195,9 +195,16 @@ export class PersonsService {
     return person;
   }
 
-  async update(id: number, dto: UpdatePersonDto): Promise<Person> {
+  async update(
+    id: number,
+    dto: UpdatePersonDto,
+    user: AuthenticatedUser,
+  ): Promise<Person> {
     if (!Number.isInteger(id) || id < 1 || id > 4294967295) {
       throw new BadRequestException('Shaxs ID qiymati noto‘g‘ri');
+    }
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      await this.findOne(id, user);
     }
 
     // Faqat ruxsat etilgan va yuborilgan maydonlarni olamiz.

@@ -84,7 +84,12 @@ export class PersonsController {
   @Post(':id/photo')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: memoryStorage(),
@@ -99,8 +104,15 @@ export class PersonsController {
   uploadPhoto(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() request: AuthenticatedRequest,
   ): Promise<{ id: number; photoUrl: string }> {
-    return this.personPhotosService.upload(id, file);
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personPhotosService.upload(id, file, user);
   }
 
   @Get(':id/photo')
@@ -133,11 +145,23 @@ export class PersonsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePersonDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<Person> {
-    return this.personsService.update(id, dto);
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personsService.update(id, dto, user);
   }
 }
