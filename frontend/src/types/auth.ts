@@ -5,7 +5,8 @@ export type UserRole =
   | "DISTRICT_ADMIN"
   | "SCHOOL_ADMIN"
   | "TEACHER"
-  | "STUDENT";
+  | "STUDENT"
+  | "MAHALLA_INSPECTOR";
 
 export interface LoginResponse {
   accessToken: string;
