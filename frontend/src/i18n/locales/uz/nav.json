@@ -10,7 +10,8 @@
     "personal": "Shaxsiy",
     "attendance": "Davomat",
     "education": "Ta’lim tuzilmasi",
-    "system": "Tizim"
+    "system": "Tizim",
+    "inspector": "Uchastkavoy"
   },
   "items": {
     "profile": "Shaxsiy ma’lumotlar",
@@ -32,8 +33,9 @@
     "users": "Foydalanuvchilar",
     "person": "Shaxs ma’lumotlari",
     "forbidden": "Kirish cheklangan",
-    "teacherDashboard":"O'qituvchi kabineti",
-    "personSyncMonitoring": "Terminallar monitoringi"
+    "teacherDashboard": "O'qituvchi kabineti",
+    "personSyncMonitoring": "Terminallar monitoringi",
+    "inspectorStudents": "Mahalla o‘quvchilari"
   },
   "short": {
     "profile": "Profil",
@@ -41,6 +43,7 @@
     "teacherAttendance": "O‘qituvchilar",
     "schools": "Maktablar",
     "more": "Menyu",
-    "lessonSchedules": "Jadval"
+    "lessonSchedules": "Jadval",
+    "inspectorStudents": "Mahalla"
   }
 }

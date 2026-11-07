@@ -10,7 +10,8 @@
     "personal": "Personal",
     "attendance": "Attendance",
     "education": "Education",
-    "system": "System"
+    "system": "System",
+    "inspector": "Inspector"
   },
   "items": {
     "profile": "Personal details",
@@ -33,7 +34,8 @@
     "person": "Person details",
     "forbidden": "Access restricted",
     "teacherDashboard": "Teacher dashboard",
-    "personSyncMonitoring": "Terminal Monitoring"
+    "personSyncMonitoring": "Terminal Monitoring",
+    "inspectorStudents": "Neighbourhood students"
   },
   "short": {
     "profile": "Profile",
@@ -41,6 +43,7 @@
     "teacherAttendance": "Teachers",
     "schools": "Schools",
     "more": "Menu",
-    "lessonSchedules": "Schedule"
+    "lessonSchedules": "Schedule",
+    "inspectorStudents": "Students"
   }
 }

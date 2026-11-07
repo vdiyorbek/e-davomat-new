@@ -31,7 +31,10 @@ const TeacherDashboardPage = lazy(() =>
     import('@/pages/teacher-dashboard/TeacherDashboardPage')
         .then((m) => ({ default: m.TeacherDashboardPage }))
 );
-
+const InspectorStudentsPage = lazy(() =>
+    import('@/pages/inspector/InspectorStudentsPage')
+        .then((m) => ({ default: m.InspectorStudentsPage }))
+);
 const TeacherJournalPage = lazy(() =>
     import('@/pages/teacher-dashboard/TeacherJournalPage')
         .then((m) => ({ default: m.TeacherJournalPage }))
@@ -69,6 +72,15 @@ export const router = createBrowserRouter([
                             {
                                 path: '/teacher/journal/:assignmentId',
                                 element: <TeacherJournalPage />,
+                            },
+                        ],
+                    },
+                    {
+                        element: <RequireRole roles={['MAHALLA_INSPECTOR']} />,
+                        children: [
+                            {
+                                path: '/inspector/students',
+                                element: <InspectorStudentsPage />,
                             },
                         ],
                     },

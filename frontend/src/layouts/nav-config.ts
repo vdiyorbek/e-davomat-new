@@ -17,6 +17,7 @@ import {
   UserRound,
   LayoutDashboard,
   Activity,
+  UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,7 +56,18 @@ export const NAV_GROUPS: NavGroup[] = [
       },
     ],
   },
-
+  {
+    key: "inspector",
+    items: [
+      {
+        to: "/inspector/students",
+        key: "inspectorStudents",
+        icon: UsersRound,
+        roles: ["MAHALLA_INSPECTOR"],
+        mobilePriority: 1,
+      },
+    ],
+  },
   {
     key: "attendance",
     items: [

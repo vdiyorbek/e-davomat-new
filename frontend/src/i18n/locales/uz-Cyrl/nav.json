@@ -10,7 +10,8 @@
     "personal": "Шахсий",
     "attendance": "Давомат",
     "education": "Таълим тузилмаси",
-    "system": "Тизим"
+    "system": "Тизим",
+    "inspector": "Участкавой"
   },
   "items": {
     "profile": "Шахсий маълумотлар",
@@ -32,7 +33,8 @@
     "users": "Фойдаланувчилар",
     "person": "Шахс маълумотлари",
     "forbidden": "Кириш чекланган",
-    "teacherDashboard": "Ўқитувчи кабинети"
+    "teacherDashboard": "Ўқитувчи кабинети",
+    "inspectorStudents": "Маҳалла ўқувчилари"
   },
   "short": {
     "profile": "Профил",
@@ -40,6 +42,7 @@
     "teacherAttendance": "Ўқитувчилар",
     "schools": "Мактаблар",
     "more": "Меню",
-    "lessonSchedules": "Жадвал"
+    "lessonSchedules": "Жадвал",
+    "inspectorStudents": "Маҳалла"
   }
 }

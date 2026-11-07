@@ -10,7 +10,8 @@
     "personal": "Личное",
     "attendance": "Посещаемость",
     "education": "Учебная структура",
-    "system": "Система"
+    "system": "Система",
+    "inspector": "Участковый"
   },
   "items": {
     "profile": "Личные данные",
@@ -33,7 +34,8 @@
     "person": "Карточка человека",
     "forbidden": "Доступ ограничен",
     "teacherDashboard": "Кабинет учителя",
-    "personSyncMonitoring": "Мониторинг терминалов"
+    "personSyncMonitoring": "Мониторинг терминалов",
+    "inspectorStudents": "Ученики махалли"
   },
   "short": {
     "profile": "Профиль",
@@ -41,6 +43,7 @@
     "teacherAttendance": "Учителя",
     "schools": "Школы",
     "more": "Меню",
-    "lessonSchedules": "Расписание"
+    "lessonSchedules": "Расписание",
+    "inspectorStudents": "Махалля"
   }
 }
