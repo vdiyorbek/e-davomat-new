@@ -31,6 +31,16 @@ import { InspectorsService } from './inspectors.service';
 export class InspectorsController {
   constructor(private readonly inspectorsService: InspectorsService) {}
 
+  @Get('me/mahallas')
+  @Roles(UserRole.MAHALLA_INSPECTOR)
+  @Header('Cache-Control', 'private, no-store')
+  listMyMahallas(@Req() request: AuthenticatedRequest) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    return this.inspectorsService.getMyMahallas(actor);
+  }
+
   @Get(':userId/mahallas')
   @Roles(UserRole.SUPER_ADMIN, UserRole.REGION_ADMIN, UserRole.DISTRICT_ADMIN)
   @Header('Cache-Control', 'private, no-store')

@@ -9,5 +9,28 @@
     "limit": "You can select up to {{max}} neighbourhoods.",
     "save": "Save",
     "saved": "Neighbourhoods saved."
+  },
+  "students": {
+    "title": "Neighbourhood students",
+    "description": "Attendance of students living in your neighbourhoods for the selected day.",
+    "date": "Date",
+    "mahalla": "Neighbourhood",
+    "allMahallas": "All neighbourhoods",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "search": "Search by name",
+    "searchPlaceholder": "At least 2 characters",
+    "apply": "Search",
+    "name": "Full name",
+    "school": "School, class",
+    "emptyTitle": "No students found",
+    "empty": "Try changing the filters.",
+    "noMahallas": "No neighbourhoods are assigned to you yet. Contact your district administrator."
+  },
+  "status": {
+    "PRESENT": "Present",
+    "EXCUSED": "Excused",
+    "ABSENT": "Absent",
+    "DAY_OFF": "Day off"
   }
 }

@@ -9,5 +9,28 @@
     "limit": "Ko‘pi bilan {{max}} ta mahalla tanlash mumkin.",
     "save": "Saqlash",
     "saved": "Mahallalar saqlandi."
+  },
+  "students": {
+    "title": "Mahalla o‘quvchilari",
+    "description": "Mahallangizda yashovchi o‘quvchilarning tanlangan kundagi davomati.",
+    "date": "Sana",
+    "mahalla": "Mahalla",
+    "allMahallas": "Barcha mahallalar",
+    "status": "Holat",
+    "allStatuses": "Barcha holatlar",
+    "search": "F.I.Sh. bo‘yicha qidirish",
+    "searchPlaceholder": "Kamida 2 ta belgi",
+    "apply": "Qidirish",
+    "name": "F.I.Sh.",
+    "school": "Maktab, sinf",
+    "emptyTitle": "O‘quvchilar topilmadi",
+    "empty": "Filtrlarni o‘zgartirib ko‘ring.",
+    "noMahallas": "Sizga hali mahalla biriktirilmagan. Tuman administratoriga murojaat qiling."
+  },
+  "status": {
+    "PRESENT": "Kelgan",
+    "EXCUSED": "Sababli",
+    "ABSENT": "Kelmagan",
+    "DAY_OFF": "Dam olish"
   }
 }

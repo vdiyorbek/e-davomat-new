@@ -75,7 +75,18 @@ export class InspectorsService {
     @InjectRepository(InspectorTalk)
     private readonly talksRepository: Repository<InspectorTalk>,
   ) {}
+  /** Uchastkavoyning o'z faol mahallalari. */
+  async getMyMahallas(actor: AuthenticatedUser) {
+    const rows = await this.assignmentsRepository.find({
+      where: { userId: actor.id },
+      relations: { mahalla: true },
+    });
 
+    return rows
+      .filter((row) => row.mahalla.isActive)
+      .map((row) => ({ id: row.mahalla.id, name: row.mahalla.name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
   /** Uchastkavoyga biriktirilgan mahallalar (admin ko'rinishi). */
   async getMahallas(userId: number, actor: AuthenticatedUser) {
     const inspector = await this.loadInspector(userId);
