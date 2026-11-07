@@ -26,7 +26,7 @@ import { UpdateInspectorTalkDto } from './dto/update-inspector-talk.dto';
 import { CreateInspectorTalkDto } from './dto/create-inspector-talk.dto';
 import { SetInspectorMahallasDto } from './dto/set-inspector-mahallas.dto';
 import { InspectorsService } from './inspectors.service';
-
+import { GetInspectorStudentsQueryDto } from './dto/get-inspector-students-query.dto';
 @Controller('inspectors')
 export class InspectorsController {
   constructor(private readonly inspectorsService: InspectorsService) {}
@@ -163,5 +163,18 @@ export class InspectorsController {
       disposition: 'inline; filename="suhbat.pdf"',
       length: buffer.length,
     });
+  }
+
+  @Get('me/students')
+  @Roles(UserRole.MAHALLA_INSPECTOR)
+  @Header('Cache-Control', 'private, no-store')
+  listMyStudents(
+    @Query() query: GetInspectorStudentsQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    return this.inspectorsService.listStudents(query, actor);
   }
 }
