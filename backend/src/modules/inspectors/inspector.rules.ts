@@ -90,3 +90,22 @@ export function countStatuses(
   for (const s of statuses) out[s]++;
   return out;
 }
+
+/** "Kelmagan" deb hisoblash boshlanadigan vaqt (hozircha barcha maktablar uchun bir xil). */
+export const DEFAULT_ABSENT_CHECK_TIME = '09:00';
+
+const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+/** Toshkent vaqti bo'yicha sana, YYYY-MM-DD. */
+export function tashkentToday(now: Date = new Date()): string {
+  return new Date(now.getTime() + TASHKENT_OFFSET_MS)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** Toshkent vaqti bo'yicha soat, HH:mm. */
+export function tashkentTime(now: Date = new Date()): string {
+  return new Date(now.getTime() + TASHKENT_OFFSET_MS)
+    .toISOString()
+    .slice(11, 16);
+}
