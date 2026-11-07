@@ -32,5 +32,48 @@
     "EXCUSED": "Excused",
     "ABSENT": "Absent",
     "DAY_OFF": "Day off"
+  },
+  "talk": {
+    "add": "Record talk",
+    "title": "Preventive talk",
+    "student": "Student",
+    "talkDate": "Talk date",
+    "spokeWith": "Spoke with",
+    "spokeWithOptions": {
+      "FATHER": "Father",
+      "MOTHER": "Mother",
+      "GUARDIAN": "Guardian",
+      "STUDENT": "The student"
+    },
+    "chooseSpokeWith": "Select",
+    "reason": "Reason for the talk",
+    "reasonPlaceholder": "For example: unexcused absences",
+    "result": "Outcome",
+    "chooseResult": "Select",
+    "resultOptions": {
+      "SOLVED": "Resolved",
+      "RECHECK": "Needs a follow-up check",
+      "REFERRED": "Referred to another authority"
+    },
+    "note": "Note",
+    "notePlaceholder": "Brief summary of the talk",
+    "followUpDate": "Follow-up date",
+    "followUpHint": "Optional. Must be after the talk and within 6 months.",
+    "file": "Talk record (PDF)",
+    "fileHint": "PDF only, up to {{size}} MB.",
+    "chooseFile": "Choose PDF",
+    "submit": "Save",
+    "saved": "Talk saved.",
+    "errors": {
+      "reason": "Enter the reason for the talk (at least 3 characters).",
+      "spokeWith": "Select who you spoke with.",
+      "result": "Select the outcome.",
+      "date": "Select a valid talk date.",
+      "followUp": "The follow-up date must be after the talk date.",
+      "file": "Choose a PDF file.",
+      "fileSize": "The PDF must not exceed {{size}} MB.",
+      "fileType": "Only PDF files are accepted.",
+      "saveFailed": "Could not save the talk."
+    }
   }
 }

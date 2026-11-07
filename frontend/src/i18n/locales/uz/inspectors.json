@@ -32,5 +32,48 @@
     "EXCUSED": "Sababli",
     "ABSENT": "Kelmagan",
     "DAY_OFF": "Dam olish"
+  },
+  "talk": {
+    "add": "Suhbat yozish",
+    "title": "Profilaktik suhbat",
+    "student": "O‘quvchi",
+    "talkDate": "Suhbat sanasi",
+    "spokeWith": "Kim bilan suhbatlashildi",
+    "spokeWithOptions": {
+      "FATHER": "Otasi",
+      "MOTHER": "Onasi",
+      "GUARDIAN": "Vasiy",
+      "STUDENT": "O‘quvchining o‘zi"
+    },
+    "chooseSpokeWith": "Tanlang",
+    "reason": "Suhbat sababi",
+    "reasonPlaceholder": "Masalan: sababsiz dars qoldirgan",
+    "result": "Natija",
+    "chooseResult": "Tanlang",
+    "resultOptions": {
+      "SOLVED": "Hal bo‘ldi",
+      "RECHECK": "Qayta tekshirish kerak",
+      "REFERRED": "Boshqa organga yo‘naltirildi"
+    },
+    "note": "Izoh",
+    "notePlaceholder": "Suhbat haqida qisqacha",
+    "followUpDate": "Keyingi nazorat sanasi",
+    "followUpHint": "Ixtiyoriy. Suhbatdan keyin bo‘lishi va 6 oydan oshmasligi kerak.",
+    "file": "Suhbat bayonnomasi (PDF)",
+    "fileHint": "Faqat PDF, {{size}} MB gacha.",
+    "chooseFile": "PDF tanlash",
+    "submit": "Saqlash",
+    "saved": "Suhbat saqlandi.",
+    "errors": {
+      "reason": "Suhbat sababini kiriting (kamida 3 belgi).",
+      "spokeWith": "Kim bilan suhbatlashilganini tanlang.",
+      "result": "Natijani tanlang.",
+      "date": "Suhbat sanasini to‘g‘ri tanlang.",
+      "followUp": "Keyingi nazorat sanasi suhbatdan keyin bo‘lishi kerak.",
+      "file": "PDF faylni tanlang.",
+      "fileSize": "PDF hajmi {{size}} MB dan oshmasligi kerak.",
+      "fileType": "Faqat PDF formati qabul qilinadi.",
+      "saveFailed": "Suhbatni saqlab bo‘lmadi."
+    }
   }
 }
