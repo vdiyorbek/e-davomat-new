@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-
+import ExcelJS from 'exceljs';
+import type { Response } from 'express';
 import { CreateInspectorTalkDto } from './dto/create-inspector-talk.dto';
 import { InspectorTalk } from './inspector-talk.entity';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
@@ -51,6 +52,28 @@ import { UpdateInspectorTalkDto } from './dto/update-inspector-talk.dto';
 const MAX_TALK_PDF_SIZE = 10 * 1024 * 1024;
 const TALK_PDF_PATH =
   /^uploads\/inspector-talks\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.pdf$/;
+
+const EXPORT_BATCH = 500;
+const MAX_EXPORT_ROWS = 100_000;
+
+const SPOKE_WITH_LABELS: Record<string, string> = {
+  FATHER: 'Otasi',
+  MOTHER: 'Onasi',
+  GUARDIAN: 'Vasiy',
+  STUDENT: 'O‘quvchining o‘zi',
+};
+
+const RESULT_LABELS: Record<string, string> = {
+  SOLVED: 'Hal bo‘ldi',
+  RECHECK: 'Qayta tekshirish kerak',
+  REFERRED: 'Boshqa organga yo‘naltirildi',
+};
+
+// Excel kataklarida formulaga aylanib ketmasligi uchun.
+function safeText(value: string): string {
+  return /^\s*[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
 @Injectable()
 export class InspectorsService {
   private readonly talksDirectory = join(
@@ -420,12 +443,31 @@ export class InspectorsService {
     }
   }
 
+  private applyTalkFilters(
+    builder: SelectQueryBuilder<InspectorTalk>,
+    query: GetInspectorTalksQueryDto,
+  ) {
+    if (query.personId !== undefined) {
+      builder.andWhere('t.personId = :personId', { personId: query.personId });
+    }
+    if (query.result) {
+      builder.andWhere('t.result = :result', { result: query.result });
+    }
+    if (query.dateFrom) {
+      builder.andWhere('t.talkDate >= :dateFrom', { dateFrom: query.dateFrom });
+    }
+    if (query.dateTo) {
+      builder.andWhere('t.talkDate <= :dateTo', { dateTo: query.dateTo });
+    }
+  }
+
   /** Aktyor ko'ra oladigan suhbatlar so'rovi (hudud/maktab/mahalla bo'yicha). */
   private async scopedTalks(actor: AuthenticatedUser) {
     const builder = this.talksRepository
       .createQueryBuilder('t')
       .innerJoin('t.person', 'p')
       .innerJoin('t.inspector', 'u')
+      .innerJoin('p.mahalla', 'm')
       .select([
         't',
         'p.id',
@@ -447,7 +489,6 @@ export class InspectorsService {
           throw new ForbiddenException('Hisobga viloyat biriktirilmagan');
         }
         builder
-          .innerJoin('p.mahalla', 'm')
           .innerJoin('m.district', 'dist')
           .andWhere('dist.regionId = :scopeRegionId', {
             scopeRegionId: actor.regionId,
@@ -458,11 +499,9 @@ export class InspectorsService {
         if (!actor.districtId) {
           throw new ForbiddenException('Hisobga tuman biriktirilmagan');
         }
-        builder
-          .innerJoin('p.mahalla', 'm')
-          .andWhere('m.districtId = :scopeDistrictId', {
-            scopeDistrictId: actor.districtId,
-          });
+        builder.andWhere('m.districtId = :scopeDistrictId', {
+          scopeDistrictId: actor.districtId,
+        });
         break;
 
       case UserRole.SCHOOL_ADMIN:
@@ -513,18 +552,7 @@ export class InspectorsService {
   async listTalks(query: GetInspectorTalksQueryDto, actor: AuthenticatedUser) {
     const builder = await this.scopedTalks(actor);
 
-    if (query.personId !== undefined) {
-      builder.andWhere('t.personId = :personId', { personId: query.personId });
-    }
-    if (query.result) {
-      builder.andWhere('t.result = :result', { result: query.result });
-    }
-    if (query.dateFrom) {
-      builder.andWhere('t.talkDate >= :dateFrom', { dateFrom: query.dateFrom });
-    }
-    if (query.dateTo) {
-      builder.andWhere('t.talkDate <= :dateTo', { dateTo: query.dateTo });
-    }
+    this.applyTalkFilters(builder, query);
 
     const [rows, total] = await builder
       .orderBy('t.talkDate', 'DESC')
@@ -567,6 +595,114 @@ export class InspectorsService {
           canModifyTalk(row.createdAt),
       })),
     };
+  }
+
+  /** Suhbatlar ro'yxatini Excel (.xlsx) sifatida oqim bilan yuboradi. */
+  async exportTalksExcel(
+    query: GetInspectorTalksQueryDto,
+    actor: AuthenticatedUser,
+    response: Response,
+  ): Promise<void> {
+    // Ruxsat avval tekshiriladi: javob sarlavhalari yozilishidan oldin xato chiqsin.
+    const builder = await this.scopedTalks(actor);
+    this.applyTalkFilters(builder, query);
+    builder
+      .addSelect(['m.id', 'm.name'])
+      .orderBy('t.talkDate', 'DESC')
+      .addOrderBy('t.id', 'DESC');
+
+    response.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="profilaktik-suhbatlar-${tashkentToday()}.xlsx"`,
+    );
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+
+    try {
+      const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+        stream: response,
+        useStyles: true,
+        useSharedStrings: false,
+      });
+      const sheet = workbook.addWorksheet('Suhbatlar');
+
+      sheet.columns = [
+        { header: '№', key: 'number', width: 8 },
+        { header: 'Sana', key: 'talkDate', width: 14 },
+        { header: 'O‘quvchi F.I.Sh.', key: 'student', width: 40 },
+        { header: 'Mahalla', key: 'mahalla', width: 28 },
+        { header: 'Kim bilan', key: 'spokeWith', width: 20 },
+        { header: 'Sabab', key: 'reason', width: 40 },
+        { header: 'Natija', key: 'result', width: 28 },
+        { header: 'Izoh', key: 'note', width: 45 },
+        { header: 'Keyingi nazorat', key: 'followUpDate', width: 16 },
+        { header: 'Uchastkavoy', key: 'inspector', width: 32 },
+      ];
+      sheet.getRow(1).font = { bold: true };
+      sheet.getRow(1).commit();
+
+      let number = 0;
+      let page = 0;
+
+      while (number < MAX_EXPORT_ROWS) {
+        if (response.destroyed) return;
+
+        const rows = await builder
+          .clone()
+          .skip(page * EXPORT_BATCH)
+          .take(EXPORT_BATCH)
+          .getMany();
+
+        if (rows.length === 0) break;
+
+        for (const row of rows) {
+          number += 1;
+          sheet
+            .addRow({
+              number,
+              talkDate: row.talkDate,
+              student: safeText(
+                [
+                  row.person.lastName,
+                  row.person.firstName,
+                  row.person.middleName,
+                ]
+                  .filter(Boolean)
+                  .join(' '),
+              ),
+              mahalla: safeText(row.person.mahalla?.name ?? ''),
+              spokeWith: SPOKE_WITH_LABELS[row.spokeWith] ?? row.spokeWith,
+              reason: safeText(row.reason),
+              result: RESULT_LABELS[row.result] ?? row.result,
+              note: safeText(row.note ?? ''),
+              followUpDate: row.followUpDate ?? '',
+              inspector: safeText(
+                [row.inspector.lastName, row.inspector.firstName]
+                  .filter(Boolean)
+                  .join(' '),
+              ),
+            })
+            .commit();
+        }
+
+        if (rows.length < EXPORT_BATCH) break;
+        page += 1;
+      }
+
+      sheet.commit();
+      await workbook.commit();
+    } catch (error) {
+      if (response.headersSent) {
+        response.destroy();
+        return;
+      }
+      response.removeHeader('Content-Disposition');
+      throw error;
+    }
   }
 
   /** Suhbat PDF'ini o'qiydi; ko'rish huquqi ro'yxat bilan bir xil. */

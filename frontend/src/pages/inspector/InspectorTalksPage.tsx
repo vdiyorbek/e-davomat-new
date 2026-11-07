@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Download, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useConfirm } from '@/components/common/ConfirmDialog';
@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
-import { authorizedDelete } from '@/lib/auth-session';
+import { authorizedDelete, authorizedGet } from '@/lib/auth-session';
 import { formatDate } from '@/lib/date';
 import { TALK_RESULTS } from '@/types/inspector';
 import type { InspectorTalkItem, InspectorTalksResponse, TalkResult } from '@/types/inspector';
@@ -49,6 +49,7 @@ export function InspectorTalksPage() {
     const [editing, setEditing] = useState<InspectorTalkItem | null>(null);
     const [notice, setNotice] = useState('');
     const [actionError, setActionError] = useState('');
+    const [exporting, setExporting] = useState(false);
 
     const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
     if (result !== ALL) params.set('result', result);
@@ -77,9 +78,58 @@ export function InspectorTalksPage() {
         }
     }
 
+    async function exportExcel() {
+        if (exporting) return;
+        setExporting(true);
+        setActionError('');
+        try {
+            const exportQuery = new URLSearchParams(params);
+            exportQuery.delete('page');
+            exportQuery.delete('limit');
+
+            const blob = await authorizedGet<Blob>(
+                `/inspectors/talks/export?${exportQuery.toString()}`,
+                undefined,
+                'blob',
+                120_000,
+            );
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'profilaktik-suhbatlar.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+        } catch (err: unknown) {
+            setActionError(err instanceof Error ? err.message : t('attendance.exportFailed'));
+        } finally {
+            setExporting(false);
+        }
+    }
+
     return (
         <div className="space-y-6">
-            <PageHeader title={t('inspectors.talks.title')} description={t('inspectors.talks.description')} />
+            <PageHeader
+                title={t('inspectors.talks.title')}
+                description={t('inspectors.talks.description')}
+                actions={
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-card"
+                        disabled={exporting}
+                        onClick={() => void exportExcel()}
+                    >
+                        {exporting ? (
+                            <Loader2 aria-hidden="true" className="animate-spin" />
+                        ) : (
+                            <Download aria-hidden="true" />
+                        )}
+                        {exporting ? t('attendance.exporting') : t('attendance.export')}
+                    </Button>
+                }
+            />
 
             {notice && <SuccessNotice>{notice}</SuccessNotice>}
             {actionError && <ErrorState message={actionError} />}

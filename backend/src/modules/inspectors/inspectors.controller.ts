@@ -15,7 +15,9 @@ import {
   Query,
   Delete,
   Patch,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { GetInspectorTalksQueryDto } from './dto/get-inspector-talks-query.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
@@ -27,6 +29,7 @@ import { CreateInspectorTalkDto } from './dto/create-inspector-talk.dto';
 import { SetInspectorMahallasDto } from './dto/set-inspector-mahallas.dto';
 import { InspectorsService } from './inspectors.service';
 import { GetInspectorStudentsQueryDto } from './dto/get-inspector-students-query.dto';
+
 @Controller('inspectors')
 export class InspectorsController {
   constructor(private readonly inspectorsService: InspectorsService) {}
@@ -118,6 +121,26 @@ export class InspectorsController {
     if (!actor) throw new UnauthorizedException();
 
     return this.inspectorsService.deleteTalk(id, actor);
+  }
+
+  @Get('talks/export')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+    UserRole.MAHALLA_INSPECTOR,
+  )
+  @Header('Cache-Control', 'private, no-store')
+  async exportTalks(
+    @Query() query: GetInspectorTalksQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ): Promise<void> {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    await this.inspectorsService.exportTalksExcel(query, actor, response);
   }
 
   @Get('talks')
