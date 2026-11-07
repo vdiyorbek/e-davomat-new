@@ -80,7 +80,10 @@
     "chooseNewSchoolClass": "Choose a class at the new school.",
     "chooseSchool": "Choose a school from the list.",
     "startDate": "Enter a valid start date.",
-    "endDate": "Enter a valid end date."
+    "endDate": "Enter a valid end date.",
+    "chooseMahalla": "Choose the residence mahalla.",
+    "existsInScope": "This person already exists within your scope. Open their page to edit details or upload a photo.",
+    "studentPhotoFailed": "The student was created, but the photo was not uploaded. Close this window and upload the photo again from the student's page."
   },
   "create": {
     "description": "First we check by PINFL whether the person already exists.",

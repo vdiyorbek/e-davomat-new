@@ -80,7 +80,11 @@
     "chooseNewSchoolClass": "Yangi maktabdagi sinfni tanlang.",
     "chooseSchool": "Ro‘yxatdan maktabni tanlang.",
     "startDate": "Boshlanish sanasini to‘g‘ri kiriting.",
-    "endDate": "Tugash sanasini to‘g‘ri kiriting."
+    "endDate": "Tugash sanasini to‘g‘ri kiriting.",
+    "chooseMahalla": "Yashash mahallasini tanlang.",
+    "photoUncertain": "...(mavjud matn o‘zgarmaydi)...",
+    "existsInScope": "Bu shaxs allaqachon sizning doirangizda mavjud. Ma’lumotlarini o‘zgartirish yoki rasm yuklash uchun uning sahifasini oching.",
+    "studentPhotoFailed": "O‘quvchi yaratildi, lekin rasm yuklanmadi. Oynani yoping va o‘quvchi sahifasidan rasmni qayta yuklang."
   },
   "create": {
     "description": "Avval PNFL bo‘yicha tizimda shaxs bor-yo‘qligi tekshiriladi.",
