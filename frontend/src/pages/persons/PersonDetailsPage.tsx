@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Camera, Pencil } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-
+import { ADMIN_ROLES } from '@/lib/roles';
 import { PageHeader } from '@/components/common/PageHeader';
 import { ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { ChangePersonPhoto } from '@/components/persons/ChangePersonPhoto';
@@ -30,7 +30,8 @@ function PersonDetails({ personId }: { personId: number }) {
     const [changingPhoto, setChangingPhoto] = useState(false);
     const [success, setSuccess] = useState('');
 
-    const canEdit = session?.profile.role === 'SUPER_ADMIN';
+    const viewerRole = session?.profile.role;
+    const canEdit = viewerRole !== undefined && ADMIN_ROLES.includes(viewerRole);
 
     const backButton = (
         <Button variant="outline" onClick={() => navigate(-1)}>

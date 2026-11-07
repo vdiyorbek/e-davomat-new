@@ -3,7 +3,7 @@ import { Plus, Users, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { MembershipDetailsForm } from './MembershipDetailsForm';
-
+import { ADMIN_ROLES } from '@/lib/roles';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
@@ -412,7 +412,11 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
     const searchValue = searchParams.get('q') ?? '';
     const page = Number(pageValue);
 
-    const canCreate = session?.profile.role === 'SUPER_ADMIN';
+    const viewerRole = session?.profile.role;
+    // O‘quvchini barcha admin rollari qo‘shadi, o‘qituvchini faqat SUPER_ADMIN.
+    const canCreate =
+        viewerRole === 'SUPER_ADMIN' ||
+        (type === 'STUDENT' && viewerRole !== undefined && ADMIN_ROLES.includes(viewerRole));
 
     const valid =
         /^\d+$/.test(pageValue) &&

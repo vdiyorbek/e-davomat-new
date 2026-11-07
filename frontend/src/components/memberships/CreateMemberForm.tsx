@@ -17,12 +17,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { formatDate, todayInTashkent } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import { uploadPersonPhoto } from '@/lib/person-photos-api';
 import { createPerson, findPersonByPnfl } from '@/lib/persons-api';
 import { createSchoolMembership } from '@/lib/school-memberships-api';
+import { createSchoolStudent } from '@/lib/school-students-api';
 import type { Person } from '@/types/person';
 import type { School } from '@/types/school';
 import type { SchoolMembership } from '@/types/school-membership';
@@ -39,6 +41,12 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
     const id = useId();
     const mounted = useRef(false);
     const operationBusy = useRef(false);
+    const { session } = useAuth();
+    const role = session?.profile.role;
+    // SUPER_ADMIN dan boshqalar o‘quvchini bitta so‘rov bilan yaratadi.
+    const studentEndpoint = type === 'STUDENT' && role !== 'SUPER_ADMIN';
+    const ownSchool = role === 'SCHOOL_ADMIN';
+    const [createdId, setCreatedId] = useState<number | null>(null);
 
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoError, setPhotoError] = useState('');
@@ -60,6 +68,8 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
     const schoolsQuery = useApiQuery<School[]>('/schools');
     const schools = schoolsQuery.data ?? [];
     const kind = type === 'STUDENT' ? 'student' : 'teacher';
+    const existingBlocked = studentEndpoint && person !== null;
+    const blocked = existingBlocked || createdId !== null;
 
     useEffect(() => {
         mounted.current = true;
@@ -139,12 +149,90 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
         }
     }
 
+    async function saveStudent() {
+        const selectedSchool = schools.find((school) => String(school.id) === schoolId);
+        if (!ownSchool && !selectedSchool) {
+            setError(t('members.errors.chooseSchool'));
+            return;
+        }
+
+        const invalid = validatePersonFields(fields);
+        if (invalid) {
+            setError(t(invalid));
+            return;
+        }
+
+        const mahallaId = fields.residence.mahallaId;
+        if (mahallaId === null) {
+            setError(t('members.errors.chooseMahalla'));
+            return;
+        }
+
+        operationBusy.current = true;
+        setBusy(true);
+
+        let completed = false;
+
+        try {
+            const created = await createSchoolStudent({
+                ...(!ownSchool && selectedSchool ? { schoolId: selectedSchool.id } : {}),
+                pnfl,
+                firstName: fields.firstName.trim(),
+                lastName: fields.lastName.trim(),
+                middleName: fields.middleName.trim() || null,
+                gender: fields.gender || null,
+                birthDate: fields.birthDate || null,
+                phoneNumber: fields.phoneNumber.trim() || null,
+                address: fields.address.trim() || null,
+                mahallaId,
+            });
+            if (!mounted.current) return;
+            setCreatedId(created.person.id);
+
+            if (photoFile) {
+                try {
+                    await uploadPersonPhoto(created.person.id, photoFile);
+                } catch {
+                    if (!mounted.current) return;
+                    setError(t('members.create.studentPhotoFailed'));
+                    return;
+                }
+            }
+
+            completed = true;
+        } catch (saveError: unknown) {
+            if (!mounted.current) return;
+            if (saveError instanceof DOMException && saveError.name === 'AbortError') return;
+
+            const uncertain =
+                saveError instanceof ApiError && (saveError.status === 0 || saveError.status >= 500);
+
+            setError(
+                uncertain
+                    ? t('members.create.uncertain')
+                    : saveError instanceof ApiError
+                        ? saveError.message
+                        : t('members.create.saveFailed'),
+            );
+        } finally {
+            operationBusy.current = false;
+            if (mounted.current) setBusy(false);
+        }
+
+        if (completed && mounted.current) onSaved();
+    }
+
     async function handleSave(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (operationBusy.current || !checked || photoChecking) return;
+        if (operationBusy.current || !checked || photoChecking || blocked) return;
 
         setError('');
         setNotice('');
+
+        if (studentEndpoint) {
+            await saveStudent();
+            return;
+        }
 
         const selectedSchool = schools.find((school) => String(school.id) === schoolId);
         if (schoolsQuery.loading || schoolsQuery.error || !selectedSchool) {
@@ -330,7 +418,9 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                         ))}
                     </dl>
                     <PersonSchools key={person.id} personId={person.id} />
-                    <p className="text-xs leading-5 text-muted-foreground">{t('members.create.existingNote')}</p>
+                    <p className="text-xs leading-5 text-muted-foreground">
+                        {studentEndpoint ? t('members.create.existsInScope') : t('members.create.existingNote')}
+                    </p>
                 </section>
             ) : (
                 <section className="space-y-4">
@@ -338,117 +428,125 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                     <PersonFields value={fields} onChange={setFields} disabled={busy} />
                 </section>
             )}
-
-            <section className="space-y-4 rounded-xl border p-4">
-                <div>
-                    <h3 className="text-sm font-semibold">{t('members.create.photoTitle')}</h3>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('members.create.photoHint', { size: 5 })}</p>
-                </div>
-                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                    <PersonPhoto
-                        {...(person ? { personId: person.id } : {})}
-                        photoUrl={person?.photoUrl ?? null}
-                        file={photoFile}
-                        name={person ? personFullName(person) : t('members.create.newPerson')}
-                        className="size-24"
-                    />
-                    <div className="w-full min-w-0 flex-1 space-y-2">
-                        <FileInput
-                            id={`${id}-photo`}
-                            accept="image/jpeg,image/png,image/webp"
-                            file={photoFile}
-                            disabled={busy || photoChecking}
-                            icon={<ImageUp aria-hidden="true" />}
-                            buttonLabel={t('photo.choose')}
-                            onFileChange={(selected) => {
-                                void handlePhotoSelect(selected);
-                            }}
-                        />
-                        <p className="text-xs leading-5 text-muted-foreground">{t('members.create.photoUploadNote')}</p>
-                        {photoError && (
-                            <p role="alert" className="text-sm text-destructive">
-                                {photoError}
-                            </p>
-                        )}
+            {!existingBlocked && (
+                <section className="space-y-4 rounded-xl border p-4">
+                    <div>
+                        <h3 className="text-sm font-semibold">{t('members.create.photoTitle')}</h3>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('members.create.photoHint', { size: 5 })}</p>
                     </div>
-                </div>
-            </section>
-
-            <section className="space-y-4">
-                <h3 className="font-heading text-base font-semibold">{t('members.create.membershipTitle')}</h3>
-                <Field
-                    htmlFor={`${id}-school`}
-                    label={t('common.school')}
-                    required
-                    error={schoolsQuery.error || undefined}
-                    hint={!schoolsQuery.loading && !schoolsQuery.error && schools.length === 0 ? t('members.create.noSchools') : undefined}
-                >
-                    <SelectField
-                        id={`${id}-school`}
-                        value={schoolId}
-                        onValueChange={setSchoolId}
-                        required
-                        searchable
-                        disabled={busy || schoolsQuery.loading || Boolean(schoolsQuery.error) || schools.length === 0}
-                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
-                        options={schools.map((school) => ({
-                            value: String(school.id),
-                            label: `${school.name} — ${school.district.name}`,
-                        }))}
-                    />
-                    {schoolsQuery.error && (
-                        <Button type="button" variant="outline" size="sm" className="w-fit" disabled={busy} onClick={schoolsQuery.retry}>
-                            {t('common.retry')}
-                        </Button>
-                    )}
-                </Field>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <Field htmlFor={`${id}-start`} label={t(`members.create.${kind}Start`)} required>
-                        <Input
-                            id={`${id}-start`}
-                            type="date"
-                            value={startDate}
-                            onChange={(event) => setStartDate(event.target.value)}
-                            min="1900-01-01"
-                            max="9999-12-31"
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                        <PersonPhoto
+                            {...(person ? { personId: person.id } : {})}
+                            photoUrl={person?.photoUrl ?? null}
+                            file={photoFile}
+                            name={person ? personFullName(person) : t('members.create.newPerson')}
+                            className="size-24"
+                        />
+                        <div className="w-full min-w-0 flex-1 space-y-2">
+                            <FileInput
+                                id={`${id}-photo`}
+                                accept="image/jpeg,image/png,image/webp"
+                                file={photoFile}
+                                disabled={busy || photoChecking}
+                                icon={<ImageUp aria-hidden="true" />}
+                                buttonLabel={t('photo.choose')}
+                                onFileChange={(selected) => {
+                                    void handlePhotoSelect(selected);
+                                }}
+                            />
+                            <p className="text-xs leading-5 text-muted-foreground">{t('members.create.photoUploadNote')}</p>
+                            {photoError && (
+                                <p role="alert" className="text-sm text-destructive">
+                                    {photoError}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            )}
+            {!existingBlocked && (
+                <section className="space-y-4">
+                    <h3 className="font-heading text-base font-semibold">{t('members.create.membershipTitle')}</h3>
+                    {!ownSchool && (
+                        <Field
+                            htmlFor={`${id}-school`}
+                            label={t('common.school')}
                             required
-                            disabled={busy}
-                        />
-                    </Field>
-                    <Field htmlFor={`${id}-end`} label={t(`members.create.${kind}End`)} hint={t('members.create.endHint')}>
-                        <Input
-                            id={`${id}-end`}
-                            type="date"
-                            value={endDate}
-                            onChange={(event) => setEndDate(event.target.value)}
-                            min={startDate || '1900-01-01'}
-                            max="9999-12-31"
-                            disabled={busy}
-                        />
-                    </Field>
-                </div>
-            </section>
+                            error={schoolsQuery.error || undefined}
+                            hint={!schoolsQuery.loading && !schoolsQuery.error && schools.length === 0 ? t('members.create.noSchools') : undefined}
+                        >
+                            <SelectField
+                                id={`${id}-school`}
+                                value={schoolId}
+                                onValueChange={setSchoolId}
+                                required
+                                searchable
+                                disabled={busy || schoolsQuery.loading || Boolean(schoolsQuery.error) || schools.length === 0}
+                                placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
+                                options={schools.map((school) => ({
+                                    value: String(school.id),
+                                    label: `${school.name} — ${school.district.name}`,
+                                }))}
+                            />
+                            {schoolsQuery.error && (
+                                <Button type="button" variant="outline" size="sm" className="w-fit" disabled={busy} onClick={schoolsQuery.retry}>
+                                    {t('common.retry')}
+                                </Button>
+                            )}
+                        </Field>
+                    )}
+                    {!studentEndpoint && (
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field htmlFor={`${id}-start`} label={t(`members.create.${kind}Start`)} required>
+                                <Input
+                                    id={`${id}-start`}
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(event) => setStartDate(event.target.value)}
+                                    min="1900-01-01"
+                                    max="9999-12-31"
+                                    required
+                                    disabled={busy}
+                                />
+                            </Field>
+                            <Field htmlFor={`${id}-end`} label={t(`members.create.${kind}End`)} hint={t('members.create.endHint')}>
+                                <Input
+                                    id={`${id}-end`}
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(event) => setEndDate(event.target.value)}
+                                    min={startDate || '1900-01-01'}
+                                    max="9999-12-31"
+                                    disabled={busy}
+                                />
+                            </Field>
+                        </div>
+                    )}
+                </section>
+            )}
 
             <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
-                <Button type="button" variant="outline" disabled={busy} onClick={onCancel}>
-                    {t('common.cancel')}
+                <Button type="button" variant="outline" disabled={busy} onClick={createdId !== null ? onSaved : onCancel}>
+                    {createdId !== null ? t('common.close') : t('common.cancel')}
                 </Button>
-                <Button
-                    type="submit"
-                    disabled={
-                        busy ||
-                        schoolsQuery.loading ||
-                        Boolean(schoolsQuery.error) ||
-                        !schools.some((school) => String(school.id) === schoolId)
-                    }
-                >
-                    {busy
-                        ? t('common.saving')
-                        : person
-                            ? t('members.create.attach')
-                            : t('members.create.createAndAttach')}
-                </Button>
+                {!blocked && (
+                    <Button
+                        type="submit"
+                        disabled={
+                            busy ||
+                            (!ownSchool &&
+                                (schoolsQuery.loading ||
+                                    Boolean(schoolsQuery.error) ||
+                                    !schools.some((school) => String(school.id) === schoolId)))
+                        }
+                    >
+                        {busy
+                            ? t('common.saving')
+                            : person
+                                ? t('members.create.attach')
+                                : t('members.create.createAndAttach')}
+                    </Button>
+                )}
             </div>
         </form>
     );
