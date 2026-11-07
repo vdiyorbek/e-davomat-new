@@ -28,6 +28,8 @@ import { UserPersonLink } from '../modules/user-person-links/user-person-link.en
 import { StudentMembershipDetail } from 'src/modules/membership-details/student-membership-detail.entity';
 import { TeacherMembershipDetail } from 'src/modules/membership-details/teacher-membership-detail.entity';
 import { TerminalPersonSync } from '../modules/terminals/terminal-person-sync.entity';
+import { InspectorTalk } from 'src/modules/inspectors/inspector-talk.entity';
+import { InspectorMahalla } from 'src/modules/inspectors/inspector-mahalla.entity';
 function requiredEnv(name: string): string {
   const value = process.env[name];
 
@@ -80,6 +82,8 @@ export default new DataSource({
     TeacherMembershipDetail,
     TerminalPersonSync,
     TerminalPersonSyncCheck,
+    InspectorMahalla,
+    InspectorTalk,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],
