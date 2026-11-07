@@ -5,5 +5,6 @@
   "DISTRICT_ADMIN": "District administrator",
   "SCHOOL_ADMIN": "School administrator",
   "TEACHER": "Teacher",
-  "STUDENT": "Student"
+  "STUDENT": "Student",
+  "MAHALLA_INSPECTOR": "Neighbourhood inspector"
 }

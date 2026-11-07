@@ -5,5 +5,6 @@
   "DISTRICT_ADMIN": "Администратор района",
   "SCHOOL_ADMIN": "Администратор школы",
   "TEACHER": "Учитель",
-  "STUDENT": "Ученик"
+  "STUDENT": "Ученик",
+  "MAHALLA_INSPECTOR": "Участковый махалли"
 }
