@@ -8,7 +8,7 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
-
+import { UpdateTerminalDto } from './dto/update-terminal.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
 import { School } from '../schools/school.entity';
@@ -96,6 +96,75 @@ export class TerminalsService {
 
         if (driverError.code === 'ER_NO_REFERENCED_ROW_2') {
           throw new NotFoundException('Maktab topilmadi');
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async update(id: number, dto: UpdateTerminalDto) {
+    const terminal = await this.terminalsRepository.findOne({
+      where: { id },
+      relations: {
+        school: {
+          district: {
+            region: true,
+          },
+        },
+      },
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (dto.name !== undefined) {
+      terminal.name = dto.name;
+    }
+
+    if (dto.direction !== undefined) {
+      terminal.direction = dto.direction;
+    }
+
+    if (dto.protocol !== undefined) {
+      terminal.protocol = dto.protocol;
+    }
+
+    if (dto.host !== undefined) {
+      terminal.host = this.normalizeHost(dto.host);
+    }
+
+    if (dto.port !== undefined) {
+      terminal.port = dto.port;
+    }
+
+    if (dto.username !== undefined) {
+      terminal.username = dto.username;
+    }
+
+    if (dto.password !== undefined) {
+      terminal.passwordEncrypted = this.terminalCrypto.encrypt(dto.password);
+    }
+
+    if (dto.isActive !== undefined) {
+      terminal.isActive = dto.isActive;
+    }
+
+    try {
+      const saved = await this.terminalsRepository.save(terminal);
+
+      return this.toResponse(saved);
+    } catch (error: unknown) {
+      if (error instanceof QueryFailedError) {
+        const driverError = error.driverError as {
+          code?: string;
+        };
+
+        if (driverError.code === 'ER_DUP_ENTRY') {
+          throw new ConflictException(
+            'Ushbu IP manzil va port boshqa terminalda mavjud',
+          );
         }
       }
 

@@ -10,8 +10,9 @@ import {
   Param,
   ParseIntPipe,
   BadRequestException,
+  Patch,
 } from '@nestjs/common';
-
+import { UpdateTerminalDto } from './dto/update-terminal.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -33,6 +34,15 @@ export class TerminalsController {
   @Post()
   create(@Body() dto: CreateTerminalDto) {
     return this.terminalsService.create(dto);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTerminalDto,
+  ) {
+    return this.terminalsService.update(id, dto);
   }
 
   @Get()

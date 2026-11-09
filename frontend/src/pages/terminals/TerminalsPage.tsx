@@ -11,7 +11,9 @@ import {
     ScanFace,
     Settings2,
     Search,
+    Pencil,
 } from "lucide-react";
+import { EditTerminalForm } from "@/components/terminals/EditTerminalForm";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -240,7 +242,8 @@ function TerminalsTable({
 
     const [selectedTerminal, setSelectedTerminal] =
         useState<Terminal | null>(null);
-
+    const [editingTerminal, setEditingTerminal] =
+        useState<Terminal | null>(null);
     const params = new URLSearchParams({
         page: String(page),
         limit: String(limit),
@@ -494,20 +497,32 @@ function TerminalsTable({
                                             </td>
 
                                             <td className="px-3 py-3 text-right">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        setSelectedTerminal(terminal)
-                                                    }
-                                                >
-                                                    <Settings2
-                                                        aria-hidden="true"
-                                                        className="size-4"
-                                                    />
-                                                    Boshqarish
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    {canManage && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setEditingTerminal(terminal)}
+                                                        >
+                                                            <Pencil aria-hidden="true" className="size-4" />
+                                                            Tahrirlash
+                                                        </Button>
+                                                    )}
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setSelectedTerminal(terminal)}
+                                                    >
+                                                        <Settings2
+                                                            aria-hidden="true"
+                                                            className="size-4"
+                                                        />
+                                                        Boshqarish
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -533,6 +548,33 @@ function TerminalsTable({
                 onClose={() => setSelectedTerminal(null)}
                 onChanged={retry}
             />
+            <Dialog
+                open={editingTerminal !== null}
+                onOpenChange={(open) => {
+                    if (!open) setEditingTerminal(null);
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Terminalni tahrirlash</DialogTitle>
+                        <DialogDescription>
+                            Terminal ma’lumotlarini yangilash
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {editingTerminal && (
+                        <EditTerminalForm
+                            key={editingTerminal.id}
+                            terminal={editingTerminal}
+                            onCancel={() => setEditingTerminal(null)}
+                            onSaved={() => {
+                                setEditingTerminal(null);
+                                retry();
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

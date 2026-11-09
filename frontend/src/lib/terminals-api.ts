@@ -1,4 +1,4 @@
-import { authorizedPost } from "@/lib/auth-session";
+import { authorizedPost, authorizedPatch } from "@/lib/auth-session";
 
 import type {
   CreateTerminalInput,
@@ -17,4 +17,10 @@ export function checkTerminal(
     `/terminals/${terminalId}/check`,
     {},
   );
+}
+export function updateTerminal(
+  terminalId: number,
+  input: Partial<CreateTerminalInput>,
+): Promise<Terminal> {
+  return authorizedPatch<Terminal>(`/terminals/${terminalId}`, input);
 }
