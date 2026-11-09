@@ -47,7 +47,7 @@ export class GetTerminalsQueryDto {
   @Min(1)
   @Max(4294967295)
   regionId?: number;
-  
+
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -61,4 +61,8 @@ export class GetTerminalsQueryDto {
   @Matches(/^20\d{2}-\d{2}-\d{2}$/)
   @IsDateString({ strict: true })
   date?: string;
+
+  @IsOptional()
+  @IsEnum(['ACTIVE', 'ARCHIVED', 'ALL'])
+  archiveStatus?: 'ACTIVE' | 'ARCHIVED' | 'ALL';
 }

@@ -11,6 +11,7 @@ export interface Terminal {
   port: number;
   username: string;
   isActive: boolean;
+  archivedAt: string | null;
   model: string | null;
   serialNumber: string | null;
   lastCheckedAt: string | null;
@@ -70,5 +71,3 @@ export type TerminalCheckResponse =
       checkedAt: string;
       message: string;
     };
-
-    

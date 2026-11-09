@@ -16,6 +16,7 @@ import { Person } from '../persons/person.entity';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { GetMissingPersonsQueryDto } from './dto/get-missing-persons-query.dto';
 import {
   SchoolMembership,
   MembershipType,
@@ -426,6 +427,174 @@ export class PersonSyncService {
       requiresPhotoValidation,
       storedSyncStatus: result.sync.status,
       checkedAt: new Date().toISOString(),
+    };
+  }
+
+  async getMissingPersons(
+    terminalId: number,
+    user: AuthenticatedUser,
+    query: GetMissingPersonsQueryDto,
+  ) {
+    // Terminalga kirish huquqi va maktabni tekshirish.
+    await this.getPersonSyncPreview(terminalId, user);
+
+    const terminal = await this.terminalsRepository
+      .createQueryBuilder('terminal')
+      .addSelect('terminal.passwordEncrypted')
+      .where('terminal.id = :terminalId', { terminalId })
+      .getOneOrFail();
+
+    if (terminal.archivedAt) {
+      throw new BadRequestException(
+        'Arxivlangan terminalni tekshirib bo‘lmaydi',
+      );
+    }
+
+    if (!terminal.isActive) {
+      throw new BadRequestException('Terminal faol emas');
+    }
+
+    const today = this.todayInTashkent();
+
+    // Ushbu maktabdagi faol a'zoliklarni olamiz.
+    const rows = await this.membershipsRepository
+      .createQueryBuilder('membership')
+      .innerJoin('membership.person', 'person')
+      .select('person.id', 'personId')
+      .addSelect('person.pnfl', 'pnfl')
+      .addSelect('person.firstName', 'firstName')
+      .addSelect('person.lastName', 'lastName')
+      .addSelect('person.middleName', 'middleName')
+      .addSelect('person.photoUrl', 'photoUrl')
+      .addSelect('membership.type', 'membershipType')
+      .where('membership.schoolId = :schoolId', {
+        schoolId: terminal.schoolId,
+      })
+      .andWhere('membership.startDate <= :today', { today })
+      .andWhere('(membership.endDate IS NULL OR membership.endDate > :today)', {
+        today,
+      })
+      .andWhere('person.deletedAt IS NULL')
+      .andWhere('membership.type IN (:...types)', {
+        types: [MembershipType.STUDENT, MembershipType.TEACHER],
+      })
+      .getRawMany<{
+        personId: number | string;
+        pnfl: string;
+        firstName: string;
+        lastName: string;
+        middleName: string | null;
+        photoUrl: string | null;
+        membershipType: MembershipType;
+      }>();
+
+    type Candidate = {
+      personId: number;
+      fullName: string;
+      pnfl: string;
+      membershipTypes: MembershipType[];
+      hasPhotoUrl: boolean;
+    };
+
+    // Bir shaxsda bir nechta a'zolik bo'lishi mumkin.
+    const candidateMap = new Map<number, Candidate>();
+
+    for (const row of rows) {
+      const personId = Number(row.personId);
+
+      if (!Number.isSafeInteger(personId) || personId <= 0) {
+        continue;
+      }
+
+      const existing = candidateMap.get(personId);
+
+      if (existing) {
+        if (!existing.membershipTypes.includes(row.membershipType)) {
+          existing.membershipTypes.push(row.membershipType);
+        }
+        continue;
+      }
+
+      const fullName = [row.lastName, row.firstName, row.middleName]
+        .filter(Boolean)
+        .join(' ');
+
+      candidateMap.set(personId, {
+        personId,
+        fullName,
+        pnfl: row.pnfl,
+        membershipTypes: [row.membershipType],
+        hasPhotoUrl: Boolean(row.photoUrl?.trim()),
+      });
+    }
+
+    // Filtr: STUDENT, TEACHER yoki hammasi.
+    const persons = [...candidateMap.values()]
+      .filter(
+        (person) => !query.type || person.membershipTypes.includes(query.type),
+      )
+      .sort((a, b) => a.personId - b.personId);
+
+    // Terminaldagi shaxslarni faqat bir marta olamiz.
+    const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
+
+    const terminalUsers = await this.hikvision.getAllTerminalUsers(
+      terminal,
+      password,
+    );
+
+    const employeeNos = new Set(terminalUsers.map((item) => item.employeeNo));
+
+    let invalidPnfl = 0;
+
+    const missing: Array<{
+      personId: number;
+      fullName: string;
+      membershipTypes: MembershipType[];
+      hasPhotoUrl: boolean;
+      status: 'MISSING_USER';
+    }> = [];
+
+    for (const person of persons) {
+      if (!/^\d{14}$/.test(person.pnfl)) {
+        invalidPnfl++;
+        continue;
+      }
+
+      if (employeeNos.has(person.pnfl)) {
+        continue;
+      }
+
+      missing.push({
+        personId: person.personId,
+        fullName: person.fullName,
+        membershipTypes: person.membershipTypes,
+        hasPhotoUrl: person.hasPhotoUrl,
+        status: 'MISSING_USER',
+      });
+    }
+
+    const { page, limit } = query;
+    const total = missing.length;
+    const start = (page - 1) * limit;
+
+    return {
+      terminalId: terminal.id,
+      terminalName: terminal.name,
+      schoolId: terminal.schoolId,
+      type: query.type ?? 'ALL',
+      databasePersons: persons.length,
+      terminalPersons: terminalUsers.length,
+      missingCount: total,
+      invalidPnfl,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      data: missing.slice(start, start + limit),
+      checkedAt: new Date().toISOString(),
+      note:
+        'Solishtirish faqat PNFL va employeeNo orqali bajarildi. ' +
+        'Yuz yozuvi va rasm faylining haqiqiy holati alohida tekshiriladi.',
     };
   }
 

@@ -17,7 +17,7 @@ import { UpdateTerminalDto } from './dto/update-terminal.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
-
+import { GetMissingPersonsQueryDto } from './dto/get-missing-persons-query.dto';
 import { CreateTerminalDto } from './dto/create-terminal.dto';
 import { GetTerminalsQueryDto } from './dto/get-terminals-query.dto';
 import { TerminalsService } from './terminals.service';
@@ -479,5 +479,35 @@ export class TerminalsController {
   @Roles(UserRole.SUPER_ADMIN)
   archive(@Param('id', ParseIntPipe) id: number) {
     return this.terminalsService.archive(id);
+  }
+
+  @Post(':id/restore')
+  @HttpCode(200)
+  @Roles(UserRole.SUPER_ADMIN)
+  restore(@Param('id', ParseIntPipe) id: number) {
+    return this.terminalsService.restore(id);
+  }
+
+  @Get(':id/person-sync/missing-persons')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  getMissingPersons(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: GetMissingPersonsQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personSyncService.getMissingPersons(
+      id,
+      request.authUser,
+      query,
+    );
   }
 }

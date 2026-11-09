@@ -2,6 +2,10 @@ import { SelectField } from "@/components/common/SelectField";
 import { schoolScopeOptions } from "@/lib/school-scope";
 import type { School } from "@/types/school";
 import type { TerminalDirection } from "@/types/terminal";
+import { TerminalArchiveAction } from
+    "@/components/terminals/TerminalArchiveAction";
+import { TerminalPersonsOverview } from
+    "@/components/terminals/TerminalPersonsOverview";
 import { useState } from "react";
 import {
     ArrowDownToLine,
@@ -51,6 +55,7 @@ import type {
     Terminal,
     TerminalsPageResponse,
 } from "@/types/terminal";
+type ArchiveStatus = "ACTIVE" | "ARCHIVED" | "ALL";
 
 function terminalAddress(terminal: Terminal) {
     const host = terminal.host.includes(":")
@@ -177,7 +182,10 @@ function TerminalManagementDialog({
                             </dd>
                         </div>
                     </dl>
-
+                    <TerminalPersonsOverview
+                        key={terminal.id}
+                        terminalId={terminal.id}
+                    />
                     {canManage && (
                         <div className="space-y-4 border-t pt-4">
                             <h3 className="font-semibold">
@@ -220,7 +228,8 @@ function TerminalsTable({
     regionId,
     districtId,
     schoolId,
-    direction,
+    direction, archiveStatus,
+
     onPageChange,
     onLimitChange,
 }: {
@@ -231,6 +240,7 @@ function TerminalsTable({
     districtId: string;
     schoolId: string;
     direction: TerminalDirection | "";
+    archiveStatus: ArchiveStatus | "";
     onPageChange: (page: number) => void;
     onLimitChange: (limit: number) => void;
 }) {
@@ -255,6 +265,7 @@ function TerminalsTable({
     if (search.trim()) {
         params.set("search", search.trim());
     }
+    if (archiveStatus) params.set("archiveStatus", archiveStatus);
 
     const path = `/terminals?${params.toString()}`;
 
@@ -498,7 +509,7 @@ function TerminalsTable({
 
                                             <td className="px-3 py-3 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {canManage && (
+                                                    {canManage && !terminal.archivedAt && (
                                                         <Button
                                                             type="button"
                                                             variant="outline"
@@ -509,19 +520,26 @@ function TerminalsTable({
                                                             Tahrirlash
                                                         </Button>
                                                     )}
-
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setSelectedTerminal(terminal)}
-                                                    >
-                                                        <Settings2
-                                                            aria-hidden="true"
-                                                            className="size-4"
+                                                    {!terminal.archivedAt && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setSelectedTerminal(terminal)}
+                                                        >
+                                                            <Settings2
+                                                                aria-hidden="true"
+                                                                className="size-4"
+                                                            />
+                                                            Boshqarish
+                                                        </Button>
+                                                    )}
+                                                    {canManage && (
+                                                        <TerminalArchiveAction
+                                                            terminal={terminal}
+                                                            onChanged={retry}
                                                         />
-                                                        Boshqarish
-                                                    </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -582,7 +600,6 @@ function TerminalsTable({
 export function TerminalsPage() {
     const { t } = useTranslation();
     const { session } = useAuth();
-
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [searchInput, setSearchInput] = useState("");
@@ -590,6 +607,8 @@ export function TerminalsPage() {
     const [regionId, setRegionId] = useState("");
     const [districtId, setDistrictId] = useState("");
     const [schoolId, setSchoolId] = useState("");
+    const [archiveStatus, setArchiveStatus] =
+        useState<ArchiveStatus>("ACTIVE");
     const [direction, setDirection] =
         useState<TerminalDirection | "">("");
 
@@ -792,6 +811,39 @@ export function TerminalsPage() {
                             />
                         </div>
                     </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                            Arxiv holati
+                        </label>
+
+                        <SelectField
+                            value={archiveStatus}
+                            onValueChange={(value) => {
+                                if (
+                                    value === "ACTIVE" ||
+                                    value === "ARCHIVED" ||
+                                    value === "ALL"
+                                ) {
+                                    setArchiveStatus(value);
+                                    setPage(1);
+                                }
+                            }}
+                            options={[
+                                {
+                                    value: "ACTIVE",
+                                    label: "Arxivlanmagan terminallar",
+                                },
+                                {
+                                    value: "ARCHIVED",
+                                    label: "Arxivlangan terminallar",
+                                },
+                                {
+                                    value: "ALL",
+                                    label: "Barcha terminallar",
+                                },
+                            ]}
+                        />
+                    </div>
                 </CardContent>
             </Card>
 
@@ -802,6 +854,7 @@ export function TerminalsPage() {
                 search={search}
                 regionId={regionId}
                 districtId={districtId}
+                archiveStatus={archiveStatus}
                 schoolId={schoolId}
                 direction={direction}
                 onPageChange={setPage}

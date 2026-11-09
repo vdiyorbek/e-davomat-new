@@ -210,12 +210,58 @@ export class TerminalsService {
     };
   }
 
+  async restore(id: number) {
+    const terminal = await this.terminalsRepository.findOne({
+      where: { id },
+      relations: {
+        school: {
+          district: {
+            region: true,
+          },
+        },
+      },
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (!terminal.archivedAt) {
+      throw new ConflictException('Terminal arxivda emas');
+    }
+
+    // Arxivdan chiqaramiz, lekin avtomatik ishga tushirmaymiz.
+    // Super Admin ulanishni tekshirgach faollashtirishi mumkin.
+    terminal.archivedAt = null;
+    terminal.isActive = false;
+
+    const saved = await this.terminalsRepository.save(terminal);
+
+    return {
+      success: true,
+      message: 'Terminal arxivdan tiklandi',
+      terminalId: saved.id,
+      isActive: saved.isActive,
+      archivedAt: saved.archivedAt,
+    };
+  }
+
   async findAll(query: GetTerminalsQueryDto, user: AuthenticatedUser) {
     const builder = this.terminalsRepository
       .createQueryBuilder('terminal')
       .innerJoinAndSelect('terminal.school', 'school')
       .innerJoinAndSelect('school.district', 'district')
       .innerJoinAndSelect('district.region', 'region');
+
+    const archiveStatus = query.archiveStatus ?? 'ACTIVE';
+
+    if (archiveStatus === 'ACTIVE') {
+      builder.andWhere('terminal.archivedAt IS NULL');
+    }
+
+    if (archiveStatus === 'ARCHIVED') {
+      builder.andWhere('terminal.archivedAt IS NOT NULL');
+    }
 
     switch (user.role) {
       case UserRole.SUPER_ADMIN:
