@@ -11,7 +11,7 @@ import { HikvisionService } from './hikvision.service';
 import { HikvisionEventsService } from './hikvision-events.service';
 import { HikvisionPhotoService } from './hikvision-photo.service';
 import { SchoolMembership } from '../school-memberships/school-membership.entity';
-
+import { TerminalHealthScheduler } from './terminal-health.scheduler';
 import { Person } from '../persons/person.entity';
 import { PersonSyncService } from './person-sync.service';
 @Module({
@@ -32,6 +32,7 @@ import { PersonSyncService } from './person-sync.service';
     HikvisionService,
     HikvisionPhotoService,
     PersonSyncService,
+    TerminalHealthScheduler,
   ],
   exports: [
     TerminalCryptoService,
