@@ -168,6 +168,24 @@ export class TerminalsService {
       });
     }
 
+    if (query.search?.trim()) {
+      const search = `%${query.search.trim()}%`;
+
+      builder.andWhere(
+        `(
+      terminal.name LIKE :search
+      OR terminal.host LIKE :search
+      OR terminal.model LIKE :search
+      OR school.name LIKE :search
+      OR CAST(terminal.id AS CHAR) = :exactId
+    )`,
+        {
+          search,
+          exactId: query.search.trim(),
+        },
+      );
+    }
+
     if (query.direction !== undefined) {
       builder.andWhere('terminal.direction = :filterDirection', {
         filterDirection: query.direction,

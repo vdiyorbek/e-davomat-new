@@ -1,4 +1,7 @@
-
+import { SelectField } from "@/components/common/SelectField";
+import { schoolScopeOptions } from "@/lib/school-scope";
+import type { School } from "@/types/school";
+import type { TerminalDirection } from "@/types/terminal";
 import { useState } from "react";
 import {
     ArrowDownToLine,
@@ -7,9 +10,10 @@ import {
     RotateCw,
     ScanFace,
     Settings2,
+    Search,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Pagination } from "@/components/common/Pagination";
 import {
@@ -210,11 +214,21 @@ function TerminalManagementDialog({
 function TerminalsTable({
     page,
     limit,
+    search,
+    regionId,
+    districtId,
+    schoolId,
+    direction,
     onPageChange,
     onLimitChange,
 }: {
     page: number;
     limit: number;
+    search: string;
+    regionId: string;
+    districtId: string;
+    schoolId: string;
+    direction: TerminalDirection | "";
     onPageChange: (page: number) => void;
     onLimitChange: (limit: number) => void;
 }) {
@@ -227,7 +241,19 @@ function TerminalsTable({
     const [selectedTerminal, setSelectedTerminal] =
         useState<Terminal | null>(null);
 
-    const path = `/terminals?page=${page}&limit=${limit}`;
+    const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+    });
+    if (regionId) params.set("regionId", regionId);
+    if (districtId) params.set("districtId", districtId);
+    if (schoolId) params.set("schoolId", schoolId);
+    if (direction) params.set("direction", direction);
+    if (search.trim()) {
+        params.set("search", search.trim());
+    }
+
+    const path = `/terminals?${params.toString()}`;
 
     const { data, loading, error, retry } =
         useApiQuery<TerminalsPageResponse>(path);
@@ -517,6 +543,70 @@ export function TerminalsPage() {
 
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
+    const [searchInput, setSearchInput] = useState("");
+    const [search, setSearch] = useState("");
+    const [regionId, setRegionId] = useState("");
+    const [districtId, setDistrictId] = useState("");
+    const [schoolId, setSchoolId] = useState("");
+    const [direction, setDirection] =
+        useState<TerminalDirection | "">("");
+
+    const { data: schools } = useApiQuery<School[]>("/schools");
+
+    const scope = schoolScopeOptions(
+        schools,
+        regionId,
+        districtId,
+    );
+
+    const role = session?.profile.role;
+
+    const canSelectRegion = role === "SUPER_ADMIN";
+
+    const canSelectDistrict =
+        role === "SUPER_ADMIN" ||
+        role === "REGION_ADMIN";
+
+    const canSelectSchool =
+        canSelectDistrict ||
+        role === "DISTRICT_ADMIN";
+
+    function changeRegion(value: string) {
+        setRegionId(value);
+        setDistrictId("");
+        setSchoolId("");
+        setPage(1);
+    }
+
+    function changeDistrict(value: string) {
+        setDistrictId(value);
+        setSchoolId("");
+        setPage(1);
+    }
+
+    function changeSchool(value: string) {
+        setSchoolId(value);
+        setPage(1);
+    }
+
+    function changeDirection(value: string) {
+        if (value !== "" && value !== "IN" && value !== "OUT") {
+            return;
+        }
+
+        setDirection(value);
+        setPage(1);
+    }
+    function applySearch() {
+        setSearch(searchInput.trim());
+        setPage(1);
+    }
+
+    function clearSearch() {
+        setSearchInput("");
+        setSearch("");
+        setPage(1);
+    }
     const [showCreate, setShowCreate] = useState(false);
     const [refreshVersion, setRefreshVersion] = useState(0);
     const [success, setSuccess] = useState("");
@@ -548,11 +638,130 @@ export function TerminalsPage() {
             />
 
             {success && <SuccessNotice>{success}</SuccessNotice>}
+            <Card>
+                <CardContent className="p-4">
+                    <form
+                        className="flex flex-col gap-3 sm:flex-row"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            applySearch();
+                        }}
+                    >
+                        <div className="relative min-w-0 flex-1">
+                            <Search
+                                aria-hidden="true"
+                                className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                            />
+
+                            <Input
+                                value={searchInput}
+                                onChange={(event) =>
+                                    setSearchInput(event.target.value)
+                                }
+                                placeholder="Terminal nomi, IP, model, maktab yoki ID..."
+                                aria-label="Terminallarni qidirish"
+                                className="pl-10"
+                            />
+                        </div>
+
+                        <Button type="submit">
+                            <Search aria-hidden="true" />
+                            Qidirish
+                        </Button>
+
+                        {(search || searchInput) && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={clearSearch}
+                            >
+                                Tozalash
+                            </Button>
+                        )}
+                    </form>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardContent className="p-4">
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+                        {canSelectRegion && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    Viloyat
+                                </label>
+
+                                <SelectField
+                                    value={regionId}
+                                    onValueChange={changeRegion}
+                                    emptyOption="Barcha viloyatlar"
+                                    options={scope.regions}
+                                    searchable
+                                />
+                            </div>
+                        )}
+
+                        {canSelectDistrict && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    Tuman
+                                </label>
+
+                                <SelectField
+                                    value={districtId}
+                                    onValueChange={changeDistrict}
+                                    emptyOption="Barcha tumanlar"
+                                    options={scope.districts}
+                                    searchable
+                                />
+                            </div>
+                        )}
+
+                        {canSelectSchool && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    Maktab
+                                </label>
+
+                                <SelectField
+                                    value={schoolId}
+                                    onValueChange={changeSchool}
+                                    emptyOption="Barcha maktablar"
+                                    options={scope.schools}
+                                    searchable
+                                />
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                Terminal yo‘nalishi
+                            </label>
+
+                            <SelectField
+                                value={direction}
+                                onValueChange={changeDirection}
+                                emptyOption="Barcha yo‘nalishlar"
+                                options={[
+                                    { value: "IN", label: "Kirish" },
+                                    { value: "OUT", label: "Chiqish" },
+                                ]}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             <TerminalsTable
-                key={`${page}-${limit}-${refreshVersion}`}
+                key={`${page}-${limit}-${search}-${regionId}-${districtId}-${schoolId}-${direction}-${refreshVersion}`}
                 page={page}
                 limit={limit}
+                search={search}
+                regionId={regionId}
+                districtId={districtId}
+                schoolId={schoolId}
+                direction={direction}
                 onPageChange={setPage}
                 onLimitChange={(nextLimit) => {
                     setLimit(nextLimit);

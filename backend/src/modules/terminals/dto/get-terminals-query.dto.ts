@@ -8,6 +8,8 @@ import {
   Min,
   IsDateString,
   Matches,
+  IsString,
+  MaxLength,
 } from 'class-validator';
 
 import { TerminalDirection } from '../enums/terminal-direction.enum';
@@ -45,6 +47,11 @@ export class GetTerminalsQueryDto {
   @Min(1)
   @Max(4294967295)
   regionId?: number;
+  
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
 
   @IsOptional()
   @IsEnum(TerminalDirection)
