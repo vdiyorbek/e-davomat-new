@@ -436,13 +436,55 @@ export class PersonSyncService {
     query: GetMissingPersonsQueryDto,
   ) {
     // Terminalga kirish huquqi va maktabni tekshirish.
-    await this.getPersonSyncPreview(terminalId, user);
 
+    // Terminal va maktabning hududiy ma'lumotlarini olamiz.
     const terminal = await this.terminalsRepository
       .createQueryBuilder('terminal')
       .addSelect('terminal.passwordEncrypted')
+      .innerJoinAndSelect('terminal.school', 'school')
+      .innerJoinAndSelect('school.district', 'district')
+      .innerJoinAndSelect('district.region', 'region')
       .where('terminal.id = :terminalId', { terminalId })
-      .getOneOrFail();
+      .getOne();
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    // Administratorning terminalga kirish vakolatini tekshiramiz.
+    switch (user.role) {
+      case UserRole.SUPER_ADMIN:
+        break;
+
+      case UserRole.REGION_ADMIN:
+        if (
+          !user.regionId ||
+          terminal.school.district.region.id !== user.regionId
+        ) {
+          throw new ForbiddenException('Ushbu viloyat terminaliga ruxsat yo‘q');
+        }
+        break;
+
+      case UserRole.DISTRICT_ADMIN:
+        if (
+          !user.districtId ||
+          terminal.school.district.id !== user.districtId
+        ) {
+          throw new ForbiddenException('Ushbu tuman terminaliga ruxsat yo‘q');
+        }
+        break;
+
+      case UserRole.SCHOOL_ADMIN:
+        if (!user.schoolId || terminal.schoolId !== user.schoolId) {
+          throw new ForbiddenException('Ushbu maktab terminaliga ruxsat yo‘q');
+        }
+        break;
+
+      default:
+        throw new ForbiddenException(
+          'Terminal ma’lumotlarini ko‘rishga ruxsat yo‘q',
+        );
+    }
 
     if (terminal.archivedAt) {
       throw new BadRequestException(
