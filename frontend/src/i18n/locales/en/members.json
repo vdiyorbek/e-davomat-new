@@ -113,5 +113,26 @@
     "photoUncertain": "Could not confirm the photo upload. The person exists, but has not been assigned yet. You can upload the photo again.",
     "existsInScope": "This person already exists within your scope. Open their page to edit details or upload a photo.",
     "studentPhotoFailed": "The student was created, but the photo was not uploaded. Close this window and upload the photo again from the student's page."
+  },
+  "import": {
+    "button": "Upload from Excel",
+    "title": "Upload students from Excel",
+    "description": "Download the template first, fill it in and check it. Nothing is saved while checking.",
+    "hint": "Mahalla is the mahalla name in the school's district. Class is optional. Up to 1000 students per file.",
+    "template": "Download template",
+    "templateFailed": "Could not download the template.",
+    "file": "Excel file (.xlsx)",
+    "noFile": "Choose an Excel file.",
+    "check": "Check",
+    "checking": "Checking…",
+    "apply": "Import ({{count}})",
+    "applying": "Importing…",
+    "failed": "Could not process the file.",
+    "summaryCheck": "{{total}} rows in total: {{valid}} valid, {{failed}} with errors.",
+    "summaryDone": "{{created}} students added, {{failed}} rows skipped.",
+    "noErrors": "No errors, you can import.",
+    "row": "Row",
+    "message": "Error",
+    "imported": "Students imported."
   }
 }

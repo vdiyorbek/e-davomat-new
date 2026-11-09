@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Users, X } from 'lucide-react';
+import { FileSpreadsheet, Plus, Users, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { MembershipDetailsForm } from './MembershipDetailsForm';
@@ -25,6 +25,7 @@ import { CreateMemberForm } from './CreateMemberForm';
 import { EndMembershipForm } from './EndMembershipForm';
 import { SchoolMemberActions } from './SchoolMemberActions';
 import { TransferSchoolForm } from './TransferSchoolForm';
+import { ImportStudentsForm } from './ImportStudentsForm';
 
 type MembershipType = 'STUDENT' | 'TEACHER';
 
@@ -401,6 +402,7 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
     const { session } = useAuth();
 
     const [showCreate, setShowCreate] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const [success, setSuccess] = useState('');
     const [refreshVersion, setRefreshVersion] = useState(0);
 
@@ -435,17 +437,33 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
             description={schoolValue ? t(`members.${kind}.subtitleSchool`) : t(`members.${kind}.subtitle`)}
             actions={
                 canCreate ? (
-                    <Button
-                        type="button"
-                        className="w-full sm:w-auto"
-                        onClick={() => {
-                            setSuccess('');
-                            setShowCreate(true);
-                        }}
-                    >
-                        <Plus aria-hidden="true" />
-                        {t(`members.${kind}.add`)}
-                    </Button>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        {type === 'STUDENT' && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full sm:w-auto"
+                                onClick={() => {
+                                    setSuccess('');
+                                    setShowImport(true);
+                                }}
+                            >
+                                <FileSpreadsheet aria-hidden="true" />
+                                {t('members.import.button')}
+                            </Button>
+                        )}
+                        <Button
+                            type="button"
+                            className="w-full sm:w-auto"
+                            onClick={() => {
+                                setSuccess('');
+                                setShowCreate(true);
+                            }}
+                        >
+                            <Plus aria-hidden="true" />
+                            {t(`members.${kind}.add`)}
+                        </Button>
+                    </div>
                 ) : undefined
             }
         />
@@ -494,7 +512,6 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
             <SchoolMembersFilters />
 
             <MembersResults key={`${path}-${refreshVersion}`} path={path} type={type} onPageChange={changePage} />
-
             {canCreate && (
                 <Dialog open={showCreate} onOpenChange={setShowCreate}>
                     <DialogContent className="sm:max-w-3xl">
@@ -516,7 +533,29 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
                                 setRefreshVersion((value) => value + 1);
                             }}
                         />
-
+                    </DialogContent>
+                </Dialog>
+            )}
+            {canCreate && type === 'STUDENT' && (
+                <Dialog open={showImport} onOpenChange={setShowImport}>
+                    <DialogContent className="sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>{t('members.import.title')}</DialogTitle>
+                            <DialogDescription>{t('members.import.description')}</DialogDescription>
+                        </DialogHeader>
+                        {showImport && (
+                            <ImportStudentsForm
+                                onClose={() => setShowImport(false)}
+                                onImported={() => {
+                                    setShowImport(false);
+                                    setSuccess(t('members.import.imported'));
+                                    const next = new URLSearchParams(searchParams);
+                                    next.set('page', '1');
+                                    setSearchParams(next);
+                                    setRefreshVersion((value) => value + 1);
+                                }}
+                            />
+                        )}
                     </DialogContent>
                 </Dialog>
             )}

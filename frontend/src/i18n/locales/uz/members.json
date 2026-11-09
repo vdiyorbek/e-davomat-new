@@ -113,5 +113,26 @@
     "photoUncertain": "Rasm yuklash natijasini tasdiqlab bo‘lmadi. Shaxs yozuvi mavjud, lekin maktabga biriktirish hali bajarilmadi. Rasmni qayta yuklash mumkin.",
     "existsInScope": "Bu shaxs allaqachon sizning doirangizda mavjud. Ma’lumotlarini o‘zgartirish yoki rasm yuklash uchun uning sahifasini oching.",
     "studentPhotoFailed": "O‘quvchi yaratildi, lekin rasm yuklanmadi. Oynani yoping va o‘quvchi sahifasidan rasmni qayta yuklang."
+  },
+  "import": {
+    "button": "Excel orqali yuklash",
+    "title": "O‘quvchilarni Excel orqali yuklash",
+    "description": "Avval shablonni yuklab oling, to‘ldiring va tekshiring. Tekshirishda hech narsa saqlanmaydi.",
+    "hint": "Mahalla — maktab joylashgan tumandagi mahalla nomi. Sinf ixtiyoriy. Bir faylda 1000 tagacha o‘quvchi.",
+    "template": "Shablonni yuklab olish",
+    "templateFailed": "Shablonni yuklab bo‘lmadi.",
+    "file": "Excel fayl (.xlsx)",
+    "noFile": "Excel faylni tanlang.",
+    "check": "Tekshirish",
+    "checking": "Tekshirilmoqda…",
+    "apply": "Import qilish ({{count}})",
+    "applying": "Yuklanmoqda…",
+    "failed": "Faylni qayta ishlab bo‘lmadi.",
+    "summaryCheck": "Jami {{total}} ta qator: {{valid}} tasi to‘g‘ri, {{failed}} tasida xato.",
+    "summaryDone": "{{created}} ta o‘quvchi qo‘shildi, {{failed}} ta qator o‘tkazib yuborildi.",
+    "noErrors": "Xatolar yo‘q, import qilishingiz mumkin.",
+    "row": "Qator",
+    "message": "Xato",
+    "imported": "O‘quvchilar import qilindi."
   }
 }
