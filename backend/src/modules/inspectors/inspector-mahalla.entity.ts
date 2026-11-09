@@ -13,6 +13,7 @@ import { User } from '../users/user.entity';
 
 @Entity('inspector_mahallas')
 @Index('UQ_inspector_mahallas', ['userId', 'mahallaId'], { unique: true })
+@Index('IDX_inspector_mahallas_mahalla', ['mahallaId'])
 export class InspectorMahalla {
   @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
   id!: number;

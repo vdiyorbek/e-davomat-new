@@ -112,6 +112,15 @@ export class Terminal {
   })
   lastCheckedAt!: Date | null;
 
+  @Column({ type: 'datetime', precision: 3, nullable: true })
+  lastSeenAt!: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  lastError!: string | null;
+
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  consecutiveFailures!: number;
+
   @Column({
     type: 'datetime',
     precision: 3,
