@@ -216,4 +216,36 @@ export function parseBirthDate(raw: unknown): string | null | undefined {
 
 /** +998901234567 ko'rinishiga keltiradi; bo'sh bo'lsa null; noto'g'ri bo'lsa undefined. */
 export function normalizePhone(value: string): string | null | undefined {
-  const text =
+  const text = value.trim();
+
+  if (text === '') return null;
+
+  const digits = text.replace(/\D/g, '');
+
+  if (digits.length === 9) return `+998${digits}`;
+
+  if (digits.length === 12 && digits.startsWith('998')) return `+${digits}`;
+
+  const international = text.startsWith('+') ? `+${digits}` : null;
+
+  if (international && /^\+[1-9][0-9]{7,14}$/.test(international)) {
+    return international;
+  }
+
+  return undefined;
+}
+
+/** "5-a", "5 A" -> "5A". */
+export function normalizeClassName(value: string): string {
+  return value.toUpperCase().replace(/[\s\-_.]/g, '');
+}
+
+const MAHALLA_WORDS = new Set(['mfy', 'mahalla', 'махалла', 'мфй']);
+
+/** Mahalla nomini solishtirish uchun: "Navro'z MFY" -> "navroz". */
+export function normalizeMahallaName(value: string): string {
+  return normalizeHeader(value)
+    .split(' ')
+    .filter((word) => word !== '' && !MAHALLA_WORDS.has(word))
+    .join(' ');
+}
