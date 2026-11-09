@@ -118,6 +118,11 @@ export class TerminalsService {
     if (!terminal) {
       throw new NotFoundException('Terminal topilmadi');
     }
+    if (terminal.archivedAt) {
+      throw new ConflictException(
+        'Arxivlangan terminalni tahrirlash mumkin emas',
+      );
+    }
 
     if (dto.name !== undefined) {
       terminal.name = dto.name;
@@ -170,6 +175,39 @@ export class TerminalsService {
 
       throw error;
     }
+  }
+
+  async archive(id: number) {
+    const terminal = await this.terminalsRepository.findOne({
+      where: { id },
+      relations: {
+        school: {
+          district: {
+            region: true,
+          },
+        },
+      },
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (terminal.archivedAt) {
+      throw new ConflictException('Terminal allaqachon arxivlangan');
+    }
+
+    terminal.isActive = false;
+    terminal.archivedAt = new Date();
+
+    const saved = await this.terminalsRepository.save(terminal);
+
+    return {
+      success: true,
+      message: 'Terminal arxivlandi',
+      terminalId: saved.id,
+      archivedAt: saved.archivedAt,
+    };
   }
 
   async findAll(query: GetTerminalsQueryDto, user: AuthenticatedUser) {

@@ -92,6 +92,13 @@ export class Terminal {
   isActive!: boolean;
 
   @Column({
+    type: 'datetime',
+    precision: 3,
+    nullable: true,
+  })
+  archivedAt!: Date | null;
+
+  @Column({
     type: 'varchar',
     length: 100,
     nullable: true,

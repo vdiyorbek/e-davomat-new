@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   BadRequestException,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { UpdateTerminalDto } from './dto/update-terminal.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -472,5 +473,11 @@ export class TerminalsController {
         limit,
       },
     );
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  archive(@Param('id', ParseIntPipe) id: number) {
+    return this.terminalsService.archive(id);
   }
 }
