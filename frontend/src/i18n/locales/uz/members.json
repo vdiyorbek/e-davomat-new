@@ -81,10 +81,7 @@
     "chooseSchool": "Ro‘yxatdan maktabni tanlang.",
     "startDate": "Boshlanish sanasini to‘g‘ri kiriting.",
     "endDate": "Tugash sanasini to‘g‘ri kiriting.",
-    "chooseMahalla": "Yashash mahallasini tanlang.",
-    "photoUncertain": "...(mavjud matn o‘zgarmaydi)...",
-    "existsInScope": "Bu shaxs allaqachon sizning doirangizda mavjud. Ma’lumotlarini o‘zgartirish yoki rasm yuklash uchun uning sahifasini oching.",
-    "studentPhotoFailed": "O‘quvchi yaratildi, lekin rasm yuklanmadi. Oynani yoping va o‘quvchi sahifasidan rasmni qayta yuklang."
+    "chooseMahalla": "Yashash mahallasini tanlang."
   },
   "create": {
     "description": "Avval PNFL bo‘yicha tizimda shaxs bor-yo‘qligi tekshiriladi.",
@@ -113,6 +110,8 @@
     "createAndAttach": "Yaratish va biriktirish",
     "saveFailed": "Saqlashda xatolik yuz berdi.",
     "uncertain": "Biriktirish natijasini tasdiqlab bo‘lmadi. Oynani yoping va ro‘yxatni yangilab tekshiring. Shaxsni qaytadan yaratish shart emas.",
-    "photoUncertain": "Rasm yuklash natijasini tasdiqlab bo‘lmadi. Shaxs yozuvi mavjud, lekin maktabga biriktirish hali bajarilmadi. Rasmni qayta yuklash mumkin."
+    "photoUncertain": "Rasm yuklash natijasini tasdiqlab bo‘lmadi. Shaxs yozuvi mavjud, lekin maktabga biriktirish hali bajarilmadi. Rasmni qayta yuklash mumkin.",
+    "existsInScope": "Bu shaxs allaqachon sizning doirangizda mavjud. Ma’lumotlarini o‘zgartirish yoki rasm yuklash uchun uning sahifasini oching.",
+    "studentPhotoFailed": "O‘quvchi yaratildi, lekin rasm yuklanmadi. Oynani yoping va o‘quvchi sahifasidan rasmni qayta yuklang."
   }
 }

@@ -81,9 +81,7 @@
     "chooseSchool": "Choose a school from the list.",
     "startDate": "Enter a valid start date.",
     "endDate": "Enter a valid end date.",
-    "chooseMahalla": "Choose the residence mahalla.",
-    "existsInScope": "This person already exists within your scope. Open their page to edit details or upload a photo.",
-    "studentPhotoFailed": "The student was created, but the photo was not uploaded. Close this window and upload the photo again from the student's page."
+    "chooseMahalla": "Choose the residence mahalla."
   },
   "create": {
     "description": "First we check by PINFL whether the person already exists.",
@@ -112,6 +110,8 @@
     "createAndAttach": "Create and assign",
     "saveFailed": "Failed to save.",
     "uncertain": "Could not confirm the result. Close the window and refresh the list. There is no need to create the person again.",
-    "photoUncertain": "Could not confirm the photo upload. The person exists, but has not been assigned yet. You can upload the photo again."
+    "photoUncertain": "Could not confirm the photo upload. The person exists, but has not been assigned yet. You can upload the photo again.",
+    "existsInScope": "This person already exists within your scope. Open their page to edit details or upload a photo.",
+    "studentPhotoFailed": "The student was created, but the photo was not uploaded. Close this window and upload the photo again from the student's page."
   }
 }
