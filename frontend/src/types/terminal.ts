@@ -20,6 +20,11 @@ export interface Terminal {
   eventsSyncedUntil: string | null;
   createdAt: string;
   updatedAt: string;
+  healthStatus: "ONLINE" | "OFFLINE" | "UNKNOWN" | "DISABLED" | "ARCHIVED";
+
+  lastSeenAt: string | null;
+  lastError: string | null;
+  consecutiveFailures: number;
 
   school: {
     id: number;

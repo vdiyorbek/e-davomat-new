@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Archive,
     ArchiveRestore,
@@ -58,6 +58,21 @@ import type {
 
 type ArchiveStatus = "ACTIVE" | "ARCHIVED" | "ALL";
 type ActionMode = "archive" | "restore";
+
+function healthBadge(terminal: Terminal) {
+    switch (terminal.healthStatus) {
+        case "ONLINE":
+            return { text: "Online", tone: "success" as const };
+        case "OFFLINE":
+            return { text: "Offline", tone: "danger" as const };
+        case "ARCHIVED":
+            return { text: "Arxiv", tone: "neutral" as const };
+        case "DISABLED":
+            return { text: "O‘chirilgan", tone: "warning" as const };
+        default:
+            return { text: "Tekshirilmagan", tone: "neutral" as const };
+    }
+}
 
 type ArchiveAwareTerminal = Terminal & {
     archivedAt?: string | null;
@@ -221,16 +236,27 @@ function TerminalDetails({
                             <dd>{terminal.model ?? "—"}</dd>
                             <dt className="text-muted-foreground">Seriya raqami</dt>
                             <dd className="break-all">{terminal.serialNumber ?? "—"}</dd>
-                            <dt className="text-muted-foreground">Oxirgi tekshiruv</dt>
-                            <dd>{formatDateTime(terminal.lastCheckedAt, "—")}</dd>
                             <dt className="text-muted-foreground">Holat</dt>
                             <dd>
-                                {archived ? "Arxivlangan" : terminal.isActive ? "Faol" : "Nofaol"}
+                                <StatusBadge tone={healthBadge(terminal).tone}>
+                                    {healthBadge(terminal).text}
+                                </StatusBadge>
                             </dd>
+                            <dt className="text-muted-foreground">Oxirgi tekshiruv</dt>
+                            <dd>{formatDateTime(terminal.lastCheckedAt, "—")}</dd>
+                            <dt className="text-muted-foreground">Oxirgi muvaffaqiyatli ulanish</dt>
+                            <dd>{formatDateTime(terminal.lastSeenAt, "—")}</dd>
                         </dl>
-                        <p className="text-xs text-muted-foreground">
-                            Faol holat qurilma ayni damda online ekanini bildirmaydi.
-                        </p>
+                        {terminal.healthStatus === "OFFLINE" && terminal.lastError && (
+                            <p className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive break-words">
+                                Oxirgi xatolik: {terminal.lastError}
+                            </p>
+                        )}
+                        {terminal.healthStatus === "UNKNOWN" && (
+                            <p className="text-xs text-muted-foreground">
+                                Oxirgi ulanish tekshiruvi eskirgan yoki hali bajarilmagan.
+                            </p>
+                        )}
                     </div>
 
                     <div className="space-y-3">
@@ -314,6 +340,14 @@ export function TerminalsPage() {
     const terminals = useApiQuery<TerminalsPageResponse>(
         `/terminals?${params.toString()}`,
     );
+
+    // Backend 2 daqiqada HealthCheck qiladi; jadval 30 soniyada natijani yangilaydi.
+    const retryRef = useRef(terminals.retry);
+    retryRef.current = terminals.retry;
+    useEffect(() => {
+        const interval = window.setInterval(() => retryRef.current(), 30_000);
+        return () => window.clearInterval(interval);
+    }, []);
 
     function refresh() {
         terminals.retry();
@@ -501,6 +535,9 @@ export function TerminalsPage() {
                                 <option value={50}>50 / sahifa</option>
                                 <option value={100}>100 / sahifa</option>
                             </select>
+                            <span className="hidden text-xs text-muted-foreground sm:inline">
+                                Avto-yangilash: 30 s
+                            </span>
                             <Button type="button" size="sm" variant="outline" onClick={refresh}>
                                 <RefreshCw aria-hidden="true" className="size-4" />
                                 Yangilash
@@ -545,8 +582,8 @@ export function TerminalsPage() {
                                                     </td>
                                                     <td className="px-3 py-3 font-mono text-xs">{terminal.host}</td>
                                                     <td className="px-3 py-3">
-                                                        <StatusBadge tone={archived ? "neutral" : terminal.isActive ? "success" : "warning"}>
-                                                            {archived ? "Arxiv" : terminal.isActive ? "Faol" : "Nofaol"}
+                                                        <StatusBadge tone={healthBadge(terminal).tone}>
+                                                            {healthBadge(terminal).text}
                                                         </StatusBadge>
                                                     </td>
                                                     <td className="px-3 py-3">

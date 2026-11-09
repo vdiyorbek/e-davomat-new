@@ -462,6 +462,11 @@ export class TerminalsService {
       isActive: terminal.isActive,
       model: terminal.model,
       serialNumber: terminal.serialNumber,
+      archivedAt: terminal.archivedAt,
+      healthStatus: this.getTerminalHealthStatus(terminal),
+      lastSeenAt: terminal.lastSeenAt,
+      lastError: terminal.lastError,
+      consecutiveFailures: terminal.consecutiveFailures,
       lastCheckedAt: terminal.lastCheckedAt,
       lastSuccessfulSyncAt: terminal.lastSuccessfulSyncAt,
       syncStartAt: terminal.syncStartAt,
@@ -679,6 +684,8 @@ export class TerminalsService {
     if (!info) {
       await this.terminalsRepository.update(id, {
         lastCheckedAt: checkedAt,
+        lastError: message.slice(0, 255),
+        consecutiveFailures: () => '`consecutiveFailures` + 1',
       });
 
       return {
@@ -693,6 +700,9 @@ export class TerminalsService {
       model: info.model,
       serialNumber: info.serialNumber,
       lastCheckedAt: checkedAt,
+      lastSeenAt: checkedAt,
+      lastError: null,
+      consecutiveFailures: 0,
     });
 
     return {
@@ -1499,5 +1509,46 @@ export class TerminalsService {
       schoolId: terminal.schoolId,
       checkedAt: new Date().toISOString(),
     };
+  }
+
+  private getTerminalHealthStatus(
+    terminal: Terminal,
+  ): 'ONLINE' | 'OFFLINE' | 'UNKNOWN' | 'DISABLED' | 'ARCHIVED' {
+    if (terminal.archivedAt) return 'ARCHIVED';
+    if (!terminal.isActive) return 'DISABLED';
+
+    if (!terminal.lastCheckedAt) return 'UNKNOWN';
+
+    const now = Date.now();
+    const checkedAt = new Date(terminal.lastCheckedAt).getTime();
+    const maxAgeMs = 5 * 60 * 1000;
+
+    // HealthCheck 5 daqiqadan beri yangilanmagan
+    // bo'lsa, eski natijaga ishonmaymiz.
+    if (
+      !Number.isFinite(checkedAt) ||
+      checkedAt > now + 60_000 ||
+      now - checkedAt > maxAgeMs
+    ) {
+      return 'UNKNOWN';
+    }
+
+    if (terminal.consecutiveFailures > 0 || Boolean(terminal.lastError)) {
+      return 'OFFLINE';
+    }
+
+    if (!terminal.lastSeenAt) return 'UNKNOWN';
+
+    const seenAt = new Date(terminal.lastSeenAt).getTime();
+
+    if (
+      Number.isFinite(seenAt) &&
+      Math.abs(checkedAt - seenAt) <= 30_000 &&
+      now - seenAt <= maxAgeMs
+    ) {
+      return 'ONLINE';
+    }
+
+    return 'UNKNOWN';
   }
 }
