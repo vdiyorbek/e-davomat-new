@@ -88,6 +88,77 @@ function systemBadge(terminal: Terminal) {
     return { text: "Faol", tone: "info" as const };
 }
 
+
+function syncBadge(
+    terminal: Terminal,
+    now: number,
+) {
+    if (isArchived(terminal) || !terminal.isActive) {
+        return {
+            text: "O‘chirilgan",
+            tone: "neutral" as const,
+            delay: "—",
+        };
+    }
+
+    if (!terminal.syncStartAt) {
+        return {
+            text: "Boshlanmagan",
+            tone: "warning" as const,
+            delay: "—",
+        };
+    }
+
+    const cursor = terminal.eventsSyncedUntil
+        ? new Date(terminal.eventsSyncedUntil).getTime()
+        : new Date(terminal.syncStartAt).getTime();
+
+    if (!Number.isFinite(cursor)) {
+        return {
+            text: "Noma’lum",
+            tone: "neutral" as const,
+            delay: "—",
+        };
+    }
+
+    const delaySeconds = Math.max(
+        0,
+        Math.floor((now - cursor) / 1000),
+    );
+
+    const delayMinutes = Math.floor(delaySeconds / 60);
+
+    const delay =
+        delayMinutes >= 1440
+            ? `${Math.floor(delayMinutes / 1440)} kun`
+            : delayMinutes >= 60
+                ? `${Math.floor(delayMinutes / 60)} soat`
+                : `${delayMinutes} daqiqa`;
+
+    if (!terminal.eventsSyncedUntil) {
+        return {
+            text: "Kutilmoqda",
+            tone: "warning" as const,
+            delay,
+        };
+    }
+
+    if (delaySeconds <= 600) {
+        return {
+            text: "Me’yorda",
+            tone: "success" as const,
+            delay,
+        };
+    }
+
+    return {
+        text: "Kechikmoqda",
+        tone: "danger" as const,
+        delay,
+    };
+}
+
+
 type ArchiveAwareTerminal = Terminal & {
     archivedAt?: string | null;
 };
@@ -266,6 +337,29 @@ function TerminalDetails({
                             <dd>{formatDateTime(terminal.lastCheckedAt, "—")}</dd>
                             <dt className="text-muted-foreground">Oxirgi muvaffaqiyatli ulanish</dt>
                             <dd>{formatDateTime(terminal.lastSeenAt, "—")}</dd>
+
+                            <dt className="text-muted-foreground">
+                                Sinxronlash boshlangan
+                            </dt>
+                            <dd>
+                                {formatDateTime(terminal.syncStartAt, "—")}
+                            </dd>
+
+                            <dt className="text-muted-foreground">
+                                Eventlar olingan vaqtgacha
+                            </dt>
+                            <dd>
+                                {formatDateTime(terminal.eventsSyncedUntil, "—")}
+                            </dd>
+
+                            <dt className="text-muted-foreground">
+                                Oxirgi muvaffaqiyatli sync
+                            </dt>
+                            <dd>
+                                {formatDateTime(terminal.lastSuccessfulSyncAt, "—")}
+                            </dd>
+
+
                         </dl>
                         {terminal.healthStatus === "OFFLINE" && terminal.lastError && (
                             <p className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive break-words">
@@ -338,6 +432,15 @@ export function TerminalsPage() {
     const canSelectRegion = role === "SUPER_ADMIN";
     const canSelectDistrict = canSelectRegion || role === "REGION_ADMIN";
     const canSelectSchool = canSelectDistrict || role === "DISTRICT_ADMIN";
+    const [syncNow, setSyncNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            setSyncNow(Date.now());
+        }, 30_000);
+
+        return () => window.clearInterval(interval);
+    }, []);
 
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
@@ -587,7 +690,7 @@ export function TerminalsPage() {
                     ) : (
                         <>
                             <div className="overflow-x-auto rounded-xl border">
-                                <table className="w-full min-w-[900px] text-left text-sm">
+                                <table className="w-full min-w-[1050px] text-left text-sm">
                                     <thead className="bg-muted/60 text-xs text-muted-foreground">
                                         <tr>
                                             <th className="px-3 py-3">ID</th>
@@ -597,6 +700,7 @@ export function TerminalsPage() {
                                             <th className="px-3 py-3">IP manzil</th>
                                             <th className="px-3 py-3">Ulanish</th>
                                             <th className="px-3 py-3">Tizim holati</th>
+                                            <th className="px-3 py-3">Sinxronlash</th>
                                             <th className="px-3 py-3 text-right">Amallar</th>
                                         </tr>
                                     </thead>
@@ -625,6 +729,19 @@ export function TerminalsPage() {
                                                             {systemBadge(terminal).text}
                                                         </StatusBadge>
                                                     </td>
+
+                                                    <td className="px-3 py-3">
+                                                        <div className="space-y-1">
+                                                            <StatusBadge tone={syncBadge(terminal, syncNow).tone}>
+                                                                {syncBadge(terminal, syncNow).text}
+                                                            </StatusBadge>
+
+                                                            <div className="text-xs text-muted-foreground">
+                                                                Kechikish: {syncBadge(terminal, syncNow).delay}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
                                                     <td className="px-3 py-3">
                                                         <div className="flex justify-end gap-1">
                                                             <Button
