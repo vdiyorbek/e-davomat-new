@@ -1,12 +1,11 @@
 import {
   BadGatewayException,
   BadRequestException,
-  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-
+import { EventSyncTerminalLockService } from './event-sync-terminal-lock.service';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
@@ -32,10 +31,6 @@ interface SyncStatistics {
 
 @Injectable()
 export class AttendanceEventsService {
-  // Hozir bitta Nest jarayoni ichida parallel ishga tushishni cheklaydi.
-  // Worker bosqichida Redis orqali umumiy qulf qo‘shamiz.
-  private readonly runningTerminals = new Set<number>();
-
   constructor(
     private readonly dataSource: DataSource,
 
@@ -44,6 +39,8 @@ export class AttendanceEventsService {
 
     private readonly terminalCrypto: TerminalCryptoService,
     private readonly hikvisionEvents: HikvisionEventsService,
+
+    private readonly eventSyncLock: EventSyncTerminalLockService,
   ) {}
 
   async sync(dto: SyncAttendanceEventsDto) {
@@ -70,11 +67,7 @@ export class AttendanceEventsService {
       );
     }
 
-    if (this.runningTerminals.has(dto.terminalId)) {
-      throw new ConflictException('Ushbu terminaldan eventlar hozir olinmoqda');
-    }
-
-    this.runningTerminals.add(dto.terminalId);
+    const lease = await this.eventSyncLock.acquire(dto.terminalId);
 
     try {
       const terminal = await this.terminalsRepository
@@ -124,6 +117,9 @@ export class AttendanceEventsService {
           dto.startTime,
           dto.endTime,
         )) {
+          // Har bir sahifa alohida tranzaksiyada saqlanadi.
+          await lease.assertOwned();
+
           // Har bir sahifa alohida tranzaksiyada saqlanadi.
           const pageStatistics = await this.dataSource.transaction(
             async (manager): Promise<SyncStatistics> => {
@@ -215,7 +211,7 @@ export class AttendanceEventsService {
                   throw error;
                 }
               }
-
+              await lease.assertOwned();
               return counts;
             },
           );
@@ -244,7 +240,7 @@ export class AttendanceEventsService {
             : 'Terminaldan eventlarni olib bo‘lmadi',
         );
       }
-
+      await lease.assertOwned();
       return {
         success: true,
         terminalId: terminal.id,
@@ -254,7 +250,7 @@ export class AttendanceEventsService {
         ...statistics,
       };
     } finally {
-      this.runningTerminals.delete(dto.terminalId);
+      await lease.release();
     }
   }
 }
