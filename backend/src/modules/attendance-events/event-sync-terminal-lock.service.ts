@@ -38,10 +38,16 @@ export class EventSyncTerminalLockService {
 
   constructor(private readonly redisService: RedisService) {}
 
-  async acquire(terminalId: number): Promise<EventSyncLease> {
+  async acquire(
+    terminalId: number,
+    scope: 'events' | 'run' = 'events',
+  ): Promise<EventSyncLease> {
     const redis = this.redisService.getClient();
 
-    const key = `edavomat:event-sync:terminal:${terminalId}:lock`;
+    const key =
+      scope === 'run'
+        ? `edavomat:terminal-sync:run:${terminalId}:lock`
+        : `edavomat:event-sync:terminal:${terminalId}:lock`;
 
     const token = randomUUID();
 
