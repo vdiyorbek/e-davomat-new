@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -29,5 +37,16 @@ export class AttendanceEventsController {
     @Body() dto: DownloadEventPhotosDto,
   ): Promise<DownloadEventPhotosResponse> {
     return this.attendanceEventPhotosService.downloadPending(dto);
+  }
+
+  @Get('photos/stats')
+  getPhotoStats() {
+    return this.attendanceEventPhotosService.getPhotoStats();
+  }
+
+  @Post('photos/:terminalId/retry-missing')
+  @HttpCode(200)
+  retryMissingPhotos(@Param('terminalId', ParseIntPipe) terminalId: number) {
+    return this.attendanceEventPhotosService.retryMissingPhotos(terminalId);
   }
 }

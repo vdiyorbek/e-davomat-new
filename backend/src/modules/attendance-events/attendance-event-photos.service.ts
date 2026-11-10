@@ -52,6 +52,140 @@ export class AttendanceEventPhotosService {
     private readonly eventSyncLock: EventSyncTerminalLockService,
   ) {}
 
+  async getPhotoStats() {
+    const rows = await this.eventsRepository
+      .createQueryBuilder('event')
+      .select('event.terminalId', 'terminalId')
+      .addSelect('event.photoStatus', 'status')
+      .addSelect('COUNT(*)', 'total')
+      .groupBy('event.terminalId')
+      .addGroupBy('event.photoStatus')
+      .orderBy('event.terminalId', 'ASC')
+      .getRawMany<{
+        terminalId: string | number;
+        status: EventPhotoStatus;
+        total: string;
+      }>();
+
+    const stats = new Map<
+      number,
+      {
+        terminalId: number;
+        total: number;
+        pending: number;
+        downloaded: number;
+        failed: number;
+        missing: number;
+      }
+    >();
+
+    for (const row of rows) {
+      const terminalId = Number(row.terminalId);
+      const count = Number(row.total);
+
+      let item = stats.get(terminalId);
+
+      if (!item) {
+        item = {
+          terminalId,
+          total: 0,
+          pending: 0,
+          downloaded: 0,
+          failed: 0,
+          missing: 0,
+        };
+
+        stats.set(terminalId, item);
+      }
+
+      item.total += count;
+
+      switch (row.status) {
+        case EventPhotoStatus.PENDING:
+          item.pending += count;
+          break;
+
+        case EventPhotoStatus.DOWNLOADED:
+          item.downloaded += count;
+          break;
+
+        case EventPhotoStatus.FAILED:
+          item.failed += count;
+          break;
+
+        case EventPhotoStatus.MISSING:
+          item.missing += count;
+          break;
+      }
+    }
+
+    return {
+      success: true,
+      terminals: Array.from(stats.values()),
+    };
+  }
+
+  async retryMissingPhotos(terminalId: number) {
+    if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
+      throw new BadRequestException('Terminal ID noto‘g‘ri');
+    }
+
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    // Har bir so'rovda ko'pi bilan 100 ta rasmni
+    // qayta tekshirish uchun tayyorlaymiz.
+    const events = await this.eventsRepository
+      .createQueryBuilder('event')
+      .select('event.id')
+      .where('event.terminalId = :terminalId', {
+        terminalId,
+      })
+      .andWhere('event.photoStatus = :status', {
+        status: EventPhotoStatus.MISSING,
+      })
+      .andWhere('event.sourcePictureUrl IS NOT NULL')
+      .andWhere("event.sourcePictureUrl <> ''")
+      .orderBy('event.id', 'ASC')
+      .take(100)
+      .getMany();
+
+    if (events.length === 0) {
+      return {
+        success: true,
+        terminalId,
+        reset: 0,
+      };
+    }
+
+    const ids = events.map((event) => event.id);
+
+    const result = await this.eventsRepository
+      .createQueryBuilder()
+      .update(AttendanceEvent)
+      .set({
+        photoStatus: EventPhotoStatus.PENDING,
+        photoAttempts: 0,
+        photoLastAttemptAt: null,
+      })
+      .whereInIds(ids)
+      .andWhere('photoStatus = :status', {
+        status: EventPhotoStatus.MISSING,
+      })
+      .execute();
+
+    return {
+      success: true,
+      terminalId,
+      reset: result.affected ?? 0,
+    };
+  }
+
   async downloadPending(
     dto: DownloadEventPhotosDto,
   ): Promise<DownloadEventPhotosResponse> {
