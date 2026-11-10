@@ -30,6 +30,13 @@ export class TerminalSyncService {
     // Yangi event terminal jurnaliga yozilishi uchun ozgina vaqt qoldiramiz.
     const targetMs = Date.now() - 30_000;
 
+    // Shu run() davomida muvaffaqiyatli hisoblangan
+    // maktab va sanalarni eslab turamiz.
+    const rebuiltDates = new Set<string>();
+
+    let rebuiltCount = 0;
+    let skippedRebuildCount = 0;
+
     for (let windowIndex = 0; windowIndex < 6; windowIndex++) {
       const terminal = await this.terminalsRepository.findOneBy({
         id: terminalId,
@@ -63,11 +70,35 @@ export class TerminalSyncService {
       });
 
       // Oraliq ikki Toshkent sanasiga tushsa, ikkala kun hisoblanadi.
+
+      // Vaqt oralig'i ikki Toshkent sanasiga tushsa,
+      // ikkala sanani alohida ko'rib chiqamiz.
       for (const date of this.getTashkentDates(startAt, endAt)) {
+        const rebuildKey = `${terminal.schoolId}:${date}`;
+
+        // Agar ushbu maktab va sana shu run() ichida
+        // muvaffaqiyatli hisoblangan bo'lsa va
+        // yangi event yozilmagan bo'lsa, takroriy
+        // to'liq hisoblashni o'tkazib yuboramiz.
+        const canSkipRebuild =
+          result.inserted === 0 && rebuiltDates.has(rebuildKey);
+
+        if (canSkipRebuild) {
+          skippedRebuildCount++;
+          continue;
+        }
+
+        // Yangi event mavjud bo'lsa yoki sana birinchi
+        // marta uchrasa, to'liq hisoblaymiz.
         await this.dailyAttendanceService.rebuild({
           schoolId: terminal.schoolId,
           date,
         });
+
+        // Faqat rebuild muvaffaqiyatli tugagandan
+        // keyin hisoblangan deb belgilaymiz.
+        rebuiltDates.add(rebuildKey);
+        rebuiltCount++;
       }
 
       // Eventlar va kunlik hisob muvaffaqiyatli tugagandan keyingina
@@ -106,7 +137,9 @@ export class TerminalSyncService {
           `${startAt.toISOString()} → ${endAt.toISOString()}; ` +
           `olindi=${result.fetched}, ` +
           `yangi=${result.inserted}, ` +
-          `takror=${result.duplicates}`,
+          `takror=${result.duplicates}, ` +
+          `rebuild=${rebuiltCount}, ` +
+          `rebuildSkipped=${skippedRebuildCount}`,
       );
 
       if (
