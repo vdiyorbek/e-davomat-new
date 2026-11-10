@@ -37,6 +37,38 @@ export interface DownloadEventPhotosResponse {
   results: PhotoResult[];
 }
 
+function getSafePhotoError(
+  error: unknown,
+  stage: 'download' | 'storage',
+): string {
+  if (stage === 'storage') {
+    return 'Rasmni server diskiga saqlab bo‘lmadi';
+  }
+
+  if (error instanceof HikvisionPhotoPermanentError) {
+    return error.message.slice(0, 500);
+  }
+
+  if (!(error instanceof Error)) {
+    return 'Rasmni yuklashda noma’lum xatolik';
+  }
+
+  const allowedMessages = [
+    'Rasmni olish vaqti tugadi',
+    'Terminal rasmni olishga ruxsat bermadi',
+    'Terminal Digest ma’lumotini qaytarmadi',
+    'Terminal bo‘sh rasm qaytardi',
+    'Rasmni olib bo‘lmadi:',
+    'Rasm so‘rovi HTTP ',
+  ];
+
+  if (allowedMessages.some((prefix) => error.message.startsWith(prefix))) {
+    return error.message.slice(0, 500);
+  }
+
+  return 'Rasmni yuklashda kutilmagan xatolik';
+}
+
 @Injectable()
 export class AttendanceEventPhotosService {
   constructor(
@@ -87,6 +119,7 @@ export class AttendanceEventPhotosService {
         'event.photoStatus',
         'event.photoAttempts',
         'event.photoLastAttemptAt',
+        'event.photoLastError',
       ])
       .orderBy('event.eventAt', 'DESC')
       .addOrderBy('event.id', 'DESC')
@@ -104,6 +137,7 @@ export class AttendanceEventPhotosService {
         status: event.photoStatus,
         attempts: event.photoAttempts,
         lastAttemptAt: event.photoLastAttemptAt,
+        lastError: event.photoLastError,
       })),
     };
   }
@@ -181,6 +215,90 @@ export class AttendanceEventPhotosService {
     };
   }
 
+  async retrySinglePhoto(terminalId: number, eventId: string) {
+    if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
+      throw new BadRequestException('Terminal ID noto‘g‘ri');
+    }
+
+    if (!/^[1-9]\d{0,19}$/.test(eventId)) {
+      throw new BadRequestException('Event ID noto‘g‘ri');
+    }
+
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (!terminal.isActive) {
+      throw new BadRequestException('Terminal nofaol');
+    }
+
+    const event = await this.eventsRepository
+      .createQueryBuilder('event')
+      .addSelect('event.sourcePictureUrl')
+      .where('event.id = :eventId', { eventId })
+      .andWhere('event.terminalId = :terminalId', { terminalId })
+      .getOne();
+
+    if (!event) {
+      throw new NotFoundException('Event topilmadi');
+    }
+
+    if (
+      ![EventPhotoStatus.FAILED, EventPhotoStatus.MISSING].includes(
+        event.photoStatus,
+      )
+    ) {
+      throw new BadRequestException(
+        'Faqat FAILED yoki MISSING holatidagi rasmni qayta tekshirish mumkin',
+      );
+    }
+
+    if (!event.sourcePictureUrl?.trim()) {
+      throw new BadRequestException('Eventda rasm manzili mavjud emas');
+    }
+
+    if (event.photoPath) {
+      throw new BadRequestException('Eventda saqlangan rasm manzili mavjud');
+    }
+
+    const update = this.eventsRepository
+      .createQueryBuilder()
+      .update(AttendanceEvent)
+      .set({
+        photoStatus: EventPhotoStatus.PENDING,
+        photoAttempts: 0,
+        photoLastAttemptAt: null,
+      })
+      .where('id = :eventId', { eventId })
+      .andWhere('terminalId = :terminalId', { terminalId })
+      .andWhere('photoStatus IN (:...statuses)', {
+        statuses: [EventPhotoStatus.FAILED, EventPhotoStatus.MISSING],
+      })
+      .andWhere('photoPath IS NULL')
+      .andWhere('sourcePictureUrl IS NOT NULL')
+      .andWhere("TRIM(sourcePictureUrl) <> ''");
+
+    const updated = await update.execute();
+
+    if (updated.affected !== 1) {
+      throw new BadRequestException(
+        'Rasm holati o‘zgargan. Ro‘yxatni yangilang',
+      );
+    }
+
+    return {
+      success: true,
+      terminalId,
+      eventId,
+      status: EventPhotoStatus.PENDING,
+      message: 'Rasm qayta yuklashga tayyorlandi',
+    };
+  }
+
   async retryMissingPhotos(terminalId: number) {
     if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
       throw new BadRequestException('Terminal ID noto‘g‘ri');
@@ -228,6 +346,7 @@ export class AttendanceEventPhotosService {
         photoStatus: EventPhotoStatus.PENDING,
         photoAttempts: 0,
         photoLastAttemptAt: null,
+        photoLastError: null,
       })
       .whereInIds(ids)
       .andWhere('photoStatus = :status', {
@@ -336,6 +455,7 @@ export class AttendanceEventPhotosService {
         if (!event.sourcePictureUrl) {
           await this.eventsRepository.update(event.id, {
             photoStatus: EventPhotoStatus.MISSING,
+            photoLastError: 'Eventda rasm manzili mavjud emas',
           });
 
           results.push({
@@ -396,6 +516,7 @@ export class AttendanceEventPhotosService {
           const updated = await this.eventsRepository.update(event.id, {
             photoPath: relativePath,
             photoStatus: EventPhotoStatus.DOWNLOADED,
+            photoLastError: null,
           });
 
           if (updated.affected !== 1) {
@@ -436,17 +557,17 @@ export class AttendanceEventPhotosService {
 
           await lease.assertOwned();
 
+          const errorMessage = getSafePhotoError(error, stage);
+
           await this.eventsRepository.update(event.id, {
             photoStatus: nextStatus,
+            photoLastError: errorMessage,
           });
 
           results.push({
             eventId: event.id,
             status: nextStatus,
-            message:
-              stage === 'download' && error instanceof Error
-                ? error.message
-                : 'Rasmni server diskiga saqlab bo‘lmadi',
+            message: errorMessage,
           });
         }
       }

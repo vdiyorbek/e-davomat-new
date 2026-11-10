@@ -67,4 +67,16 @@ export class AttendanceEventsController {
 
     return this.attendanceEventPhotosService.getPhotoIssues(terminalId, limit);
   }
+
+  @Post('photos/:terminalId/events/:eventId/retry')
+  @HttpCode(200)
+  retrySinglePhoto(
+    @Param('terminalId', ParseIntPipe) terminalId: number,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.attendanceEventPhotosService.retrySinglePhoto(
+      terminalId,
+      eventId,
+    );
+  }
 }

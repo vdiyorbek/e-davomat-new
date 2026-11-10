@@ -143,6 +143,13 @@ export class AttendanceEvent {
   })
   photoLastAttemptAt!: Date | null;
 
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
+  photoLastError!: string | null;
+
   @CreateDateColumn({
     type: 'datetime',
     precision: 3,
