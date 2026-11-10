@@ -59,19 +59,33 @@ import type {
 type ArchiveStatus = "ACTIVE" | "ARCHIVED" | "ALL";
 type ActionMode = "archive" | "restore";
 
-function healthBadge(terminal: Terminal) {
+// Qurilmaning tarmoq holati: faqat HealthCheck ma'lumotlariga asoslanadi.
+function connectionBadge(terminal: Terminal) {
+    // Health scheduler arxivlangan yoki tizimda nofaol qurilmalarni so'ramaydi.
+    // Ularni asossiz ravishda "Offline" deb ko'rsatmaymiz.
+    if (isArchived(terminal) || !terminal.isActive) {
+        return { text: "Tekshirilmaydi", tone: "neutral" as const };
+    }
+
     switch (terminal.healthStatus) {
         case "ONLINE":
             return { text: "Online", tone: "success" as const };
         case "OFFLINE":
             return { text: "Offline", tone: "danger" as const };
-        case "ARCHIVED":
-            return { text: "Arxiv", tone: "neutral" as const };
-        case "DISABLED":
-            return { text: "O‘chirilgan", tone: "warning" as const };
         default:
-            return { text: "Tekshirilmagan", tone: "neutral" as const };
+            return { text: "Noma’lum", tone: "neutral" as const };
     }
+}
+
+// Terminalning tizimdagi holati: HealthCheck'dan mustaqil.
+function systemBadge(terminal: Terminal) {
+    if (isArchived(terminal)) {
+        return { text: "Arxivlangan", tone: "neutral" as const };
+    }
+    if (!terminal.isActive) {
+        return { text: "Nofaol", tone: "warning" as const };
+    }
+    return { text: "Faol", tone: "info" as const };
 }
 
 type ArchiveAwareTerminal = Terminal & {
@@ -236,10 +250,16 @@ function TerminalDetails({
                             <dd>{terminal.model ?? "—"}</dd>
                             <dt className="text-muted-foreground">Seriya raqami</dt>
                             <dd className="break-all">{terminal.serialNumber ?? "—"}</dd>
-                            <dt className="text-muted-foreground">Holat</dt>
+                            <dt className="text-muted-foreground">Tizim holati</dt>
                             <dd>
-                                <StatusBadge tone={healthBadge(terminal).tone}>
-                                    {healthBadge(terminal).text}
+                                <StatusBadge tone={systemBadge(terminal).tone}>
+                                    {systemBadge(terminal).text}
+                                </StatusBadge>
+                            </dd>
+                            <dt className="text-muted-foreground">Ulanish</dt>
+                            <dd>
+                                <StatusBadge tone={connectionBadge(terminal).tone}>
+                                    {connectionBadge(terminal).text}
                                 </StatusBadge>
                             </dd>
                             <dt className="text-muted-foreground">Oxirgi tekshiruv</dt>
@@ -554,7 +574,7 @@ export function TerminalsPage() {
                     ) : (
                         <>
                             <div className="overflow-x-auto rounded-xl border">
-                                <table className="w-full min-w-[780px] text-left text-sm">
+                                <table className="w-full min-w-[900px] text-left text-sm">
                                     <thead className="bg-muted/60 text-xs text-muted-foreground">
                                         <tr>
                                             <th className="px-3 py-3">ID</th>
@@ -562,7 +582,8 @@ export function TerminalsPage() {
                                             <th className="px-3 py-3">Tuman</th>
                                             <th className="px-3 py-3">Nomi</th>
                                             <th className="px-3 py-3">IP manzil</th>
-                                            <th className="px-3 py-3">Holat</th>
+                                            <th className="px-3 py-3">Ulanish</th>
+                                            <th className="px-3 py-3">Tizim holati</th>
                                             <th className="px-3 py-3 text-right">Amallar</th>
                                         </tr>
                                     </thead>
@@ -582,8 +603,13 @@ export function TerminalsPage() {
                                                     </td>
                                                     <td className="px-3 py-3 font-mono text-xs">{terminal.host}</td>
                                                     <td className="px-3 py-3">
-                                                        <StatusBadge tone={healthBadge(terminal).tone}>
-                                                            {healthBadge(terminal).text}
+                                                        <StatusBadge tone={connectionBadge(terminal).tone}>
+                                                            {connectionBadge(terminal).text}
+                                                        </StatusBadge>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <StatusBadge tone={systemBadge(terminal).tone}>
+                                                            {systemBadge(terminal).text}
                                                         </StatusBadge>
                                                     </td>
                                                     <td className="px-3 py-3">
