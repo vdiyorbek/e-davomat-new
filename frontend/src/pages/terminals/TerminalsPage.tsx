@@ -54,6 +54,7 @@ import type {
     Terminal,
     TerminalDirection,
     TerminalsPageResponse,
+    TerminalMonitoringResponse,
 } from "@/types/terminal";
 
 type ArchiveStatus = "ACTIVE" | "ARCHIVED" | "ALL";
@@ -477,9 +478,32 @@ export function TerminalsPage() {
         `/terminals?${params.toString()}`,
     );
 
+
+    const monitoring = useApiQuery<TerminalMonitoringResponse>(
+        `/terminals/monitoring?${params.toString()}`,
+    );
+
+    const monitoringById = new Map(
+        monitoring.data?.data.map((item) => [item.id, item]) ?? [],
+    );
+
+
     // Backend 2 daqiqada HealthCheck qiladi; jadval 30 soniyada natijani yangilaydi.
     const retryRef = useRef(terminals.retry);
     retryRef.current = terminals.retry;
+
+    const monitoringRetryRef = useRef(monitoring.retry);
+
+    monitoringRetryRef.current = monitoring.retry;
+
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            monitoringRetryRef.current();
+        }, 60_000);
+
+        return () => window.clearInterval(interval);
+    }, []);
+
     useEffect(() => {
         const interval = window.setInterval(() => retryRef.current(), 30_000);
         return () => window.clearInterval(interval);
@@ -487,6 +511,7 @@ export function TerminalsPage() {
 
     function refresh() {
         terminals.retry();
+        monitoring.retry();
     }
 
     function resetFilters() {
@@ -680,7 +705,11 @@ export function TerminalsPage() {
                             </Button>
                         </div>
                     </div>
-
+                    {monitoring.error && (
+                        <p role="alert" className="text-sm text-destructive">
+                            Event monitoringi: {monitoring.error}
+                        </p>
+                    )}
                     {terminals.loading ? (
                         <LoadingState label="Terminallar yuklanmoqda" />
                     ) : terminals.error || !terminals.data ? (
@@ -690,7 +719,7 @@ export function TerminalsPage() {
                     ) : (
                         <>
                             <div className="overflow-x-auto rounded-xl border">
-                                <table className="w-full min-w-[1050px] text-left text-sm">
+                                <table className="w-full min-w-[1250px] text-left text-sm">
                                     <thead className="bg-muted/60 text-xs text-muted-foreground">
                                         <tr>
                                             <th className="px-3 py-3">ID</th>
@@ -701,12 +730,15 @@ export function TerminalsPage() {
                                             <th className="px-3 py-3">Ulanish</th>
                                             <th className="px-3 py-3">Tizim holati</th>
                                             <th className="px-3 py-3">Sinxronlash</th>
+                                            <th className="px-3 py-3">Bugungi eventlar</th>
+                                            <th className="px-3 py-3">Takroriy eventlar</th>
                                             <th className="px-3 py-3 text-right">Amallar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {terminals.data.data.map((terminal) => {
                                             const archived = isArchived(terminal);
+                                            const eventStats = monitoringById.get(terminal.id);
                                             return (
                                                 <tr key={terminal.id} className="border-t hover:bg-muted/25">
                                                     <td className="px-3 py-3 font-mono text-xs">{terminal.id}</td>
@@ -741,7 +773,30 @@ export function TerminalsPage() {
                                                             </div>
                                                         </div>
                                                     </td>
+                                                    <td className="px-3 py-3">
+                                                        {eventStats ? (
+                                                            <span className="font-semibold tabular-nums">
+                                                                {eventStats.totalEvents.toLocaleString("uz-UZ")}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">—</span>
+                                                        )}
+                                                    </td>
 
+                                                    <td className="px-3 py-3">
+                                                        {eventStats ? (
+                                                            <div>
+                                                                <div className="font-medium tabular-nums">
+                                                                    {eventStats.repeatedEvents.toLocaleString("uz-UZ")}
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {eventStats.repeatedPercent.toFixed(2)}%
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">—</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-3 py-3">
                                                         <div className="flex justify-end gap-1">
                                                             <Button

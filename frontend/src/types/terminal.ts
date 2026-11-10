@@ -76,3 +76,26 @@ export type TerminalCheckResponse =
       checkedAt: string;
       message: string;
     };
+
+export interface TerminalMonitoringItem {
+  id: number;
+  name: string;
+  totalEvents: number;
+  repeatedEvents: number;
+  repeatedPercent: number;
+  lastCheckedAt: string | null;
+  lastSuccessfulSyncAt: string | null;
+  eventsSyncedUntil: string | null;
+  syncDelaySeconds: number | null;
+  syncStatus: "DISABLED" | "NOT_STARTED" | "HEALTHY" | "DELAYED";
+}
+
+export interface TerminalMonitoringResponse {
+  data: TerminalMonitoringItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  date: string;
+  checkedAt: string;
+}
