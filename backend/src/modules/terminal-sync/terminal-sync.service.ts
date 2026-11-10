@@ -6,6 +6,9 @@ import { Terminal } from '../terminals/terminal.entity';
 import { AttendanceEventsService } from '../attendance-events/attendance-events.service';
 import { DailyAttendanceService } from '../daily-attendance/daily-attendance.service';
 
+const MAX_SYNC_WINDOWS = 24;
+const MAX_SYNC_RUN_MS = 90_000;
+
 @Injectable()
 export class TerminalSyncService {
   private readonly logger = new Logger(TerminalSyncService.name);
@@ -40,7 +43,19 @@ export class TerminalSyncService {
       let rebuiltCount = 0;
       let skippedRebuildCount = 0;
 
-      for (let windowIndex = 0; windowIndex < 6; windowIndex++) {
+      for (let windowIndex = 0; windowIndex < MAX_SYNC_WINDOWS; windowIndex++) {
+        // Uzoq davom etadigan vazifani xavfsiz chegaralaymiz.
+        // Bajarilayotgan oraliqni yarim yo'lda to'xtatmaymiz.
+        if (Date.now() - syncStartedAt >= MAX_SYNC_RUN_MS) {
+          this.logger.warn(
+            `Terminal ${terminalId}: vaqt chegarasiga yetildi. ` +
+              `Qolgan eventlar keyingi navbatda olinadi.`,
+          );
+
+          break;
+        }
+
+        await lease.assertOwned();
         const terminal = await this.terminalsRepository.findOneBy({
           id: terminalId,
         });
