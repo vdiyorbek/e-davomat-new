@@ -1,11 +1,10 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-
+import { EventSyncTerminalLockService } from './event-sync-terminal-lock.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 
@@ -38,8 +37,6 @@ export interface DownloadEventPhotosResponse {
 
 @Injectable()
 export class AttendanceEventPhotosService {
-  private readonly runningTerminals = new Set<number>();
-
   constructor(
     @InjectRepository(AttendanceEvent)
     private readonly eventsRepository: Repository<AttendanceEvent>,
@@ -49,18 +46,17 @@ export class AttendanceEventPhotosService {
 
     private readonly terminalCrypto: TerminalCryptoService,
     private readonly hikvisionPhoto: HikvisionPhotoService,
+
+    private readonly eventSyncLock: EventSyncTerminalLockService,
   ) {}
 
   async downloadPending(
     dto: DownloadEventPhotosDto,
   ): Promise<DownloadEventPhotosResponse> {
-    if (this.runningTerminals.has(dto.terminalId)) {
-      throw new ConflictException('Ushbu terminal rasmlari hozir yuklanmoqda');
-    }
-
-    this.runningTerminals.add(dto.terminalId);
+    const lease = await this.eventSyncLock.acquire(dto.terminalId, 'photos');
 
     try {
+      await lease.assertOwned();
       const terminal = await this.terminalsRepository
         .createQueryBuilder('terminal')
         .addSelect('terminal.passwordEncrypted')
@@ -113,6 +109,7 @@ export class AttendanceEventPhotosService {
       const results: PhotoResult[] = [];
 
       for (const event of events) {
+        await lease.assertOwned();
         if (!event.sourcePictureUrl) {
           await this.eventsRepository.update(event.id, {
             photoStatus: EventPhotoStatus.MISSING,
@@ -227,7 +224,7 @@ export class AttendanceEventPhotosService {
         results,
       };
     } finally {
-      this.runningTerminals.delete(dto.terminalId);
+      await lease.release();
     }
   }
 }

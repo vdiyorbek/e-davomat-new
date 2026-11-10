@@ -40,14 +40,16 @@ export class EventSyncTerminalLockService {
 
   async acquire(
     terminalId: number,
-    scope: 'events' | 'run' = 'events',
+    scope: 'events' | 'run' | 'photos' = 'events',
   ): Promise<EventSyncLease> {
     const redis = this.redisService.getClient();
 
     const key =
       scope === 'run'
         ? `edavomat:terminal-sync:run:${terminalId}:lock`
-        : `edavomat:event-sync:terminal:${terminalId}:lock`;
+        : scope === 'photos'
+          ? `edavomat:photo-sync:terminal:${terminalId}:lock`
+          : `edavomat:event-sync:terminal:${terminalId}:lock`;
 
     const token = randomUUID();
 
