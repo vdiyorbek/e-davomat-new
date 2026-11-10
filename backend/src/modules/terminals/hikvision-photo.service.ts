@@ -5,6 +5,19 @@ import sharp from 'sharp';
 import { Terminal } from './terminal.entity';
 import { createDigestAuthorization } from './helpers/digest-auth';
 
+export type PermanentPhotoErrorCode =
+  'INVALID_URL' | 'NOT_FOUND' | 'INVALID_IMAGE';
+
+export class HikvisionPhotoPermanentError extends Error {
+  constructor(
+    public readonly code: PermanentPhotoErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'HikvisionPhotoPermanentError';
+  }
+}
+
 @Injectable()
 export class HikvisionPhotoService {
   async download(
@@ -25,7 +38,10 @@ export class HikvisionPhotoService {
     try {
       pictureUrl = new URL(sourceUrl);
     } catch {
-      throw new Error('Eventdagi rasm manzili noto‘g‘ri');
+      throw new HikvisionPhotoPermanentError(
+        'INVALID_URL',
+        'Eventdagi rasm manzili noto‘g‘ri',
+      );
     }
 
     // Terminal parolini boshqa manzilga yubormaymiz.
@@ -36,8 +52,9 @@ export class HikvisionPhotoService {
       pictureUrl.hash ||
       !pictureUrl.pathname.startsWith('/LOCALS/pic/')
     ) {
-      throw new Error(
-        'Rasm manzili terminal manziliga yoki ruxsat etilgan yo‘lga mos emas',
+      throw new HikvisionPhotoPermanentError(
+        'INVALID_URL',
+        'Rasm manzili terminalga yoki ruxsat etilgan yo‘lga mos emas',
       );
     }
 
@@ -59,9 +76,7 @@ export class HikvisionPhotoService {
           proxy: false,
           headers: {
             Accept: 'image/jpeg,image/png,image/webp',
-            ...(authorization
-              ? { Authorization: authorization }
-              : {}),
+            ...(authorization ? { Authorization: authorization } : {}),
           },
           validateStatus: () => true,
         });
@@ -69,8 +84,7 @@ export class HikvisionPhotoService {
       let response = await request();
 
       if (response.status === 401) {
-        const challenge: unknown =
-          response.headers['www-authenticate'];
+        const challenge: unknown = response.headers['www-authenticate'];
 
         if (typeof challenge !== 'string') {
           throw new Error('Terminal Digest ma’lumotini qaytarmadi');
@@ -92,13 +106,14 @@ export class HikvisionPhotoService {
       }
 
       if (response.status === 404) {
-        throw new Error('Rasm terminalda topilmadi');
+        throw new HikvisionPhotoPermanentError(
+          'NOT_FOUND',
+          'Rasm terminalda topilmadi',
+        );
       }
 
       if (response.status !== 200) {
-        throw new Error(
-          `Rasm so‘rovi HTTP ${response.status} bilan tugadi`,
-        );
+        throw new Error(`Rasm so‘rovi HTTP ${response.status} bilan tugadi`);
       }
 
       const buffer = Buffer.from(response.data);
@@ -130,7 +145,8 @@ export class HikvisionPhotoService {
           .jpeg({ quality: 90 })
           .toBuffer();
       } catch {
-        throw new Error(
+        throw new HikvisionPhotoPermanentError(
+          'INVALID_IMAGE',
           'Terminal javobi yaroqli JPEG, PNG yoki WebP rasm emas',
         );
       }

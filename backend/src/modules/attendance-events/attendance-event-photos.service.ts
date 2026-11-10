@@ -11,10 +11,12 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-
 import { Terminal } from '../terminals/terminal.entity';
 import { TerminalCryptoService } from '../terminals/terminal-crypto.service';
-import { HikvisionPhotoService } from '../terminals/hikvision-photo.service';
+import {
+  HikvisionPhotoService,
+  HikvisionPhotoPermanentError,
+} from '../terminals/hikvision-photo.service';
 
 import { AttendanceEvent } from './attendance-event.entity';
 import { EventPhotoStatus } from './enums/event-photo-status.enum';
@@ -81,7 +83,13 @@ export class AttendanceEventPhotosService {
         );
       }
 
-      const retryBefore = new Date(Date.now() - 60_000);
+      const now = Date.now();
+
+      const retry1m = new Date(now - 60_000);
+      const retry5m = new Date(now - 5 * 60_000);
+      const retry15m = new Date(now - 15 * 60_000);
+      const retry1h = new Date(now - 60 * 60_000);
+      const retry6h = new Date(now - 6 * 60 * 60_000);
 
       const events = await this.eventsRepository
         .createQueryBuilder('event')
@@ -93,14 +101,39 @@ export class AttendanceEventPhotosService {
           statuses: [EventPhotoStatus.PENDING, EventPhotoStatus.FAILED],
         })
         .andWhere('event.photoAttempts < :maxAttempts', {
-          maxAttempts: 5,
+          maxAttempts: 1000,
         })
         .andWhere(
           `(
-            event.photoLastAttemptAt IS NULL
-            OR event.photoLastAttemptAt <= :retryBefore
-          )`,
-          { retryBefore },
+    event.photoLastAttemptAt IS NULL
+    OR (
+      event.photoAttempts < 3
+      AND event.photoLastAttemptAt <= :retry1m
+    )
+    OR (
+      event.photoAttempts BETWEEN 3 AND 5
+      AND event.photoLastAttemptAt <= :retry5m
+    )
+    OR (
+      event.photoAttempts BETWEEN 6 AND 9
+      AND event.photoLastAttemptAt <= :retry15m
+    )
+    OR (
+      event.photoAttempts BETWEEN 10 AND 19
+      AND event.photoLastAttemptAt <= :retry1h
+    )
+    OR (
+      event.photoAttempts >= 20
+      AND event.photoLastAttemptAt <= :retry6h
+    )
+  )`,
+          {
+            retry1m,
+            retry5m,
+            retry15m,
+            retry1h,
+            retry6h,
+          },
         )
         .orderBy('event.id', 'ASC')
         .take(dto.limit)
@@ -194,13 +227,32 @@ export class AttendanceEventPhotosService {
             );
           }
 
+          const isPermanentError =
+            stage === 'download' &&
+            error instanceof HikvisionPhotoPermanentError;
+
+          const isNotFound = isPermanentError && error.code === 'NOT_FOUND';
+
+          const nextAttempt = event.photoAttempts + 1;
+
+          // 404 xatosiga uch marta imkon beramiz.
+          // Boshqa permanent xatolar darhol to'xtatiladi.
+          const shouldStopRetry =
+            isPermanentError && (!isNotFound || nextAttempt >= 3);
+
+          const nextStatus = shouldStopRetry
+            ? EventPhotoStatus.MISSING
+            : EventPhotoStatus.FAILED;
+
+          await lease.assertOwned();
+
           await this.eventsRepository.update(event.id, {
-            photoStatus: EventPhotoStatus.FAILED,
+            photoStatus: nextStatus,
           });
 
           results.push({
             eventId: event.id,
-            status: EventPhotoStatus.FAILED,
+            status: nextStatus,
             message:
               stage === 'download' && error instanceof Error
                 ? error.message
