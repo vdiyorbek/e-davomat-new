@@ -26,7 +26,7 @@ export class TerminalSyncService {
     ) {
       throw new Error('Navbatdagi terminal identifikatori noto‘g‘ri');
     }
-
+    const syncStartedAt = Date.now();
     // Yangi event terminal jurnaliga yozilishi uchun ozgina vaqt qoldiramiz.
     const targetMs = Date.now() - 30_000;
 
@@ -63,11 +63,17 @@ export class TerminalSyncService {
       const startAt = new Date(startMs);
       const endAt = new Date(endMs);
 
+      const eventsStartedAt = Date.now();
+
       const result = await this.attendanceEventsService.sync({
         terminalId,
         startTime: this.toTerminalTime(startAt),
         endTime: this.toTerminalTime(endAt),
       });
+
+      const eventsDurationMs = Date.now() - eventsStartedAt;
+
+      const rebuildStartedAt = Date.now();
 
       // Oraliq ikki Toshkent sanasiga tushsa, ikkala kun hisoblanadi.
 
@@ -131,6 +137,15 @@ export class TerminalSyncService {
           'Terminal holati yoki sinxronlash chegarasi o‘zgardi. Vazifa qayta tekshiriladi',
         );
       }
+
+      const rebuildDurationMs = Date.now() - rebuildStartedAt;
+
+      this.logger.log(
+        `Terminal ${terminalId}: ` +
+          `eventsMs=${eventsDurationMs}, ` +
+          `rebuildMs=${rebuildDurationMs}, ` +
+          `totalMs=${Date.now() - syncStartedAt}`,
+      );
 
       this.logger.log(
         `Terminal ${terminalId}: ` +
