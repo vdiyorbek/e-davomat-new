@@ -198,6 +198,11 @@ export class DailyAttendanceService {
             `staleRows=${staleRowCount}`,
         );
       }
+
+      let createdRows = 0;
+      let updatedRows = 0;
+      let unchangedRows = 0;
+
       for (const [key, personDay] of people) {
         const existing = existingByKey.get(key);
 
@@ -205,6 +210,44 @@ export class DailyAttendanceService {
           MembershipType,
           string,
         ];
+
+        const firstInTime = personDay.firstIn?.eventAt ?? null;
+        const firstInEventId = personDay.firstIn?.id ?? null;
+
+        const lastOutTime = personDay.lastOut?.eventAt ?? null;
+        const lastOutEventId = personDay.lastOut?.id ?? null;
+
+        if (existing) {
+          const sameFirstInTime =
+            (existing.firstInTime?.getTime() ?? null) ===
+            (firstInTime?.getTime() ?? null);
+
+          const sameLastOutTime =
+            (existing.lastOutTime?.getTime() ?? null) ===
+            (lastOutTime?.getTime() ?? null);
+
+          const sameFirstInEvent =
+            (existing.firstInEventId === null
+              ? null
+              : String(existing.firstInEventId)) ===
+            (firstInEventId === null ? null : String(firstInEventId));
+
+          const sameLastOutEvent =
+            (existing.lastOutEventId === null
+              ? null
+              : String(existing.lastOutEventId)) ===
+            (lastOutEventId === null ? null : String(lastOutEventId));
+
+          if (
+            sameFirstInTime &&
+            sameLastOutTime &&
+            sameFirstInEvent &&
+            sameLastOutEvent
+          ) {
+            unchangedRows++;
+            continue;
+          }
+        }
 
         const row =
           existing ??
@@ -216,15 +259,31 @@ export class DailyAttendanceService {
             districtId: district.id,
             regionId: district.regionId,
           });
-        row.membershipType = membershipType;
-        row.firstInTime = personDay.firstIn?.eventAt ?? null;
-        row.firstInEventId = personDay.firstIn?.id ?? null;
 
-        row.lastOutTime = personDay.lastOut?.eventAt ?? null;
-        row.lastOutEventId = personDay.lastOut?.id ?? null;
+        row.membershipType = membershipType;
+
+        row.firstInTime = firstInTime;
+        row.firstInEventId = firstInEventId;
+
+        row.lastOutTime = lastOutTime;
+        row.lastOutEventId = lastOutEventId;
 
         await repository.save(row);
+
+        if (existing) {
+          updatedRows++;
+        } else {
+          createdRows++;
+        }
       }
+
+      this.logger.log(
+        `DailyAttendance: school=${school.id}, ` +
+          `date=${dto.date}, ` +
+          `created=${createdRows}, ` +
+          `updated=${updatedRows}, ` +
+          `unchanged=${unchangedRows}`,
+      );
 
       const activeExcuses = await manager.getRepository(AttendanceExcuse).find({
         select: {
