@@ -199,9 +199,14 @@ export class DailyAttendanceService {
         );
       }
 
+      const BATCH_SIZE = 100;
+
       let createdRows = 0;
       let updatedRows = 0;
       let unchangedRows = 0;
+
+      const rowsToInsert: DailyAttendance[] = [];
+      const rowsToUpdate: DailyAttendance[] = [];
 
       for (const [key, personDay] of people) {
         const existing = existingByKey.get(key);
@@ -268,13 +273,27 @@ export class DailyAttendanceService {
         row.lastOutTime = lastOutTime;
         row.lastOutEventId = lastOutEventId;
 
-        await repository.save(row);
-
         if (existing) {
-          updatedRows++;
+          rowsToUpdate.push(row);
         } else {
-          createdRows++;
+          rowsToInsert.push(row);
         }
+      }
+
+      for (let offset = 0; offset < rowsToInsert.length; offset += BATCH_SIZE) {
+        const batch = rowsToInsert.slice(offset, offset + BATCH_SIZE);
+
+        await repository.insert(batch);
+
+        createdRows += batch.length;
+      }
+
+      if (rowsToUpdate.length > 0) {
+        await repository.save(rowsToUpdate, {
+          chunk: BATCH_SIZE,
+        });
+
+        updatedRows = rowsToUpdate.length;
       }
 
       this.logger.log(
