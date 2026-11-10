@@ -10,7 +10,7 @@ import {
     ScanFace,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
+import { TerminalPhotoStats } from "@/components/terminals/TerminalPhotoStats";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Pagination } from "@/components/common/Pagination";
 import { SelectField } from "@/components/common/SelectField";
@@ -292,17 +292,30 @@ function TerminalDetails({
                 </div>
 
                 {canManage && !archived && (
+                    <TerminalPhotoStats
+                        key={terminal.id}
+                        terminalId={terminal.id}
+                        canManage={canManage}
+                    />
+                )}
+
+                {canManage && !archived && (
                     <details className="rounded-xl border p-3">
                         <summary className="cursor-pointer text-sm font-medium">
                             Qo‘shimcha sozlamalar va diagnostika
                         </summary>
+
                         <div className="mt-3 space-y-3 border-t pt-3">
                             <CheckTerminalButton terminalId={terminal.id} />
+
                             {!terminal.syncStartAt && (
                                 <StartTerminalSyncForm
                                     terminalId={terminal.id}
                                     isActive={terminal.isActive}
-                                    onStarted={() => { onChanged(); onClose(); }}
+                                    onStarted={() => {
+                                        onChanged();
+                                        onClose();
+                                    }}
                                 />
                             )}
                         </div>
