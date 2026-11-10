@@ -52,6 +52,62 @@ export class AttendanceEventPhotosService {
     private readonly eventSyncLock: EventSyncTerminalLockService,
   ) {}
 
+  async getPhotoIssues(terminalId: number, limit = 50) {
+    if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
+      throw new BadRequestException('Terminal ID noto‘g‘ri');
+    }
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new BadRequestException('Limit 1 dan 100 gacha bo‘lishi kerak');
+    }
+
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    const query = this.eventsRepository
+      .createQueryBuilder('event')
+      .where('event.terminalId = :terminalId', {
+        terminalId,
+      })
+      .andWhere('event.photoStatus IN (:...statuses)', {
+        statuses: [EventPhotoStatus.FAILED, EventPhotoStatus.MISSING],
+      });
+
+    const total = await query.clone().getCount();
+
+    const events = await query
+      .select([
+        'event.id',
+        'event.eventAt',
+        'event.photoStatus',
+        'event.photoAttempts',
+        'event.photoLastAttemptAt',
+      ])
+      .orderBy('event.eventAt', 'DESC')
+      .addOrderBy('event.id', 'DESC')
+      .take(limit)
+      .getMany();
+
+    return {
+      success: true,
+      terminalId,
+      total,
+      limit,
+      items: events.map((event) => ({
+        eventId: event.id,
+        eventAt: event.eventAt,
+        status: event.photoStatus,
+        attempts: event.photoAttempts,
+        lastAttemptAt: event.photoLastAttemptAt,
+      })),
+    };
+  }
+
   async getPhotoStats() {
     const rows = await this.eventsRepository
       .createQueryBuilder('event')

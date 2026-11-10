@@ -1,11 +1,14 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   Param,
   ParseIntPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -48,5 +51,20 @@ export class AttendanceEventsController {
   @HttpCode(200)
   retryMissingPhotos(@Param('terminalId', ParseIntPipe) terminalId: number) {
     return this.attendanceEventPhotosService.retryMissingPhotos(terminalId);
+  }
+
+  @Get('photos/:terminalId/issues')
+  getPhotoIssues(
+    @Param('terminalId', ParseIntPipe)
+    terminalId: number,
+
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe)
+    limit: number,
+  ) {
+    if (limit < 1 || limit > 100) {
+      throw new BadRequestException('Limit 1 dan 100 gacha bo‘lishi kerak');
+    }
+
+    return this.attendanceEventPhotosService.getPhotoIssues(terminalId, limit);
   }
 }
