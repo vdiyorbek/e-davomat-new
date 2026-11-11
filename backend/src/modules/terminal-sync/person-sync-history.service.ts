@@ -134,62 +134,100 @@ export class PersonSyncHistoryService {
   }
 
   async refreshBatch(batchId: string): Promise<void> {
-    const batch = await this.batches.findOneBy({ id: batchId });
-    if (!batch) return;
+    await this.batches.manager.transaction(
+      'READ COMMITTED',
+      async (manager) => {
+        const batchRepository = manager.getRepository(PersonSyncBatch);
 
-    const all = await this.items.find({
-      where: { batchId },
-      select: { status: true },
-    });
+        const itemRepository = manager.getRepository(PersonSyncBatchItem);
 
-    const total = all.length;
+        // Bitta batch bo‘yicha parallel refresh
+        // chaqiruvlarini navbatga qo‘yamiz.
+        const batch = await batchRepository
+          .createQueryBuilder('batch')
+          .setLock('pessimistic_write')
+          .where('batch.id = :batchId', { batchId })
+          .getOne();
 
-    const queued = all.filter(
-      (item) => item.status !== PersonSyncBatchItemStatus.PENDING,
-    ).length;
+        if (!batch) return;
 
-    const finished = all.filter((item) =>
-      [
-        PersonSyncBatchItemStatus.SUCCESS,
-        PersonSyncBatchItemStatus.SKIPPED,
-        PersonSyncBatchItemStatus.FAILED,
-        PersonSyncBatchItemStatus.UNCERTAIN,
-      ].includes(item.status),
-    ).length;
+        // Batch hali shakllantirilayotgan bo‘lsa,
+        // uning yakuniy holatini hisoblamaymiz.
+        if (batch.status === PersonSyncBatchStatus.QUEUING) {
+          return;
+        }
 
-    const hasProblems = all.some((item) =>
-      [
-        PersonSyncBatchItemStatus.FAILED,
-        PersonSyncBatchItemStatus.UNCERTAIN,
-      ].includes(item.status),
-    );
+        // Shaxslarni xotiraga yuklamaymiz.
+        // Hisoblashni MySQL bajaradi.
+        const rows = await itemRepository
+          .createQueryBuilder('item')
+          .select('item.status', 'status')
+          .addSelect('COUNT(*)', 'count')
+          .where('item.batchId = :batchId', { batchId })
+          .groupBy('item.status')
+          .getRawMany<{
+            status: PersonSyncBatchItemStatus;
+            count: string;
+          }>();
 
-    let status: PersonSyncBatchStatus;
-    let finishedAt: Date | null = null;
+        const counts = new Map<PersonSyncBatchItemStatus, number>();
 
-    if (total === 0) {
-      status = PersonSyncBatchStatus.COMPLETED;
-      finishedAt = new Date();
-    } else if (finished === total) {
-      status = hasProblems
-        ? PersonSyncBatchStatus.PARTIAL
-        : PersonSyncBatchStatus.COMPLETED;
-      finishedAt = new Date();
-    } else if (
-      all.some((item) => item.status === PersonSyncBatchItemStatus.RUNNING)
-    ) {
-      status = PersonSyncBatchStatus.RUNNING;
-    } else {
-      status = PersonSyncBatchStatus.QUEUED;
-    }
+        let total = 0;
 
-    await this.batches.update(
-      { id: batchId },
-      {
-        totalItems: total,
-        queuedItems: queued,
-        status,
-        finishedAt,
+        for (const row of rows) {
+          const count = Number(row.count);
+
+          counts.set(row.status, count);
+          total += count;
+        }
+
+        const get = (status: PersonSyncBatchItemStatus): number =>
+          counts.get(status) ?? 0;
+
+        const pending = get(PersonSyncBatchItemStatus.PENDING);
+
+        const running = get(PersonSyncBatchItemStatus.RUNNING);
+
+        const success = get(PersonSyncBatchItemStatus.SUCCESS);
+
+        const skipped = get(PersonSyncBatchItemStatus.SKIPPED);
+
+        const failed = get(PersonSyncBatchItemStatus.FAILED);
+
+        const uncertain = get(PersonSyncBatchItemStatus.UNCERTAIN);
+
+        const finished = success + skipped + failed + uncertain;
+
+        const allFinished = total === 0 || finished === total;
+
+        let status: PersonSyncBatchStatus;
+        let finishedAt: Date | null = null;
+
+        if (allFinished) {
+          status =
+            failed > 0 || uncertain > 0
+              ? PersonSyncBatchStatus.PARTIAL
+              : PersonSyncBatchStatus.COMPLETED;
+
+          // Takroriy hisoblashda yakunlangan vaqtni
+          // qaytadan o‘zgartirmaymiz.
+          finishedAt = batch.finishedAt ?? new Date();
+        } else if (running > 0) {
+          status = PersonSyncBatchStatus.RUNNING;
+        } else {
+          // PENDING va QUEUED elementlar mavjud.
+          status = PersonSyncBatchStatus.QUEUED;
+        }
+
+        await batchRepository.update(
+          { id: batchId },
+          {
+            totalItems: total,
+            queuedItems: total - pending,
+            status,
+            finishedAt,
+          },
+        );
       },
     );
   }
