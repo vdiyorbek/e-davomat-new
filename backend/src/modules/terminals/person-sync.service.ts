@@ -242,6 +242,56 @@ export class PersonSyncService {
     };
   }
 
+  /**
+   * Terminal xotirasini to‘liq tozalaydi va natijani terminaldan
+   * qayta sanab tasdiqlaydi. Faqat terminal lock ichida chaqiriladi.
+   */
+  async clearTerminalPersons(
+    terminalId: number,
+    assertOwned: () => Promise<void>,
+  ) {
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (!terminal.isActive || terminal.archivedAt) {
+      throw new BadRequestException('Terminal faol emas');
+    }
+
+    const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
+
+    const usersBefore = await this.hikvision.getRegisteredPersonsCount(
+      terminal,
+      password,
+    );
+
+    await this.hikvision.clearAllTerminalUsers(terminal, password, assertOwned);
+
+    // Terminalda endi hech kim yo‘q. Bazadagi "yuklangan" belgilarini
+    // o‘chiramiz — keyingi sinxronlash hammani qaytadan yuklaydi.
+    await this.syncRepository.delete({ terminalId });
+
+    const usersAfter = await this.hikvision.getRegisteredPersonsCount(
+      terminal,
+      password,
+    );
+
+    const { faceRecords: facesAfter } =
+      await this.hikvision.getFaceRecordsCount(terminal, password);
+
+    return {
+      terminalId,
+      usersBefore,
+      usersAfter,
+      facesAfter,
+      cleared: usersAfter === 0 && (facesAfter === null || facesAfter === 0),
+    };
+  }
+
   async checkTerminalPerson(
     terminalId: number,
     personId: number,

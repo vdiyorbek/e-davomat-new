@@ -12,12 +12,17 @@ import {
   DefaultValuePipe,
   Req,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import {
+  PersonSyncBatchItem,
+  PersonSyncBatchItemStatus,
+} from './person-sync-batch-item.entity';
 import { PersonSyncScheduler } from './person-sync.scheduler';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -48,6 +53,9 @@ export class PersonSyncQueueController {
     private readonly terminalsRepository: Repository<Terminal>,
     private readonly personSyncScheduler: PersonSyncScheduler,
     private readonly monitoringService: PersonSyncMonitoringService,
+
+    @InjectRepository(PersonSyncBatchItem)
+    private readonly batchItems: Repository<PersonSyncBatchItem>,
   ) {}
 
   @Post('terminals/:id/check')
@@ -213,6 +221,77 @@ export class PersonSyncQueueController {
     };
   }
 
+  /** Terminal xotirasidagi barcha shaxslarni o‘chirish (qaytarib bo‘lmaydi). */
+  @Post('terminals/:id/clear')
+  @HttpCode(202)
+  async enqueueClear(
+    @Param('id', ParseIntPipe) terminalId: number,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    const input =
+      body !== null && typeof body === 'object' && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+
+    if (input.confirm !== 'CLEAR_TERMINAL_PERSONS') {
+      throw new BadRequestException(
+        'confirm: CLEAR_TERMINAL_PERSONS talab etiladi',
+      );
+    }
+
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+
+    if (!terminal.isActive || terminal.archivedAt) {
+      throw new BadRequestException('Terminal faol emas');
+    }
+
+    // Yuklash ketayotganda tozalasak, navbatdagilar
+    // yarim-yarti yuklanib qoladi.
+    const inProgress = await this.batchItems.count({
+      where: {
+        terminalId,
+        status: In([
+          PersonSyncBatchItemStatus.PENDING,
+          PersonSyncBatchItemStatus.QUEUED,
+          PersonSyncBatchItemStatus.RUNNING,
+        ]),
+      },
+    });
+
+    if (inProgress > 0) {
+      throw new ConflictException({
+        code: 'SYNC_IN_PROGRESS',
+        count: inProgress,
+        message: `Bu terminalga ${inProgress} ta shaxs yuklanmoqda. Avval yuklash tugashini kuting.`,
+      });
+    }
+
+    const jobId = `clear-terminal-${terminalId}-${Date.now()}`;
+
+    await this.queue.add(
+      PERSON_SYNC_JOB.CLEAR_TERMINAL,
+      { terminalId, requestedByUserId: actor.id },
+      {
+        jobId,
+        attempts: 1,
+        removeOnComplete: { age: 86400, count: 1000 },
+        removeOnFail: { age: 86400, count: 1000 },
+      },
+    );
+
+    return { terminalId, queued: true, jobId };
+  }
+
   @Get('jobs/:jobId')
   async getJobStatus(@Param('jobId') jobId: string) {
     // Faqat ushbu controller yaratadigan
@@ -220,7 +299,8 @@ export class PersonSyncQueueController {
     if (
       !/^manual-check-[1-9]\d*-\d+$/.test(jobId) &&
       !/^person-check-[1-9]\d*-\d{8}-\d{2}$/.test(jobId) &&
-      !/^sync-person-[1-9]\d*-[1-9]\d*$/.test(jobId)
+      !/^sync-person-[1-9]\d*-[1-9]\d*$/.test(jobId) &&
+      !/^clear-terminal-[1-9]\d*-\d+$/.test(jobId)
     ) {
       throw new NotFoundException('Vazifa topilmadi');
     }
@@ -233,7 +313,8 @@ export class PersonSyncQueueController {
 
     if (
       job.name !== PERSON_SYNC_JOB.CHECK_TERMINAL &&
-      job.name !== PERSON_SYNC_JOB.SYNC_PERSON
+      job.name !== PERSON_SYNC_JOB.SYNC_PERSON &&
+      job.name !== PERSON_SYNC_JOB.CLEAR_TERMINAL
     ) {
       throw new NotFoundException('Vazifa topilmadi');
     }

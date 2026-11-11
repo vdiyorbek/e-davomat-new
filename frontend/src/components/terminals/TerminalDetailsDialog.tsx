@@ -12,6 +12,7 @@ import {
     ScanFace,
     Users,
 } from 'lucide-react';
+import { TerminalClearPersonsAction } from './TerminalClearPersonsAction';
 import { useTranslation } from 'react-i18next';
 import { TerminalStatusTimeline } from './TerminalStatusTimeline';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -312,6 +313,24 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                             />
                                         )}
                                     </div>
+                                </section>
+                            )}
+
+                            {showDiagnostics && terminal.isActive && (
+                                <section className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-destructive">
+                                            {t('terminals.clearPersons.zoneTitle')}
+                                        </h3>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {t('terminals.clearPersons.zoneHint')}
+                                        </p>
+                                    </div>
+                                    <TerminalClearPersonsAction
+                                        terminalId={terminal.id}
+                                        terminalName={terminal.name}
+                                        onFinished={onChanged}
+                                    />
                                 </section>
                             )}
                         </TabsContent>

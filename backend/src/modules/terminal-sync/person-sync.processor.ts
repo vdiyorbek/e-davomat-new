@@ -141,6 +141,26 @@ export class PersonSyncProcessor extends WorkerHost {
         }
       }
 
+      case PERSON_SYNC_JOB.CLEAR_TERMINAL: {
+        const terminalId = job.data.terminalId;
+
+        const locked = await this.terminalLock.run(terminalId, (assertOwned) =>
+          this.personSyncService.clearTerminalPersons(terminalId, assertOwned),
+        );
+
+        if (!locked.acquired) {
+          throw new UnrecoverableError('TERMINAL_BUSY');
+        }
+
+        this.logger.warn(
+          `Terminal ${terminalId} xotirasi tozalandi ` +
+            `(foydalanuvchi #${job.data.requestedByUserId ?? '?'}): ` +
+            JSON.stringify(locked.result),
+        );
+
+        return locked.result;
+      }
+
       default:
         throw new Error('Noma’lum PersonSync vazifasi');
     }

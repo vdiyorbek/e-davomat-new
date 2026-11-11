@@ -471,5 +471,34 @@
     "notQueued": "Vazifa navbatga qo‘shilmadi.",
     "queued": "Yangi diagnostika vazifasi navbatga yuborildi.",
     "sendFailed": "Vazifani yuborib bo‘lmadi."
+  },
+  "clearPersons": {
+    "zoneTitle": "Xavfli amallar",
+    "zoneHint": "Bu amallarni qaytarib bo‘lmaydi.",
+    "button": "Terminal xotirasini tozalash",
+    "title": "Terminal xotirasini tozalash",
+    "description": "«{{name}}» terminalidagi barcha shaxslar va ularning yuz rasmlari o‘chiriladi.",
+    "warnAll": "Qo‘lda qo‘shilgan shaxslar (qorovul, admin) ham o‘chadi.",
+    "warnEvents": "Bazadagi davomat tarixi saqlanib qoladi.",
+    "warnResync": "Tozalangandan keyin o‘quvchi va o‘qituvchilarni qayta yuklash kerak bo‘ladi.",
+    "confirmLabel": "Tasdiqlash uchun terminal nomini kiriting: {{name}}",
+    "cancel": "Bekor qilish",
+    "close": "Yopish",
+    "confirm": "Tozalash",
+    "running": "Tozalanmoqda. Bu bir necha daqiqa davom etishi mumkin.",
+    "done": "Terminal xotirasi tozalandi.",
+    "partial": "Tozalash to‘liq bo‘lmadi: terminalda hali {{count}} ta shaxs qoldi.",
+    "before": "Oldin",
+    "after": "Keyin",
+    "faces": "Yuz rasmlari",
+    "unknown": "noma’lum",
+    "errors": {
+      "busy": "Terminal hozir band (tekshiruv yoki yuklash ketmoqda). Birozdan keyin urinib ko‘ring.",
+      "notSupported": "Bu terminal modeli barcha shaxslarni bir yo‘la o‘chirishni qo‘llab-quvvatlamaydi.",
+      "timeout": "Terminal 10 daqiqa ichida tozalashni tugatmadi.",
+      "auth": "Terminal login yoki paroli noto‘g‘ri.",
+      "watchTimeout": "Natijani kutish vaqti tugadi. Birozdan keyin shaxslar sonini tekshiring.",
+      "generic": "Tozalashda xatolik yuz berdi."
+    }
   }
 }

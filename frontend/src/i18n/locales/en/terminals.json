@@ -476,5 +476,34 @@
     "queued": "A new diagnostic job was queued.",
     "sendFailed": "Could not send the job."
   },
+  "clearPersons": {
+    "zoneTitle": "Danger zone",
+    "zoneHint": "These actions cannot be undone.",
+    "button": "Clear terminal memory",
+    "title": "Clear terminal memory",
+    "description": "All people and their face photos on terminal “{{name}}” will be deleted.",
+    "warnAll": "People added manually (guards, admins) will be deleted too.",
+    "warnEvents": "Attendance history in the database is kept.",
+    "warnResync": "Students and teachers will need to be uploaded again afterwards.",
+    "confirmLabel": "Type the terminal name to confirm: {{name}}",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Clear",
+    "running": "Clearing. This may take a few minutes.",
+    "done": "Terminal memory cleared.",
+    "partial": "Clearing incomplete: {{count}} people remain on the terminal.",
+    "before": "Before",
+    "after": "After",
+    "faces": "Face photos",
+    "unknown": "unknown",
+    "errors": {
+      "busy": "The terminal is busy (a check or upload is running). Try again shortly.",
+      "notSupported": "This terminal model doesn't support deleting all people at once.",
+      "timeout": "The terminal didn't finish clearing within 10 minutes.",
+      "auth": "Wrong terminal login or password.",
+      "watchTimeout": "Stopped waiting for the result. Check the people count a little later.",
+      "generic": "Clearing failed."
+    }
+  },
   "total_one": "Total: {{count}} terminal"
 }

@@ -1077,6 +1077,141 @@ export class HikvisionService {
     };
   }
 
+  /** Digest autentifikatsiyali JSON so‘rov (GET yoki PUT). */
+  private async isapiJson(
+    terminal: Terminal,
+    password: string,
+    method: 'GET' | 'PUT',
+    path: string,
+    body?: unknown,
+    timeoutMs = 15000,
+  ): Promise<{ status: number; data: unknown }> {
+    const host = terminal.host.includes(':')
+      ? `[${terminal.host}]`
+      : terminal.host;
+
+    const url =
+      `${terminal.protocol.toLowerCase()}://` +
+      `${host}:${terminal.port}${path}`;
+
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+
+    const request = (authorization?: string) =>
+      axios.request<unknown>({
+        url,
+        method,
+        data: payload,
+        responseType: 'json',
+        timeout: timeoutMs,
+        maxRedirects: 0,
+        maxContentLength: 256 * 1024,
+        maxBodyLength: 4096,
+        proxy: false,
+        headers: {
+          Accept: 'application/json',
+          ...(payload !== undefined
+            ? { 'Content-Type': 'application/json' }
+            : {}),
+          ...(authorization ? { Authorization: authorization } : {}),
+        },
+        validateStatus: () => true,
+      });
+
+    let response = await request();
+
+    if (response.status === 401) {
+      const challenge: unknown = response.headers['www-authenticate'];
+
+      if (typeof challenge !== 'string') {
+        throw new Error('Terminal Digest autentifikatsiyasini qaytarmadi');
+      }
+
+      response = await request(
+        createDigestAuthorization(
+          challenge,
+          terminal.username,
+          password,
+          method,
+          path,
+        ),
+      );
+    }
+
+    return { status: response.status, data: response.data };
+  }
+
+  /**
+   * Terminal xotirasidagi BARCHA shaxslarni va ularga bog‘langan
+   * yuz/karta/barmoq izlarini o‘chiradi. Qaytarib bo‘lmaydi.
+   * Terminal o‘chirishni fonda bajaradi, shuning uchun
+   * tugaguncha holatini so‘rab turamiz.
+   */
+  async clearAllTerminalUsers(
+    terminal: Terminal,
+    password: string,
+    assertOwned: () => Promise<void>,
+  ): Promise<void> {
+    const start = await this.isapiJson(
+      terminal,
+      password,
+      'PUT',
+      '/ISAPI/AccessControl/UserInfoDetail/Delete?format=json',
+      { UserInfoDetail: { mode: 'all' } },
+    );
+
+    const startData = isRecord(start.data) ? start.data : {};
+
+    if (start.status === 401) {
+      throw new Error('DEVICE_AUTH_FAILED');
+    }
+
+    if (start.status === 404 || startData.subStatusCode === 'notSupport') {
+      throw new Error('CLEAR_NOT_SUPPORTED');
+    }
+
+    if (start.status !== 200 || Number(startData.statusCode) !== 1) {
+      throw new Error(
+        `CLEAR_REJECTED: HTTP ${start.status} ${String(startData.subStatusCode ?? '')}`,
+      );
+    }
+
+    const deadline = Date.now() + 10 * 60_000;
+
+    while (Date.now() < deadline) {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 2000);
+      });
+
+      // Lock boshqa jarayonga o‘tib ketgan bo‘lsa — to‘xtaymiz.
+      await assertOwned();
+
+      const progress = await this.isapiJson(
+        terminal,
+        password,
+        'GET',
+        '/ISAPI/AccessControl/UserInfoDetail/DeleteProcess?format=json',
+      );
+
+      // Ba’zi proshivkalarda holat endpointi yo‘q — o‘chirish
+      // sinxron bajariladi. Natijani chaqiruvchi sanab tasdiqlaydi.
+      if (progress.status === 404) {
+        return;
+      }
+
+      const body = isRecord(progress.data)
+        ? progress.data.UserInfoDetailDeleteProcess
+        : null;
+
+      const status = isRecord(body) ? body.status : null;
+
+      if (status === 'success') return;
+      if (status === 'failed') throw new Error('CLEAR_FAILED');
+      // 'processing' — kutishda davom etamiz
+    }
+
+    throw new Error('CLEAR_TIMEOUT');
+  }
+
   async createTerminalUser(
     terminal: Terminal,
     password: string,
