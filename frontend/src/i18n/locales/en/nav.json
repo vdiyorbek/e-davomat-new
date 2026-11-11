@@ -36,7 +36,8 @@
     "teacherDashboard": "Teacher dashboard",
     "personSyncMonitoring": "Terminal Monitoring",
     "inspectorStudents": "Neighbourhood students",
-    "inspectorTalks": "Preventive talks"
+    "inspectorTalks": "Preventive talks",
+    "syncHistory": "Sync history"
   },
   "short": {
     "profile": "Profile",

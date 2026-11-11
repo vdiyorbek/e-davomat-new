@@ -16,7 +16,7 @@ import {
   UserCog,
   UserRound,
   LayoutDashboard,
-  Activity,
+  History,
   UsersRound,
   MessagesSquare,
 } from "lucide-react";
@@ -168,8 +168,8 @@ export const NAV_GROUPS: NavGroup[] = [
 
       {
         to: "/terminals/sync-history",
-        key: "personSyncMonitoring",
-        icon: Activity,
+        key: "syncHistory",
+        icon: History,
         roles: ["SUPER_ADMIN"],
       },
       {

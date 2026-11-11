@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, CheckCircle2, Clock3, Eye, RefreshCw, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
+import { KpiCard } from '@/components/common/KpiCard';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
@@ -14,7 +14,6 @@ import { TerminalMonitoringDialog } from '@/components/terminals/TerminalMonitor
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { formatDateTime, formatNumber } from '@/lib/date';
 import { cn } from '@/lib/utils';
@@ -76,44 +75,6 @@ function numberOrDash(value: number | null) {
     return value === null ? '—' : formatNumber(value);
 }
 
-function SummaryCard({
-    title,
-    value,
-    icon: Icon,
-    tone,
-    loading,
-}: {
-    title: string;
-    value: number;
-    icon: LucideIcon;
-    tone: 'primary' | 'success' | 'danger' | 'warning';
-    loading: boolean;
-}) {
-    const tones = {
-        primary: 'bg-primary/12 text-primary',
-        success: 'bg-success/14 text-success',
-        danger: 'bg-destructive/12 text-destructive',
-        warning: 'bg-warning/18 text-[color-mix(in_oklch,var(--warning),var(--foreground)_45%)]',
-    };
-    return (
-        <Card className="gap-0 p-4">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-muted-foreground sm:text-sm">{title}</p>
-                    {loading ? (
-                        <Skeleton className="mt-2 h-8 w-14" />
-                    ) : (
-                        <p className="mt-1 font-heading text-2xl font-bold tabular-nums sm:text-3xl">{formatNumber(value)}</p>
-                    )}
-                </div>
-                <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl', tones[tone])}>
-                    <Icon aria-hidden="true" className="size-5" />
-                </span>
-            </div>
-        </Card>
-    );
-}
-
 export function PersonSyncMonitoringPage() {
     const { t } = useTranslation();
     const [page, setPage] = useState(1);
@@ -162,10 +123,10 @@ export function PersonSyncMonitoringPage() {
             />
 
             <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <SummaryCard title={t('terminals.monitoring.totalTerminals')} value={data?.summary.totalTerminals ?? 0} icon={Server} tone="primary" loading={loading} />
-                <SummaryCard title={statusLabel('SUCCESS')} value={data?.summary.success ?? 0} icon={CheckCircle2} tone="success" loading={loading} />
-                <SummaryCard title={statusLabel('TIMEOUT')} value={data?.summary.timeout ?? 0} icon={Clock3} tone="danger" loading={loading} />
-                <SummaryCard title={statusLabel('ERROR')} value={data?.summary.error ?? 0} icon={AlertTriangle} tone="warning" loading={loading} />
+                <KpiCard label={t('terminals.monitoring.totalTerminals')} value={data?.summary.totalTerminals ?? 0} icon={Server} tone="primary" loading={loading} />
+                <KpiCard label={statusLabel('SUCCESS')} value={data?.summary.success ?? 0} icon={CheckCircle2} tone="success" loading={loading} />
+                <KpiCard label={statusLabel('TIMEOUT')} value={data?.summary.timeout ?? 0} icon={Clock3} tone="danger" loading={loading} />
+                <KpiCard label={statusLabel('ERROR')} value={data?.summary.error ?? 0} icon={AlertTriangle} tone="warning" loading={loading} />
             </section>
 
             {data && (

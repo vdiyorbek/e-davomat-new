@@ -85,7 +85,8 @@
     "created": "Terminal added.",
     "editTitle": "Edit terminal",
     "editDescription": "Connection and system settings of the terminal.",
-    "updated": "Terminal details updated."
+    "updated": "Terminal details updated.",
+    "history": "Sync history"
   },
   "kpi": {
     "total": "Total terminals",
@@ -270,7 +271,8 @@
     "success": "Success",
     "failed": "Failed",
     "seconds": "{{value}} s",
-    "note": "Last 20 records. Refreshes every 30 seconds."
+    "note": "Last 20 records. Refreshes every 30 seconds.",
+    "newEvents": "+{{count}} new"
   },
   "photos": {
     "title": "Attendance photos",
@@ -375,7 +377,18 @@
     "result": "Queued: {{queued}} · existing job: {{reused}} · failed: {{failed}}",
     "resultNote": "Queueing finished. Check the device result in monitoring.",
     "failed": "Sync request failed.",
-    "candidates_one": "{{count}} candidate"
+    "candidates_one": "{{count}} candidate",
+    "mode": "Sync scope",
+    "modes": {
+      "ALL": "All active people at the school",
+      "LIMITED": "Limited sample for testing"
+    },
+    "allNote": "All candidates will be queued. People are sent to each terminal one after another; people already on the terminal are not rewritten.",
+    "limitedNote": "Test mode: only the first {{count}} people are sent to each terminal.",
+    "queuedBatch": "Task #{{id}} created. {{count}} people queued in total.",
+    "openHistory": "Track progress",
+    "scheduled": "{{count}} people queued",
+    "scheduled_one": "{{count}} person queued"
   },
   "monitoring": {
     "title": "Terminal sync monitoring",

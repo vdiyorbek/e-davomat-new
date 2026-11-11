@@ -1,0 +1,120 @@
+{
+  "title": "История синхронизации",
+  "description": "Получение событий посещаемости и отправка людей на терминалы.",
+  "tabs": {
+    "events": "События посещаемости",
+    "persons": "Отправка людей"
+  },
+  "filters": {
+    "status": "Статус",
+    "all": "Все",
+    "terminalId": "ID терминала",
+    "terminalPlaceholder": "Все терминалы",
+    "dateFrom": "Дата начала",
+    "dateTo": "Дата окончания",
+    "apply": "Применить",
+    "reset": "Сбросить",
+    "invalidTerminal": "Неверный ID терминала.",
+    "invalidRange": "Неверный диапазон дат."
+  },
+  "common": {
+    "total": "Всего: {{count}}",
+    "refreshing": "Обновление…",
+    "autoRefresh": "Обновляется каждые 15 секунд",
+    "loadFailed": "Не удалось загрузить историю.",
+    "terminal": "Терминал",
+    "seconds": "{{value}} с"
+  },
+  "events": {
+    "title": "История получения событий",
+    "hint": "Результаты получения событий с турникетов. Сохраняются циклы с новыми событиями или ошибками, а также контрольная запись по каждому терминалу раз в 15 минут.",
+    "emptyTitle": "Записи не найдены",
+    "empty": "Нет записей, подходящих под фильтры.",
+    "columns": {
+      "terminal": "Терминал",
+      "startedAt": "Начало",
+      "finishedAt": "Окончание",
+      "status": "Статус",
+      "duration": "Длительность",
+      "cursorBefore": "Прежний курсор",
+      "cursorAfter": "Новый курсор",
+      "error": "Ошибка",
+      "events": "События"
+    },
+    "statuses": {
+      "SUCCESS": "Успешно",
+      "FAILED": "Ошибка"
+    },
+    "cursor": "Курсор: {{from}} → {{to}}",
+    "onPage": "На текущей странице",
+    "success": "Успешно",
+    "failed": "С ошибкой",
+    "avgDuration": "Средняя длительность",
+    "newOfFetched": "{{inserted}} новых / {{fetched}}",
+    "newEvents": "Новые события"
+  },
+  "batches": {
+    "title": "Задачи отправки людей",
+    "hint": "Задачи отправки учеников и учителей на терминалы и их выполнение.",
+    "emptyTitle": "Задачи не найдены",
+    "empty": "Новые задачи синхронизации появятся здесь.",
+    "task": "Задача #{{id}}",
+    "columns": {
+      "task": "Задача",
+      "createdAt": "Отправлено",
+      "type": "Люди",
+      "terminals": "Терминалы",
+      "status": "Статус",
+      "progress": "Выполнение",
+      "actions": "Действия"
+    },
+    "types": {
+      "BOTH": "Ученики и учителя",
+      "STUDENT": "Ученики",
+      "TEACHER": "Учителя"
+    },
+    "statuses": {
+      "QUEUING": "Постановка в очередь",
+      "QUEUED": "В очереди",
+      "RUNNING": "Выполняется",
+      "COMPLETED": "Завершено",
+      "PARTIAL": "Завершено частично",
+      "FAILED": "Ошибка"
+    },
+    "terminalsCount": "Терминалов: {{count}}",
+    "details": "Подробнее",
+    "progress": "{{done}} / {{total}}",
+    "problems": "Ошибки и неясные"
+  },
+  "batch": {
+    "back": "Список задач",
+    "createdAt": "Отправлено: {{date}}",
+    "finishedAt": "Завершено: {{date}}",
+    "persons": "Люди",
+    "columns": {
+      "person": "Человек",
+      "terminal": "Терминал",
+      "status": "Статус",
+      "attempts": "Попытки",
+      "error": "Ошибка",
+      "startedAt": "Начало",
+      "finishedAt": "Окончание",
+      "time": "Время"
+    },
+    "personId": "ID: {{id}}",
+    "attempts": "Попыток: {{count}}",
+    "emptyItems": "В этой задаче нет записей.",
+    "eta": "Осталось примерно {{value}}",
+    "etaMinutes": "{{count}} мин",
+    "etaHours": "{{hours}} ч {{minutes}} мин"
+  },
+  "items": {
+    "PENDING": "Ожидает",
+    "QUEUED": "В очереди",
+    "RUNNING": "Выполняется",
+    "SUCCESS": "Успешно",
+    "SKIPPED": "Пропущено",
+    "FAILED": "Ошибка",
+    "UNCERTAIN": "Нужна проверка"
+  }
+}

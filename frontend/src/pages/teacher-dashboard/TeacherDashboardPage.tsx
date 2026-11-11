@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router';
 import { PageHeader } from '@/components/common/PageHeader';
+import { SelectField } from '@/components/common/SelectField';
 import {
     EmptyState,
     ErrorState,
@@ -215,23 +216,15 @@ export function TeacherDashboardPage() {
 
                                 </div>
 
-                                <select
+                                <SelectField
                                     aria-label={t('teacher.dashboard.academicYear')}
                                     value={academicYear}
-                                    onChange={(event) =>
-                                        setAcademicYear(event.target.value)
-                                    }
-                                    className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                                >
-                                    <option value="ALL">
-                                        {t('teacher.dashboard.allYears')}
-                                    </option>
-                                    {academicYears.map((year) => (
-                                        <option key={year} value={year}>
-                                            {year}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onValueChange={setAcademicYear}
+                                    options={[
+                                        { value: 'ALL', label: t('teacher.dashboard.allYears') },
+                                        ...academicYears.map((year) => ({ value: year, label: year })),
+                                    ]}
+                                />
                             </CardContent>
                         </Card>
 

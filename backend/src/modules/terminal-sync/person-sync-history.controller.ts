@@ -12,11 +12,15 @@ import { In, Repository } from 'typeorm';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from '../terminals/terminal.entity';
+import { Person } from '../persons/person.entity';
 import {
   PersonSyncBatch,
   PersonSyncBatchStatus,
 } from './person-sync-batch.entity';
-import { PersonSyncBatchItem } from './person-sync-batch-item.entity';
+import {
+  PersonSyncBatchItem,
+  PersonSyncBatchItemStatus,
+} from './person-sync-batch-item.entity';
 
 const STATUSES = Object.values(PersonSyncBatchStatus);
 
@@ -154,6 +158,7 @@ export class PersonSyncHistoryController {
     @Param('batchId') batchId: string,
     @Query('page') pageRaw?: string,
     @Query('limit') limitRaw?: string,
+    @Query('status') statusRaw?: string,
   ) {
     if (!/^[1-9]\d*$/.test(batchId)) {
       throw new BadRequestException('Topshiriq ID noto‘g‘ri');
@@ -168,8 +173,25 @@ export class PersonSyncHistoryController {
       throw new NotFoundException('Topshiriq topilmadi');
     }
 
+    // Ixtiyoriy: faqat ma’lum holatdagi yozuvlarni ko‘rsatish.
+    const itemStatus = statusRaw && statusRaw !== 'ALL' ? statusRaw : undefined;
+
+    if (
+      itemStatus !== undefined &&
+      !Object.values(PersonSyncBatchItemStatus).includes(
+        itemStatus as PersonSyncBatchItemStatus,
+      )
+    ) {
+      throw new BadRequestException('Holat noto‘g‘ri');
+    }
+
     const [items, totalItems] = await this.items.findAndCount({
-      where: { batchId },
+      where: {
+        batchId,
+        ...(itemStatus
+          ? { status: itemStatus as PersonSyncBatchItemStatus }
+          : {}),
+      },
       order: { id: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -185,6 +207,32 @@ export class PersonSyncHistoryController {
 
     const terminalNames = new Map(
       terminals.map((terminal) => [terminal.id, terminal.name]),
+    );
+
+    // Jadvalda faqat ID emas, shaxsning F.I.Sh. ko‘rinishi uchun.
+    // `withDeleted` — o‘chirilgan shaxslarning tarixi ham o‘qilsin.
+    const personIds = [...new Set(items.map((item) => item.personId))];
+
+    const persons = personIds.length
+      ? await this.items.manager.getRepository(Person).find({
+          where: { id: In(personIds) },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            middleName: true,
+          },
+          withDeleted: true,
+        })
+      : [];
+
+    const personNames = new Map(
+      persons.map((person) => [
+        person.id,
+        [person.lastName, person.firstName, person.middleName]
+          .filter(Boolean)
+          .join(' '),
+      ]),
     );
 
     const counts = await this.items
@@ -211,6 +259,7 @@ export class PersonSyncHistoryController {
         terminalId: item.terminalId,
         terminalName: terminalNames.get(item.terminalId) ?? null,
         personId: item.personId,
+        personName: personNames.get(item.personId) ?? null,
         jobId: item.jobId,
         status: item.status,
         attempts: item.attempts,

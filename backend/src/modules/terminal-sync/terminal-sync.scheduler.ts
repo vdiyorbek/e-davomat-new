@@ -102,39 +102,47 @@ export class TerminalSyncScheduler {
 
       const now = Date.now();
 
-      let queued = 0;
       let offlineSkipped = 0;
 
-      for (const terminal of terminals) {
-        if (this.shouldSkipOffline(terminal, now)) {
-          offlineSkipped++;
-          continue;
-        }
+      const jobs = terminals
+        .filter((terminal) => {
+          if (this.shouldSkipOffline(terminal, now)) {
+            offlineSkipped++;
+            return false;
+          }
 
-        await this.queue.add(
-          'sync-terminal',
-          {
-            terminalId: terminal.id,
-          },
-          {
+          return true;
+        })
+        .map((terminal) => ({
+          name: 'sync-terminal',
+          data: { terminalId: terminal.id },
+          opts: {
+            // Bir xil jobId — terminal allaqachon navbatda yoki
+            // bajarilayotgan bo‘lsa, takroriy vazifa qo‘shilmaydi.
             jobId: `terminal-${terminal.id}`,
 
             attempts: 3,
 
             backoff: {
-              type: 'exponential',
+              type: 'exponential' as const,
               delay: 15_000,
             },
 
             removeOnComplete: true,
             removeOnFail: true,
           },
-        );
+        }));
 
-        queued++;
+      // Avval har terminal uchun alohida `await queue.add()` — har 5 s
+      // da N ta Redis so‘rovi. Endi bitta pipeline.
+      if (jobs.length > 0) {
+        await this.queue.addBulk(jobs);
       }
 
-      if (terminals.length > 0) {
+      const queued = jobs.length;
+
+      // Har 5 soniyada log yozmaymiz: faqat daqiqa boshida.
+      if (terminals.length > 0 && new Date(now).getSeconds() < 5) {
         this.logger.log(
           `Terminal sync: ` +
             `jami=${terminals.length}, ` +

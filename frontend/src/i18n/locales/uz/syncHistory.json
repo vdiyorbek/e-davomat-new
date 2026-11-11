@@ -1,0 +1,120 @@
+{
+  "title": "Sinxronlash tarixi",
+  "description": "Davomat eventlarini olish va shaxslarni terminallarga yuborish jarayonlari.",
+  "tabs": {
+    "events": "Davomat eventlari",
+    "persons": "Shaxslarni yuborish"
+  },
+  "filters": {
+    "status": "Holat",
+    "all": "Barchasi",
+    "terminalId": "Terminal ID",
+    "terminalPlaceholder": "Barcha terminallar",
+    "dateFrom": "Boshlanish sanasi",
+    "dateTo": "Tugash sanasi",
+    "apply": "Qo‘llash",
+    "reset": "Tozalash",
+    "invalidTerminal": "Terminal ID noto‘g‘ri.",
+    "invalidRange": "Sana oralig‘i noto‘g‘ri."
+  },
+  "common": {
+    "total": "Jami: {{count}}",
+    "refreshing": "Yangilanmoqda…",
+    "autoRefresh": "Har 15 soniyada yangilanadi",
+    "loadFailed": "Tarixni yuklab bo‘lmadi.",
+    "terminal": "Terminal",
+    "seconds": "{{value}} s"
+  },
+  "events": {
+    "title": "Eventlarni olish tarixi",
+    "hint": "Turniketlardan eventlarni olish natijalari. Yangi event kelgan yoki xato bo‘lgan sikllar, hamda har terminal uchun 15 daqiqada bir nazorat yozuvi saqlanadi.",
+    "emptyTitle": "Yozuvlar topilmadi",
+    "empty": "Tanlangan filtrlarga mos yozuv yo‘q.",
+    "columns": {
+      "terminal": "Terminal",
+      "startedAt": "Boshlangan",
+      "finishedAt": "Yakunlangan",
+      "status": "Holat",
+      "duration": "Davomiylik",
+      "cursorBefore": "Oldingi cursor",
+      "cursorAfter": "Yangi cursor",
+      "error": "Xatolik",
+      "events": "Eventlar"
+    },
+    "statuses": {
+      "SUCCESS": "Muvaffaqiyatli",
+      "FAILED": "Xatolik"
+    },
+    "cursor": "Cursor: {{from}} → {{to}}",
+    "onPage": "Joriy sahifada",
+    "success": "Muvaffaqiyatli",
+    "failed": "Xatolik",
+    "avgDuration": "O‘rtacha davomiylik",
+    "newOfFetched": "{{inserted}} yangi / {{fetched}}",
+    "newEvents": "Yangi eventlar"
+  },
+  "batches": {
+    "title": "Shaxslarni yuborish topshiriqlari",
+    "hint": "O‘quvchi va o‘qituvchilarni terminallarga yuborish topshiriqlari va ularning bajarilishi.",
+    "emptyTitle": "Topshiriqlar topilmadi",
+    "empty": "Yangi sinxronlash topshiriqlari shu yerda paydo bo‘ladi.",
+    "task": "Topshiriq #{{id}}",
+    "columns": {
+      "task": "Topshiriq",
+      "createdAt": "Yuborilgan vaqt",
+      "type": "Shaxslar",
+      "terminals": "Terminallar",
+      "status": "Holat",
+      "progress": "Bajarilish",
+      "actions": "Amallar"
+    },
+    "types": {
+      "BOTH": "O‘quvchi va o‘qituvchilar",
+      "STUDENT": "O‘quvchilar",
+      "TEACHER": "O‘qituvchilar"
+    },
+    "statuses": {
+      "QUEUING": "Navbatga olinmoqda",
+      "QUEUED": "Navbatda",
+      "RUNNING": "Jarayonda",
+      "COMPLETED": "Yakunlangan",
+      "PARTIAL": "Qisman yakunlangan",
+      "FAILED": "Xatolik"
+    },
+    "terminalsCount": "{{count}} ta terminal",
+    "details": "Tafsilotlar",
+    "progress": "{{done}} / {{total}}",
+    "problems": "Xato va noaniq yozuvlar"
+  },
+  "batch": {
+    "back": "Topshiriqlar ro‘yxati",
+    "createdAt": "Yuborilgan: {{date}}",
+    "finishedAt": "Yakunlangan: {{date}}",
+    "persons": "Shaxslar",
+    "columns": {
+      "person": "Shaxs",
+      "terminal": "Terminal",
+      "status": "Holat",
+      "attempts": "Urinish",
+      "error": "Xatolik",
+      "startedAt": "Boshlangan",
+      "finishedAt": "Yakunlangan",
+      "time": "Vaqt"
+    },
+    "personId": "ID: {{id}}",
+    "attempts": "Urinish: {{count}}",
+    "emptyItems": "Bu topshiriqda yozuvlar yo‘q.",
+    "eta": "Taxminan {{value}} qoldi",
+    "etaMinutes": "{{count}} daq",
+    "etaHours": "{{hours}} soat {{minutes}} daq"
+  },
+  "items": {
+    "PENDING": "Kutilmoqda",
+    "QUEUED": "Navbatda",
+    "RUNNING": "Jarayonda",
+    "SUCCESS": "Muvaffaqiyatli",
+    "SKIPPED": "O‘tkazib yuborilgan",
+    "FAILED": "Xatolik",
+    "UNCERTAIN": "Tekshirish kerak"
+  }
+}

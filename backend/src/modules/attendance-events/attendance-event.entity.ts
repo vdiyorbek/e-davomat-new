@@ -26,6 +26,9 @@ import { EventPhotoStatus } from './enums/event-photo-status.enum';
   'eventAt',
 ])
 @Index('IDX_attendance_events_school_time', ['schoolId', 'eventAt'])
+@Index('IDX_attendance_events_terminal_time', ['terminalId', 'eventAt'])
+@Index('IDX_attendance_events_terminal_photo', ['terminalId', 'photoStatus'])
+@Index('IDX_attendance_events_photo_terminal', ['photoStatus', 'terminalId'])
 export class AttendanceEvent {
   @PrimaryGeneratedColumn({
     type: 'bigint',

@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
-import { ListChecks, Send } from 'lucide-react';
+import { ExternalLink, ListChecks, Send } from 'lucide-react';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
@@ -7,14 +8,16 @@ import { SelectField } from '@/components/common/SelectField';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { authorizedPost } from '@/lib/auth-session';
+import { formatNumber } from '@/lib/date';
 
 type SyncType = 'STUDENT' | 'TEACHER' | 'BOTH';
+type SyncMode = 'ALL' | 'LIMITED';
 
 interface BulkSyncResponse {
     success: boolean;
     dryRun: boolean;
     type: SyncType;
-    mode: 'ALL' | 'LIMITED';
+    mode: SyncMode;
     batchId: string | null;
     results: Array<{
         terminalId: number;
@@ -22,9 +25,9 @@ interface BulkSyncResponse {
         candidates: number;
         hasMore: boolean;
         queued: number;
-        scheduled?: number;
         reused: number;
         failed: number;
+        scheduled?: number;
     }>;
 }
 
@@ -36,17 +39,26 @@ interface Props {
 const MAX_TERMINALS = 5;
 const LIMITS = [1, 5, 10, 20];
 
+/**
+ * Tanlangan terminallarga maktabdagi shaxslarni yuborish.
+ *
+ * «ALL» rejimida maktabdagi barcha faol o‘quvchi/o‘qituvchilar bitta
+ * topshiriq (batch) sifatida saqlanadi. Backend dispatcher ularni har
+ * terminalga ketma-ket yuboradi; bajarilishini «Sinxronlash tarixi»da
+ * kuzatish mumkin. «LIMITED» — faqat sinov uchun.
+ */
 export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
     const { t } = useTranslation();
     const id = useId();
     const [type, setType] = useState<SyncType>('BOTH');
+    const [mode, setMode] = useState<SyncMode>('ALL');
     const [limit, setLimit] = useState(10);
     const [preview, setPreview] = useState<BulkSyncResponse | null>(null);
     const [previewSignature, setPreviewSignature] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState<BulkSyncResponse | null>(null);
-    const [mode, setMode] = useState<'ALL' | 'LIMITED'>('ALL');
+
     const tooMany = terminalIds.length > MAX_TERMINALS;
     const currentSignature = JSON.stringify({
         terminalIds: [...terminalIds].sort((a, b) => a - b),
@@ -55,12 +67,21 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
         limit: mode === 'LIMITED' ? limit : null,
     });
 
+    // Oldindan ko‘rilgan reja joriy tanlovga mos bo‘lsagina tasdiqlash mumkin.
+    // LIMITED rejimida `hasMore` tabiiy holat (sinov uchun bir qismi
+    // yuboriladi), shuning uchun u tasdiqlashni to‘smaydi.
+    const totalCandidates = preview?.results.reduce((sum, item) => sum + item.candidates, 0) ?? 0;
     const canApply =
         preview !== null &&
         previewSignature === currentSignature &&
         terminalIds.length > 0 &&
         !tooMany &&
-        preview.results.every((item) => !item.hasMore);
+        totalCandidates > 0;
+
+    function resetPlan() {
+        setPreview(null);
+        setResult(null);
+    }
 
     async function submit(dryRun: boolean) {
         if (busy || terminalIds.length === 0) return;
@@ -71,19 +92,14 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                 terminalIds,
                 type,
                 mode,
-                ...(mode === 'LIMITED'
-                    ? { limitPerTerminal: limit }
-                    : {}),
+                ...(mode === 'LIMITED' ? { limitPerTerminal: limit } : {}),
                 dryRun,
-                ...(dryRun
-                    ? {}
-                    : { confirm: 'SYNC_SELECTED_PERSONS' }),
+                ...(dryRun ? {} : { confirm: 'SYNC_SELECTED_PERSONS' }),
             });
             if (dryRun) {
                 setPreview(response);
                 setPreviewSignature(currentSignature);
                 setResult(null);
-
             } else {
                 setResult(response);
                 setPreview(null);
@@ -95,6 +111,8 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
             setBusy(false);
         }
     }
+
+    const scheduledTotal = result?.results.reduce((sum, item) => sum + (item.scheduled ?? item.candidates), 0) ?? 0;
 
     return (
         <section className="space-y-4">
@@ -110,70 +128,51 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                         value={type}
                         onValueChange={(value) => {
                             setType(value as SyncType);
-                            setPreview(null);
-                            setResult(null);
+                            resetPlan();
                         }}
-                        options={[
-                            {
-                                value: 'BOTH',
-                                label: 'O‘quvchi va o‘qituvchilar',
-                            },
-                            {
-                                value: 'STUDENT',
-                                label: 'Faqat o‘quvchilar',
-                            },
-                            {
-                                value: 'TEACHER',
-                                label: 'Faqat o‘qituvchilar',
-                            },
-                        ]}
+                        options={(['BOTH', 'STUDENT', 'TEACHER'] as const).map((value) => ({
+                            value,
+                            label: t(`terminals.personSync.types.${value}`),
+                        }))}
                     />
                 </Field>
-                <Field
-                    htmlFor={`${id}-mode`}
-                    label="Sinxronlash hajmi"
-                >
+                <Field htmlFor={`${id}-mode`} label={t('terminals.personSync.mode')}>
                     <SelectField
                         id={`${id}-mode`}
                         value={mode}
                         onValueChange={(value) => {
-                            setMode(value as 'ALL' | 'LIMITED');
-                            setPreview(null);
-                            setResult(null);
+                            setMode(value === 'LIMITED' ? 'LIMITED' : 'ALL');
+                            resetPlan();
                         }}
-                        options={[
-                            {
-                                value: 'ALL',
-                                label: 'Maktabdagi barcha faol shaxslar',
-                            },
-                            {
-                                value: 'LIMITED',
-                                label: 'Sinov uchun cheklangan miqdor',
-                            },
-                        ]}
+                        options={(['ALL', 'LIMITED'] as const).map((value) => ({
+                            value,
+                            label: t(`terminals.personSync.modes.${value}`),
+                        }))}
                     />
                 </Field>
                 {mode === 'LIMITED' && (
-                    <Field
-                        htmlFor={`${id}-limit`}
-                        label="Har terminal uchun"
-                    >
+                    <Field htmlFor={`${id}-limit`} label={t('terminals.personSync.limit')}>
                         <SelectField
                             id={`${id}-limit`}
                             value={String(limit)}
                             onValueChange={(value) => {
                                 setLimit(Number(value));
-                                setPreview(null);
-                                setResult(null);
+                                resetPlan();
                             }}
                             options={LIMITS.map((value) => ({
                                 value: String(value),
-                                label: `${value} ta`,
+                                label: t('terminals.personSync.limitOption', { count: value }),
                             }))}
                         />
                     </Field>
                 )}
             </div>
+
+            <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                {mode === 'ALL'
+                    ? t('terminals.personSync.allNote')
+                    : t('terminals.personSync.limitedNote', { count: limit })}
+            </p>
 
             {tooMany && (
                 <Alert variant="destructive">
@@ -212,29 +211,36 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                         <Send aria-hidden="true" />
                         {busy ? t('terminals.personSync.applying') : t('terminals.personSync.apply')}
                     </Button>
-                    {mode === 'ALL' && (
-                        <p className="text-xs text-muted-foreground">
-                            Barcha nomzodlar aniqlandi.
-                            To‘liq yuborish navbat dispatcheriga
-                            ulangandan so‘ng faollashadi.
-                        </p>
-                    )}
                 </div>
             )}
 
             {result && (
-                <div className="space-y-2 rounded-xl border border-success/30 bg-success/8 p-4 text-sm">
-                    {result.results.map((item) => (
-                        <p key={item.terminalId} className="tabular-nums">
-                            <span className="font-semibold">#{item.terminalId}</span>{' '}
-                            {t('terminals.personSync.result', {
-                                queued: item.queued,
-                                reused: item.reused,
-                                failed: item.failed,
-                            })}
-                        </p>
-                    ))}
-                    <p className="text-xs text-muted-foreground">{t('terminals.personSync.resultNote')}</p>
+                <div className="space-y-3 rounded-xl border border-success/30 bg-success/8 p-4 text-sm">
+                    <p className="font-semibold">
+                        {result.batchId
+                            ? t('terminals.personSync.queuedBatch', { id: result.batchId, count: formatNumber(scheduledTotal) })
+                            : t('terminals.personSync.scheduled', { count: scheduledTotal })}
+                    </p>
+                    <ul className="space-y-1 text-xs">
+                        {result.results.map((item) => (
+                            <li key={item.terminalId} className="tabular-nums">
+                                <span className="font-semibold">#{item.terminalId}</span> —{' '}
+                                {t('terminals.personSync.scheduled', { count: item.scheduled ?? item.candidates })}
+                            </li>
+                        ))}
+                    </ul>
+                    <Button asChild size="sm" variant="outline" className="bg-background">
+                        <Link
+                            to={
+                                result.batchId
+                                    ? `/terminals/sync-history?tab=persons&batch=${result.batchId}`
+                                    : '/terminals/sync-history?tab=persons'
+                            }
+                        >
+                            <ExternalLink aria-hidden="true" />
+                            {t('terminals.personSync.openHistory')}
+                        </Link>
+                    </Button>
                 </div>
             )}
 

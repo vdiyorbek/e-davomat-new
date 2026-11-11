@@ -36,7 +36,8 @@
     "teacherDashboard": "Кабинет учителя",
     "personSyncMonitoring": "Мониторинг терминалов",
     "inspectorStudents": "Ученики махалли",
-    "inspectorTalks": "Профилактические беседы"
+    "inspectorTalks": "Профилактические беседы",
+    "syncHistory": "История синхронизации"
   },
   "short": {
     "profile": "Профиль",

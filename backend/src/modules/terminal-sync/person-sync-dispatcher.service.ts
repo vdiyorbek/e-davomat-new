@@ -20,13 +20,23 @@ import {
 import { PersonSyncHistoryService } from './person-sync-history.service';
 
 const LOCK_NAME = 'edav:person-sync:dispatcher';
-const MAX_PER_CYCLE = 20;
+
+/**
+ * Bir siklda yuboriladigan vazifalar chegarasi.
+ * Har terminalga baribir bir vaqtda faqat bitta vazifa
+ * yuboriladi, shuning uchun bu — bir vaqtda ishlayotgan
+ * terminallar sonining yuqori chegarasi.
+ */
+const MAX_PER_CYCLE = 50;
 
 @Injectable()
 export class PersonSyncDispatcherService {
   private readonly logger = new Logger(PersonSyncDispatcherService.name);
 
   private running = false;
+
+  /** Dispatch ishlayotgan paytda yana chaqirilgan bo‘lsa — tugagach qayta ishlaydi. */
+  private rerun = false;
 
   constructor(
     private readonly dataSource: DataSource,
@@ -40,12 +50,26 @@ export class PersonSyncDispatcherService {
     private readonly history: PersonSyncHistoryService,
   ) {}
 
-  @Cron('*/10 * * * * *', {
+  /**
+   * Vazifa tugashi bilan shu terminalning keyingi shaxsini
+   * darhol navbatga qo‘yish uchun processor chaqiradi.
+   * Cron (har 5 s) zaxira sifatida qoladi.
+   */
+  kick(): void {
+    setTimeout(() => {
+      void this.dispatch();
+    }, 250);
+  }
+
+  @Cron('*/5 * * * * *', {
     name: 'person-sync-dispatcher',
     timeZone: 'Asia/Tashkent',
   })
   async dispatch(): Promise<void> {
-    if (this.running) return;
+    if (this.running) {
+      this.rerun = true;
+      return;
+    }
 
     this.running = true;
 
@@ -68,9 +92,14 @@ export class PersonSyncDispatcherService {
 
       locked = true;
 
-      const candidates = await this.items
+      // Har bir terminal uchun eng eski PENDING yozuvni olamiz.
+      // Avval `ORDER BY id LIMIT 100` ishlatilgan edi: ALL rejimida
+      // birinchi terminalning minglab yozuvlari oldinda turgani uchun
+      // qolgan terminallar u tugaguncha navbat olmas edi.
+      const heads = await this.items
         .createQueryBuilder('item')
         .innerJoin(PersonSyncBatch, 'batch', 'batch.id = item.batchId')
+        .select('MIN(item.id)', 'itemId')
         .where('item.status = :status', {
           status: Status.PENDING,
         })
@@ -80,9 +109,15 @@ export class PersonSyncDispatcherService {
             PersonSyncBatchStatus.RUNNING,
           ],
         })
-        .orderBy('item.id', 'ASC')
-        .take(100)
-        .getMany();
+        .groupBy('item.terminalId')
+        .getRawMany<{ itemId: string | number }>();
+
+      const candidates = heads.length
+        ? await this.items.find({
+            where: { id: In(heads.map((row) => String(row.itemId))) },
+            order: { id: 'ASC' },
+          })
+        : [];
 
       let dispatched = 0;
       const usedTerminals = new Set<number>();
@@ -217,6 +252,11 @@ export class PersonSyncDispatcherService {
       }
 
       this.running = false;
+
+      if (this.rerun) {
+        this.rerun = false;
+        this.kick();
+      }
     }
   }
 }

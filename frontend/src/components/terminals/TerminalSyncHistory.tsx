@@ -18,6 +18,7 @@ interface SyncHistoryItem {
     cursorBefore: string | null;
     cursorAfter: string | null;
     errorCode: string | null;
+    insertedEvents?: number;
 }
 
 interface SyncHistoryResponse {
@@ -86,6 +87,11 @@ export function TerminalSyncHistory({ terminalId }: { terminalId: number }) {
                             </StatusBadge>
                             <span className="truncate font-medium">{formatDateTime(run.startedAt)}</span>
                             <span className="text-right text-muted-foreground tabular-nums">
+                                {(run.insertedEvents ?? 0) > 0 && (
+                                    <span className="mr-2 font-semibold text-success">
+                                        {t('terminals.history.newEvents', { count: run.insertedEvents })}
+                                    </span>
+                                )}
                                 {t('terminals.history.seconds', { value: (run.durationMs / 1000).toFixed(2) })}
                             </span>
                             <span className="col-span-2 truncate text-muted-foreground" title={run.errorCode ?? undefined}>

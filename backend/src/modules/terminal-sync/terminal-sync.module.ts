@@ -8,6 +8,7 @@ import { TerminalsModule } from '../terminals/terminals.module';
 import { TerminalPersonSyncCheck } from './terminal-person-sync-check.entity';
 import { AttendanceEventsModule } from '../attendance-events/attendance-events.module';
 import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.module';
+import { RedisModule } from '../../redis/redis.module';
 import { User } from '../users/user.entity';
 import { TERMINAL_SYNC_QUEUE } from './terminal-sync.constants';
 import { PERSON_SYNC_QUEUE } from '../terminals/person-sync.constants';
@@ -47,6 +48,7 @@ import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
 
     AttendanceEventsModule,
     DailyAttendanceModule,
+    RedisModule,
 
     BullModule.forRootAsync({
       imports: [ConfigModule],

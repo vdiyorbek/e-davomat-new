@@ -57,7 +57,7 @@ interface Props {
 
 export function TerminalPhotoStats({ terminalId, canManage }: Props) {
     const { t } = useTranslation();
-    const statsQuery = useApiQuery<StatsResponse>('/attendance-events/photos/stats');
+    const statsQuery = useApiQuery<StatsResponse>(`/attendance-events/photos/stats?terminalId=${terminalId}`);
     const issuesQuery = useApiQuery<IssuesResponse>(`/attendance-events/photos/${terminalId}/issues?limit=50`);
 
     const [busy, setBusy] = useState(false);

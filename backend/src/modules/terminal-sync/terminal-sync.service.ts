@@ -5,9 +5,28 @@ import { EventSyncTerminalLockService } from '../attendance-events/event-sync-te
 import { Terminal } from '../terminals/terminal.entity';
 import { AttendanceEventsService } from '../attendance-events/attendance-events.service';
 import { DailyAttendanceService } from '../daily-attendance/daily-attendance.service';
+import { RedisService } from '../../redis/redis.service';
 
 const MAX_SYNC_WINDOWS = 24;
 const MAX_SYNC_RUN_MS = 90_000;
+
+/**
+ * Yangi event bo‘lmasa ham maktab davomati kamida shu oraliqda
+ * bir marta qayta hisoblanadi (xavfsizlik uchun).
+ */
+const SAFETY_REBUILD_SECONDS = 10 * 60;
+
+/** Event yozilgan, lekin hali hisoblanmagan maktab/sana belgisi. */
+const PENDING_TTL_SECONDS = 2 * 24 * 60 * 60;
+
+export interface TerminalSyncRunSummary {
+  windows: number;
+  fetched: number;
+  inserted: number;
+  duplicates: number;
+  rebuilt: number;
+  rebuildSkipped: number;
+}
 
 @Injectable()
 export class TerminalSyncService {
@@ -19,9 +38,101 @@ export class TerminalSyncService {
     private readonly eventSyncLock: EventSyncTerminalLockService,
     private readonly attendanceEventsService: AttendanceEventsService,
     private readonly dailyAttendanceService: DailyAttendanceService,
+    private readonly redisService: RedisService,
   ) {}
 
-  async run(terminalId: number): Promise<void> {
+  private pendingKey(schoolId: number, date: string): string {
+    return `edav:attendance:rebuild-pending:${schoolId}:${date}`;
+  }
+
+  private freshKey(schoolId: number, date: string): string {
+    return `edav:attendance:rebuild-fresh:${schoolId}:${date}`;
+  }
+
+  /**
+   * Maktab/sana uchun kunlik davomatni qayta hisoblash kerakmi?
+   *
+   * Avval har 5 soniyada, yangi event bo‘lmasa ham, butun maktab
+   * davomati qayta hisoblanar edi (maktab qatori FOR UPDATE bilan
+   * qulflanadi). Endi:
+   *  • yangi event yozilgan bo‘lsa — ha;
+   *  • oldingi hisoblash yakunlanmagan bo‘lsa (pending belgisi) — ha;
+   *  • so‘nggi 10 daqiqada hisoblanmagan bo‘lsa — ha (xavfsizlik);
+   *  • aks holda — yo‘q.
+   * Redis ishlamasa, xavfsiz tomonga: qayta hisoblaymiz.
+   */
+  private async needsRebuild(
+    schoolId: number,
+    date: string,
+    inserted: number,
+  ): Promise<boolean> {
+    if (inserted > 0) return true;
+
+    try {
+      const redis = this.redisService.getClient();
+
+      if ((await redis.exists(this.pendingKey(schoolId, date))) === 1) {
+        return true;
+      }
+
+      // NX: kalit yo‘q bo‘lsa (10 daqiqada hisoblanmagan) — hisoblaymiz.
+      const claimed = await redis.set(
+        this.freshKey(schoolId, date),
+        '1',
+        'EX',
+        SAFETY_REBUILD_SECONDS,
+        'NX',
+      );
+
+      return claimed === 'OK';
+    } catch {
+      return true;
+    }
+  }
+
+  private async markPending(schoolId: number, dates: string[]) {
+    try {
+      const redis = this.redisService.getClient();
+      const pipeline = redis.pipeline();
+
+      for (const date of dates) {
+        pipeline.set(
+          this.pendingKey(schoolId, date),
+          '1',
+          'EX',
+          PENDING_TTL_SECONDS,
+        );
+      }
+
+      await pipeline.exec();
+    } catch {
+      // Belgi qo‘yilmasa ham 10 daqiqalik xavfsizlik hisoblashi ishlaydi.
+    }
+  }
+
+  private async markRebuilt(schoolId: number, date: string) {
+    try {
+      await this.redisService
+        .getClient()
+        .multi()
+        .del(this.pendingKey(schoolId, date))
+        .set(this.freshKey(schoolId, date), '1', 'EX', SAFETY_REBUILD_SECONDS)
+        .exec();
+    } catch {
+      // Keyingi siklda qayta hisoblanadi — bu xavfsiz.
+    }
+  }
+
+  async run(terminalId: number): Promise<TerminalSyncRunSummary> {
+    const summary: TerminalSyncRunSummary = {
+      windows: 0,
+      fetched: 0,
+      inserted: 0,
+      duplicates: 0,
+      rebuilt: 0,
+      rebuildSkipped: 0,
+    };
+
     if (
       !Number.isInteger(terminalId) ||
       terminalId < 1 ||
@@ -61,7 +172,7 @@ export class TerminalSyncService {
         });
 
         if (!terminal || !terminal.isActive || !terminal.syncStartAt) {
-          return;
+          return summary;
         }
 
         const initialMs = terminal.syncStartAt.getTime();
@@ -69,7 +180,7 @@ export class TerminalSyncService {
         const cursorMs = terminal.eventsSyncedUntil?.getTime() ?? initialMs;
 
         if (cursorMs >= targetMs) {
-          return;
+          return summary;
         }
 
         // Oldingi chegaradan 2 daqiqa orqaga qaytib tekshiramiz.
@@ -91,29 +202,40 @@ export class TerminalSyncService {
 
         const eventsDurationMs = Date.now() - eventsStartedAt;
 
-        const rebuildStartedAt = Date.now();
+        summary.windows++;
+        summary.fetched += result.fetched;
+        summary.inserted += result.inserted;
+        summary.duplicates += result.duplicates;
 
-        // Oraliq ikki Toshkent sanasiga tushsa, ikkala kun hisoblanadi.
+        const rebuildStartedAt = Date.now();
 
         // Vaqt oralig'i ikki Toshkent sanasiga tushsa,
         // ikkala sanani alohida ko'rib chiqamiz.
-        for (const date of this.getTashkentDates(startAt, endAt)) {
+        const dates = this.getTashkentDates(startAt, endAt);
+
+        // Yangi event yozildi: hisoblash tugaguncha «pending» belgisi
+        // turadi. Rebuild xato bilan tugasa ham, keyingi siklda
+        // (yangi event bo‘lmasa ham) albatta qayta hisoblanadi.
+        if (result.inserted > 0) {
+          await this.markPending(terminal.schoolId, dates);
+        }
+
+        for (const date of dates) {
           const rebuildKey = `${terminal.schoolId}:${date}`;
 
-          // Agar ushbu maktab va sana shu run() ichida
-          // muvaffaqiyatli hisoblangan bo'lsa va
-          // yangi event yozilmagan bo'lsa, takroriy
-          // to'liq hisoblashni o'tkazib yuboramiz.
-          const canSkipRebuild =
-            result.inserted === 0 && rebuiltDates.has(rebuildKey);
-
-          if (canSkipRebuild) {
+          // Shu run() ichida allaqachon hisoblangan va yangi event yo‘q.
+          if (result.inserted === 0 && rebuiltDates.has(rebuildKey)) {
             skippedRebuildCount++;
             continue;
           }
 
-          // Yangi event mavjud bo'lsa yoki sana birinchi
-          // marta uchrasa, to'liq hisoblaymiz.
+          if (
+            !(await this.needsRebuild(terminal.schoolId, date, result.inserted))
+          ) {
+            skippedRebuildCount++;
+            continue;
+          }
+
           await this.dailyAttendanceService.rebuild({
             schoolId: terminal.schoolId,
             date,
@@ -121,9 +243,13 @@ export class TerminalSyncService {
 
           // Faqat rebuild muvaffaqiyatli tugagandan
           // keyin hisoblangan deb belgilaymiz.
+          await this.markRebuilt(terminal.schoolId, date);
           rebuiltDates.add(rebuildKey);
           rebuiltCount++;
         }
+
+        summary.rebuilt = rebuiltCount;
+        summary.rebuildSkipped = skippedRebuildCount;
 
         // Eventlar va kunlik hisob muvaffaqiyatli tugagandan keyingina
         // davom etish vaqtini yangilaymiz.
@@ -159,6 +285,12 @@ export class TerminalSyncService {
 
         const rebuildDurationMs = Date.now() - rebuildStartedAt;
 
+        // Yangi event bo‘lmagan oddiy sikllarni log’ga yozmaymiz —
+        // har 5 soniyada har terminal uchun 2 qator log to‘planib qolardi.
+        if (result.inserted === 0 && rebuiltCount === 0) {
+          continue;
+        }
+
         this.logger.log(
           `Terminal ${terminalId}: ` +
             `eventsMs=${eventsDurationMs}, ` +
@@ -191,6 +323,7 @@ export class TerminalSyncService {
           );
         }
       }
+      return summary;
     } finally {
       // Muvaffaqiyat yoki xatolikdan qat'i nazar
       // o'zimizga tegishli Redis Lock'ni bo'shatamiz.

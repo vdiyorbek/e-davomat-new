@@ -42,9 +42,24 @@ export class AttendanceEventsController {
     return this.attendanceEventPhotosService.downloadPending(dto);
   }
 
+  /**
+   * Foto statistikasi. `terminalId` berilsa — faqat shu terminal
+   * (terminal tafsilotlari oynasi har 30 s da chaqiradi; avval barcha
+   * terminallarning barcha eventlari GROUP BY qilinardi).
+   */
   @Get('photos/stats')
-  getPhotoStats() {
-    return this.attendanceEventPhotosService.getPhotoStats();
+  getPhotoStats(@Query('terminalId') terminalIdRaw?: string) {
+    let terminalId: number | undefined;
+
+    if (terminalIdRaw !== undefined && terminalIdRaw !== '') {
+      if (!/^[1-9]\d*$/.test(terminalIdRaw) || Number(terminalIdRaw) > 4294967295) {
+        throw new BadRequestException('Terminal ID noto‘g‘ri');
+      }
+
+      terminalId = Number(terminalIdRaw);
+    }
+
+    return this.attendanceEventPhotosService.getPhotoStats(terminalId);
   }
 
   @Post('photos/:terminalId/retry-missing')

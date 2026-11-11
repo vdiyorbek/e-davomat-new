@@ -1,0 +1,121 @@
+{
+  "title": "Sync history",
+  "description": "Attendance event fetching and pushing people to terminals.",
+  "tabs": {
+    "events": "Attendance events",
+    "persons": "People sync"
+  },
+  "filters": {
+    "status": "Status",
+    "all": "All",
+    "terminalId": "Terminal ID",
+    "terminalPlaceholder": "All terminals",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "apply": "Apply",
+    "reset": "Reset",
+    "invalidTerminal": "Invalid terminal ID.",
+    "invalidRange": "Invalid date range."
+  },
+  "common": {
+    "total": "Total: {{count}}",
+    "refreshing": "Refreshing…",
+    "autoRefresh": "Refreshes every 15 seconds",
+    "loadFailed": "Could not load history.",
+    "terminal": "Terminal",
+    "seconds": "{{value}} s"
+  },
+  "events": {
+    "title": "Event fetch history",
+    "hint": "Results of fetching events from turnstiles. Runs with new events or errors are stored, plus one check-in record per terminal every 15 minutes.",
+    "emptyTitle": "No records found",
+    "empty": "No records match the selected filters.",
+    "columns": {
+      "terminal": "Terminal",
+      "startedAt": "Started",
+      "finishedAt": "Finished",
+      "status": "Status",
+      "duration": "Duration",
+      "cursorBefore": "Previous cursor",
+      "cursorAfter": "New cursor",
+      "error": "Error",
+      "events": "Events"
+    },
+    "statuses": {
+      "SUCCESS": "Success",
+      "FAILED": "Failed"
+    },
+    "cursor": "Cursor: {{from}} → {{to}}",
+    "onPage": "On this page",
+    "success": "Successful",
+    "failed": "Failed",
+    "avgDuration": "Average duration",
+    "newOfFetched": "{{inserted}} new / {{fetched}}",
+    "newEvents": "New events"
+  },
+  "batches": {
+    "title": "People sync tasks",
+    "hint": "Tasks that push students and teachers to terminals, and their progress.",
+    "emptyTitle": "No tasks found",
+    "empty": "New sync tasks will appear here.",
+    "task": "Task #{{id}}",
+    "columns": {
+      "task": "Task",
+      "createdAt": "Submitted",
+      "type": "People",
+      "terminals": "Terminals",
+      "status": "Status",
+      "progress": "Progress",
+      "actions": "Actions"
+    },
+    "types": {
+      "BOTH": "Students and teachers",
+      "STUDENT": "Students",
+      "TEACHER": "Teachers"
+    },
+    "statuses": {
+      "QUEUING": "Queuing",
+      "QUEUED": "Queued",
+      "RUNNING": "Running",
+      "COMPLETED": "Completed",
+      "PARTIAL": "Partially completed",
+      "FAILED": "Failed"
+    },
+    "terminalsCount": "{{count}} terminals",
+    "terminalsCount_one": "{{count}} terminal",
+    "details": "Details",
+    "progress": "{{done}} / {{total}}",
+    "problems": "Failed and uncertain"
+  },
+  "batch": {
+    "back": "Task list",
+    "createdAt": "Submitted: {{date}}",
+    "finishedAt": "Finished: {{date}}",
+    "persons": "People",
+    "columns": {
+      "person": "Person",
+      "terminal": "Terminal",
+      "status": "Status",
+      "attempts": "Attempts",
+      "error": "Error",
+      "startedAt": "Started",
+      "finishedAt": "Finished",
+      "time": "Time"
+    },
+    "personId": "ID: {{id}}",
+    "attempts": "Attempts: {{count}}",
+    "emptyItems": "This task has no records.",
+    "eta": "About {{value}} left",
+    "etaMinutes": "{{count}} min",
+    "etaHours": "{{hours}} h {{minutes}} min"
+  },
+  "items": {
+    "PENDING": "Pending",
+    "QUEUED": "Queued",
+    "RUNNING": "Running",
+    "SUCCESS": "Success",
+    "SKIPPED": "Skipped",
+    "FAILED": "Failed",
+    "UNCERTAIN": "Needs review"
+  }
+}

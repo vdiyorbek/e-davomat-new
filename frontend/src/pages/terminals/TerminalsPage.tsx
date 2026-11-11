@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import {
-    Activity,
     Clock3,
+    History,
     Layers,
     Plus,
     RefreshCw,
@@ -16,6 +15,7 @@ import {
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
+import { KpiCard } from '@/components/common/KpiCard';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
@@ -46,7 +46,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { useInterval } from '@/hooks/useInterval';
@@ -67,47 +66,6 @@ type ActionMode = 'archive' | 'restore';
 
 const PAGE_SIZES = [10, 20, 50, 100];
 const ARCHIVE_STATUSES: ArchiveStatus[] = ['ACTIVE', 'ARCHIVED', 'ALL'];
-
-function KpiCard({
-    label,
-    value,
-    hint,
-    icon: Icon,
-    tone,
-    loading,
-}: {
-    label: string;
-    value: number;
-    hint?: string;
-    icon: LucideIcon;
-    tone: 'primary' | 'success' | 'danger' | 'warning';
-    loading: boolean;
-}) {
-    const tones = {
-        primary: 'bg-primary/12 text-primary',
-        success: 'bg-success/14 text-success',
-        danger: 'bg-destructive/12 text-destructive',
-        warning: 'bg-warning/18 text-[color-mix(in_oklch,var(--warning),var(--foreground)_45%)]',
-    };
-    return (
-        <Card className="gap-0 p-4">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-muted-foreground sm:text-sm">{label}</p>
-                    {loading ? (
-                        <Skeleton className="mt-2 h-8 w-14" />
-                    ) : (
-                        <p className="mt-1 font-heading text-2xl font-bold tabular-nums sm:text-3xl">{formatNumber(value)}</p>
-                    )}
-                </div>
-                <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl', tones[tone])}>
-                    <Icon aria-hidden="true" className="size-5" />
-                </span>
-            </div>
-            {hint && <p className="mt-2 truncate text-[11px] text-muted-foreground">{hint}</p>}
-        </Card>
-    );
-}
 
 export function TerminalsPage() {
     const { t } = useTranslation();
@@ -260,9 +218,9 @@ export function TerminalsPage() {
                 actions={canManage ? (
                     <>
                         <Button asChild variant="outline">
-                            <Link to="/terminals/person-sync-monitoring">
-                                <Activity aria-hidden="true" />
-                                {t('terminals.page.monitoring')}
+                            <Link to="/terminals/sync-history">
+                                <History aria-hidden="true" />
+                                {t('terminals.page.history')}
                             </Link>
                         </Button>
                         <Button type="button" onClick={() => setCreateOpen(true)}>

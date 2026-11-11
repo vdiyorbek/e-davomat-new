@@ -9,6 +9,7 @@ import { EventSyncTerminalLockService } from './event-sync-terminal-lock.service
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import { Terminal } from '../terminals/terminal.entity';
 import { TerminalCryptoService } from '../terminals/terminal-crypto.service';
@@ -28,6 +29,9 @@ interface SyncStatistics {
   skippedOutOfRange: number;
   photosQueued: number;
 }
+
+/** Bitta INSERT / SELECT IN so‘rovidagi qatorlar soni. */
+const INSERT_CHUNK = 500;
 
 @Injectable()
 export class AttendanceEventsService {
@@ -136,6 +140,9 @@ export class AttendanceEventsService {
                 photosQueued: 0,
               };
 
+              // 1) Saqlanadigan eventlarni ajratamiz.
+              const rows: Array<QueryDeepPartialEntity<AttendanceEvent>> = [];
+
               for (const event of events) {
                 if (
                   event.major !== 5 ||
@@ -171,45 +178,50 @@ export class AttendanceEventsService {
 
                 const pictureUrl = event.pictureURL?.trim() || null;
 
-                try {
-                  await repository.insert({
-                    terminalId: terminal.id,
-                    schoolId: terminal.schoolId,
-                    pnfl,
-                    serialNo: BigInt(event.serialNo).toString(),
-                    eventAt,
-                    direction: terminal.direction,
-                    major: event.major,
-                    minor: event.minor,
-                    verifyMode: event.currentVerifyMode,
-                    sourcePictureUrl: pictureUrl,
-                    photoPath: null,
-                    photoStatus: pictureUrl
-                      ? EventPhotoStatus.PENDING
-                      : EventPhotoStatus.MISSING,
-                    photoAttempts: 0,
-                    photoLastAttemptAt: null,
-                  });
+                rows.push({
+                  terminalId: terminal.id,
+                  schoolId: terminal.schoolId,
+                  pnfl,
+                  serialNo: BigInt(event.serialNo).toString(),
+                  eventAt,
+                  direction: terminal.direction,
+                  major: event.major,
+                  minor: event.minor,
+                  verifyMode: event.currentVerifyMode,
+                  sourcePictureUrl: pictureUrl,
+                  photoPath: null,
+                  photoStatus: pictureUrl
+                    ? EventPhotoStatus.PENDING
+                    : EventPhotoStatus.MISSING,
+                  photoAttempts: 0,
+                  photoLastAttemptAt: null,
+                });
+              }
 
-                  counts.inserted++;
+              // 2) Bazada allaqachon borlarini bitta so‘rov bilan aniqlaymiz.
+              // Sinxronlash har safar 2 daqiqa orqadan boshlangani uchun
+              // takroriy eventlar ko‘p bo‘ladi; avval har biri alohida
+              // INSERT + ER_DUP_ENTRY xatosi bilan qaytardi.
+              const fresh = await this.excludeExisting(
+                repository,
+                terminal.id,
+                rows,
+              );
 
-                  if (pictureUrl) {
-                    counts.photosQueued++;
-                  }
-                } catch (error: unknown) {
-                  if (error instanceof QueryFailedError) {
-                    const driverError = error.driverError as {
-                      code?: string;
-                    };
+              counts.duplicates += rows.length - fresh.length;
 
-                    if (driverError.code === 'ER_DUP_ENTRY') {
-                      counts.duplicates++;
-                      continue;
-                    }
-                  }
+              // 3) Yangilarini bo‘laklab, bitta INSERT bilan yozamiz.
+              for (let index = 0; index < fresh.length; index += INSERT_CHUNK) {
+                const chunk = fresh.slice(index, index + INSERT_CHUNK);
+                const inserted = await this.insertChunk(repository, chunk);
 
-                  throw error;
-                }
+                counts.inserted += inserted.inserted;
+                counts.duplicates += inserted.duplicates;
+                counts.photosQueued += chunk.filter(
+                  (row, rowIndex) =>
+                    inserted.insertedIndexes.has(rowIndex) &&
+                    Boolean(row.sourcePictureUrl),
+                ).length;
               }
               await lease.assertOwned();
               return counts;
@@ -252,5 +264,94 @@ export class AttendanceEventsService {
     } finally {
       await lease.release();
     }
+  }
+
+  /** Bazada mavjud (terminalId, serialNo, eventAt) yozuvlarini chiqarib tashlaydi. */
+  private async excludeExisting(
+    repository: Repository<AttendanceEvent>,
+    terminalId: number,
+    rows: Array<QueryDeepPartialEntity<AttendanceEvent>>,
+  ): Promise<Array<QueryDeepPartialEntity<AttendanceEvent>>> {
+    if (rows.length === 0) return rows;
+
+    const keyOf = (serialNo: string, eventAt: Date) =>
+      `${serialNo}|${eventAt.getTime()}`;
+
+    const existing = new Set<string>();
+    const serials = [...new Set(rows.map((row) => String(row.serialNo)))];
+
+    for (let index = 0; index < serials.length; index += INSERT_CHUNK) {
+      const found = await repository
+        .createQueryBuilder('event')
+        .select(['event.serialNo', 'event.eventAt'])
+        .where('event.terminalId = :terminalId', { terminalId })
+        .andWhere('event.serialNo IN (:...serials)', {
+          serials: serials.slice(index, index + INSERT_CHUNK),
+        })
+        .getMany();
+
+      for (const event of found) {
+        existing.add(keyOf(String(event.serialNo), new Date(event.eventAt)));
+      }
+    }
+
+    // Bitta sahifa ichidagi takrorlarni ham olib tashlaymiz.
+    const seen = new Set<string>();
+
+    return rows.filter((row) => {
+      const key = keyOf(String(row.serialNo), row.eventAt as Date);
+      if (existing.has(key) || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  /**
+   * Bo‘lakni bitta INSERT bilan yozadi. Kamdan-kam holatda (parallel
+   * yozuv) unique xatosi chiqsa, shu bo‘lakni bittalab yozishga o‘tadi.
+   */
+  private async insertChunk(
+    repository: Repository<AttendanceEvent>,
+    chunk: Array<QueryDeepPartialEntity<AttendanceEvent>>,
+  ): Promise<{
+    inserted: number;
+    duplicates: number;
+    insertedIndexes: Set<number>;
+  }> {
+    const all = new Set(chunk.map((_, index) => index));
+
+    if (chunk.length === 0) {
+      return { inserted: 0, duplicates: 0, insertedIndexes: all };
+    }
+
+    try {
+      await repository.insert(chunk);
+      return { inserted: chunk.length, duplicates: 0, insertedIndexes: all };
+    } catch (error: unknown) {
+      if (!this.isDuplicate(error)) throw error;
+    }
+
+    const insertedIndexes = new Set<number>();
+    let duplicates = 0;
+
+    for (const [index, row] of chunk.entries()) {
+      try {
+        await repository.insert(row);
+        insertedIndexes.add(index);
+      } catch (error: unknown) {
+        if (!this.isDuplicate(error)) throw error;
+        duplicates++;
+      }
+    }
+
+    return { inserted: insertedIndexes.size, duplicates, insertedIndexes };
+  }
+
+  private isDuplicate(error: unknown): boolean {
+    return (
+      error instanceof QueryFailedError &&
+      (error.driverError as { code?: string } | undefined)?.code ===
+        'ER_DUP_ENTRY'
+    );
   }
 }

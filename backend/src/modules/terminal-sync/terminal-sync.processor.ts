@@ -13,6 +13,8 @@ import { TERMINAL_SYNC_QUEUE } from './terminal-sync.constants';
 import type { TerminalSyncJob } from './terminal-sync.constants';
 
 import { TerminalSyncService } from './terminal-sync.service';
+import type { TerminalSyncRunSummary } from './terminal-sync.service';
+import { RedisService } from '../../redis/redis.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -44,6 +46,8 @@ export class TerminalSyncProcessor
 
     @InjectRepository(TerminalSyncRun)
     private readonly historyRepository: Repository<TerminalSyncRun>,
+
+    private readonly redisService: RedisService,
   ) {
     super();
   }
@@ -101,9 +105,10 @@ export class TerminalSyncProcessor
 
     let cursorAfter: Date | null = null;
     let syncError: unknown = null;
+    let summary: TerminalSyncRunSummary | null = null;
 
     try {
-      await this.terminalSyncService.run(terminalId);
+      summary = await this.terminalSyncService.run(terminalId);
 
       const after = await this.terminalsRepository.findOneBy({
         id: terminalId,
@@ -133,7 +138,16 @@ export class TerminalSyncProcessor
     const beforeMs = cursorBefore?.getTime() ?? 0;
     const afterMs = cursorAfter?.getTime() ?? 0;
 
-    const shouldSave = syncError !== null || afterMs > beforeMs;
+    // Avval kursor siljigan har bir sikl (har ~5 s) yozilar edi —
+    // 100 terminalda kuniga ~1.7 mln qator. Endi faqat:
+    //  • xatolik,
+    //  • yangi event saqlangan sikl,
+    //  • yoki terminal «tirikligini» ko‘rsatish uchun 15 daqiqada bir yozuv.
+    const shouldSave =
+      syncError !== null ||
+      (afterMs > beforeMs &&
+        ((summary?.inserted ?? 0) > 0 ||
+          (await this.heartbeatDue(terminalId))));
 
     if (shouldSave) {
       try {
@@ -146,7 +160,9 @@ export class TerminalSyncProcessor
           startedAt,
           cursorBefore,
           cursorAfter,
-          errorCode: syncError === null ? null : 'SYNC_FAILED',
+          errorCode: syncError === null ? null : this.errorCode(syncError),
+          fetchedEvents: summary?.fetched ?? 0,
+          insertedEvents: summary?.inserted ?? 0,
         });
       } catch {
         this.logger.error(
@@ -168,6 +184,8 @@ export class TerminalSyncProcessor
     cursorBefore: Date | null;
     cursorAfter: Date | null;
     errorCode: string | null;
+    fetchedEvents: number;
+    insertedEvents: number;
   }): Promise<void> {
     const finishedAt = new Date();
 
@@ -185,7 +203,42 @@ export class TerminalSyncProcessor
       cursorBefore: input.cursorBefore,
       cursorAfter: input.cursorAfter,
       errorCode: input.errorCode,
+      fetchedEvents: input.fetchedEvents,
+      insertedEvents: input.insertedEvents,
     });
+  }
+
+  /** 15 daqiqada bir marta «hech narsa yangi emas» yozuvini saqlash uchun. */
+  private async heartbeatDue(terminalId: number): Promise<boolean> {
+    try {
+      const claimed = await this.redisService
+        .getClient()
+        .set(
+          `edav:terminal-sync:history-heartbeat:${terminalId}`,
+          '1',
+          'EX',
+          15 * 60,
+          'NX',
+        );
+
+      return claimed === 'OK';
+    } catch {
+      return false;
+    }
+  }
+
+  /** Tarixda ko‘rsatish uchun qisqa xato kodi (varchar 50). */
+  private errorCode(error: unknown): string {
+    const message = error instanceof Error ? error.message : '';
+
+    if (/ETIMEDOUT|timeout|timed out/i.test(message)) return 'DEVICE_TIMEOUT';
+    if (/ECONNREFUSED|EHOSTUNREACH|ENETUNREACH|ECONNRESET/i.test(message))
+      return 'DEVICE_UNREACHABLE';
+    if (/401|unauthori[sz]ed|parol/i.test(message)) return 'DEVICE_AUTH_FAILED';
+    if (/bazaga saqlash|QueryFailed/i.test(message)) return 'DATABASE_ERROR';
+    if (/chegarasi o‘zgardi/i.test(message)) return 'CURSOR_CONFLICT';
+
+    return 'SYNC_FAILED';
   }
 
   @OnWorkerEvent('failed')

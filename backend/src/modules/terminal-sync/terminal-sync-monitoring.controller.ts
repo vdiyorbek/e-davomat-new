@@ -168,6 +168,8 @@ export class TerminalSyncMonitoringController {
         cursorBefore: run.cursorBefore,
         cursorAfter: run.cursorAfter,
         errorCode: run.errorCode,
+        fetchedEvents: run.fetchedEvents,
+        insertedEvents: run.insertedEvents,
       })),
     };
   }
@@ -250,6 +252,8 @@ export class TerminalSyncMonitoringController {
         cursorBefore: run.cursorBefore,
         cursorAfter: run.cursorAfter,
         errorCode: run.errorCode,
+        fetchedEvents: run.fetchedEvents,
+        insertedEvents: run.insertedEvents,
       })),
     };
   }

@@ -8,6 +8,7 @@ export enum TerminalSyncRunStatus {
 @Entity('terminal_sync_runs')
 @Index('IDX_terminal_sync_runs_terminal_started', ['terminalId', 'startedAt'])
 @Index('IDX_terminal_sync_runs_finished_at', ['finishedAt'])
+@Index('IDX_terminal_sync_runs_started', ['startedAt'])
 export class TerminalSyncRun {
   @PrimaryGeneratedColumn({
     type: 'bigint',
@@ -65,4 +66,20 @@ export class TerminalSyncRun {
     nullable: true,
   })
   errorCode!: string | null;
+
+  /** Terminaldan olingan eventlar soni (takrorlar bilan). */
+  @Column({
+    type: 'int',
+    unsigned: true,
+    default: 0,
+  })
+  fetchedEvents!: number;
+
+  /** Bazaga yangi yozilgan eventlar soni. */
+  @Column({
+    type: 'int',
+    unsigned: true,
+    default: 0,
+  })
+  insertedEvents!: number;
 }

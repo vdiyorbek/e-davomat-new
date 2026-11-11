@@ -142,9 +142,14 @@ export class AttendanceEventPhotosService {
     };
   }
 
-  async getPhotoStats() {
-    const rows = await this.eventsRepository
-      .createQueryBuilder('event')
+  async getPhotoStats(terminalId?: number) {
+    const query = this.eventsRepository.createQueryBuilder('event');
+
+    if (terminalId !== undefined) {
+      query.where('event.terminalId = :terminalId', { terminalId });
+    }
+
+    const rows = await query
       .select('event.terminalId', 'terminalId')
       .addSelect('event.photoStatus', 'status')
       .addSelect('COUNT(*)', 'total')

@@ -36,7 +36,8 @@
     "teacherDashboard": "O'qituvchi kabineti",
     "personSyncMonitoring": "Terminallar monitoringi",
     "inspectorStudents": "Mahalla o‘quvchilari",
-    "inspectorTalks": "Profilaktik suhbatlar"
+    "inspectorTalks": "Profilaktik suhbatlar",
+    "syncHistory": "Sinxronlash tarixi"
   },
   "short": {
     "profile": "Profil",

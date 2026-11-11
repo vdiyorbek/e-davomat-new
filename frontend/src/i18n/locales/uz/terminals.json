@@ -85,7 +85,8 @@
     "created": "Terminal qo‘shildi.",
     "editTitle": "Terminalni tahrirlash",
     "editDescription": "Terminalning ulanish va tizim sozlamalari.",
-    "updated": "Terminal ma’lumotlari yangilandi."
+    "updated": "Terminal ma’lumotlari yangilandi.",
+    "history": "Sinxronlash tarixi"
   },
   "kpi": {
     "total": "Jami terminallar",
@@ -269,7 +270,8 @@
     "success": "Muvaffaqiyatli",
     "failed": "Xatolik",
     "seconds": "{{value}} s",
-    "note": "Oxirgi 20 ta yozuv. Har 30 soniyada yangilanadi."
+    "note": "Oxirgi 20 ta yozuv. Har 30 soniyada yangilanadi.",
+    "newEvents": "+{{count}} yangi"
   },
   "photos": {
     "title": "Davomat rasmlari",
@@ -368,7 +370,17 @@
     "applying": "Navbatga yuborilmoqda…",
     "result": "Navbatga: {{queued}} · mavjud vazifa: {{reused}} · xato: {{failed}}",
     "resultNote": "Navbatga qo‘yish tugadi. Qurilmadagi natijani monitoring orqali tekshiring.",
-    "failed": "Sinxronlash so‘rovi bajarilmadi."
+    "failed": "Sinxronlash so‘rovi bajarilmadi.",
+    "mode": "Sinxronlash hajmi",
+    "modes": {
+      "ALL": "Maktabdagi barcha faol shaxslar",
+      "LIMITED": "Sinov uchun cheklangan miqdor"
+    },
+    "allNote": "Hamma nomzodlar navbatga qo‘yiladi. Har terminalga shaxslar ketma-ket yuboriladi; terminalda allaqachon bor shaxslar qayta yozilmaydi.",
+    "limitedNote": "Sinov rejimi: har terminal uchun faqat birinchi {{count}} ta shaxs yuboriladi.",
+    "queuedBatch": "#{{id}} topshiriq yaratildi. Jami {{count}} ta shaxs navbatga qo‘yildi.",
+    "openHistory": "Bajarilishini kuzatish",
+    "scheduled": "{{count}} ta shaxs navbatga qo‘yildi"
   },
   "monitoring": {
     "title": "Terminallar sinxronlash monitoringi",

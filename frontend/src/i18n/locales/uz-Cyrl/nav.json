@@ -36,7 +36,8 @@
     "teacherDashboard": "Ўқитувчи кабинети",
     "inspectorStudents": "Маҳалла ўқувчилари",
     "inspectorTalks": "Профилактик суҳбатлар",
-    "personSyncMonitoring": "Терминаллар мониторинги"
+    "personSyncMonitoring": "Терминаллар мониторинги",
+    "syncHistory": "Синхронлаш тарихи"
   },
   "short": {
     "profile": "Профил",
