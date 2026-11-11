@@ -95,9 +95,10 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                 <Field htmlFor={`${id}-type`} label={t('terminals.personSync.type')}>
                     <SelectField
                         id={`${id}-mode`}
-                        value={type}
+                        value={mode}
                         onValueChange={(value) => {
                             setType(value as SyncType);
+                            setMode(value as 'ALL' | 'LIMITED');
                             setPreview(null);
                             setResult(null);
                         }}
@@ -127,6 +128,7 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                                 onValueChange={(value) => {
                                     setLimit(Number(value));
                                     setPreview(null);
+                                    setResult(null);
                                 }}
                                 options={LIMITS.map((value) => ({
                                     value: String(value),
