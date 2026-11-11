@@ -112,6 +112,25 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                             },
                         ]}
                     />
+                    {mode === 'LIMITED' && (
+                        <Field
+                            htmlFor={`${id}-limit`}
+                            label="Har terminal uchun"
+                        >
+                            <SelectField
+                                id={`${id}-limit`}
+                                value={String(limit)}
+                                onValueChange={(value) => {
+                                    setLimit(Number(value));
+                                    setPreview(null);
+                                }}
+                                options={LIMITS.map((value) => ({
+                                    value: String(value),
+                                    label: `${value} ta`,
+                                }))}
+                            />
+                        </Field>
+                    )}
                 </Field>
                 <Field htmlFor={`${id}-limit`} label={t('terminals.personSync.limit')}>
                     <SelectField
@@ -162,9 +181,16 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                         ))}
                     </ul>
                     <p className="text-xs text-muted-foreground">{t('terminals.personSync.planNote')}</p>
-                    <Button type="button" disabled={!canApply || busy} onClick={() => void submit(false)}>
+                    <Button type="button" disabled={!canApply || busy || mode === 'ALL'} onClick={() => void submit(false)}>
                         <Send aria-hidden="true" />
                         {busy ? t('terminals.personSync.applying') : t('terminals.personSync.apply')}
+                        {mode === 'ALL' && (
+                            <p className="text-xs text-muted-foreground">
+                                Barcha nomzodlar aniqlandi.
+                                To‘liq yuborish navbat dispatcheriga
+                                ulangandan so‘ng faollashadi.
+                            </p>
+                        )}
                     </Button>
                 </div>
             )}
