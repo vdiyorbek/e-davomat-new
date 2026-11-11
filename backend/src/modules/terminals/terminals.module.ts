@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
+import { TerminalStatusHistoryService } from './terminal-status-history.service';
+import { TerminalStatusPeriod } from './terminal-status-period.entity';
 import { School } from '../schools/school.entity';
 import { Terminal } from './terminal.entity';
 import { TerminalPersonSync } from './terminal-person-sync.entity';
@@ -24,6 +25,7 @@ import { BulkTerminalStatusController } from './bulk-terminal-status.controller'
       Person,
       SchoolMembership,
       TerminalPersonSync,
+      TerminalStatusPeriod,
     ]),
   ],
   controllers: [
@@ -39,6 +41,7 @@ import { BulkTerminalStatusController } from './bulk-terminal-status.controller'
     HikvisionPhotoService,
     PersonSyncService,
     TerminalHealthScheduler,
+    TerminalStatusHistoryService,
   ],
   exports: [
     TerminalCryptoService,

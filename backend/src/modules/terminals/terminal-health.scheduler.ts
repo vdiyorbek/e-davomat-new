@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import { TerminalStatusHistoryService } from './terminal-status-history.service';
+import { HEALTH_CHECK_INTERVAL_MS } from './terminal-health.constants';
 import { Terminal } from './terminal.entity';
 import { HikvisionService } from './hikvision.service';
 import { TerminalCryptoService } from './terminal-crypto.service';
@@ -22,6 +23,7 @@ export class TerminalHealthScheduler {
     private readonly terminalsRepository: Repository<Terminal>,
     private readonly hikvision: HikvisionService,
     private readonly terminalCrypto: TerminalCryptoService,
+    private readonly statusHistory: TerminalStatusHistoryService,
   ) {}
 
   // Har 2 daqiqada, 30-soniyada ishlaydi (00:00:30, 00:02:30, ...).
@@ -30,7 +32,13 @@ export class TerminalHealthScheduler {
     if (this.running) return;
 
     this.running = true;
-
+    await this.statusHistory
+      .closeUnmonitored(new Date())
+      .catch((error: unknown) => {
+        this.logger.error(
+          `Holatlar tarixini yopib bo‘lmadi: ${this.errorMessage(error)}`,
+        );
+      });
     try {
       // Parol entity’da select: false, shuning uchun alohida qo‘shamiz.
       const terminals = await this.terminalsRepository
@@ -83,6 +91,7 @@ export class TerminalHealthScheduler {
           `Terminal ${terminal.id} (${terminal.name}) qayta online`,
         );
       }
+      await this.recordHistory(terminal, now, true, null);
     } catch (error: unknown) {
       const message = this.errorMessage(error).slice(0, 255);
 
@@ -105,9 +114,52 @@ export class TerminalHealthScheduler {
           `Terminal ${terminal.id} (${terminal.name}) offline: ${message}`,
         );
       }
+      await this.recordHistory(terminal, now, false, message);
     }
   }
+  /**
+   * Holatlar tarixiga yozish. Xato bo‘lsa ham asosiy health
+   * tekshiruviga ta’sir qilmaydi — faqat log’ga yoziladi.
+   */
+  private async recordHistory(
+    terminal: Terminal,
+    now: Date,
+    ok: boolean,
+    error: string | null,
+  ): Promise<void> {
+    // `terminal` — tekshiruvdan OLDINGI holat.
+    const failures = ok ? 0 : terminal.consecutiveFailures + 1;
 
+    // Ketma-ket xatolarning birinchisi: shu tekshiruv (1-xato),
+    // oldingi tekshiruv (2-xato) yoki taxminan hisoblangan vaqt.
+    let firstFailureAt: Date | null = null;
+
+    if (!ok) {
+      if (failures === 1) {
+        firstFailureAt = now;
+      } else if (failures === 2 && terminal.lastCheckedAt) {
+        firstFailureAt = new Date(terminal.lastCheckedAt);
+      } else {
+        firstFailureAt = new Date(
+          now.getTime() - (failures - 1) * HEALTH_CHECK_INTERVAL_MS,
+        );
+      }
+    }
+
+    try {
+      await this.statusHistory.recordCheck(terminal.id, {
+        ok,
+        at: now,
+        failures,
+        firstFailureAt,
+        error,
+      });
+    } catch (historyError: unknown) {
+      this.logger.error(
+        `Terminal ${terminal.id} holatlar tarixini saqlab bo‘lmadi: ${this.errorMessage(historyError)}`,
+      );
+    }
+  }
   private errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'Noma’lum xatolik';
   }

@@ -31,6 +31,7 @@ import { TerminalPersonSync } from '../modules/terminals/terminal-person-sync.en
 import { InspectorTalk } from 'src/modules/inspectors/inspector-talk.entity';
 import { InspectorMahalla } from 'src/modules/inspectors/inspector-mahalla.entity';
 import { TerminalSyncRun } from '../modules/terminal-sync/terminal-sync-run.entity';
+import { TerminalStatusPeriod } from '../modules/terminals/terminal-status-period.entity';
 function requiredEnv(name: string): string {
   const value = process.env[name];
 
@@ -86,6 +87,7 @@ export default new DataSource({
     InspectorMahalla,
     InspectorTalk,
     TerminalSyncRun,
+    TerminalStatusPeriod,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],
