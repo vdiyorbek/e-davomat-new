@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  ConflictException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 
@@ -106,6 +111,20 @@ export class TerminalSyncProcessor
 
       cursorAfter = after?.eventsSyncedUntil ?? null;
     } catch (error: unknown) {
+      if (
+        error instanceof ConflictException &&
+        error.message ===
+          `Terminal ${terminalId}: sinxronlash allaqachon ishlamoqda`
+      ) {
+        // Boshqa worker ushbu terminalni
+        // sinxronlayapti. Bu haqiqiy sync xatosi emas.
+        this.logger.debug(
+          `Terminal ${terminalId}: parallel sync o'tkazib yuborildi`,
+        );
+
+        return;
+      }
+
       syncError = error;
     }
 
