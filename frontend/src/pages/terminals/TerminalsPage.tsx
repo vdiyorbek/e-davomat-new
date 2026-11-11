@@ -14,6 +14,7 @@ import { TerminalPhotoStats } from "@/components/terminals/TerminalPhotoStats";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Pagination } from "@/components/common/Pagination";
 import { SelectField } from "@/components/common/SelectField";
+import { TerminalSyncHistory } from "@/components/terminals/TerminalSyncHistory";
 import {
     EmptyState,
     ErrorState,
@@ -56,7 +57,7 @@ import type {
     TerminalsPageResponse,
     TerminalMonitoringResponse,
 } from "@/types/terminal";
-
+import { TerminalSyncMonitoring } from "@/components/terminals/TerminalSyncMonitoring";
 type ArchiveStatus = "ACTIVE" | "ARCHIVED" | "ALL";
 type ActionMode = "archive" | "restore";
 
@@ -391,6 +392,16 @@ function TerminalDetails({
                         key={terminal.id}
                         terminalId={terminal.id}
                         canManage={canManage}
+                    />
+                )}
+                {canManage && !archived && (
+                    <TerminalSyncMonitoring terminalId={terminal.id} />
+                )}
+
+                {canManage && !archived && (
+                    <TerminalSyncHistory
+                        key={terminal.id}
+                        terminalId={terminal.id}
                     />
                 )}
 

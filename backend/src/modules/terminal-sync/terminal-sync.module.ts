@@ -19,10 +19,16 @@ import { PersonSyncMonitoringService } from './person-sync-monitoring.service';
 import { PersonSyncProcessor } from './person-sync.processor';
 import { PersonSyncScheduler } from './person-sync.scheduler';
 import { PersonSyncQueueController } from './person-sync-queue.controller';
-
+import { TerminalSyncMonitoringController } from './terminal-sync-monitoring.controller';
+import { TerminalSyncRun } from './terminal-sync-run.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Terminal, TerminalPersonSyncCheck, User]),
+    TypeOrmModule.forFeature([
+      Terminal,
+      TerminalPersonSyncCheck,
+      TerminalSyncRun,
+      User,
+    ]),
 
     // PersonSyncService shu moduldan export qilinadi.
     TerminalsModule,
@@ -63,7 +69,7 @@ import { PersonSyncQueueController } from './person-sync-queue.controller';
     ),
   ],
 
-  controllers: [PersonSyncQueueController],
+  controllers: [PersonSyncQueueController, TerminalSyncMonitoringController],
 
   providers: [
     TerminalSyncService,

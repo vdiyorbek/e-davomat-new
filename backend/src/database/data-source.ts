@@ -30,6 +30,7 @@ import { TeacherMembershipDetail } from 'src/modules/membership-details/teacher-
 import { TerminalPersonSync } from '../modules/terminals/terminal-person-sync.entity';
 import { InspectorTalk } from 'src/modules/inspectors/inspector-talk.entity';
 import { InspectorMahalla } from 'src/modules/inspectors/inspector-mahalla.entity';
+import { TerminalSyncRun } from '../modules/terminal-sync/terminal-sync-run.entity';
 function requiredEnv(name: string): string {
   const value = process.env[name];
 
@@ -84,6 +85,7 @@ export default new DataSource({
     TerminalPersonSyncCheck,
     InspectorMahalla,
     InspectorTalk,
+    TerminalSyncRun,
   ],
 
   migrations: [join(__dirname, 'migrations', '*.js').replace(/\\/g, '/')],
