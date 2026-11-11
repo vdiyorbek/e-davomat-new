@@ -25,7 +25,7 @@ import { EditTerminalForm } from '@/components/terminals/EditTerminalForm';
 import { TerminalBulkActions } from '@/components/terminals/TerminalBulkActions';
 import { TerminalDetailsDialog } from '@/components/terminals/TerminalDetailsDialog';
 import { TerminalList } from '@/components/terminals/TerminalList';
-import { isArchived, syncInfo } from '@/components/terminals/terminal-status';
+import { isArchived } from '@/components/terminals/terminal-status';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -59,6 +59,8 @@ import type {
     TerminalDirection,
     TerminalMonitoringResponse,
     TerminalsPageResponse,
+    TerminalStatusFilter,
+    TerminalsSummary,
 } from '@/types/terminal';
 
 type ArchiveStatus = 'ACTIVE' | 'ARCHIVED' | 'ALL';
@@ -84,6 +86,7 @@ export function TerminalsPage() {
     const [schoolId, setSchoolId] = useState('');
     const [direction, setDirection] = useState<TerminalDirection | ''>('');
     const [archiveStatus, setArchiveStatus] = useState<ArchiveStatus>('ACTIVE');
+    const [statusFilter, setStatusFilter] = useState<TerminalStatusFilter>('');
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
 
@@ -119,14 +122,24 @@ export function TerminalsPage() {
     const schools = useApiQuery<School[]>('/schools');
     const scope = schoolScopeOptions(schools.data, regionId, districtId);
 
-    const params = new URLSearchParams({ page: String(page), limit: String(limit), archiveStatus });
-    if (regionId) params.set('regionId', regionId);
-    if (districtId) params.set('districtId', districtId);
-    if (schoolId) params.set('schoolId', schoolId);
-    if (direction) params.set('direction', direction);
-    if (search) params.set('search', search);
+    // Umumiy filtrlar: ham ro‘yxat, ham ko‘rsatkich kartalari uchun.
+    const filterParams = new URLSearchParams({ archiveStatus });
+    if (regionId) filterParams.set('regionId', regionId);
+    if (districtId) filterParams.set('districtId', districtId);
+    if (schoolId) filterParams.set('schoolId', schoolId);
+    if (direction) filterParams.set('direction', direction);
+    if (search) filterParams.set('search', search);
+
+    // Ro‘yxat uchun: sahifa va karta bosilganda tanlangan holat ham qo‘shiladi.
+    const params = new URLSearchParams(filterParams);
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    if (statusFilter === 'DELAYED') params.set('syncStatus', 'DELAYED');
+    else if (statusFilter) params.set('healthStatus', statusFilter);
 
     const terminals = useApiQuery<TerminalsPageResponse>(`/terminals?${params.toString()}`);
+    // Kartalar tanlangan holat filtriga bog‘liq emas — doim barcha sonlar.
+    const summary = useApiQuery<TerminalsSummary>(`/terminals/summary?${filterParams.toString()}`);
     const monitoring = useApiQuery<TerminalMonitoringResponse>(`/terminals/monitoring?${params.toString()}`);
     const monitoringById = new Map(monitoring.data?.data.map((item) => [item.id, item]) ?? []);
 
@@ -134,6 +147,7 @@ export function TerminalsPage() {
     useInterval(() => {
         setNow(Date.now());
         terminals.retry();
+        summary.retry();
     }, 30_000);
     useInterval(monitoring.retry, 60_000);
 
@@ -142,13 +156,19 @@ export function TerminalsPage() {
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
     const somePageSelected = !allPageSelected && pageIds.some((id) => selectedIds.includes(id));
 
-    const kpi = {
-        online: rows.filter((terminal) => !isArchived(terminal) && terminal.isActive && terminal.healthStatus === 'ONLINE').length,
-        offline: rows.filter((terminal) => !isArchived(terminal) && terminal.isActive && terminal.healthStatus === 'OFFLINE').length,
-        delayed: rows.filter((terminal) => syncInfo(terminal, now, t).kind === 'delayed').length,
-    };
 
-    const hasFilters = Boolean(regionId || districtId || schoolId || direction || search || archiveStatus !== 'ACTIVE');
+    const hasFilters = Boolean(
+        regionId || districtId || schoolId || direction || search || statusFilter || archiveStatus !== 'ACTIVE',
+    );
+
+    function toggleStatusFilter(value: Exclude<TerminalStatusFilter, ''>) {
+        setStatusFilter((current) => (current === value ? '' : value));
+        setPage(1);
+    }
+
+    const kpiHint = (value: Exclude<TerminalStatusFilter, ''>) =>
+        statusFilter === value ? t('terminals.kpi.activeFilter') : t('terminals.kpi.clickToFilter');
+
     const activeSelectFilters = [regionId, districtId, schoolId, direction].filter(Boolean).length;
     const refreshing = terminals.refreshing || monitoring.refreshing;
 
@@ -168,6 +188,7 @@ export function TerminalsPage() {
         setNow(Date.now());
         terminals.retry();
         monitoring.retry();
+        summary.retry();
     }
 
     function resetFilters() {
@@ -178,6 +199,7 @@ export function TerminalsPage() {
         setSearchInput('');
         setSearch('');
         setArchiveStatus('ACTIVE');
+        setStatusFilter('');
         setPage(1);
     }
 
@@ -236,34 +258,52 @@ export function TerminalsPage() {
             <section aria-label={t('terminals.kpi.total')} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <KpiCard
                     label={t('terminals.kpi.total')}
-                    value={terminals.data?.total ?? 0}
+                    value={summary.data?.total ?? 0}
+                    hint={
+                        summary.data && summary.data.unknown + summary.data.disabled > 0
+                            ? t('terminals.kpi.notChecked', {
+                                count: summary.data.unknown + summary.data.disabled,
+                            })
+                            : undefined
+                    }
                     icon={Layers}
                     tone="primary"
-                    loading={terminals.loading}
+                    loading={summary.loading}
+                    active={statusFilter === ''}
+                    onClick={() => {
+                        setStatusFilter('');
+                        setPage(1);
+                    }}
                 />
                 <KpiCard
                     label={t('terminals.kpi.online')}
-                    value={kpi.online}
-                    hint={t('terminals.kpi.onPage')}
+                    value={summary.data?.online ?? 0}
+                    hint={kpiHint('ONLINE')}
                     icon={Wifi}
                     tone="success"
-                    loading={terminals.loading}
+                    loading={summary.loading}
+                    active={statusFilter === 'ONLINE'}
+                    onClick={() => toggleStatusFilter('ONLINE')}
                 />
                 <KpiCard
                     label={t('terminals.kpi.offline')}
-                    value={kpi.offline}
-                    hint={t('terminals.kpi.onPage')}
+                    value={summary.data?.offline ?? 0}
+                    hint={kpiHint('OFFLINE')}
                     icon={WifiOff}
                     tone="danger"
-                    loading={terminals.loading}
+                    loading={summary.loading}
+                    active={statusFilter === 'OFFLINE'}
+                    onClick={() => toggleStatusFilter('OFFLINE')}
                 />
                 <KpiCard
                     label={t('terminals.kpi.delayed')}
-                    value={kpi.delayed}
-                    hint={t('terminals.kpi.onPage')}
+                    value={summary.data?.syncDelayed ?? 0}
+                    hint={kpiHint('DELAYED')}
                     icon={Clock3}
                     tone="warning"
-                    loading={terminals.loading}
+                    loading={summary.loading}
+                    active={statusFilter === 'DELAYED'}
+                    onClick={() => toggleStatusFilter('DELAYED')}
                 />
             </section>
 
@@ -272,51 +312,51 @@ export function TerminalsPage() {
                 <div className="space-y-3 border-b bg-muted/20 p-4">
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
                         <div className="flex gap-2 sm:col-span-2 xl:col-span-4">
-                        <div className="relative min-w-0 flex-1">
-                            <Search
-                                aria-hidden="true"
-                                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                            />
-                            <Input
-                                type="search"
-                                value={searchInput}
-                                onChange={(event) => setSearchInput(event.target.value)}
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        setSearch(searchInput.trim());
-                                        setPage(1);
-                                    }
-                                }}
-                                aria-label={t('terminals.filters.search')}
-                                placeholder={t('terminals.filters.searchPlaceholder')}
-                                className="bg-background pr-9 pl-9"
-                            />
-                            {searchInput && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearchInput('')}
-                                    aria-label={t('common.clearSearch')}
-                                    className="absolute top-1/2 right-2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                                >
-                                    <X aria-hidden="true" className="size-3.5" />
-                                </button>
-                            )}
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="relative bg-background sm:hidden"
-                            aria-expanded={filtersOpen}
-                            onClick={() => setFiltersOpen((open) => !open)}
-                        >
-                            <SlidersHorizontal aria-hidden="true" />
-                            <span className="sr-only">{t('terminals.filters.toggle')}</span>
-                            {activeSelectFilters > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
-                                    {activeSelectFilters}
-                                </span>
-                            )}
-                        </Button>
+                            <div className="relative min-w-0 flex-1">
+                                <Search
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                                />
+                                <Input
+                                    type="search"
+                                    value={searchInput}
+                                    onChange={(event) => setSearchInput(event.target.value)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            setSearch(searchInput.trim());
+                                            setPage(1);
+                                        }
+                                    }}
+                                    aria-label={t('terminals.filters.search')}
+                                    placeholder={t('terminals.filters.searchPlaceholder')}
+                                    className="bg-background pr-9 pl-9"
+                                />
+                                {searchInput && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchInput('')}
+                                        aria-label={t('common.clearSearch')}
+                                        className="absolute top-1/2 right-2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    >
+                                        <X aria-hidden="true" className="size-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="relative bg-background sm:hidden"
+                                aria-expanded={filtersOpen}
+                                onClick={() => setFiltersOpen((open) => !open)}
+                            >
+                                <SlidersHorizontal aria-hidden="true" />
+                                <span className="sr-only">{t('terminals.filters.toggle')}</span>
+                                {activeSelectFilters > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                                        {activeSelectFilters}
+                                    </span>
+                                )}
+                            </Button>
                         </div>
                         {canSelectRegion && (
                             <div className={cn('xl:col-span-2', !filtersOpen && 'max-sm:hidden')}>

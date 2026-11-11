@@ -65,4 +65,14 @@ export class GetTerminalsQueryDto {
   @IsOptional()
   @IsEnum(['ACTIVE', 'ARCHIVED', 'ALL'])
   archiveStatus?: 'ACTIVE' | 'ARCHIVED' | 'ALL';
+
+  /** Ulanish holati bo‘yicha filtr (KPI kartasi bosilganda). */
+  @IsOptional()
+  @IsEnum(['ONLINE', 'OFFLINE', 'UNKNOWN'])
+  healthStatus?: 'ONLINE' | 'OFFLINE' | 'UNKNOWN';
+
+  /** Faqat sinxronlashi kechikayotgan terminallar. */
+  @IsOptional()
+  @IsEnum(['DELAYED'])
+  syncStatus?: 'DELAYED';
 }

@@ -64,6 +64,25 @@ export class TerminalsController {
     return this.terminalsService.findAll(query, request.authUser);
   }
 
+  /** Filtr bo‘yicha barcha terminallar holati: online, offline va h.k. */
+  @Get('summary')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  summary(
+    @Query() query: GetTerminalsQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.terminalsService.summary(query, request.authUser);
+  }
+
   @Get('monitoring')
   @Roles(
     UserRole.SUPER_ADMIN,

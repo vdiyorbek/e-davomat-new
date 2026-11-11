@@ -93,7 +93,9 @@
     "online": "Online",
     "offline": "Offline",
     "delayed": "Sinxronlash kechikmoqda",
-    "onPage": "Joriy sahifada"
+    "clickToFilter":"Bosing — faqat shularni ko‘rsatish",
+    "activeFilter":"Filtr yoqilgan · qayta bosing",
+    "notChecked":"Tekshirilmagan / nofaol: {{count}}"
   },
   "filters": {
     "search": "Terminal qidirish",

@@ -5,7 +5,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-
+import {
+  getTerminalHealthStatus,
+  healthSqlParams,
+  healthStatusSql,
+  syncDelayedSql,
+} from './terminal-health.rules';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { UpdateTerminalDto } from './dto/update-terminal.dto';
@@ -246,7 +251,11 @@ export class TerminalsService {
     };
   }
 
-  async findAll(query: GetTerminalsQueryDto, user: AuthenticatedUser) {
+  private buildFilteredQuery(
+    query: GetTerminalsQueryDto,
+    user: AuthenticatedUser,
+    withStatusFilters = true,
+  ) {
     const builder = this.terminalsRepository
       .createQueryBuilder('terminal')
       .innerJoinAndSelect('terminal.school', 'school')
@@ -344,7 +353,22 @@ export class TerminalsService {
         filterDirection: query.direction,
       });
     }
+    if (withStatusFilters && query.healthStatus !== undefined) {
+      builder.andWhere(`${healthStatusSql('terminal')} = :filterHealthStatus`, {
+        ...healthSqlParams(),
+        filterHealthStatus: query.healthStatus,
+      });
+    }
 
+    if (withStatusFilters && query.syncStatus === 'DELAYED') {
+      builder.andWhere(syncDelayedSql('terminal'), healthSqlParams());
+    }
+
+    return builder;
+  }
+
+  async findAll(query: GetTerminalsQueryDto, user: AuthenticatedUser) {
+    const builder = this.buildFilteredQuery(query, user);
     const [terminals, total] = await builder
       .orderBy('terminal.id', 'DESC')
       .skip((query.page - 1) * query.limit)
@@ -357,6 +381,37 @@ export class TerminalsService {
       page: query.page,
       limit: query.limit,
       totalPages: Math.ceil(total / query.limit),
+    };
+  }
+  /**
+   * Filtr bo‘yicha BARCHA terminallar holati (KPI kartalari uchun).
+   * Bitta SQL so‘rov: terminallarning o‘zi yuklanmaydi, faqat sonlar.
+   */
+  async summary(query: GetTerminalsQueryDto, user: AuthenticatedUser) {
+    const health = healthStatusSql('terminal');
+
+    const row = await this.buildFilteredQuery(query, user, false)
+      .select('COUNT(*)', 'total')
+      .addSelect(`SUM(${health} = 'ONLINE')`, 'online')
+      .addSelect(`SUM(${health} = 'OFFLINE')`, 'offline')
+      .addSelect(`SUM(${health} = 'UNKNOWN')`, 'unknown')
+      .addSelect(`SUM(${health} = 'DISABLED')`, 'disabled')
+      .addSelect(`SUM(${health} = 'ARCHIVED')`, 'archived')
+      .addSelect(`SUM(${syncDelayedSql('terminal')})`, 'syncDelayed')
+      .setParameters(healthSqlParams())
+      .getRawOne<Record<string, string | number | null>>();
+
+    const count = (key: string) => Number(row?.[key] ?? 0);
+
+    return {
+      total: count('total'),
+      online: count('online'),
+      offline: count('offline'),
+      unknown: count('unknown'),
+      disabled: count('disabled'),
+      archived: count('archived'),
+      syncDelayed: count('syncDelayed'),
+      checkedAt: new Date().toISOString(),
     };
   }
 
@@ -463,7 +518,7 @@ export class TerminalsService {
       model: terminal.model,
       serialNumber: terminal.serialNumber,
       archivedAt: terminal.archivedAt,
-      healthStatus: this.getTerminalHealthStatus(terminal),
+      healthStatus: getTerminalHealthStatus(terminal),
       lastSeenAt: terminal.lastSeenAt,
       lastError: terminal.lastError,
       consecutiveFailures: terminal.consecutiveFailures,
@@ -1509,46 +1564,5 @@ export class TerminalsService {
       schoolId: terminal.schoolId,
       checkedAt: new Date().toISOString(),
     };
-  }
-
-  private getTerminalHealthStatus(
-    terminal: Terminal,
-  ): 'ONLINE' | 'OFFLINE' | 'UNKNOWN' | 'DISABLED' | 'ARCHIVED' {
-    if (terminal.archivedAt) return 'ARCHIVED';
-    if (!terminal.isActive) return 'DISABLED';
-
-    if (!terminal.lastCheckedAt) return 'UNKNOWN';
-
-    const now = Date.now();
-    const checkedAt = new Date(terminal.lastCheckedAt).getTime();
-    const maxAgeMs = 5 * 60 * 1000;
-
-    // HealthCheck 5 daqiqadan beri yangilanmagan
-    // bo'lsa, eski natijaga ishonmaymiz.
-    if (
-      !Number.isFinite(checkedAt) ||
-      checkedAt > now + 60_000 ||
-      now - checkedAt > maxAgeMs
-    ) {
-      return 'UNKNOWN';
-    }
-
-    if (terminal.consecutiveFailures > 0 || Boolean(terminal.lastError)) {
-      return 'OFFLINE';
-    }
-
-    if (!terminal.lastSeenAt) return 'UNKNOWN';
-
-    const seenAt = new Date(terminal.lastSeenAt).getTime();
-
-    if (
-      Number.isFinite(seenAt) &&
-      Math.abs(checkedAt - seenAt) <= 30_000 &&
-      now - seenAt <= maxAgeMs
-    ) {
-      return 'ONLINE';
-    }
-
-    return 'UNKNOWN';
   }
 }

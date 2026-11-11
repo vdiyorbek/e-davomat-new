@@ -22,12 +22,25 @@ interface Props {
     tone?: KpiTone;
     hint?: string;
     loading?: boolean;
+    /** Berilsa — karta tugma bo‘ladi (masalan, ro‘yxatni filtrlash). */
+    onClick?: () => void;
+    /** Karta tanlangan (filtr yoqilgan) holatda. */
+    active?: boolean;
 }
 
 /** Sahifa tepasidagi ko‘rsatkich kartasi (Terminals, Monitoring, Tarix). */
-export function KpiCard({ label, value, icon: Icon, tone = 'primary', hint, loading = false }: Props) {
-    return (
-        <Card className="min-w-0 gap-0 p-4">
+export function KpiCard({
+    label,
+    value,
+    icon: Icon,
+    tone = 'primary',
+    hint,
+    loading = false,
+    onClick,
+    active = false,
+}: Props) {
+    const content = (
+        <>
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <p className="truncate text-xs font-medium text-muted-foreground sm:text-sm">{label}</p>
@@ -44,6 +57,28 @@ export function KpiCard({ label, value, icon: Icon, tone = 'primary', hint, load
                 </span>
             </div>
             {hint && <p className="mt-2 truncate text-[11px] text-muted-foreground">{hint}</p>}
+        </>
+    );
+
+    if (!onClick) {
+        return <Card className="min-w-0 gap-0 p-4">{content}</Card>;
+    }
+
+    return (
+        <Card
+            className={cn(
+                'min-w-0 gap-0 p-0 transition-shadow',
+                active && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+            )}
+        >
+            <button
+                type="button"
+                onClick={onClick}
+                aria-pressed={active}
+                className="w-full rounded-[inherit] p-4 text-left outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+                {content}
+            </button>
         </Card>
     );
 }

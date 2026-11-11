@@ -99,3 +99,18 @@ export interface TerminalMonitoringResponse {
   date: string;
   checkedAt: string;
 }
+
+/** GET /terminals/summary — filtr bo‘yicha BARCHA terminallar holati. */
+export interface TerminalsSummary {
+  total: number;
+  online: number;
+  offline: number;
+  unknown: number;
+  disabled: number;
+  archived: number;
+  syncDelayed: number;
+  checkedAt: string;
+}
+
+/** Ko‘rsatkich kartasi bosilganda qo‘llanadigan holat filtri. */
+export type TerminalStatusFilter = "" | "ONLINE" | "OFFLINE" | "DELAYED";
