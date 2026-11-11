@@ -8,8 +8,7 @@ import {
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -68,12 +67,7 @@ function tashkentToday(): string {
 @Controller('terminals/bulk')
 @Roles(UserRole.SUPER_ADMIN)
 export class BulkPersonSyncController {
-  constructor(
-    private readonly dataSource: DataSource,
-
-    @InjectRepository(Terminal)
-    private readonly terminals: Repository<Terminal>,
-  ) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   @Post('person-sync')
   @HttpCode(200)

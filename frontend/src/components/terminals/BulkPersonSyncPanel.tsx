@@ -14,12 +14,15 @@ interface BulkSyncResponse {
     success: boolean;
     dryRun: boolean;
     type: SyncType;
+    mode: 'ALL' | 'LIMITED';
+    batchId: string | null;
     results: Array<{
         terminalId: number;
         schoolId: number;
         candidates: number;
         hasMore: boolean;
         queued: number;
+        scheduled?: number;
         reused: number;
         failed: number;
     }>;
@@ -40,16 +43,25 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
     const [limit, setLimit] = useState(10);
     const [preview, setPreview] = useState<BulkSyncResponse | null>(null);
     const [previewIds, setPreviewIds] = useState<number[]>([]);
+    const [previewSignature, setPreviewSignature] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState<BulkSyncResponse | null>(null);
     const [mode, setMode] = useState<'ALL' | 'LIMITED'>('ALL');
     const tooMany = terminalIds.length > MAX_TERMINALS;
+    const currentSignature = JSON.stringify({
+        terminalIds: [...terminalIds].sort((a, b) => a - b),
+        type,
+        mode,
+        limit: mode === 'LIMITED' ? limit : null,
+    });
+
     const canApply =
         preview !== null &&
-        previewIds.join(',') === terminalIds.join(',') &&
+        previewSignature === currentSignature &&
         terminalIds.length > 0 &&
-        !tooMany;
+        !tooMany &&
+        preview.results.every((item) => !item.hasMore);
 
     async function submit(dryRun: boolean) {
         if (busy || terminalIds.length === 0) return;
@@ -70,8 +82,10 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
             });
             if (dryRun) {
                 setPreview(response);
+                setPreviewSignature(currentSignature);
                 setPreviewIds([...terminalIds]);
                 setResult(null);
+
             } else {
                 setResult(response);
                 setPreview(null);
@@ -94,7 +108,7 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
             <div className="grid gap-3 sm:grid-cols-2">
                 <Field htmlFor={`${id}-type`} label={t('terminals.personSync.type')}>
                     <SelectField
-                        id={`${id}-mode`}
+                        id={`${id}-type`}
                         value={type}
                         onValueChange={(value) => {
                             setType(value as SyncType);
@@ -196,7 +210,7 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                         ))}
                     </ul>
                     <p className="text-xs text-muted-foreground">{t('terminals.personSync.planNote')}</p>
-                    <Button type="button" disabled={!canApply || busy || mode === 'ALL'} onClick={() => void submit(false)}>
+                    <Button type="button" disabled={!canApply || busy} onClick={() => void submit(false)}>
                         <Send aria-hidden="true" />
                         {busy ? t('terminals.personSync.applying') : t('terminals.personSync.apply')}
                     </Button>
