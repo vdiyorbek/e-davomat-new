@@ -74,7 +74,9 @@
     "next": "Кейинги",
     "pageOf": "{{page}} / {{total}} саҳифа",
     "range": "{{from}}–{{to}}, жами {{total}}",
-    "firstPage": "Биринчи саҳифага қайтиш"
+    "firstPage": "Биринчи саҳифага қайтиш",
+    "goTo": "{{page}}-саҳифа",
+    "jump": "Саҳифага ўтиш"
   },
   "total": "Жами: {{count}}",
   "membershipStatus": {

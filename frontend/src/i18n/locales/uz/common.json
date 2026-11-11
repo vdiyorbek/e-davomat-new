@@ -74,7 +74,9 @@
     "next": "Keyingi",
     "pageOf": "{{page}} / {{total}} sahifa",
     "range": "{{from}}–{{to}}, jami {{total}}",
-    "firstPage": "Birinchi sahifaga qaytish"
+    "firstPage": "Birinchi sahifaga qaytish",
+    "goTo": "{{page}}-sahifa",
+    "jump": "Sahifaga o‘tish"
   },
   "total": "Jami: {{count}}",
   "membershipStatus": {

@@ -74,7 +74,9 @@
     "next": "Далее",
     "pageOf": "Страница {{page}} из {{total}}",
     "range": "{{from}}–{{to}} из {{total}}",
-    "firstPage": "Вернуться на первую страницу"
+    "firstPage": "Вернуться на первую страницу",
+    "goTo": "Страница {{page}}",
+    "jump": "Перейти к странице"
   },
   "total": "Всего: {{count}}",
   "membershipStatus": {
