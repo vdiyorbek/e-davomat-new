@@ -198,19 +198,16 @@ function SchoolsResults({ path, hasFilters, onPageChange, onLimitChange, onClear
                 </Table>
             </Card>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Pagination
-                    className="flex-1"
-                    page={data.page}
-                    totalPages={data.totalPages}
-                    onPageChange={onPageChange}
-                    total={data.total}
-                    pageSize={data.limit}
-                    shownCount={data.data.length}
-                    label={t('schools.pagesLabel')}
-                />
-                <PageSizeSelect value={data.limit} onChange={onLimitChange} />
-            </div>
+            <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                onPageChange={onPageChange}
+                onPageSizeChange={onLimitChange}
+                total={data.total}
+                pageSize={data.limit}
+                shownCount={data.data.length}
+                label={t('schools.pagesLabel')}
+            />
         </div>
     );
 }
