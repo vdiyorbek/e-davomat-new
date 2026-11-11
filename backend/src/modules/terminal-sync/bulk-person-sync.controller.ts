@@ -11,7 +11,11 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { In, Repository } from 'typeorm';
+import { PersonSyncBatchType } from './person-sync-batch.entity';
 
+import { PersonSyncBatchItemStatus } from './person-sync-batch-item.entity';
+
+import { PersonSyncHistoryService } from './person-sync-history.service';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -39,6 +43,7 @@ interface PersonSyncJobData {
   terminalId: number;
   personId?: number;
   requestedByUserId?: number;
+  historyItemId?: string;
 }
 
 @Controller('terminals/bulk')
@@ -53,6 +58,8 @@ export class BulkPersonSyncController {
 
     @InjectRepository(SchoolMembership)
     private readonly memberships: Repository<SchoolMembership>,
+
+    private readonly history: PersonSyncHistoryService,
   ) {}
 
   @Post('person-sync')
@@ -133,6 +140,14 @@ export class BulkPersonSyncController {
         ? [MembershipType.STUDENT, MembershipType.TEACHER]
         : [body.type as MembershipType];
 
+    const batch = body.dryRun
+      ? null
+      : await this.history.createBatch(
+          actor.id,
+          body.type as PersonSyncBatchType,
+          body.terminalIds.length,
+        );
+
     const results: Array<{
       terminalId: number;
       schoolId: number;
@@ -174,30 +189,25 @@ export class BulkPersonSyncController {
       let reused = 0;
       let failed = 0;
 
-      if (!body.dryRun) {
+      if (!body.dryRun && batch) {
         for (const personId of personIds) {
-          const jobId = `sync-person-${terminalId}-${personId}`;
+          const item = await this.history.createItem(
+            batch.id,
+            terminalId,
+            personId,
+          );
+
+          // Har bir tarix elementi uchun alohida BullMQ job.
+          const jobId = `psh-${item.id}`;
 
           try {
-            const existing = await this.queue.getJob(jobId);
-
-            if (existing) {
-              const state = await existing.getState();
-
-              if (state !== 'completed' && state !== 'failed') {
-                reused++;
-                continue;
-              }
-
-              await existing.remove();
-            }
-
             await this.queue.add(
               PERSON_SYNC_JOB.SYNC_PERSON,
               {
                 terminalId,
                 personId,
                 requestedByUserId: actor.id,
+                historyItemId: item.id,
               },
               {
                 jobId,
@@ -217,9 +227,26 @@ export class BulkPersonSyncController {
               },
             );
 
+            await this.history.markQueued(item.id, jobId);
             queued++;
-          } catch {
+          } catch (error: unknown) {
             failed++;
+
+            // Redisga qo‘shish noaniq yakunlangan bo‘lsa,
+            // job haqiqatda mavjudligini tekshiramiz.
+            const existing = await this.queue.getJob(jobId).catch(() => null);
+
+            if (existing) {
+              await this.history.markQueued(item.id, jobId);
+              queued++;
+              failed--;
+            } else {
+              await this.history.markFinished(
+                item.id,
+                PersonSyncBatchItemStatus.UNCERTAIN,
+                'QUEUE_SUBMISSION_UNCONFIRMED',
+              );
+            }
           }
         }
       }
@@ -234,11 +261,14 @@ export class BulkPersonSyncController {
         failed,
       });
     }
-
+    if (batch) {
+      await this.history.refreshBatch(batch.id);
+    }
     return {
       success: results.every((item) => item.failed === 0),
       dryRun: body.dryRun,
       type: body.type,
+      batchId: batch?.id ?? null,
       results,
       checkedAt: new Date().toISOString(),
     };

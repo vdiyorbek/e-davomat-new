@@ -24,6 +24,9 @@ import { TerminalSyncHistoryCleanupService } from './terminal-sync-history-clean
 import { TerminalSyncRun } from './terminal-sync-run.entity';
 import { SchoolMembership } from '../school-memberships/school-membership.entity';
 import { BulkPersonSyncController } from './bulk-person-sync.controller';
+import { PersonSyncBatch } from './person-sync-batch.entity';
+import { PersonSyncBatchItem } from './person-sync-batch-item.entity';
+import { PersonSyncHistoryService } from './person-sync-history.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -32,6 +35,8 @@ import { BulkPersonSyncController } from './bulk-person-sync.controller';
       TerminalSyncRun,
       SchoolMembership,
       User,
+      PersonSyncBatch,
+      PersonSyncBatchItem,
     ]),
 
     // PersonSyncService shu moduldan export qilinadi.
@@ -88,6 +93,7 @@ import { BulkPersonSyncController } from './bulk-person-sync.controller';
     PersonSyncScheduler,
     PersonSyncTerminalLockService,
     TerminalSyncHistoryCleanupService,
+    PersonSyncHistoryService,
   ],
 })
 export class TerminalSyncModule {}

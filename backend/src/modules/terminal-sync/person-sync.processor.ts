@@ -8,6 +8,8 @@ import { PersonSyncService } from '../terminals/person-sync.service';
 import { Job, UnrecoverableError } from 'bullmq';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { User } from '../users/user.entity';
+import { PersonSyncHistoryService } from './person-sync-history.service';
+import { PersonSyncBatchItemStatus } from './person-sync-batch-item.entity';
 import { UserRole } from '../users/enums/user-role.enum';
 import {
   PERSON_SYNC_JOB,
@@ -23,6 +25,7 @@ interface PersonSyncQueueJob {
   terminalId: number;
   personId?: number;
   requestedByUserId?: number;
+  historyItemId?: string;
 }
 
 interface CheckRecordInput {
@@ -54,6 +57,8 @@ export class PersonSyncProcessor extends WorkerHost {
     private readonly terminalLock: PersonSyncTerminalLockService,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+
+    private readonly history: PersonSyncHistoryService,
   ) {
     super();
   }
@@ -97,6 +102,7 @@ export class PersonSyncProcessor extends WorkerHost {
         const terminalId = job.data.terminalId;
         const personId = job.data.personId;
         const requestedBy = job.data.requestedByUserId;
+        const historyItemId = job.data.historyItemId;
 
         if (
           typeof personId !== 'number' ||
@@ -111,18 +117,100 @@ export class PersonSyncProcessor extends WorkerHost {
           );
         }
 
-        const actor = await this.loadSyncActor(requestedBy);
-
-        const locked = await this.terminalLock.run(terminalId, () =>
-          this.personSyncService.syncPerson(terminalId, personId, actor),
-        );
-
-        if (!locked.acquired) {
-          // Terminal band: BullMQ keyinroq qayta uradi.
-          throw new Error('TERMINAL_BUSY');
+        // Eski, tarixsiz joblar ham ishlashda davom etadi.
+        if (historyItemId) {
+          await this.history.markRunning(historyItemId, job.attemptsMade + 1);
         }
 
-        return locked.result;
+        try {
+          const actor = await this.loadSyncActor(requestedBy);
+
+          const locked = await this.terminalLock.run(terminalId, () =>
+            this.personSyncService.syncPerson(terminalId, personId, actor),
+          );
+
+          if (!locked.acquired) {
+            throw new Error('TERMINAL_BUSY');
+          }
+
+          const result = locked.result as {
+            action?: string;
+            status?: string;
+            reason?: string;
+          };
+
+          if (
+            result.action === 'BLOCKED' ||
+            result.action === 'MANUAL_REVIEW'
+          ) {
+            if (historyItemId) {
+              await this.history.markFinished(
+                historyItemId,
+                PersonSyncBatchItemStatus.SKIPPED,
+                result.reason?.slice(0, 100) ?? null,
+              );
+            }
+
+            return result;
+          }
+
+          if (result.status !== 'VERIFIED') {
+            if (historyItemId) {
+              await this.history.markFinished(
+                historyItemId,
+                PersonSyncBatchItemStatus.UNCERTAIN,
+                'NOT_VERIFIED',
+              );
+            }
+
+            return result;
+          }
+
+          if (historyItemId) {
+            await this.history.markFinished(
+              historyItemId,
+              PersonSyncBatchItemStatus.SUCCESS,
+            );
+          }
+
+          return result;
+        } catch (error: unknown) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+
+          const uncertain =
+            message.includes('SYNC_RESULT_UNCERTAIN') ||
+            message.includes('SYNC_RECONCILIATION_REQUIRED');
+
+          if (historyItemId && uncertain) {
+            await this.history.markFinished(
+              historyItemId,
+              PersonSyncBatchItemStatus.UNCERTAIN,
+              'SYNC_RECONCILIATION_REQUIRED',
+            );
+
+            // Qurilmaga yozilgan bo‘lishi mumkin.
+            // Avtomatik qayta yubormaymiz.
+            throw new UnrecoverableError(
+              'Sinxronlash natijasi noaniq. Qo‘lda tekshirish kerak',
+            );
+          }
+
+          const maxAttempts = Number(job.opts.attempts ?? 1);
+          const isFinalAttempt =
+            error instanceof UnrecoverableError ||
+            job.attemptsMade + 1 >= maxAttempts;
+
+          if (historyItemId && isFinalAttempt) {
+            await this.history.markFinished(
+              historyItemId,
+              PersonSyncBatchItemStatus.FAILED,
+              message.slice(0, 100),
+            );
+          }
+
+          throw error;
+        }
       }
 
       default:
