@@ -369,7 +369,7 @@ export class PersonSyncQueueController {
   @Get('jobs/:jobId')
   async getJobStatus(@Param('jobId') jobId: string) {
     // Faqat ushbu controller yaratadigan
-    // diagnostika vazifalarini ko‘rsatamiz.
+    // vazifalarni ko‘rsatamiz.
     if (
       !/^manual-check-[1-9]\d*-\d+$/.test(jobId) &&
       !/^person-check-[1-9]\d*-\d{8}-\d{2}$/.test(jobId) &&
