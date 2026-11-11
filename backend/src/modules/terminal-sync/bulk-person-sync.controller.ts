@@ -30,11 +30,12 @@ import {
 } from '../terminals/person-sync.constants';
 
 type SyncType = 'STUDENT' | 'TEACHER' | 'BOTH';
-
+type SyncMode = 'ALL' | 'LIMITED';
 interface BulkSyncRequest {
   terminalIds: number[];
   type: SyncType;
-  limitPerTerminal: number;
+  mode: SyncMode;
+  limitPerTerminal?: number;
   dryRun: boolean;
   confirm?: string;
 }
@@ -89,13 +90,24 @@ export class BulkPersonSyncController {
       throw new BadRequestException('Sinxronlash turi noto‘g‘ri');
     }
 
+    if (!['ALL', 'LIMITED'].includes(body.mode)) {
+      throw new BadRequestException('Sinxronlash rejimi noto‘g‘ri');
+    }
+
     if (
-      !Number.isInteger(body.limitPerTerminal) ||
-      body.limitPerTerminal < 1 ||
-      body.limitPerTerminal > 20
+      body.mode === 'LIMITED' &&
+      (!Number.isInteger(body.limitPerTerminal) ||
+        body.limitPerTerminal! < 1 ||
+        body.limitPerTerminal! > 20)
     ) {
+      throw new BadRequestException('Sinov rejimida limit 1–20 bo‘lishi kerak');
+    }
+
+    // To‘liq rejimni xavfsiz navbat dispatcheriga
+    // ulashdan oldin ishga tushirmaymiz.
+    if (body.mode === 'ALL' && !body.dryRun) {
       throw new BadRequestException(
-        'Har terminal uchun limit 1–20 bo‘lishi kerak',
+        'To‘liq sinxronlash dispatcherini ulash talab etiladi',
       );
     }
 
@@ -160,6 +172,43 @@ export class BulkPersonSyncController {
 
     for (const terminalId of body.terminalIds) {
       const terminal = terminals.find((t) => t.id === terminalId)!;
+
+      const query = this.memberships
+        .createQueryBuilder('membership')
+        .innerJoin('membership.person', 'person')
+        .select('membership.personId', 'personId')
+        .distinct(true)
+        .where('membership.schoolId = :schoolId', {
+          schoolId: terminal.schoolId,
+        })
+        .andWhere('membership.type IN (:...types)', {
+          types,
+        })
+        .andWhere('membership.startDate <= :today', {
+          today,
+        })
+        .andWhere(
+          '(membership.endDate IS NULL OR membership.endDate > :today)',
+          { today },
+        )
+        .andWhere('person.deletedAt IS NULL')
+        .orderBy('membership.personId', 'ASC');
+
+      if (body.mode === 'LIMITED') {
+        query.limit(body.limitPerTerminal! + 1);
+      }
+
+      const rows = await query.getRawMany<{
+        personId: number | string;
+      }>();
+
+      const hasMore =
+        body.mode === 'LIMITED' && rows.length > body.limitPerTerminal!;
+
+      const selectedRows =
+        body.mode === 'LIMITED' ? rows.slice(0, body.limitPerTerminal!) : rows;
+
+      const personIds = selectedRows.map((row) => Number(row.personId));
 
       const rows = await this.memberships
         .createQueryBuilder('membership')

@@ -43,7 +43,7 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState<BulkSyncResponse | null>(null);
-
+    const [mode, setMode] = useState<'ALL' | 'LIMITED'>('ALL');
     const tooMany = terminalIds.length > MAX_TERMINALS;
     const canApply =
         preview !== null &&
@@ -59,9 +59,14 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
             const response = await authorizedPost<BulkSyncResponse>('/terminals/bulk/person-sync', {
                 terminalIds,
                 type,
-                limitPerTerminal: limit,
+                mode,
+                ...(mode === 'LIMITED'
+                    ? { limitPerTerminal: limit }
+                    : {}),
                 dryRun,
-                ...(dryRun ? {} : { confirm: 'SYNC_SELECTED_PERSONS' }),
+                ...(dryRun
+                    ? {}
+                    : { confirm: 'SYNC_SELECTED_PERSONS' }),
             });
             if (dryRun) {
                 setPreview(response);
@@ -89,16 +94,23 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
             <div className="grid gap-3 sm:grid-cols-2">
                 <Field htmlFor={`${id}-type`} label={t('terminals.personSync.type')}>
                     <SelectField
-                        id={`${id}-type`}
-                        value={type}
+                        id={`${id}-mode`}
+                        value={mode}
                         onValueChange={(value) => {
-                            setType(value as SyncType);
+                            setMode(value as 'ALL' | 'LIMITED');
                             setPreview(null);
+                            setResult(null);
                         }}
-                        options={(['BOTH', 'STUDENT', 'TEACHER'] as const).map((value) => ({
-                            value,
-                            label: t(`terminals.personSync.types.${value}`),
-                        }))}
+                        options={[
+                            {
+                                value: 'ALL',
+                                label: 'Maktabdagi barcha faol shaxslar',
+                            },
+                            {
+                                value: 'LIMITED',
+                                label: 'Sinov uchun cheklangan miqdor',
+                            },
+                        ]}
                     />
                 </Field>
                 <Field htmlFor={`${id}-limit`} label={t('terminals.personSync.limit')}>
