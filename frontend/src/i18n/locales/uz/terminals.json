@@ -1,4 +1,27 @@
 {
+  "uptime": {
+    "title": "Ish holati",
+    "date": "Sana",
+    "today": "Bugun",
+    "now": "Hozir",
+    "since": "{{time}} dan beri · {{duration}}",
+    "uptime": "Ishlash foizi",
+    "onlineTime": "Online vaqti",
+    "offlineTime": "Offline vaqti",
+    "outages": "Uzilishlar",
+    "noOutages": "Bu kunda uzilish bo‘lmagan.",
+    "ongoing": "hozirgacha",
+    "noData": "Bu kun uchun holat ma’lumoti yo‘q.",
+    "loadFailed": "Holat tarixini yuklab bo‘lmadi.",
+    "hoursMinutes": "{{h}} soat {{m}} daq",
+    "minutes": "{{m}} daq",
+    "lessThanMinute": "1 daqiqadan kam",
+    "legend": {
+      "ONLINE": "Online",
+      "OFFLINE": "Offline",
+      "UNKNOWN": "Ma’lumot yo‘q"
+    }
+  },
   "title": "Terminallar",
   "subtitle": "Maktablardagi kirish va chiqish Face ID terminallarini boshqarish.",
   "eyebrow": "E-Davomat · Hikvision",
@@ -93,9 +116,9 @@
     "online": "Online",
     "offline": "Offline",
     "delayed": "Sinxronlash kechikmoqda",
-    "clickToFilter":"Bosing — faqat shularni ko‘rsatish",
-    "activeFilter":"Filtr yoqilgan · qayta bosing",
-    "notChecked":"Tekshirilmagan / nofaol: {{count}}"
+    "clickToFilter": "Bosing — faqat shularni ko‘rsatish",
+    "activeFilter": "Filtr yoqilgan · qayta bosing",
+    "notChecked": "Tekshirilmagan / nofaol: {{count}}"
   },
   "filters": {
     "search": "Terminal qidirish",

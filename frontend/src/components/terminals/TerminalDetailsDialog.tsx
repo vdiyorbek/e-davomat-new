@@ -13,7 +13,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
+import { TerminalStatusTimeline } from './TerminalStatusTimeline';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -273,7 +273,7 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                     <InfoRow label={t('terminals.details.lastSync')}>{formatDateTime(terminal.lastSuccessfulSyncAt)}</InfoRow>
                                 </InfoList>
                             </div>
-
+                            {!archived && <TerminalStatusTimeline terminalId={terminal.id} />}
                             {archived && (
                                 <Alert>
                                     <Archive aria-hidden="true" />

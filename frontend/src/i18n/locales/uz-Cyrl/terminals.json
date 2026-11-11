@@ -1,4 +1,27 @@
 {
+  "uptime": {
+    "title": "Иш ҳолати",
+    "date": "Сана",
+    "today": "Бугун",
+    "now": "Ҳозир",
+    "since": "{{time}} дан бери · {{duration}}",
+    "uptime": "Ишлаш фоизи",
+    "onlineTime": "Онлайн вақти",
+    "offlineTime": "Офлайн вақти",
+    "outages": "Узилишлар",
+    "noOutages": "Бу кунда узилиш бўлмаган.",
+    "ongoing": "ҳозиргача",
+    "noData": "Бу кун учун ҳолат маълумоти йўқ.",
+    "loadFailed": "Ҳолат тарихини юклаб бўлмади.",
+    "hoursMinutes": "{{h}} соат {{m}} дақ",
+    "minutes": "{{m}} дақ",
+    "lessThanMinute": "1 дақиқадан кам",
+    "legend": {
+      "ONLINE": "Онлайн",
+      "OFFLINE": "Офлайн",
+      "UNKNOWN": "Маълумот йўқ"
+    }
+  },
   "title": "Терминаллар",
   "subtitle": "Мактаблардаги кириш ва чиқиш Face ID терминалларини бошқариш.",
   "eyebrow": "E-Davomat · Hikvision",

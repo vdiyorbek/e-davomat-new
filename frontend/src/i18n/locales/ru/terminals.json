@@ -1,4 +1,27 @@
 {
+  "uptime": {
+    "title": "Состояние работы",
+    "date": "Дата",
+    "today": "Сегодня",
+    "now": "Сейчас",
+    "since": "с {{time}} · {{duration}}",
+    "uptime": "Доступность",
+    "onlineTime": "Время онлайн",
+    "offlineTime": "Время офлайн",
+    "outages": "Отключения",
+    "noOutages": "В этот день отключений не было.",
+    "ongoing": "до сих пор",
+    "noData": "Нет данных о состоянии за этот день.",
+    "loadFailed": "Не удалось загрузить историю состояния.",
+    "hoursMinutes": "{{h}} ч {{m}} мин",
+    "minutes": "{{m}} мин",
+    "lessThanMinute": "меньше минуты",
+    "legend": {
+      "ONLINE": "Онлайн",
+      "OFFLINE": "Офлайн",
+      "UNKNOWN": "Нет данных"
+    }
+  },
   "title": "Терминалы",
   "subtitle": "Управление терминалами Face ID на входах и выходах школ.",
   "eyebrow": "E-Davomat · Hikvision",

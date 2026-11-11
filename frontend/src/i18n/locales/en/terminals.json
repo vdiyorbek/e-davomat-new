@@ -1,4 +1,23 @@
 {
+  "uptime": {
+    "title": "Availability",
+    "date": "Date",
+    "today": "Today",
+    "now": "Now",
+    "since": "since {{time}} · {{duration}}",
+    "uptime": "Uptime",
+    "onlineTime": "Online time",
+    "offlineTime": "Offline time",
+    "outages": "Outages",
+    "noOutages": "No outages on this day.",
+    "ongoing": "ongoing",
+    "noData": "No status data for this day.",
+    "loadFailed": "Could not load status history.",
+    "hoursMinutes": "{{h}} h {{m}} min",
+    "minutes": "{{m}} min",
+    "lessThanMinute": "less than a minute",
+    "legend": { "ONLINE": "Online", "OFFLINE": "Offline", "UNKNOWN": "No data" }
+  },
   "title": "Terminals",
   "subtitle": "Manage Face ID terminals at school entrances and exits.",
   "eyebrow": "E-Davomat · Hikvision",
