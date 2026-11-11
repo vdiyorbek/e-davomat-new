@@ -383,6 +383,27 @@ export class TerminalsService {
       totalPages: Math.ceil(total / query.limit),
     };
   }
+
+  /**
+   * Foydalanuvchi shu terminalni ko‘rishga haqlimi (hududiy cheklovlar).
+   * Ro‘yxatdagi filtrlar qayta ishlatiladi; ruxsat bo‘lmasa — 404.
+   */
+  async assertTerminalVisible(
+    id: number,
+    user: AuthenticatedUser,
+  ): Promise<void> {
+    const found = await this.buildFilteredQuery(
+      { page: 1, limit: 1, archiveStatus: 'ALL' },
+      user,
+      false,
+    )
+      .andWhere('terminal.id = :visibleId', { visibleId: id })
+      .getExists();
+
+    if (!found) {
+      throw new NotFoundException('Terminal topilmadi');
+    }
+  }
   /**
    * Filtr bo‘yicha BARCHA terminallar holati (KPI kartalari uchun).
    * Bitta SQL so‘rov: terminallarning o‘zi yuklanmaydi, faqat sonlar.

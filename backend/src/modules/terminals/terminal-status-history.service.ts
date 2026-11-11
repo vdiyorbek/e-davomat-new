@@ -1,11 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, IsNull } from 'typeorm';
+import { DataSource, IsNull, LessThan, MoreThan } from 'typeorm';
 
 import { Terminal } from './terminal.entity';
 import { TerminalStatusPeriod } from './terminal-status-period.entity';
 import { planStatusChange } from './terminal-status-history.rules';
 import type { HealthCheck } from './terminal-status-history.rules';
+import { buildDayTimeline } from './terminal-status-timeline.rules';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Toshkent vaqti bo‘yicha bugungi sana (YYYY-MM-DD). */
+function todayInTashkent(now: Date): string {
+  return new Date(now.getTime() + 5 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+}
 
 @Injectable()
 export class TerminalStatusHistoryService {
@@ -90,5 +100,60 @@ export class TerminalStatusHistoryService {
           AND p.lastCheckAt <= ?`,
       [now],
     );
+  }
+
+  /**
+   * Bir kunlik holatlar tarixi (Toshkent vaqti bo‘yicha 00:00–24:00).
+   * `date` berilmasa — bugun.
+   */
+  async getDayHistory(terminalId: number, date?: string, now = new Date()) {
+    const day = date ?? todayInTashkent(now);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+      throw new BadRequestException('Sana formati noto‘g‘ri (YYYY-MM-DD)');
+    }
+
+    const dayStart = new Date(`${day}T00:00:00+05:00`);
+
+    if (
+      Number.isNaN(dayStart.getTime()) ||
+      new Date(`${day}T00:00:00Z`).toISOString().slice(0, 10) !== day
+    ) {
+      throw new BadRequestException('Bunday sana mavjud emas');
+    }
+
+    if (dayStart.getTime() > now.getTime()) {
+      throw new BadRequestException('Kelajakdagi sanani tanlab bo‘lmaydi');
+    }
+
+    const dayEnd = new Date(dayStart.getTime() + DAY_MS);
+
+    // Kun bilan kesishgan davrlar: kun tugashidan oldin boshlangan va
+    // kun boshlangandan keyin tugagan (yoki hali ochiq).
+    const periods = await this.dataSource
+      .getRepository(TerminalStatusPeriod)
+      .find({
+        where: [
+          {
+            terminalId,
+            startedAt: LessThan(dayEnd),
+            endedAt: MoreThan(dayStart),
+          },
+          { terminalId, startedAt: LessThan(dayEnd), endedAt: IsNull() },
+        ],
+        order: { startedAt: 'ASC' },
+      });
+
+    const timeline = buildDayTimeline(periods, dayStart, dayEnd, now);
+
+    return {
+      terminalId,
+      date: day,
+      from: dayStart.toISOString(),
+      to: dayEnd.toISOString(),
+      isToday: day === todayInTashkent(now),
+      generatedAt: now.toISOString(),
+      ...timeline,
+    };
   }
 }

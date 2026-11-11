@@ -23,6 +23,7 @@ import { GetTerminalsQueryDto } from './dto/get-terminals-query.dto';
 import { TerminalsService } from './terminals.service';
 import { StartTerminalSyncDto } from './dto/start-terminal-sync.dto';
 import { PersonSyncService } from './person-sync.service';
+import { TerminalStatusHistoryService } from './terminal-status-history.service';
 
 @Controller('terminals')
 @Roles(UserRole.SUPER_ADMIN)
@@ -30,6 +31,7 @@ export class TerminalsController {
   constructor(
     private readonly terminalsService: TerminalsService,
     private readonly personSyncService: PersonSyncService,
+    private readonly statusHistory: TerminalStatusHistoryService,
   ) {}
 
   @Post()
@@ -134,6 +136,28 @@ export class TerminalsController {
     }
 
     return this.terminalsService.getTerminalTime(id, request.authUser);
+  }
+
+  /** Terminalning bir kunlik ish holati: vaqt chizig‘i, uptime, uzilishlar. */
+  @Get(':id/status-history')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  async getStatusHistory(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+    @Query('date') date?: string,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    await this.terminalsService.assertTerminalVisible(id, request.authUser);
+
+    return this.statusHistory.getDayHistory(id, date || undefined);
   }
 
   @Post(':id/time/sync')
