@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Building2, MapPin, Pencil, Plus, Search } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-
+import { PageSizeSelect } from '@/components/common/PageSizeSelect';
+import { parsePageSize } from '@/lib/pagination';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
@@ -43,11 +44,12 @@ interface ResultsProps {
     path: string;
     hasFilters: boolean;
     onPageChange: (page: number) => void;
+    onLimitChange: (limit: number) => void;
     onClearFilters: () => void;
     onEdit?: (school: School) => void;
 }
 
-function SchoolsResults({ path, hasFilters, onPageChange, onClearFilters, onEdit }: ResultsProps) {
+function SchoolsResults({ path, hasFilters, onPageChange, onLimitChange, onClearFilters, onEdit }: ResultsProps) {
     const { t } = useTranslation();
     const { data, loading, error, retry } = useApiQuery<SchoolsPageData>(path);
 
@@ -196,15 +198,19 @@ function SchoolsResults({ path, hasFilters, onPageChange, onClearFilters, onEdit
                 </Table>
             </Card>
 
-            <Pagination
-                page={data.page}
-                totalPages={data.totalPages}
-                onPageChange={onPageChange}
-                total={data.total}
-                pageSize={data.limit}
-                shownCount={data.data.length}
-                label={t('schools.pagesLabel')}
-            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Pagination
+                    className="flex-1"
+                    page={data.page}
+                    totalPages={data.totalPages}
+                    onPageChange={onPageChange}
+                    total={data.total}
+                    pageSize={data.limit}
+                    shownCount={data.data.length}
+                    label={t('schools.pagesLabel')}
+                />
+                <PageSizeSelect value={data.limit} onChange={onLimitChange} />
+            </div>
         </div>
     );
 }

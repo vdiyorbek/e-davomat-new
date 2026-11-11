@@ -76,7 +76,9 @@
     "range": "{{from}}–{{to}} из {{total}}",
     "firstPage": "Вернуться на первую страницу",
     "goTo": "Страница {{page}}",
-    "jump": "Перейти к странице"
+    "jump": "Перейти к странице",
+    "perPage": "На странице",
+    "perPageLabel": "Записей на странице"
   },
   "total": "Всего: {{count}}",
   "membershipStatus": {

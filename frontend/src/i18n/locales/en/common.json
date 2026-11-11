@@ -76,7 +76,9 @@
     "range": "{{from}}–{{to}} of {{total}}",
     "firstPage": "Back to first page",
     "goTo": "Page {{page}}",
-    "jump": "Go to page"
+    "jump": "Go to page",
+    "perPage": "Per page",
+    "perPageLabel": "Rows per page"
   },
   "total": "Total: {{count}}",
   "membershipStatus": {

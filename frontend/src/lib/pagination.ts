@@ -27,3 +27,15 @@ export function getPageItems(
 
   return [1, "gap-start", ...range(left, right), "gap-end", total];
 }
+export const PAGE_SIZE_OPTIONS = [10, 20, 30, 50] as const;
+export const DEFAULT_PAGE_SIZE = 20;
+
+/**
+ * URL'dagi `limit` qiymati: yo‘q bo‘lsa — standart son,
+ * ruxsat etilmagan son bo‘lsa — null (sahifa xato manzil deb ko‘rsatadi).
+ */
+export function parsePageSize(value: string | null): number | null {
+  if (value === null) return DEFAULT_PAGE_SIZE;
+  const size = Number(value);
+  return (PAGE_SIZE_OPTIONS as readonly number[]).includes(size) ? size : null;
+}

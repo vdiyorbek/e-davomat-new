@@ -76,7 +76,9 @@
     "range": "{{from}}–{{to}}, jami {{total}}",
     "firstPage": "Birinchi sahifaga qaytish",
     "goTo": "{{page}}-sahifa",
-    "jump": "Sahifaga o‘tish"
+    "jump": "Sahifaga o‘tish",
+    "perPage": "Sahifada",
+    "perPageLabel": "Bir sahifadagi yozuvlar soni"
   },
   "total": "Jami: {{count}}",
   "membershipStatus": {
