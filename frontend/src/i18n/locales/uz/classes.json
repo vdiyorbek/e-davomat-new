@@ -1,6 +1,6 @@
 {
   "title": "Sinflar",
-  "subtitle": "Maktab va o‘quv yili bo‘yicha sinflarni boshqarish.",
+  "subtitle": "Barcha maktablardagi sinflarni ko‘rish va boshqarish.",
   "choose": "Sinflarni ko‘rish uchun maktab va o‘quv yilini tanlang.",
   "noSchools": "Sizga ko‘rinadigan maktablar mavjud emas.",
   "createTitle": "Yangi sinf qo‘shish",
@@ -19,6 +19,20 @@
   "emptyTitle": "Sinflar yo‘q",
   "empty": "Ushbu o‘quv yilida sinflar mavjud emas.",
   "errors": {
-    "required": "Sinf nomi va darajasini kiriting."
+    "required": "Sinf nomi va darajasini kiriting.",
+    "school": "Maktab va o‘quv yilini tanlang."
+  },
+  "search": "Sinf qidirish",
+  "searchPlaceholder": "Sinf yoki maktab nomi…",
+  "allGrades": "Barcha darajalar",
+  "createDescription": "Maktab, o‘quv yili, sinf nomi va darajasini kiriting.",
+  "createdNamed": "«{{name}}» sinfi yaratildi.",
+  "studentsCount": "{{count}} ta o‘quvchi",
+  "noMatchTitle": "Filtrga mos sinf topilmadi",
+  "noMatch": "Boshqa nom, daraja yoki maktab bilan qidirib ko‘ring.",
+  "pagesLabel": "Sinflar sahifalari",
+  "columns": {
+    "class": "Sinf",
+    "students": "O‘quvchilar"
   }
 }

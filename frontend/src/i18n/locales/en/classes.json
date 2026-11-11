@@ -1,6 +1,6 @@
 {
   "title": "Classes",
-  "subtitle": "Manage classes by school and academic year.",
+  "subtitle": "View and manage classes across all schools.",
   "choose": "Choose a school and an academic year to see its classes.",
   "noSchools": "There are no schools available to you.",
   "createTitle": "Add a class",
@@ -19,6 +19,20 @@
   "emptyTitle": "No classes",
   "empty": "There are no classes in this academic year.",
   "errors": {
-    "required": "Enter the class name and grade."
+    "required": "Enter the class name and grade.",
+    "school": "Choose a school and academic year."
+  },
+  "search": "Search classes",
+  "searchPlaceholder": "Class or school name…",
+  "allGrades": "All grades",
+  "createDescription": "Enter the school, academic year, class name and grade.",
+  "createdNamed": "Class “{{name}}” created.",
+  "studentsCount": "{{count}} students",
+  "noMatchTitle": "No matching classes",
+  "noMatch": "Try another name, grade or school.",
+  "pagesLabel": "Class pages",
+  "columns": {
+    "class": "Class",
+    "students": "Students"
   }
 }

@@ -1,282 +1,341 @@
-import { useId, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
-import { Plus, School as SchoolIcon, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, School as SchoolIcon, Search, TriangleAlert, Users } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
-import { Field } from '@/components/common/Field';
+import { ClassesFilters } from '@/components/classes/ClassesFilters';
+import { CreateClassForm } from '@/components/classes/CreateClassForm';
+import { GradeLevelEditor } from '@/components/classes/GradeLevelEditor';
 import { PageHeader } from '@/components/common/PageHeader';
-import { SelectField } from '@/components/common/SelectField';
+import { Pagination } from '@/components/common/Pagination';
 import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
-import { authorizedPatch, authorizedPost } from '@/lib/auth-session';
-import { academicYearFor, academicYearOptions, isValidAcademicYear, todayInTashkent } from '@/lib/date';
-import type { School } from '@/types/school';
+import { academicYearFor, formatNumber, isValidAcademicYear, todayInTashkent } from '@/lib/date';
+import { GRADES } from '@/lib/grades';
+import type { SchoolClassRow, SchoolClassesPage } from '@/types/school-class';
 
-interface SchoolClass {
-    id: number;
-    schoolId: number;
-    academicYear: string;
-    name: string;
-    gradeLevel: number | null;
+const ID_PATTERN = /^[1-9][0-9]*$/;
+const MAX_ID = 4294967295;
+
+function validId(value: string | null) {
+    return value === null || (ID_PATTERN.test(value) && Number(value) <= MAX_ID);
 }
 
-const GRADES = Array.from({ length: 12 }, (_, index) => String(index + 1));
-
-function useGradeOptions() {
+function GradeCell({ item, canEdit, onSaved }: { item: SchoolClassRow; canEdit: boolean; onSaved: () => void }) {
     const { t } = useTranslation();
-    return GRADES.map((grade) => ({ value: grade, label: t('calendar.gradeN', { grade }) }));
-}
 
-function GradeLevelEditor({ schoolClass, onSaved }: { schoolClass: SchoolClass; onSaved: () => void }) {
-    const { t } = useTranslation();
-    const gradeOptions = useGradeOptions();
-    const [gradeLevel, setGradeLevel] = useState(schoolClass.gradeLevel == null ? '' : String(schoolClass.gradeLevel));
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
-    const saving = useRef(false);
-
-    const unchanged = gradeLevel !== '' && Number(gradeLevel) === schoolClass.gradeLevel;
-
-    async function handleSave() {
-        if (saving.current || !gradeLevel || unchanged) return;
-        saving.current = true;
-        setBusy(true);
-        setError('');
-        try {
-            await authorizedPatch(`/classes/${schoolClass.id}/grade-level`, { gradeLevel: Number(gradeLevel) });
-            onSaved();
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : t('classes.gradeSaveFailed'));
-        } finally {
-            saving.current = false;
-            setBusy(false);
-        }
-    }
-
-    return (
-        <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-                <SelectField
-                    value={gradeLevel}
-                    onValueChange={(value) => {
-                        setGradeLevel(value);
-                        setError('');
-                    }}
-                    disabled={busy}
-                    placeholder={t('common.notSet')}
-                    options={gradeOptions}
-                    aria-label={t('classes.gradeOf', { name: schoolClass.name })}
-                    className="h-9 min-w-0 flex-1"
-                />
-                {!unchanged && gradeLevel && (
-                    <Button type="button" size="sm" disabled={busy} onClick={() => void handleSave()}>
-                        {busy ? t('common.saving') : t('common.save')}
-                    </Button>
+    if (canEdit) {
+        return (
+            <div className="space-y-1">
+                <GradeLevelEditor key={`${item.id}-${item.gradeLevel ?? 'none'}`} schoolClass={item} onSaved={onSaved} />
+                {item.gradeLevel == null && (
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <TriangleAlert aria-hidden="true" className="size-3.5 text-warning" />
+                        {t('classes.gradeMissing')}
+                    </p>
                 )}
             </div>
-            {error && (
-                <p role="alert" className="text-xs text-destructive">
-                    {error}
-                </p>
+        );
+    }
+
+    return item.gradeLevel == null ? (
+        <StatusBadge tone="warning">{t('classes.gradeMissing')}</StatusBadge>
+    ) : (
+        <span>{t('calendar.gradeN', { grade: item.gradeLevel })}</span>
+    );
+}
+
+interface ResultsProps {
+    path: string;
+    canEdit: boolean;
+    hasFilters: boolean;
+    gradeFilter: string;
+    onPageChange: (page: number) => void;
+    onShowMissing: () => void;
+    onClearFilters: () => void;
+}
+
+function ClassesResults({ path, canEdit, hasFilters, gradeFilter, onPageChange, onShowMissing, onClearFilters }: ResultsProps) {
+    const { t } = useTranslation();
+    const { data, loading, error, retry } = useApiQuery<SchoolClassesPage>(path);
+
+    if (loading) return <LoadingState rows={6} />;
+    if (error) return <ErrorState message={error} onRetry={retry} />;
+    if (!data) return null;
+
+    const summary = (
+        <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge tone="neutral" dot={false}>
+                {t('common.total', { count: data.total })}
+            </StatusBadge>
+            {data.missingGrade > 0 && gradeFilter !== 'NONE' && (
+                <Button type="button" variant="outline" size="sm" onClick={onShowMissing} className="h-7 gap-1.5 text-xs">
+                    <TriangleAlert aria-hidden="true" className="size-3.5 text-warning" />
+                    {t('classes.missingGrade', { count: data.missingGrade })}
+                </Button>
             )}
         </div>
     );
-}
 
-function ClassesList({ schoolId, academicYear, canCreate }: { schoolId: number; academicYear: string; canCreate: boolean }) {
-    const { t } = useTranslation();
-    const id = useId();
-    const gradeOptions = useGradeOptions();
-    const query = useApiQuery<SchoolClass[]>(`/classes?schoolId=${schoolId}&academicYear=${academicYear}`);
-
-    const [name, setName] = useState('');
-    const [gradeLevel, setGradeLevel] = useState('');
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const saving = useRef(false);
-
-    async function handleCreate(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        if (saving.current || !canCreate) return;
-        const normalizedName = name.trim();
-        setError('');
-        setSuccess('');
-
-        if (!normalizedName || !gradeLevel) return setError(t('classes.errors.required'));
-
-        saving.current = true;
-        setBusy(true);
-        try {
-            await authorizedPost<SchoolClass>('/classes', { schoolId, academicYear, name: normalizedName, gradeLevel: Number(gradeLevel) });
-            setName('');
-            setGradeLevel('');
-            setSuccess(t('classes.created'));
-            query.retry();
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : t('classes.createFailed'));
-        } finally {
-            saving.current = false;
-            setBusy(false);
-        }
+    if (data.data.length === 0) {
+        return (
+            <div className="space-y-4">
+                {summary}
+                {hasFilters ? (
+                    <EmptyState
+                        icon={Search}
+                        title={t('classes.noMatchTitle')}
+                        description={t('classes.noMatch')}
+                        action={
+                            <Button variant="outline" onClick={onClearFilters}>
+                                {t('common.clearFilters')}
+                            </Button>
+                        }
+                    />
+                ) : (
+                    <EmptyState
+                        icon={SchoolIcon}
+                        title={t('classes.emptyTitle')}
+                        description={t('classes.empty')}
+                        action={
+                            data.page > 1 ? (
+                                <Button variant="outline" onClick={() => onPageChange(1)}>
+                                    {t('common.pagination.firstPage')}
+                                </Button>
+                            ) : undefined
+                        }
+                    />
+                )}
+            </div>
+        );
     }
 
-    const classes = [...(query.data ?? [])].sort(
-        (a, b) => (a.gradeLevel ?? 99) - (b.gradeLevel ?? 99) || a.name.localeCompare(b.name, undefined, { numeric: true }),
-    );
-    const missingGradeCount = classes.filter((item) => item.gradeLevel == null).length;
+    const firstRow = (data.page - 1) * data.limit + 1;
 
     return (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-            {canCreate && (
-                <Card className="h-fit lg:sticky lg:top-24">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-semibold">{t('classes.createTitle')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleCreate} className="space-y-4">
-                            <Field htmlFor={`${id}-name`} label={t('classes.name')} required>
-                                <Input
-                                    id={`${id}-name`}
-                                    value={name}
-                                    onChange={(event) => setName(event.target.value)}
-                                    placeholder={t('classes.namePlaceholder')}
-                                    maxLength={30}
-                                    required
-                                    disabled={busy}
-                                />
-                            </Field>
-                            <Field htmlFor={`${id}-grade`} label={t('classes.grade')} required>
-                                <SelectField
-                                    id={`${id}-grade`}
-                                    value={gradeLevel}
-                                    onValueChange={setGradeLevel}
-                                    required
-                                    disabled={busy}
-                                    placeholder={t('classes.chooseGrade')}
-                                    options={gradeOptions}
-                                />
-                            </Field>
-                            {error && <ErrorState message={error} />}
-                            {success && <SuccessNotice>{success}</SuccessNotice>}
-                            <Button type="submit" disabled={busy} className="w-full">
-                                <Plus aria-hidden="true" />
-                                {busy ? t('common.saving') : t('classes.add')}
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            )}
+        <div className="min-w-0 space-y-4">
+            {summary}
 
-            <section className="min-w-0 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="font-heading text-lg font-semibold">{t('classes.listTitle')}</h2>
-                    <div className="flex flex-wrap gap-2">
-                        <StatusBadge tone="neutral" dot={false}>
-                            {t('common.total', { count: classes.length })}
-                        </StatusBadge>
-                        {!query.loading && missingGradeCount > 0 && (
-                            <StatusBadge tone="warning">{t('classes.missingGrade', { count: missingGradeCount })}</StatusBadge>
-                        )}
-                    </div>
-                </div>
+            {/* Telefon va planshet: kartalar */}
+            <ul className="grid min-w-0 list-none gap-3 sm:grid-cols-2 xl:hidden">
+                {data.data.map((item) => (
+                    <li key={item.id}>
+                        <Card size="sm" className="h-full gap-3 px-4">
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                    <p className="font-heading text-xl font-bold">{item.name}</p>
+                                    <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                                        {item.school.name} · {item.school.district.name}
+                                    </p>
+                                </div>
+                                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{item.academicYear}</span>
+                            </div>
+                            <GradeCell item={item} canEdit={canEdit} onSaved={retry} />
+                            <p className="mt-auto flex items-center gap-1.5 border-t pt-3 text-sm text-muted-foreground">
+                                <Users aria-hidden="true" className="size-4" />
+                                {t('classes.studentsCount', { count: item.stats.students })}
+                            </p>
+                        </Card>
+                    </li>
+                ))}
+            </ul>
 
-                {query.loading ? (
-                    <LoadingState rows={4} />
-                ) : query.error ? (
-                    <ErrorState message={query.error} onRetry={query.retry} />
-                ) : classes.length ? (
-                    <ul className="grid list-none gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {classes.map((schoolClass) => (
-                            <li key={schoolClass.id}>
-                                <Card size="sm" className="h-full gap-3 px-4">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="font-heading text-xl font-bold">{schoolClass.name}</span>
-                                        <span className="text-xs text-muted-foreground tabular-nums">{schoolClass.academicYear}</span>
-                                    </div>
-                                    {canCreate ? (
-                                        <GradeLevelEditor
-                                            key={`${schoolClass.id}-${schoolClass.gradeLevel ?? 'none'}`}
-                                            schoolClass={schoolClass}
-                                            onSaved={query.retry}
-                                        />
-                                    ) : schoolClass.gradeLevel == null ? (
-                                        <StatusBadge tone="warning">{t('classes.gradeMissing')}</StatusBadge>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground">{t('calendar.gradeN', { grade: schoolClass.gradeLevel })}</p>
-                                    )}
-                                    {canCreate && schoolClass.gradeLevel == null && (
-                                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                            <TriangleAlert aria-hidden="true" className="size-3.5 text-warning" />
-                                            {t('classes.gradeMissing')}
-                                        </p>
-                                    )}
-                                </Card>
-                            </li>
+            {/* Kompyuter: jadval */}
+            <Card className="hidden py-0 xl:flex">
+                <Table className="min-w-[900px]">
+                    <TableHeader className="bg-muted/50">
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
+                            <TableHead className="w-32">{t('classes.columns.class')}</TableHead>
+                            <TableHead>{t('common.school')}</TableHead>
+                            <TableHead className="w-64">{t('classes.grade')}</TableHead>
+                            <TableHead className="w-32 pr-5 text-right">{t('classes.columns.students')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.data.map((item, index) => (
+                            <TableRow key={item.id}>
+                                <TableCell className="pl-5 text-muted-foreground tabular-nums">{firstRow + index}</TableCell>
+                                <TableCell>
+                                    <span className="font-heading text-base font-bold">{item.name}</span>
+                                    <p className="text-xs text-muted-foreground tabular-nums">{item.academicYear}</p>
+                                </TableCell>
+                                <TableCell className="max-w-96 whitespace-normal">
+                                    <span className="font-medium">{item.school.name}</span>
+                                    <p className="text-xs text-muted-foreground">
+                                        {item.school.district.name} · {item.school.district.region.name}
+                                    </p>
+                                </TableCell>
+                                <TableCell>
+                                    <GradeCell item={item} canEdit={canEdit} onSaved={retry} />
+                                </TableCell>
+                                <TableCell className="pr-5 text-right font-semibold tabular-nums">
+                                    {formatNumber(item.stats.students)}
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </ul>
-                ) : (
-                    <EmptyState icon={SchoolIcon} title={t('classes.emptyTitle')} description={t('classes.empty')} />
-                )}
-            </section>
+                    </TableBody>
+                </Table>
+            </Card>
+
+            <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                onPageChange={onPageChange}
+                total={data.total}
+                pageSize={data.limit}
+                shownCount={data.data.length}
+                label={t('classes.pagesLabel')}
+            />
         </div>
     );
 }
 
 export function ClassesPage() {
     const { t } = useTranslation();
-    const id = useId();
     const { session } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const [showCreate, setShowCreate] = useState(false);
+    const [success, setSuccess] = useState('');
+    const [refreshVersion, setRefreshVersion] = useState(0);
+
     const role = session?.profile.role;
     const canCreate = role === 'SUPER_ADMIN' || role === 'REGION_ADMIN' || role === 'DISTRICT_ADMIN' || role === 'SCHOOL_ADMIN';
 
-    const schoolsQuery = useApiQuery<School[]>('/schools');
-    const [schoolId, setSchoolId] = useState('');
-    const [academicYear, setAcademicYear] = useState(() => academicYearFor(todayInTashkent()));
+    const pageValue = searchParams.get('page') ?? '1';
+    const academicYear = searchParams.get('academicYear') ?? academicYearFor(todayInTashkent());
+    const gradeValue = searchParams.get('grade') ?? '';
+    const regionValue = searchParams.get('regionId');
+    const districtValue = searchParams.get('districtId');
+    const schoolValue = searchParams.get('schoolId');
+    const searchValue = searchParams.get('q') ?? '';
+    const page = Number(pageValue);
 
-    const schools = schoolsQuery.data ?? [];
-    const selectedSchool = schools.find((school) => String(school.id) === schoolId);
-    const validYear = isValidAcademicYear(academicYear);
+    const valid =
+        /^\d+$/.test(pageValue) &&
+        page >= 1 &&
+        page <= 100000 &&
+        isValidAcademicYear(academicYear) &&
+        (gradeValue === '' || gradeValue === 'NONE' || GRADES.includes(gradeValue)) &&
+        validId(regionValue) &&
+        validId(districtValue) &&
+        validId(schoolValue) &&
+        searchValue.length <= 100;
+
+    const header = (
+        <PageHeader
+            eyebrow={t('nav.groups.education')}
+            title={t('classes.title')}
+            description={t('classes.subtitle')}
+            actions={
+                canCreate ? (
+                    <Button
+                        type="button"
+                        className="w-full sm:w-auto"
+                        onClick={() => {
+                            setSuccess('');
+                            setShowCreate(true);
+                        }}
+                    >
+                        <Plus aria-hidden="true" />
+                        {t('classes.add')}
+                    </Button>
+                ) : undefined
+            }
+        />
+    );
+
+    function updateParams(change: (next: URLSearchParams) => void) {
+        const next = new URLSearchParams(searchParams);
+        change(next);
+        setSearchParams(next);
+    }
+
+    function changePage(nextPage: number) {
+        updateParams((next) => next.set('page', String(nextPage)));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearFilters() {
+        const next = new URLSearchParams();
+        if (searchParams.get('academicYear')) next.set('academicYear', academicYear);
+        setSearchParams(next);
+    }
+
+    if (!valid) {
+        return (
+            <div className="space-y-6">
+                {header}
+                <ErrorState message={t('common.invalidUrl')} />
+                <Button variant="outline" onClick={() => setSearchParams({})}>
+                    {t('common.resetUrl')}
+                </Button>
+            </div>
+        );
+    }
+
+    const query = new URLSearchParams({ page: String(page), limit: '20', academicYear });
+    if (gradeValue) query.set('grade', gradeValue);
+    if (regionValue) query.set('regionId', regionValue);
+    if (districtValue) query.set('districtId', districtValue);
+    if (schoolValue) query.set('schoolId', schoolValue);
+    if (searchValue.trim()) query.set('q', searchValue.trim());
+    const path = `/classes/page?${query.toString()}`;
+
+    const hasFilters = Boolean(gradeValue || regionValue || districtValue || schoolValue || searchValue.trim());
 
     return (
-        <div className="w-full min-w-0 space-y-6">
-            <PageHeader eyebrow={t('nav.groups.education')} title={t('classes.title')} description={t('classes.subtitle')} />
+        <div className="w-full min-w-0 space-y-5 sm:space-y-6">
+            {header}
 
-            <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                <Field
-                    htmlFor={`${id}-school`}
-                    label={t('common.school')}
-                    error={schoolsQuery.error || undefined}
-                    hint={!schoolsQuery.loading && !schoolsQuery.error && schools.length === 0 ? t('classes.noSchools') : undefined}
-                >
-                    <SelectField
-                        id={`${id}-school`}
-                        value={schoolId}
-                        onValueChange={setSchoolId}
-                        disabled={schoolsQuery.loading || Boolean(schoolsQuery.error) || schools.length === 0}
-                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
-                        options={schools.map((school) => ({ value: String(school.id), label: `${school.name} — ${school.district.name}` }))}
-                    />
-                </Field>
-                <Field htmlFor={`${id}-year`} label={t('members.academicYear')}>
-                    <SelectField
-                        id={`${id}-year`}
-                        value={academicYear}
-                        onValueChange={setAcademicYear}
-                        options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
-                    />
-                </Field>
-            </div>
+            {success && <SuccessNotice>{success}</SuccessNotice>}
 
-            {!schoolsQuery.loading && !schoolsQuery.error && selectedSchool && validYear ? (
-                <ClassesList key={`${schoolId}-${academicYear}`} schoolId={selectedSchool.id} academicYear={academicYear} canCreate={canCreate} />
-            ) : (
-                !schoolsQuery.loading && <EmptyState icon={SchoolIcon} title={t('calendar.chooseTitle')} description={t('classes.choose')} />
+            <ClassesFilters academicYear={academicYear} />
+
+            <ClassesResults
+                key={`${path}-${refreshVersion}`}
+                path={path}
+                canEdit={canCreate}
+                hasFilters={hasFilters}
+                gradeFilter={gradeValue}
+                onPageChange={changePage}
+                onShowMissing={() =>
+                    updateParams((next) => {
+                        next.set('grade', 'NONE');
+                        next.set('page', '1');
+                    })
+                }
+                onClearFilters={clearFilters}
+            />
+
+            {canCreate && (
+                <Dialog open={showCreate} onOpenChange={setShowCreate}>
+                    <DialogContent className="sm:max-w-xl">
+                        <DialogHeader>
+                            <DialogTitle>{t('classes.createTitle')}</DialogTitle>
+                            <DialogDescription>{t('classes.createDescription')}</DialogDescription>
+                        </DialogHeader>
+                        {showCreate && (
+                            <CreateClassForm
+                                {...(schoolValue ? { initialSchoolId: schoolValue } : {})}
+                                initialAcademicYear={academicYear}
+                                onCancel={() => setShowCreate(false)}
+                                onSaved={(created) => {
+                                    setShowCreate(false);
+                                    setSuccess(t('classes.createdNamed', { name: created.name }));
+                                    setRefreshVersion((value) => value + 1);
+                                }}
+                            />
+                        )}
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );

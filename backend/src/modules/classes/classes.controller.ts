@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-
+import { GetClassesPageQueryDto } from './dto/get-classes-page-query.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { ClassesService } from './classes.service';
@@ -66,6 +66,21 @@ export class ClassesController {
     }
 
     return this.classesService.findAll(dto, user);
+  }
+
+  /** Sahifalangan ro‘yxat: /classes sahifasi uchun. */
+  @Get('page')
+  findPage(
+    @Query() query: GetClassesPageQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.classesService.findPage(query, user);
   }
 
   @Patch(':id/grade-level')
