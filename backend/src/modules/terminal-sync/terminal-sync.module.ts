@@ -28,6 +28,8 @@ import { PersonSyncBatch } from './person-sync-batch.entity';
 import { PersonSyncBatchItem } from './person-sync-batch-item.entity';
 import { PersonSyncHistoryService } from './person-sync-history.service';
 import { PersonSyncReconciliationService } from './person-sync-reconciliation.service';
+import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -97,6 +99,7 @@ import { PersonSyncReconciliationService } from './person-sync-reconciliation.se
     TerminalSyncHistoryCleanupService,
     PersonSyncHistoryService,
     PersonSyncReconciliationService,
+    PersonSyncDispatcherService,
   ],
 })
 export class TerminalSyncModule {}

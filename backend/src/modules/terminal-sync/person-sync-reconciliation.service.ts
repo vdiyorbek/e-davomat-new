@@ -49,7 +49,7 @@ export class PersonSyncReconciliationService {
 
       const items = await this.items.find({
         where: {
-          status: In([Status.PENDING, Status.QUEUED, Status.RUNNING]),
+          status: In([Status.QUEUED, Status.RUNNING]),
           updatedAt: LessThan(cutoff),
         },
         order: {
