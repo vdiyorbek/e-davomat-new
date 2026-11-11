@@ -324,11 +324,6 @@ export class PersonSyncService {
     const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
 
     // Terminaldagi barcha foydalanuvchilarni o‘qiymiz.
-    const terminalUsers = await this.hikvision.getAllTerminalUsers(
-      terminal,
-      password,
-    );
-
     const existingUser = await this.hikvision.findTerminalUser(
       terminal,
       password,
