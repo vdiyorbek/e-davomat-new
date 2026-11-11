@@ -1,0 +1,92 @@
+{
+  "fields": {
+    "studentNumber": "O‘quvchi raqami",
+    "admissionOrderNumber": "Qabul buyrug‘i raqami",
+    "educationLanguage": "Ta’lim tili",
+    "educationForm": "Ta’lim shakli",
+    "employeeNumber": "Tabel raqami",
+    "position": "Lavozimi",
+    "employmentType": "Ish turi",
+    "qualificationCategory": "Malaka toifasi",
+    "specialization": "Mutaxassisligi",
+    "educationLevel": "Ma’lumoti",
+    "hireOrderNumber": "Ishga qabul buyrug‘i"
+  },
+  "placeholders": {
+    "position": "Matematika fani o‘qituvchisi",
+    "specialization": "Matematika"
+  },
+  "options": {
+    "educationLanguage": {
+      "UZ": "O‘zbek tili",
+      "RU": "Rus tili",
+      "KK": "Qoraqalpoq tili",
+      "TJ": "Tojik tili",
+      "EN": "Ingliz tili",
+      "OTHER": "Boshqa"
+    },
+    "educationForm": {
+      "FULL_TIME": "Kunduzgi",
+      "EVENING": "Kechki",
+      "PART_TIME": "Sirtqi",
+      "DISTANCE": "Masofaviy",
+      "DUAL": "Dual ta’lim"
+    },
+    "employmentType": {
+      "PRIMARY": "Asosiy ish joyi",
+      "PART_TIME": "O‘rindoshlik",
+      "HOURLY": "Soatbay",
+      "TEMPORARY": "Vaqtincha"
+    },
+    "qualificationCategory": {
+      "OLIY": "Oliy toifa",
+      "BIRINCHI": "Birinchi toifa",
+      "IKKINCHI": "Ikkinchi toifa",
+      "MUTAXASSIS": "Mutaxassis",
+      "TOIFASIZ": "Toifasiz"
+    },
+    "educationLevel": {
+      "SECONDARY": "O‘rta",
+      "SECONDARY_SPECIAL": "O‘rta maxsus",
+      "BACHELOR": "Bakalavr",
+      "MASTER": "Magistr",
+      "PHD": "Falsafa doktori (PhD)",
+      "DSC": "Fan doktori (DSc)"
+    }
+  },
+  "legacyValue": "{{value}} (avvalgi qiymat)",
+  "notSpecified": "Ko‘rsatilmagan",
+  "choose": "Tanlang",
+  "emptyHint": "Hali qo‘shimcha ma’lumot kiritilmagan. Quyidagi maydonlarni to‘ldirib saqlang.",
+  "saveFailed": "Ma’lumotlarni saqlab bo‘lmadi.",
+  "save": "Ma’lumotlarni saqlash",
+  "title": "Qo‘shimcha ma’lumotlar",
+  "studentTitle": "O‘quvchi qo‘shimcha ma’lumotlari",
+  "teacherTitle": "O‘qituvchi qo‘shimcha ma’lumotlari",
+  "saved": "Qo‘shimcha ma’lumotlar saqlandi.",
+  "studentAccount": "O‘quvchi akkaunti",
+  "teacherAccount": "O‘qituvchi akkaunti",
+  "accountDescription": "Foydalanuvchining akkaunt holatini tekshirish yoki yangi akkaunt yaratish.",
+  "detailsDescription": "Shaxsning maktabga a’zoligiga tegishli qo‘shimcha ma’lumotlarni kiritish va tahrirlash.",
+  "account": {
+    "personMissing": "Shaxs ma’lumoti mavjud emas",
+    "type": "Akkaunt turi: {{role}}",
+    "loginInvalid": "Login 3–50 ta kichik lotin harfi, raqam, nuqta yoki pastki chiziqdan iborat bo‘lishi kerak.",
+    "passwordLength": "Parol 12–128 ta belgidan iborat bo‘lishi kerak.",
+    "passwordMismatch": "Parollar bir-biriga mos emas.",
+    "createFailed": "Akkaunt yaratishda xatolik yuz berdi.",
+    "exists": "Ushbu shaxs uchun akkaunt mavjud",
+    "login": "Login",
+    "role": "Rol",
+    "status": "Holat",
+    "active": "Faol",
+    "blocked": "Bloklangan",
+    "loginHint": "3–50 ta belgi: a–z, 0–9, nuqta va pastki chiziq",
+    "password": "Boshlang‘ich parol",
+    "passwordHint": "Kamida 12 ta belgi. PNFL yoki tug‘ilgan sanadan foydalanmang.",
+    "confirm": "Parolni tasdiqlash",
+    "roleNote": "Akkaunt roli (o‘quvchi yoki o‘qituvchi) maktab a’zoligi asosida avtomatik belgilanadi.",
+    "create": "Akkaunt yaratish",
+    "creating": "Yaratilmoqda…"
+  }
+}

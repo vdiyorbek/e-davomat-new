@@ -9,5 +9,13 @@
   "tooLarge": "Rasm hajmi {{size}} MB dan oshmasligi kerak.",
   "uploadFailed": "Rasmni yuklashda xatolik yuz berdi.",
   "loadFailed": "Rasmni yuklab bo‘lmadi.",
-  "loading": "Rasm yuklanmoqda…"
+  "loading": "Rasm yuklanmoqda…",
+  "empty": "Rasm fayli bo‘sh.",
+  "invalid": "Rasm fayli noto‘g‘ri.",
+  "tooSmall": "Rasm kamida 640×480 piksel bo‘lishi kerak.",
+  "tooManyPixels": "Rasmning piksel o‘lchami juda katta.",
+  "openFailed": "Rasmni ochib bo‘lmadi. Boshqa rasm tanlang.",
+  "checkFailed": "Rasmni tekshirib bo‘lmadi.",
+  "notAccepted": "Rasm talabga javob bermaydi.",
+  "enlarge": "Rasmni kattalashtirish"
 }

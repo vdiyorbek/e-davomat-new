@@ -1,16 +1,19 @@
+import { useId, useState } from 'react';
+import { CalendarClock, HardDrive, Power, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { useState } from "react";
-import {
-    RefreshCw,
-    ShieldCheck,
-    Users,
-    Power,
-    CalendarClock,
-} from "lucide-react";
-import { todayInTashkent } from "@/lib/date";
-import { Button } from "@/components/ui/button";
-import { authorizedPost } from "@/lib/auth-session";
-import { BulkPersonSyncPanel } from "./BulkPersonSyncPanel";
+import { useConfirm } from '@/components/common/ConfirmDialog';
+import { Field } from '@/components/common/Field';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { SuccessNotice } from '@/components/common/states';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { authorizedPost } from '@/lib/auth-session';
+import { formatDate, todayInTashkent } from '@/lib/date';
+
+import { BulkPersonSyncPanel } from './BulkPersonSyncPanel';
 
 interface PreviewResult {
     terminalId: number;
@@ -28,357 +31,243 @@ interface ClearPreviewResponse {
 interface Props {
     terminalIds: number[];
     onSubmitted: () => void;
-    onClear: () => void;
 }
 
-export function TerminalBulkActions({
-    terminalIds,
-    onSubmitted,
-    onClear,
-}: Props) {
-    const [section, setSection] = useState<
-        "sync" | "memory" | "sync-time" | null
-    >(null);
+const MAX_BULK = 100;
+const MAX_MEMORY = 5;
 
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState("");
-    const [preview, setPreview] =
-        useState<ClearPreviewResponse | null>(null);
+function LimitHint({ max }: { max: number }) {
+    const { t } = useTranslation();
+    return (
+        <Alert variant="destructive">
+            <AlertDescription>{t('terminals.bulk.limitHint', { max })}</AlertDescription>
+        </Alert>
+    );
+}
 
+/** Tanlangan terminallar ustida ommaviy amallar (dialog ichida ko‘rsatiladi). */
+export function TerminalBulkActions({ terminalIds, onSubmitted }: Props) {
+    const { t } = useTranslation();
+    const dateId = useId();
+    const { confirm, dialog } = useConfirm();
+    const count = terminalIds.length;
 
-    const [syncStartDate, setSyncStartDate] =
-        useState(todayInTashkent);
+    const [error, setError] = useState('');
+    const [notice, setNotice] = useState('');
 
+    // Xotira tekshiruvi
+    const [memoryBusy, setMemoryBusy] = useState(false);
+    const [preview, setPreview] = useState<ClearPreviewResponse | null>(null);
+    const [previewKey, setPreviewKey] = useState('');
+    const selectionKey = [...terminalIds].sort((a, b) => a - b).join(',');
+
+    // Sinxronlash vaqti
+    const [syncStartDate, setSyncStartDate] = useState(todayInTashkent);
     const [savingSyncTime, setSavingSyncTime] = useState(false);
 
+    // Faollashtirish
+    const [activating, setActivating] = useState(false);
+
+    function resetMessages() {
+        setError('');
+        setNotice('');
+    }
+
     async function saveBulkSyncTime() {
-        if (
-            savingSyncTime ||
-            terminalIds.length === 0 ||
-            terminalIds.length > 100
-        ) {
-            return;
-        }
+        if (savingSyncTime || count === 0 || count > MAX_BULK) return;
+        resetMessages();
 
         if (!/^20\d{2}-\d{2}-\d{2}$/.test(syncStartDate)) {
-            setError("Sanani to‘g‘ri kiriting");
+            setError(t('terminals.bulk.syncTime.invalidDate'));
             return;
         }
 
-        const startTime =
-            `${syncStartDate}T00:00:00+05:00`;
-
+        const startTime = `${syncStartDate}T00:00:00+05:00`;
         const timestamp = Date.parse(startTime);
-
         if (
             !Number.isFinite(timestamp) ||
             timestamp > Date.now() ||
-            new Date(timestamp + 5 * 3600_000)
-                .toISOString()
-                .slice(0, 10) !== syncStartDate
+            new Date(timestamp + 5 * 3600_000).toISOString().slice(0, 10) !== syncStartDate
         ) {
-            setError("Noto‘g‘ri yoki kelajakdagi sana");
+            setError(t('terminals.bulk.syncTime.futureDate'));
             return;
         }
 
-        const confirmed = window.confirm(
-            `${terminalIds.length} ta terminal uchun ` +
-            `${syncStartDate} sanasidan sinxronlashni boshlaysizmi?\n\n` +
-            "Avval sinxronlangan terminallarning vaqti o‘zgartirilmaydi.",
-        );
-
+        const confirmed = await confirm({
+            title: t('terminals.bulk.syncTime.confirmTitle'),
+            description: t('terminals.bulk.syncTime.confirmText', { count, date: formatDate(syncStartDate) }),
+        });
         if (!confirmed) return;
 
         setSavingSyncTime(true);
-        setError("");
-
         try {
-            const result = await authorizedPost<{
-                success: boolean;
-                updated: number;
-                syncStartAt: string;
-            }>("/terminals/bulk/sync-start", {
-                terminalIds,
-                startTime,
-                confirm: "SET_BULK_SYNC_START",
-            });
-
-            window.alert(
-                `${result.updated} ta terminal uchun ` +
-                "sinxronlash vaqti belgilandi.",
+            const result = await authorizedPost<{ success: boolean; updated: number; syncStartAt: string }>(
+                '/terminals/bulk/sync-start',
+                { terminalIds, startTime, confirm: 'SET_BULK_SYNC_START' },
             );
-
-            setSection(null);
+            setNotice(t('terminals.bulk.syncTime.done', { count: result.updated }));
             onSubmitted();
-            onClear();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : "Sinxronlash vaqtini saqlab bo‘lmadi",
-            );
+            setError(caught instanceof Error ? caught.message : t('terminals.bulk.syncTime.failed'));
         } finally {
             setSavingSyncTime(false);
         }
     }
 
-    const [previewKey, setPreviewKey] = useState("");
-
-    const [activating, setActivating] = useState(false);
     async function activateSelected() {
-        if (
-            activating ||
-            terminalIds.length === 0 ||
-            terminalIds.length > 100
-        ) {
-            return;
-        }
+        if (activating || count === 0 || count > MAX_BULK) return;
+        resetMessages();
 
-        const confirmed = window.confirm(
-            `${terminalIds.length} ta terminalning tizim holatini faollashtirasizmi?`,
-        );
-
+        const confirmed = await confirm({
+            title: t('terminals.bulk.activate.confirmTitle'),
+            description: t('terminals.bulk.activate.confirmText', { count }),
+        });
         if (!confirmed) return;
 
         setActivating(true);
-        setError("");
-
         try {
             const result = await authorizedPost<{
                 success: boolean;
                 selected: number;
                 activated: number;
                 alreadyActive: number;
-            }>("/terminals/bulk/activate", {
-                terminalIds,
-                confirm: "ACTIVATE_SELECTED_TERMINALS",
-            });
-
-            window.alert(
-                `Faollashtirildi: ${result.activated} ta.\n` +
-                `Avvaldan faol: ${result.alreadyActive} ta.`,
+            }>('/terminals/bulk/activate', { terminalIds, confirm: 'ACTIVATE_SELECTED_TERMINALS' });
+            setNotice(
+                t('terminals.bulk.activate.done', { activated: result.activated, already: result.alreadyActive }),
             );
-
             onSubmitted();
-            onClear();
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : "Terminallarni faollashtirib bo‘lmadi",
-            );
+            setError(caught instanceof Error ? caught.message : t('terminals.bulk.activate.failed'));
         } finally {
             setActivating(false);
         }
     }
-    const selectionKey = [...terminalIds]
-        .sort((a, b) => a - b)
-        .join(",");
 
     async function checkMemory() {
-        if (busy || terminalIds.length > 5) return;
-
-        setBusy(true);
-        setError("");
+        if (memoryBusy || count === 0 || count > MAX_MEMORY) return;
+        resetMessages();
+        setMemoryBusy(true);
         setPreview(null);
-
         try {
-            const data = await authorizedPost<ClearPreviewResponse>(
-                "/terminals/bulk/clear-preview",
-                { terminalIds },
-            );
-
+            const data = await authorizedPost<ClearPreviewResponse>('/terminals/bulk/clear-preview', { terminalIds });
             setPreview(data);
             setPreviewKey(selectionKey);
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : "Terminal xotirasini tekshirib bo‘lmadi",
-            );
+            setError(caught instanceof Error ? caught.message : t('terminals.bulk.memory.failed'));
         } finally {
-            setBusy(false);
+            setMemoryBusy(false);
         }
     }
 
     return (
-        <section className="space-y-3 rounded-xl border p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-semibold">
-                    Tanlangan terminallar: {terminalIds.length} ta
-                </span>
+        <div className="space-y-4">
+            {dialog}
 
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    type="button"
-                    onClick={() => {
-                        setSection(null);
-                        setPreview(null);
-                        onClear();
-                    }}
-                >
-                    Tanlovni tozalash
-                </Button>
-            </div>
+            <Tabs defaultValue="persons" onValueChange={resetMessages}>
+                <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:h-11">
+                    <TabsTrigger value="persons" className="py-2">
+                        <Users aria-hidden="true" />
+                        {t('terminals.bulk.tabs.persons')}
+                    </TabsTrigger>
+                    <TabsTrigger value="sync-time" className="py-2">
+                        <CalendarClock aria-hidden="true" />
+                        {t('terminals.bulk.tabs.syncTime')}
+                    </TabsTrigger>
+                    <TabsTrigger value="memory" className="py-2">
+                        <HardDrive aria-hidden="true" />
+                        {t('terminals.bulk.tabs.memory')}
+                    </TabsTrigger>
+                    <TabsTrigger value="activate" className="py-2">
+                        <Power aria-hidden="true" />
+                        {t('terminals.bulk.tabs.activate')}
+                    </TabsTrigger>
+                </TabsList>
 
-            <div className="flex flex-wrap gap-2">
-                <Button
-                    type="button"
-                    size="sm"
-                    variant={section === "sync" ? "default" : "outline"}
-                    onClick={() =>
-                        setSection(section === "sync" ? null : "sync")
-                    }
-                >
-                    <Users className="size-4" />
-                    Sinxronlash
-                </Button>
+                <TabsContent value="persons" className="pt-1">
+                    <BulkPersonSyncPanel terminalIds={terminalIds} onSubmitted={onSubmitted} />
+                </TabsContent>
 
-                <Button
-                    type="button"
-                    size="sm"
-                    variant={section === "sync-time" ? "default" : "outline"}
-                    onClick={() =>
-                        setSection(section === "sync-time" ? null : "sync-time")
-                    }
-                >
-                    <CalendarClock className="size-4" />
-                    Sinxronlash vaqtini belgilash
-                </Button>
-
-                <Button
-                    type="button"
-                    size="sm"
-                    variant={section === "memory" ? "default" : "outline"}
-                    onClick={() =>
-                        setSection(section === "memory" ? null : "memory")
-                    }
-                >
-                    <ShieldCheck className="size-4" />
-                    Xotirani tekshirish
-                </Button>
-
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={
-                        activating ||
-                        terminalIds.length === 0 ||
-                        terminalIds.length > 100
-                    }
-                    onClick={() => void activateSelected()}
-                >
-                    <Power className="size-4" />
-                    {activating
-                        ? "Faollashtirilmoqda..."
-                        : "Tizim holatini faollashtirish"}
-                </Button>
-
-            </div>
-
-            {section === "sync" && (
-                <BulkPersonSyncPanel
-                    terminalIds={terminalIds}
-                    onSubmitted={onSubmitted}
-                />
-            )}
-
-            {section === "memory" && (
-                <div className="space-y-3 rounded-lg border p-3">
-                    <p className="text-sm text-muted-foreground">
-                        Qurilmalarda ro‘yxatdan o‘tgan shaxslar
-                        sonini tekshiramiz. Hech narsa o‘chirilmaydi.
-                    </p>
-
+                <TabsContent value="sync-time" className="space-y-4 pt-1">
+                    <Field
+                        htmlFor={dateId}
+                        label={t('terminals.bulk.syncTime.label')}
+                        hint={t('terminals.bulk.syncTime.hint')}
+                    >
+                        <Input
+                            id={dateId}
+                            type="date"
+                            min="2000-01-01"
+                            max={todayInTashkent()}
+                            value={syncStartDate}
+                            onChange={(event) => setSyncStartDate(event.target.value)}
+                            className="sm:max-w-56"
+                        />
+                    </Field>
+                    {count > MAX_BULK && <LimitHint max={MAX_BULK} />}
                     <Button
                         type="button"
-                        size="sm"
+                        disabled={savingSyncTime || count === 0 || count > MAX_BULK}
+                        onClick={() => void saveBulkSyncTime()}
+                    >
+                        <CalendarClock aria-hidden="true" />
+                        {savingSyncTime ? t('common.saving') : t('terminals.bulk.syncTime.submit')}
+                    </Button>
+                </TabsContent>
+
+                <TabsContent value="memory" className="space-y-4 pt-1">
+                    <p className="text-sm text-muted-foreground">{t('terminals.bulk.memory.hint')}</p>
+                    {count > MAX_MEMORY && <LimitHint max={MAX_MEMORY} />}
+                    <Button
+                        type="button"
                         variant="outline"
-                        disabled={
-                            busy ||
-                            terminalIds.length === 0 ||
-                            terminalIds.length > 5
-                        }
+                        disabled={memoryBusy || count === 0 || count > MAX_MEMORY}
                         onClick={() => void checkMemory()}
                     >
-                        <RefreshCw className="size-4" />
-                        {busy ? "Tekshirilmoqda..." : "Tekshirish"}
+                        <HardDrive aria-hidden="true" />
+                        {memoryBusy ? t('terminals.bulk.memory.checking') : t('terminals.bulk.memory.submit')}
                     </Button>
 
                     {preview && previewKey === selectionKey && (
-                        <div className="space-y-2">
+                        <ul className="divide-y rounded-xl border">
                             {preview.results.map((item) => (
-                                <div
-                                    key={item.terminalId}
-                                    className="flex flex-wrap justify-between gap-2 border-b py-2 text-sm"
-                                >
-                                    <span>Terminal #{item.terminalId}</span>
-                                    <span>
-                                        {item.status === "READY"
-                                            ? `${item.personsCount ?? 0} ta shaxs`
-                                            : item.status === "INACTIVE"
-                                                ? "Nofaol"
-                                                : "Tekshirishda xatolik"}
-                                    </span>
-                                </div>
+                                <li key={item.terminalId} className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm">
+                                    <span className="font-medium">{t('terminals.bulk.terminal', { id: item.terminalId })}</span>
+                                    {item.status === 'READY' ? (
+                                        <span className="font-semibold tabular-nums">
+                                            {t('terminals.bulk.memory.persons', { count: item.personsCount ?? 0 })}
+                                        </span>
+                                    ) : item.status === 'INACTIVE' ? (
+                                        <StatusBadge tone="warning">{t('terminals.bulk.memory.inactive')}</StatusBadge>
+                                    ) : (
+                                        <StatusBadge tone="danger">{t('terminals.bulk.memory.error')}</StatusBadge>
+                                    )}
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     )}
+                    <p className="text-xs text-muted-foreground">{t('terminals.bulk.memory.noDelete')}</p>
+                </TabsContent>
 
-                    <p className="text-xs text-muted-foreground">
-                        Qurilmadan o‘chirish amali hozircha mavjud emas.
-                    </p>
-                </div>
-            )}
-
-            {section === "sync-time" && (
-                <div className="space-y-3 rounded-lg border p-3">
-                    <p className="text-sm font-medium">
-                        Eventlarni qaysi sanadan boshlab olish kerak?
-                    </p>
-
-                    <input
-                        type="date"
-                        min="2000-01-01"
-                        max={todayInTashkent()}
-                        value={syncStartDate}
-                        onChange={(event) =>
-                            setSyncStartDate(event.target.value)
-                        }
-                        className="h-9 rounded-md border bg-background px-3 text-sm"
-                    />
-
-                    <p className="text-xs text-muted-foreground">
-                        Vaqt: 00:00 (Toshkent).
-                        Faqat hali sinxronlash boshlanmagan,
-                        faol terminallarga qo‘llanadi.
-                    </p>
-
+                <TabsContent value="activate" className="space-y-4 pt-1">
+                    <p className="text-sm text-muted-foreground">{t('terminals.bulk.activate.hint')}</p>
+                    {count > MAX_BULK && <LimitHint max={MAX_BULK} />}
                     <Button
                         type="button"
-                        size="sm"
-                        disabled={
-                            savingSyncTime ||
-                            terminalIds.length === 0 ||
-                            terminalIds.length > 100
-                        }
-                        onClick={() => void saveBulkSyncTime()}
+                        disabled={activating || count === 0 || count > MAX_BULK}
+                        onClick={() => void activateSelected()}
                     >
-                        {savingSyncTime
-                            ? "Saqlanmoqda..."
-                            : "Vaqtni belgilash"}
+                        <Power aria-hidden="true" />
+                        {activating ? t('terminals.bulk.activate.busy') : t('terminals.bulk.activate.submit')}
                     </Button>
-                </div>
-            )}
+                </TabsContent>
+            </Tabs>
 
-
+            {notice && <SuccessNotice>{notice}</SuccessNotice>}
             {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
+                <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
-        </section>
+        </div>
     );
 }

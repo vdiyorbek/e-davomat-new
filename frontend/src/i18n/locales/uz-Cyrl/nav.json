@@ -35,7 +35,8 @@
     "forbidden": "Кириш чекланган",
     "teacherDashboard": "Ўқитувчи кабинети",
     "inspectorStudents": "Маҳалла ўқувчилари",
-    "inspectorTalks": "Профилактик суҳбатлар"
+    "inspectorTalks": "Профилактик суҳбатлар",
+    "personSyncMonitoring": "Терминаллар мониторинги"
   },
   "short": {
     "profile": "Профил",

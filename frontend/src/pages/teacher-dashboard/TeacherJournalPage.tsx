@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { ArrowLeft, BookOpen, RotateCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components/common/PageHeader';
 import {
@@ -20,6 +21,7 @@ import { Input } from '@/components/ui/input';
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { todayInTashkent } from '@/lib/date';
+import { localizedName } from '@/lib/localized';
 import { authorizedPost } from '@/lib/auth-session';
 import {
     TeacherSessionEditor,
@@ -59,14 +61,10 @@ interface TeacherJournalResponse {
     }[];
 }
 
-const STATUS_LABELS: Record<string, string> = {
-    PLANNED: 'Rejalashtirilgan',
-    IN_PROGRESS: 'O‘tilmoqda',
-    COMPLETED: 'O‘tilgan',
-    CANCELLED: 'Bekor qilingan',
-};
+const STATUSES = ['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
 
 export function TeacherJournalPage() {
+    const { t } = useTranslation();
     const { assignmentId } = useParams();
     const [date, setDate] = useState(todayInTashkent);
 
@@ -107,7 +105,7 @@ export function TeacherJournalPage() {
             setCreateError(
                 caught instanceof Error
                     ? caught.message
-                    : 'Jurnal sessiyasini yaratib bo‘lmadi',
+                    : t('teacher.journal.createFailed'),
             );
         } finally {
             setCreatingId(null);
@@ -131,21 +129,21 @@ export function TeacherJournalPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="O‘qituvchi kabineti"
-                title="Mening elektron jurnalim"
-                description="O‘zingizga biriktirilgan fan va sinf darslari"
+                eyebrow={t('teacher.eyebrow')}
+                title={t('teacher.journal.title')}
+                description={t('teacher.journal.description')}
                 actions={
                     <Button asChild variant="outline">
                         <Link to="/teacher/dashboard">
                             <ArrowLeft aria-hidden="true" />
-                            Kabinetga qaytish
+                            {t('teacher.journal.back')}
                         </Link>
                     </Button>
                 }
             />
 
             {!validAssignmentId && (
-                <ErrorState message="Biriktirma ID noto‘g‘ri." />
+                <ErrorState message={t('teacher.journal.invalidId')} />
             )}
 
             {validAssignmentId && (
@@ -157,7 +155,7 @@ export function TeacherJournalPage() {
                                     htmlFor="teacher-journal-date"
                                     className="text-sm font-medium"
                                 >
-                                    Dars sanasi
+                                    {t('teacher.journal.date')}
                                 </label>
                                 <Input
                                     id="teacher-journal-date"
@@ -176,7 +174,7 @@ export function TeacherJournalPage() {
                                 onClick={journalQuery.retry}
                             >
                                 <RotateCw aria-hidden="true" />
-                                Yangilash
+                                {t('common.refresh')}
                             </Button>
                         </CardContent>
                     </Card>
@@ -199,10 +197,10 @@ export function TeacherJournalPage() {
                                 <Card>
                                     <CardContent className="space-y-1">
                                         <p className="text-xl font-semibold">
-                                            {data.assignment.class.name} sinf
+                                            {t('teacher.dashboard.className', { name: data.assignment.class.name })}
                                         </p>
                                         <p className="text-muted-foreground">
-                                            {data.assignment.subject.nameUz}
+                                            {localizedName(data.assignment.subject)}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
                                             {data.assignment.class.academicYear}
@@ -214,8 +212,8 @@ export function TeacherJournalPage() {
                                     schedulesWithoutSession.length === 0 ? (
                                     <EmptyState
                                         icon={BookOpen}
-                                        title="Ushbu sanada dars topilmadi"
-                                        description="Boshqa sanani tanlab ko‘ring."
+                                        title={t('teacher.journal.emptyTitle')}
+                                        description={t('teacher.journal.empty')}
                                     />
                                 ) : (
                                     <div className="grid gap-4 md:grid-cols-2">
@@ -223,7 +221,7 @@ export function TeacherJournalPage() {
                                             <Card key={session.id}>
                                                 <CardHeader>
                                                     <CardTitle className="text-base">
-                                                        {session.lessonNumber}-dars
+                                                        {t('teacher.journal.lesson', { n: session.lessonNumber })}
                                                     </CardTitle>
                                                     <p className="text-sm text-muted-foreground">
                                                         {session.startTime.slice(0, 5)}
@@ -235,29 +233,30 @@ export function TeacherJournalPage() {
                                                 <CardContent className="space-y-3">
                                                     <p className="text-sm">
                                                         <span className="font-medium">
-                                                            Holati:
+                                                            {t('teacher.journal.status')}:
                                                         </span>{' '}
-                                                        {STATUS_LABELS[session.status] ??
-                                                            session.status}
+                                                        {STATUSES.includes(session.status)
+                                                            ? t(`teacher.session.statuses.${session.status}`)
+                                                            : session.status}
                                                     </p>
 
                                                     <div>
                                                         <p className="text-sm font-medium">
-                                                            Dars mavzusi
+                                                            {t('teacher.journal.topic')}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground">
                                                             {session.topicTitle ??
-                                                                'Mavzu kiritilmagan'}
+                                                                t('teacher.journal.noTopic')}
                                                         </p>
                                                     </div>
 
                                                     <div>
                                                         <p className="text-sm font-medium">
-                                                            Uy vazifasi
+                                                            {t('teacher.journal.homework')}
                                                         </p>
                                                         <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                                                             {session.homework ??
-                                                                'Uy vazifasi kiritilmagan'}
+                                                                t('teacher.journal.noHomework')}
                                                         </p>
                                                     </div>
                                                     <TeacherSessionEditor
@@ -274,7 +273,7 @@ export function TeacherJournalPage() {
                                             <Card key={schedule.id}>
                                                 <CardHeader>
                                                     <CardTitle className="text-base">
-                                                        {schedule.lessonNumber}-dars
+                                                        {t('teacher.journal.lesson', { n: schedule.lessonNumber })}
                                                     </CardTitle>
                                                 </CardHeader>
                                                 <CardContent className="space-y-2">
@@ -287,8 +286,8 @@ export function TeacherJournalPage() {
                                                         onClick={() => void createSession(schedule.id)}
                                                     >
                                                         {creatingId === schedule.id
-                                                            ? 'Yaratilmoqda...'
-                                                            : 'Jurnalga qo‘shish'}
+                                                            ? t('teacher.journal.creating')
+                                                            : t('teacher.journal.create')}
                                                     </Button>
                                                     <p className="text-sm text-muted-foreground">
                                                         {schedule.startTime.slice(0, 5)}
@@ -296,7 +295,7 @@ export function TeacherJournalPage() {
                                                         {schedule.endTime.slice(0, 5)}
                                                     </p>
                                                     <p className="text-sm">
-                                                        Jurnal yozuvi hali yaratilmagan.
+                                                        {t('teacher.journal.notCreated')}
                                                     </p>
 
                                                 </CardContent>

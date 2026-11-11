@@ -84,9 +84,7 @@ export function SchoolMemberActions({
 
     actions.push({
         key: 'details',
-        label: t('members.actions.details', {
-            defaultValue: 'Qo‘shimcha ma’lumotlar',
-        }),
+        label: t('memberDetails.title'),
         icon: FilePenLine,
         onClick: () => onDetails(membership),
     });

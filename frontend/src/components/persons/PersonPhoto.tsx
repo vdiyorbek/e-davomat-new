@@ -181,8 +181,8 @@ export function PersonPhoto({
                         'focus-visible:ring-ring',
                         'focus-visible:ring-offset-2',
                     )}
-                    aria-label="Rasmni kattalashtirish"
-                    title="Rasmni kattalashtirish"
+                    aria-label={t('photo.enlarge')}
+                    title={t('photo.enlarge')}
                     onClick={() => setPreviewOpen(true)}
                 >
                     {photoContent}

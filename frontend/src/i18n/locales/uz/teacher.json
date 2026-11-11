@@ -1,0 +1,61 @@
+{
+  "eyebrow": "O‘qituvchi kabineti",
+  "dashboard": {
+    "title": "Mening fanlarim va sinflarim",
+    "description": "Sizga biriktirilgan fanlar, sinflar va maktablar.",
+    "schools": "Maktablar",
+    "classes": "Sinflar",
+    "subjects": "Fanlar",
+    "searchTitle": "Fan va sinflarni qidirish",
+    "search": "Fan, sinf yoki maktabni qidirish",
+    "searchPlaceholder": "Fan, sinf yoki maktab…",
+    "academicYear": "O‘quv yilini tanlash",
+    "allYears": "Barcha o‘quv yillari",
+    "noAssignmentsTitle": "Sizga hali fan va sinf biriktirilmagan",
+    "noAssignments": "Maktab administratori fan va sinf biriktirgandan keyin ular shu yerda paydo bo‘ladi.",
+    "noResultsTitle": "Qidiruv bo‘yicha natija topilmadi",
+    "noResults": "Qidiruv yoki o‘quv yili filtrini o‘zgartiring.",
+    "className": "{{name}} sinf",
+    "subject": "Fan",
+    "journal": "Elektron jurnal",
+    "assignedAt": "Biriktirilgan sana: {{date}}",
+    "endsAt": "Tugash sanasi: {{date}}"
+  },
+  "journal": {
+    "title": "Mening elektron jurnalim",
+    "description": "O‘zingizga biriktirilgan fan va sinf darslari.",
+    "back": "Kabinetga qaytish",
+    "invalidId": "Biriktirma ID noto‘g‘ri.",
+    "date": "Dars sanasi",
+    "emptyTitle": "Ushbu sanada dars topilmadi",
+    "empty": "Boshqa sanani tanlab ko‘ring.",
+    "lesson": "{{n}}-dars",
+    "status": "Holati",
+    "topic": "Dars mavzusi",
+    "noTopic": "Mavzu kiritilmagan",
+    "homework": "Uy vazifasi",
+    "noHomework": "Uy vazifasi kiritilmagan",
+    "create": "Jurnalga qo‘shish",
+    "creating": "Yaratilmoqda…",
+    "createFailed": "Jurnal yozuvini yaratib bo‘lmadi.",
+    "notCreated": "Jurnal yozuvi hali yaratilmagan."
+  },
+  "session": {
+    "statuses": {
+      "PLANNED": "Rejalashtirilgan",
+      "IN_PROGRESS": "O‘tilmoqda",
+      "COMPLETED": "O‘tilgan",
+      "CANCELLED": "Bekor qilingan"
+    },
+    "saved": "Jurnal ma’lumotlari saqlandi.",
+    "saveFailed": "Saqlashda xatolik yuz berdi.",
+    "textbookTopic": "Darslik mavzusi",
+    "manual": "Qo‘lda kiritish",
+    "chooseTopic": "Mavzuni tanlang",
+    "manualTopic": "Mavzuni qo‘lda kiritish",
+    "homework": "Uy vazifasi",
+    "notes": "O‘qituvchi izohi",
+    "status": "Dars holati",
+    "save": "Jurnalni saqlash"
+  }
+}

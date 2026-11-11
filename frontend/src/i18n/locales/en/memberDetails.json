@@ -1,0 +1,92 @@
+{
+  "fields": {
+    "studentNumber": "Student number",
+    "admissionOrderNumber": "Admission order number",
+    "educationLanguage": "Language of instruction",
+    "educationForm": "Form of study",
+    "employeeNumber": "Employee number",
+    "position": "Position",
+    "employmentType": "Employment type",
+    "qualificationCategory": "Qualification category",
+    "specialization": "Specialization",
+    "educationLevel": "Education",
+    "hireOrderNumber": "Hiring order"
+  },
+  "placeholders": {
+    "position": "Mathematics teacher",
+    "specialization": "Mathematics"
+  },
+  "options": {
+    "educationLanguage": {
+      "UZ": "Uzbek",
+      "RU": "Russian",
+      "KK": "Karakalpak",
+      "TJ": "Tajik",
+      "EN": "English",
+      "OTHER": "Other"
+    },
+    "educationForm": {
+      "FULL_TIME": "Full-time",
+      "EVENING": "Evening",
+      "PART_TIME": "Part-time",
+      "DISTANCE": "Distance",
+      "DUAL": "Dual education"
+    },
+    "employmentType": {
+      "PRIMARY": "Primary job",
+      "PART_TIME": "Secondary job",
+      "HOURLY": "Hourly",
+      "TEMPORARY": "Temporary"
+    },
+    "qualificationCategory": {
+      "OLIY": "Highest category",
+      "BIRINCHI": "First category",
+      "IKKINCHI": "Second category",
+      "MUTAXASSIS": "Specialist",
+      "TOIFASIZ": "No category"
+    },
+    "educationLevel": {
+      "SECONDARY": "Secondary",
+      "SECONDARY_SPECIAL": "Vocational secondary",
+      "BACHELOR": "Bachelor's",
+      "MASTER": "Master's",
+      "PHD": "Doctor of Philosophy (PhD)",
+      "DSC": "Doctor of Science (DSc)"
+    }
+  },
+  "legacyValue": "{{value}} (previous value)",
+  "notSpecified": "Not specified",
+  "choose": "Choose",
+  "emptyHint": "No additional details yet. Fill in the fields below and save.",
+  "saveFailed": "Could not save the details.",
+  "save": "Save details",
+  "title": "Additional details",
+  "studentTitle": "Student additional details",
+  "teacherTitle": "Teacher additional details",
+  "saved": "Additional details saved.",
+  "studentAccount": "Student account",
+  "teacherAccount": "Teacher account",
+  "accountDescription": "Check the user's account status or create a new account.",
+  "detailsDescription": "Enter and edit additional details of this person's school membership.",
+  "account": {
+    "personMissing": "No person details",
+    "type": "Account type: {{role}}",
+    "loginInvalid": "Login must be 3–50 lowercase Latin letters, digits, dots or underscores.",
+    "passwordLength": "Password must be 12–128 characters long.",
+    "passwordMismatch": "Passwords do not match.",
+    "createFailed": "Could not create the account.",
+    "exists": "This person already has an account",
+    "login": "Login",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "blocked": "Blocked",
+    "loginHint": "3–50 characters: a–z, 0–9, dot and underscore",
+    "password": "Initial password",
+    "passwordHint": "At least 12 characters. Do not use the PINFL or date of birth.",
+    "confirm": "Confirm password",
+    "roleNote": "The account role (student or teacher) is set automatically from the school membership.",
+    "create": "Create account",
+    "creating": "Creating…"
+  }
+}

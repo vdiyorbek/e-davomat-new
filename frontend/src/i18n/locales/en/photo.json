@@ -9,5 +9,13 @@
   "tooLarge": "The image must not exceed {{size}} MB.",
   "uploadFailed": "Failed to upload the photo.",
   "loadFailed": "Could not load the photo.",
-  "loading": "Loading photo…"
+  "loading": "Loading photo…",
+  "empty": "The image file is empty.",
+  "invalid": "Invalid image file.",
+  "tooSmall": "The image must be at least 640×480 pixels.",
+  "tooManyPixels": "The image resolution is too large.",
+  "openFailed": "Could not open the image. Choose another one.",
+  "checkFailed": "Could not check the image.",
+  "notAccepted": "The image does not meet the requirements.",
+  "enlarge": "Enlarge photo"
 }

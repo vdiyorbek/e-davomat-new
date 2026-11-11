@@ -57,7 +57,7 @@ export function ChangePersonPhoto({
 
             if (!result.valid) {
                 setError(
-                    result.error ?? 'Rasm talabga javob bermaydi.',
+                    result.error ?? t('photo.notAccepted'),
                 );
                 return;
             }
@@ -65,7 +65,7 @@ export function ChangePersonPhoto({
             setFile(selected);
         } catch {
             if (currentSelection === selectionId.current) {
-                setError('Rasmni tekshirib bo‘lmadi.');
+                setError(t('photo.checkFailed'));
             }
         } finally {
             if (currentSelection === selectionId.current) {

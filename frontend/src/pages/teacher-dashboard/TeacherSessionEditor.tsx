@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
 import { SelectField } from '@/components/common/SelectField';
@@ -40,12 +41,7 @@ interface Topic {
     };
 }
 
-const statusOptions = [
-    { value: 'PLANNED', label: 'Rejalashtirilgan' },
-    { value: 'IN_PROGRESS', label: 'O‘tilmoqda' },
-    { value: 'COMPLETED', label: 'O‘tilgan' },
-    { value: 'CANCELLED', label: 'Bekor qilingan' },
-];
+const EDITABLE_STATUSES: SessionStatus[] = ['PLANNED', 'IN_PROGRESS', 'COMPLETED'];
 
 export function TeacherSessionEditor({
     assignmentId,
@@ -56,6 +52,7 @@ export function TeacherSessionEditor({
     session: EditableTeacherSession;
     onSaved: () => void;
 }) {
+    const { t } = useTranslation();
     const [topicId, setTopicId] = useState(
         session.textbookTopicId === null
             ? ''
@@ -108,13 +105,13 @@ export function TeacherSessionEditor({
                 },
             );
 
-            setSuccess('Jurnal ma’lumotlari saqlandi.');
+            setSuccess(t('teacher.session.saved'));
             onSaved();
         } catch (caught: unknown) {
             setError(
                 caught instanceof Error
                     ? caught.message
-                    : 'Saqlashda xatolik yuz berdi',
+                    : t('teacher.session.saveFailed'),
             );
         } finally {
             setSaving(false);
@@ -128,7 +125,7 @@ export function TeacherSessionEditor({
         <div className="space-y-4 border-t pt-4">
             <Field
                 htmlFor={`topic-${session.id}`}
-                label="Darslik mavzusi"
+                label={t('teacher.session.textbookTopic')}
             >
                 <SelectField
                     id={`topic-${session.id}`}
@@ -142,9 +139,9 @@ export function TeacherSessionEditor({
 
                         if (topic) setTitle(topic.title);
                     }}
-                    emptyOption="Qo‘lda kiritish"
+                    emptyOption={t('teacher.session.manual')}
                     searchable
-                    placeholder="Mavzuni tanlang"
+                    placeholder={t('teacher.session.chooseTopic')}
                     disabled={
                         disabled ||
                         topicsQuery.loading ||
@@ -168,7 +165,7 @@ export function TeacherSessionEditor({
             {!topicId && (
                 <Field
                     htmlFor={`title-${session.id}`}
-                    label="Mavzuni qo‘lda kiritish"
+                    label={t('teacher.session.manualTopic')}
                 >
                     <Input
                         id={`title-${session.id}`}
@@ -184,7 +181,7 @@ export function TeacherSessionEditor({
 
             <Field
                 htmlFor={`homework-${session.id}`}
-                label="Uy vazifasi"
+                label={t('teacher.session.homework')}
             >
                 <Textarea
                     id={`homework-${session.id}`}
@@ -199,7 +196,7 @@ export function TeacherSessionEditor({
 
             <Field
                 htmlFor={`notes-${session.id}`}
-                label="O‘qituvchi izohi"
+                label={t('teacher.session.notes')}
             >
                 <Textarea
                     id={`notes-${session.id}`}
@@ -214,7 +211,7 @@ export function TeacherSessionEditor({
 
             <Field
                 htmlFor={`status-${session.id}`}
-                label="Dars holati"
+                label={t('teacher.session.status')}
             >
                 <SelectField
                     id={`status-${session.id}`}
@@ -223,9 +220,10 @@ export function TeacherSessionEditor({
                         setStatus(value as SessionStatus)
                     }
                     disabled={disabled}
-                    options={statusOptions.filter(
-                        (item) => item.value !== 'CANCELLED',
-                    )}
+                    options={EDITABLE_STATUSES.map((value) => ({
+                        value,
+                        label: t(`teacher.session.statuses.${value}`),
+                    }))}
                 />
             </Field>
 
@@ -241,7 +239,7 @@ export function TeacherSessionEditor({
                 disabled={disabled}
                 className="w-full"
             >
-                {saving ? 'Saqlanmoqda...' : 'Jurnalni saqlash'}
+                {saving ? t('common.saving') : t('teacher.session.save')}
             </Button>
         </div>
     );

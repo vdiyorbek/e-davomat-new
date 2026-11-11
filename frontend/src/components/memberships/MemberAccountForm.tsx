@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
 import {
@@ -39,6 +40,7 @@ export function MemberAccountForm({
     onCancel: () => void;
     onSaved: () => void;
 }) {
+    const { t } = useTranslation();
     const path =
         `/member-accounts/membership/${membership.id}`;
 
@@ -54,12 +56,12 @@ export function MemberAccountForm({
 
     const fullName = membership.person
         ? personFullName(membership.person)
-        : 'Shaxs ma’lumoti mavjud emas';
+        : t('memberDetails.account.personMissing');
 
     const targetRole =
         membership.type === 'TEACHER'
-            ? 'O‘qituvchi'
-            : 'O‘quvchi';
+            ? t('roles.TEACHER')
+            : t('roles.STUDENT');
 
     async function save() {
         if (
@@ -76,7 +78,7 @@ export function MemberAccountForm({
 
         if (!LOGIN_PATTERN.test(normalizedLogin)) {
             setSaveError(
-                'Login 3–50 ta kichik lotin harfi, raqam, nuqta yoki pastki chiziqdan iborat bo‘lishi kerak.',
+                t('memberDetails.account.loginInvalid'),
             );
             return;
         }
@@ -86,14 +88,14 @@ export function MemberAccountForm({
             password.length > 128
         ) {
             setSaveError(
-                'Parol 12–128 ta belgidan iborat bo‘lishi kerak.',
+                t('memberDetails.account.passwordLength'),
             );
             return;
         }
 
         if (password !== confirmPassword) {
             setSaveError(
-                'Parollar bir-biriga mos emas.',
+                t('memberDetails.account.passwordMismatch'),
             );
             return;
         }
@@ -118,7 +120,7 @@ export function MemberAccountForm({
             setSaveError(
                 error instanceof Error
                     ? error.message
-                    : 'Akkaunt yaratishda xatolik yuz berdi.',
+                    : t('memberDetails.account.createFailed'),
             );
 
             // Masalan, boshqa administrator shu vaqtda
@@ -139,7 +141,7 @@ export function MemberAccountForm({
                 </p>
 
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Akkaunt turi: {targetRole}
+                    {t('memberDetails.account.type', { role: targetRole })}
                 </p>
             </div>
 
@@ -160,31 +162,31 @@ export function MemberAccountForm({
                     <div className="space-y-4">
                         <div className="rounded-xl border p-4">
                             <p className="font-semibold">
-                                Ushbu shaxs uchun akkaunt mavjud
+                                {t('memberDetails.account.exists')}
                             </p>
 
                             <div className="mt-3 space-y-2 text-sm">
                                 <p>
                                     <span className="text-muted-foreground">
-                                        Login:
+                                        {t('memberDetails.account.login')}:
                                     </span>{' '}
                                     {query.data.user?.login ?? '—'}
                                 </p>
 
                                 <p>
                                     <span className="text-muted-foreground">
-                                        Rol:
+                                        {t('memberDetails.account.role')}:
                                     </span>{' '}
-                                    {query.data.user?.role ?? '—'}
+                                    {query.data.user?.role ? t(`roles.${query.data.user.role}`) : '—'}
                                 </p>
 
                                 <p>
                                     <span className="text-muted-foreground">
-                                        Holat:
+                                        {t('memberDetails.account.status')}:
                                     </span>{' '}
                                     {query.data.user?.isActive
-                                        ? 'Faol'
-                                        : 'Bloklangan'}
+                                        ? t('memberDetails.account.active')
+                                        : t('memberDetails.account.blocked')}
                                 </p>
                             </div>
                         </div>
@@ -195,7 +197,7 @@ export function MemberAccountForm({
                             onClick={onCancel}
                             className="w-full"
                         >
-                            Yopish
+                            {t('common.close')}
                         </Button>
                     </div>
                 )}
@@ -213,8 +215,8 @@ export function MemberAccountForm({
                     >
                         <Field
                             htmlFor="member-account-login"
-                            label="Login"
-                            hint="3–50 ta belgi: a–z, 0–9, nuqta va pastki chiziq"
+                            label={t('memberDetails.account.login')}
+                            hint={t('memberDetails.account.loginHint')}
                             required
                         >
                             <Input
@@ -233,8 +235,8 @@ export function MemberAccountForm({
 
                         <Field
                             htmlFor="member-account-password"
-                            label="Boshlang‘ich parol"
-                            hint="Kamida 12 ta belgi. JSHSHIR yoki tug‘ilgan sanadan foydalanmang."
+                            label={t('memberDetails.account.password')}
+                            hint={t('memberDetails.account.passwordHint')}
                             required
                         >
                             <Input
@@ -254,7 +256,7 @@ export function MemberAccountForm({
 
                         <Field
                             htmlFor="member-account-confirm"
-                            label="Parolni tasdiqlash"
+                            label={t('memberDetails.account.confirm')}
                             required
                         >
                             <Input
@@ -273,9 +275,7 @@ export function MemberAccountForm({
                         </Field>
 
                         <p className="text-xs text-muted-foreground">
-                            Akkauntning STUDENT yoki TEACHER roli
-                            backend tomonidan maktab a’zoligi
-                            asosida belgilanadi.
+                            {t('memberDetails.account.roleNote')}
                         </p>
 
                         {saveError && (
@@ -289,7 +289,7 @@ export function MemberAccountForm({
                                 onClick={onCancel}
                                 disabled={saving}
                             >
-                                Bekor qilish
+                                {t('common.cancel')}
                             </Button>
 
                             <Button
@@ -297,8 +297,8 @@ export function MemberAccountForm({
                                 disabled={saving}
                             >
                                 {saving
-                                    ? 'Yaratilmoqda...'
-                                    : 'Akkaunt yaratish'}
+                                    ? t('memberDetails.account.creating')
+                                    : t('memberDetails.account.create')}
                             </Button>
                         </div>
                     </form>

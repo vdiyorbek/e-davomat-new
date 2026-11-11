@@ -193,13 +193,12 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                                         <DialogHeader>
                                             <DialogTitle>
                                                 {type === 'STUDENT'
-                                                    ? 'O‘quvchi akkaunti'
-                                                    : 'O‘qituvchi akkaunti'}
+                                                    ? t('memberDetails.studentAccount')
+                                                    : t('memberDetails.teacherAccount')}
                                             </DialogTitle>
 
                                             <DialogDescription>
-                                                Foydalanuvchining akkaunt holatini
-                                                tekshirish yoki yangi akkaunt yaratish.
+                                                {t('memberDetails.accountDescription')}
                                             </DialogDescription>
                                         </DialogHeader>
 
@@ -354,14 +353,12 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                     <DialogHeader>
                         <DialogTitle>
                             {type === 'STUDENT'
-                                ? 'O‘quvchi qo‘shimcha ma’lumotlari'
-                                : 'O‘qituvchi qo‘shimcha ma’lumotlari'}
+                                ? t('memberDetails.studentTitle')
+                                : t('memberDetails.teacherTitle')}
                         </DialogTitle>
 
                         <DialogDescription>
-                            Ushbu shaxsning maktabga a’zoligiga
-                            tegishli qo‘shimcha ma’lumotlarni
-                            kiritish va tahrirlash.
+                            {t('memberDetails.detailsDescription')}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -374,9 +371,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                             }}
                             onSaved={() => {
                                 setDetailsMember(null);
-                                setSuccess(
-                                    'Qo‘shimcha ma’lumotlar muvaffaqiyatli saqlandi.',
-                                );
+                                setSuccess(t('memberDetails.saved'));
                                 retry();
                             }}
                         />

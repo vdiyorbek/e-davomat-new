@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     BookOpen,
     GraduationCap,
@@ -26,6 +27,8 @@ import {
 import { Input } from '@/components/ui/input';
 
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { formatDate } from '@/lib/date';
+import { localizedName } from '@/lib/localized';
 
 interface TeacherAssignment {
     id: number;
@@ -53,6 +56,7 @@ interface TeacherAssignment {
 }
 
 export function TeacherDashboardPage() {
+    const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const [academicYear, setAcademicYear] = useState('ALL');
 
@@ -60,7 +64,7 @@ export function TeacherDashboardPage() {
         '/teacher/me/assignments',
     );
 
-    const assignments = assignmentsQuery.data ?? [];
+    const assignments = useMemo(() => assignmentsQuery.data ?? [], [assignmentsQuery.data]);
 
     const academicYears = useMemo(
         () =>
@@ -113,9 +117,9 @@ export function TeacherDashboardPage() {
     return (
         <div className="w-full min-w-0 space-y-6">
             <PageHeader
-                eyebrow="O‘qituvchi kabineti"
-                title="Mening fanlarim va sinflarim"
-                description="Sizga biriktirilgan fanlar, sinflar va maktablar"
+                eyebrow={t('teacher.eyebrow')}
+                title={t('teacher.dashboard.title')}
+                description={t('teacher.dashboard.description')}
                 actions={
                     <Button
                         type="button"
@@ -124,7 +128,7 @@ export function TeacherDashboardPage() {
                         disabled={assignmentsQuery.loading}
                     >
                         <RefreshCw aria-hidden="true" />
-                        Yangilash
+                        {t('common.refresh')}
                     </Button>
                 }
             />
@@ -149,7 +153,7 @@ export function TeacherDashboardPage() {
                                     <School className="size-8 text-muted-foreground" />
                                     <div>
                                         <p className="text-sm text-muted-foreground">
-                                            Maktablar
+                                            {t('teacher.dashboard.schools')}
                                         </p>
                                         <p className="text-2xl font-bold">
                                             {statistics.schools}
@@ -163,7 +167,7 @@ export function TeacherDashboardPage() {
                                     <GraduationCap className="size-8 text-muted-foreground" />
                                     <div>
                                         <p className="text-sm text-muted-foreground">
-                                            Sinflar
+                                            {t('teacher.dashboard.classes')}
                                         </p>
                                         <p className="text-2xl font-bold">
                                             {statistics.classes}
@@ -177,7 +181,7 @@ export function TeacherDashboardPage() {
                                     <BookOpen className="size-8 text-muted-foreground" />
                                     <div>
                                         <p className="text-sm text-muted-foreground">
-                                            Fanlar
+                                            {t('teacher.dashboard.subjects')}
                                         </p>
                                         <p className="text-2xl font-bold">
                                             {statistics.subjects}
@@ -190,7 +194,7 @@ export function TeacherDashboardPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">
-                                    Fan va sinflarni qidirish
+                                    {t('teacher.dashboard.searchTitle')}
                                 </CardTitle>
 
                             </CardHeader>
@@ -202,17 +206,17 @@ export function TeacherDashboardPage() {
                                         className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
                                     />
                                     <Input
-                                        aria-label="Fan, sinf yoki maktabni qidirish"
+                                        aria-label={t('teacher.dashboard.search')}
                                         className="pl-9"
                                         value={search}
                                         onChange={(event) => setSearch(event.target.value)}
-                                        placeholder="Fan, sinf yoki maktab..."
+                                        placeholder={t('teacher.dashboard.searchPlaceholder')}
                                     />
 
                                 </div>
 
                                 <select
-                                    aria-label="O‘quv yilini tanlash"
+                                    aria-label={t('teacher.dashboard.academicYear')}
                                     value={academicYear}
                                     onChange={(event) =>
                                         setAcademicYear(event.target.value)
@@ -220,7 +224,7 @@ export function TeacherDashboardPage() {
                                     className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                                 >
                                     <option value="ALL">
-                                        Barcha o‘quv yillari
+                                        {t('teacher.dashboard.allYears')}
                                     </option>
                                     {academicYears.map((year) => (
                                         <option key={year} value={year}>
@@ -236,13 +240,13 @@ export function TeacherDashboardPage() {
                                 icon={BookOpen}
                                 title={
                                     assignments.length === 0
-                                        ? 'Sizga hali fan va sinf biriktirilmagan'
-                                        : 'Qidiruv bo‘yicha natija topilmadi'
+                                        ? t('teacher.dashboard.noAssignmentsTitle')
+                                        : t('teacher.dashboard.noResultsTitle')
                                 }
                                 description={
                                     assignments.length === 0
-                                        ? 'Maktab administratori fan va sinf biriktirgandan keyin ular shu yerda paydo bo‘ladi.'
-                                        : 'Qidiruv yoki o‘quv yili filtrini o‘zgartiring.'
+                                        ? t('teacher.dashboard.noAssignments')
+                                        : t('teacher.dashboard.noResults')
                                 }
                             />
                         ) : (
@@ -252,7 +256,7 @@ export function TeacherDashboardPage() {
                                         <CardHeader>
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <CardTitle className="text-lg">
-                                                    {item.class.name} sinf
+                                                    {t('teacher.dashboard.className', { name: item.class.name })}
                                                 </CardTitle>
 
                                                 <span className="rounded-md bg-muted px-2 py-1 text-xs">
@@ -271,32 +275,33 @@ export function TeacherDashboardPage() {
                                                     aria-hidden="true"
                                                     className="size-5 shrink-0 text-muted-foreground"
                                                 />
-                                                <div>
+                                                <div className="min-w-0">
                                                     <p className="text-xs text-muted-foreground">
-                                                        Fan
+                                                        {t('teacher.dashboard.subject')}
                                                     </p>
-                                                    <p className="font-semibold">
-                                                        {item.subject.nameUz}
+                                                    <p className="font-semibold break-words">
+                                                        {localizedName(item.subject)}
                                                     </p>
                                                 </div>
-                                                <Button asChild className="w-full">
-                                                    <Link to={`/teacher/journal/${item.id}`}>
-                                                        <NotebookPen aria-hidden="true" />
-                                                        Elektron jurnal
-                                                    </Link>
-                                                </Button>
                                             </div>
 
                                             <div className="space-y-1 text-sm text-muted-foreground">
                                                 <p>
-                                                    Biriktirilgan sana: {item.startDate}
+                                                    {t('teacher.dashboard.assignedAt', { date: formatDate(item.startDate) })}
                                                 </p>
                                                 {item.endDate && (
                                                     <p>
-                                                        Tugash sanasi: {item.endDate}
+                                                        {t('teacher.dashboard.endsAt', { date: formatDate(item.endDate) })}
                                                     </p>
                                                 )}
                                             </div>
+
+                                            <Button asChild className="w-full">
+                                                <Link to={`/teacher/journal/${item.id}`}>
+                                                    <NotebookPen aria-hidden="true" />
+                                                    {t('teacher.dashboard.journal')}
+                                                </Link>
+                                            </Button>
                                         </CardContent>
                                     </Card>
                                 ))}

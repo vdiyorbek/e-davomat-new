@@ -1,9 +1,14 @@
+import { useId, useState } from 'react';
+import { ListChecks, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { authorizedPost } from "@/lib/auth-session";
+import { Field } from '@/components/common/Field';
+import { SelectField } from '@/components/common/SelectField';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { authorizedPost } from '@/lib/auth-session';
 
-type SyncType = "STUDENT" | "TEACHER" | "BOTH";
+type SyncType = 'STUDENT' | 'TEACHER' | 'BOTH';
 
 interface BulkSyncResponse {
     success: boolean;
@@ -25,46 +30,39 @@ interface Props {
     onSubmitted?: () => void;
 }
 
-export function BulkPersonSyncPanel({
-    terminalIds,
-    onSubmitted,
-}: Props) {
-    const [type, setType] = useState<SyncType>("BOTH");
+const MAX_TERMINALS = 5;
+const LIMITS = [1, 5, 10, 20];
+
+export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
+    const { t } = useTranslation();
+    const id = useId();
+    const [type, setType] = useState<SyncType>('BOTH');
     const [limit, setLimit] = useState(10);
-    const [preview, setPreview] =
-        useState<BulkSyncResponse | null>(null);
+    const [preview, setPreview] = useState<BulkSyncResponse | null>(null);
     const [previewIds, setPreviewIds] = useState<number[]>([]);
     const [busy, setBusy] = useState(false);
-    const [error, setError] = useState("");
-    const [result, setResult] =
-        useState<BulkSyncResponse | null>(null);
+    const [error, setError] = useState('');
+    const [result, setResult] = useState<BulkSyncResponse | null>(null);
 
+    const tooMany = terminalIds.length > MAX_TERMINALS;
     const canApply =
         preview !== null &&
-        previewIds.join(",") === terminalIds.join(",") &&
+        previewIds.join(',') === terminalIds.join(',') &&
         terminalIds.length > 0 &&
-        terminalIds.length <= 5;
+        !tooMany;
 
     async function submit(dryRun: boolean) {
         if (busy || terminalIds.length === 0) return;
-
         setBusy(true);
-        setError("");
-
+        setError('');
         try {
-            const response = await authorizedPost<BulkSyncResponse>(
-                "/terminals/bulk/person-sync",
-                {
-                    terminalIds,
-                    type,
-                    limitPerTerminal: limit,
-                    dryRun,
-                    ...(dryRun
-                        ? {}
-                        : { confirm: "SYNC_SELECTED_PERSONS" }),
-                },
-            );
-
+            const response = await authorizedPost<BulkSyncResponse>('/terminals/bulk/person-sync', {
+                terminalIds,
+                type,
+                limitPerTerminal: limit,
+                dryRun,
+                ...(dryRun ? {} : { confirm: 'SYNC_SELECTED_PERSONS' }),
+            });
             if (dryRun) {
                 setPreview(response);
                 setPreviewIds([...terminalIds]);
@@ -75,127 +73,110 @@ export function BulkPersonSyncPanel({
                 onSubmitted?.();
             }
         } catch (caught: unknown) {
-            setError(
-                caught instanceof Error
-                    ? caught.message
-                    : "Sinxronlash so‘rovi bajarilmadi",
-            );
+            setError(caught instanceof Error ? caught.message : t('terminals.personSync.failed'));
         } finally {
             setBusy(false);
         }
     }
 
     return (
-        <section className="space-y-3 rounded-xl border p-4">
-            <div className="font-semibold">
-                Shaxslarni terminallarga sinxronlash
+        <section className="space-y-4">
+            <div>
+                <h3 className="text-sm font-semibold">{t('terminals.personSync.title')}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{t('terminals.personSync.hint')}</p>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-                Tanlangan terminallar: {terminalIds.length} ta.
-                Bir so‘rovda ko‘pi bilan 5 ta terminal.
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-                <label className="space-y-1 text-sm">
-                    <span className="block">Shaxslar</span>
-                    <select
+            <div className="grid gap-3 sm:grid-cols-2">
+                <Field htmlFor={`${id}-type`} label={t('terminals.personSync.type')}>
+                    <SelectField
+                        id={`${id}-type`}
                         value={type}
-                        onChange={(event) => {
-                            setType(event.target.value as SyncType);
+                        onValueChange={(value) => {
+                            setType(value as SyncType);
                             setPreview(null);
                         }}
-                        className="h-9 rounded-md border bg-background px-3"
-                    >
-                        <option value="BOTH">O‘quvchi va o‘qituvchilar</option>
-                        <option value="STUDENT">Faqat o‘quvchilar</option>
-                        <option value="TEACHER">Faqat o‘qituvchilar</option>
-                    </select>
-                </label>
-
-                <label className="space-y-1 text-sm">
-                    <span className="block">Har terminal uchun</span>
-                    <select
-                        value={limit}
-                        onChange={(event) => {
-                            setLimit(Number(event.target.value));
+                        options={(['BOTH', 'STUDENT', 'TEACHER'] as const).map((value) => ({
+                            value,
+                            label: t(`terminals.personSync.types.${value}`),
+                        }))}
+                    />
+                </Field>
+                <Field htmlFor={`${id}-limit`} label={t('terminals.personSync.limit')}>
+                    <SelectField
+                        id={`${id}-limit`}
+                        value={String(limit)}
+                        onValueChange={(value) => {
+                            setLimit(Number(value));
                             setPreview(null);
                         }}
-                        className="h-9 rounded-md border bg-background px-3"
-                    >
-                        {[1, 5, 10, 20].map((value) => (
-                            <option key={value} value={value}>
-                                {value} ta
-                            </option>
-                        ))}
-                    </select>
-                </label>
+                        options={LIMITS.map((value) => ({
+                            value: String(value),
+                            label: t('terminals.personSync.limitOption', { count: value }),
+                        }))}
+                    />
+                </Field>
             </div>
+
+            {tooMany && (
+                <Alert variant="destructive">
+                    <AlertDescription>{t('terminals.bulk.limitHint', { max: MAX_TERMINALS })}</AlertDescription>
+                </Alert>
+            )}
 
             <Button
                 type="button"
                 variant="outline"
-                disabled={
-                    busy ||
-                    terminalIds.length < 1 ||
-                    terminalIds.length > 5
-                }
+                disabled={busy || terminalIds.length < 1 || tooMany}
                 onClick={() => void submit(true)}
             >
-                {busy ? "Tekshirilmoqda..." : "Oldindan tekshirish"}
+                <ListChecks aria-hidden="true" />
+                {busy && !preview ? t('terminals.personSync.checking') : t('terminals.personSync.preview')}
             </Button>
 
             {preview && (
-                <div className="space-y-3 rounded-lg border p-3">
-                    <p className="text-sm font-medium">
-                        Sinxronlash rejasi (dry-run)
-                    </p>
-
-                    {preview.results.map((item) => (
-                        <p key={item.terminalId} className="text-sm">
-                            Terminal #{item.terminalId}:{" "}
-                            {item.candidates} ta nomzod
-                            {item.hasMore ? " (boshqalari ham mavjud)" : ""}
-                        </p>
-                    ))}
-
-                    <p className="text-xs text-muted-foreground">
-                        Bu nomzodlar soni, hali terminalda
-                        yetishmayotgan shaxslar soni emas.
-                    </p>
-
-                    <Button
-                        type="button"
-                        disabled={!canApply || busy}
-                        onClick={() => void submit(false)}
-                    >
-                        {busy
-                            ? "Navbatga yuborilmoqda..."
-                            : "Tasdiqlash va navbatga yuborish"}
+                <div className="space-y-3 rounded-xl border bg-muted/25 p-4">
+                    <p className="text-sm font-semibold">{t('terminals.personSync.planTitle')}</p>
+                    <ul className="divide-y rounded-lg border bg-card">
+                        {preview.results.map((item) => (
+                            <li key={item.terminalId} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                                <span className="font-medium">{t('terminals.bulk.terminal', { id: item.terminalId })}</span>
+                                <span className="tabular-nums">
+                                    {t('terminals.personSync.candidates', { count: item.candidates })}
+                                    {item.hasMore && (
+                                        <span className="text-muted-foreground"> · {t('terminals.personSync.hasMore')}</span>
+                                    )}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="text-xs text-muted-foreground">{t('terminals.personSync.planNote')}</p>
+                    <Button type="button" disabled={!canApply || busy} onClick={() => void submit(false)}>
+                        <Send aria-hidden="true" />
+                        {busy ? t('terminals.personSync.applying') : t('terminals.personSync.apply')}
                     </Button>
                 </div>
             )}
 
             {result && (
-                <div className="space-y-1 text-sm">
+                <div className="space-y-2 rounded-xl border border-success/30 bg-success/8 p-4 text-sm">
                     {result.results.map((item) => (
-                        <p key={item.terminalId}>
-                            #{item.terminalId}: navbatga {item.queued},
-                            mavjud vazifa {item.reused},
-                            xato {item.failed}
+                        <p key={item.terminalId} className="tabular-nums">
+                            <span className="font-semibold">#{item.terminalId}</span>{' '}
+                            {t('terminals.personSync.result', {
+                                queued: item.queued,
+                                reused: item.reused,
+                                failed: item.failed,
+                            })}
                         </p>
                     ))}
-                    <p className="text-xs text-muted-foreground">
-                        Navbatga qo‘yish tugadi. Qurilmadagi
-                        sinxronlash natijasini monitoring orqali tekshiring.
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t('terminals.personSync.resultNote')}</p>
                 </div>
             )}
 
             {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
+                <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
         </section>
     );

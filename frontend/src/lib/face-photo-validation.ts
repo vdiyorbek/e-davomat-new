@@ -1,4 +1,7 @@
+import i18n from "@/i18n";
 import { validateImage } from "@/lib/files";
+
+const MAX_SIZE_MB = 5;
 
 export interface FacePhotoValidationResult {
   valid: boolean;
@@ -14,14 +17,14 @@ export async function validateFacePhoto(
 
   if (basicError) {
     const messages: Record<string, string> = {
-      "photo.wrongType": "Faqat JPG, PNG yoki WebP rasm yuklash mumkin.",
-      "photo.tooLarge": "Rasm hajmi 5 MB dan oshmasligi kerak.",
-      "file.empty": "Rasm fayli bo‘sh.",
+      "photo.wrongType": i18n.t("photo.wrongType"),
+      "photo.tooLarge": i18n.t("photo.tooLarge", { size: MAX_SIZE_MB }),
+      "file.empty": i18n.t("photo.empty"),
     };
 
     return {
       valid: false,
-      error: messages[basicError] ?? "Rasm fayli noto‘g‘ri.",
+      error: messages[basicError] ?? i18n.t("photo.invalid"),
     };
   }
 
@@ -44,7 +47,7 @@ export async function validateFacePhoto(
     if (shortSide < 480 || longSide < 640) {
       return {
         valid: false,
-        error: "Rasm kamida 640×480 piksel bo‘lishi kerak.",
+        error: i18n.t("photo.tooSmall"),
         width,
         height,
       };
@@ -53,7 +56,7 @@ export async function validateFacePhoto(
     if (width * height > 25_000_000) {
       return {
         valid: false,
-        error: "Rasmning piksel o‘lchami juda katta.",
+        error: i18n.t("photo.tooManyPixels"),
         width,
         height,
       };
@@ -68,7 +71,7 @@ export async function validateFacePhoto(
   } catch {
     return {
       valid: false,
-      error: "Rasmni ochib bo‘lmadi. Boshqa rasm tanlang.",
+      error: i18n.t("photo.openFailed"),
     };
   } finally {
     if (url) URL.revokeObjectURL(url);

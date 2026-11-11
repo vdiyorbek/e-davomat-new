@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
 import {
@@ -44,7 +45,6 @@ function isSelectField(
 }
 interface FieldDefinition {
     key: FieldKey;
-    label: string;
     maxLength: number;
     placeholder?: string;
 }
@@ -75,70 +75,52 @@ const EMPTY_VALUES: FieldValues = {
 const STUDENT_FIELDS: FieldDefinition[] = [
     {
         key: 'studentNumber',
-        label: 'O‘quvchi raqami',
         maxLength: 50,
         placeholder: 'ST-2026-001',
     },
     {
         key: 'admissionOrderNumber',
-        label: 'Qabul buyrug‘i raqami',
         maxLength: 100,
         placeholder: '45-A',
     },
     {
         key: 'educationLanguage',
-        label: 'Ta’lim tili',
         maxLength: 50,
-        placeholder: 'O‘zbek',
     },
     {
         key: 'educationForm',
-        label: 'Ta’lim shakli',
         maxLength: 50,
-        placeholder: 'Kunduzgi',
     },
 ];
 
 const TEACHER_FIELDS: FieldDefinition[] = [
     {
         key: 'employeeNumber',
-        label: 'Tabel raqami',
         maxLength: 50,
         placeholder: 'EMP-001',
     },
     {
         key: 'position',
-        label: 'Lavozimi',
         maxLength: 150,
-        placeholder: 'Matematika fani o‘qituvchisi',
     },
     {
         key: 'employmentType',
-        label: 'Ish turi',
         maxLength: 50,
-        placeholder: 'Asosiy ish',
     },
     {
         key: 'qualificationCategory',
-        label: 'Malaka toifasi',
         maxLength: 100,
-        placeholder: 'Oliy toifa',
     },
     {
         key: 'specialization',
-        label: 'Mutaxassisligi',
         maxLength: 150,
-        placeholder: 'Matematika',
     },
     {
         key: 'educationLevel',
-        label: 'Ma’lumoti',
         maxLength: 100,
-        placeholder: 'Oliy',
     },
     {
         key: 'hireOrderNumber',
-        label: 'Ishga qabul buyrug‘i',
         maxLength: 100,
         placeholder: '112-K',
     },
@@ -153,6 +135,7 @@ export function MembershipDetailsForm({
     onSaved: () => void;
     onCancel: () => void;
 }) {
+    const { t } = useTranslation();
     const isStudent = membership.type === 'STUDENT';
 
     const fields = isStudent
@@ -222,7 +205,7 @@ export function MembershipDetailsForm({
             setSaveError(
                 error instanceof Error
                     ? error.message
-                    : 'Ma’lumotlarni saqlab bo‘lmadi',
+                    : t('memberDetails.saveFailed'),
             );
         } finally {
             setSaving(false);
@@ -254,8 +237,7 @@ export function MembershipDetailsForm({
                     <>
                         {!query.data.details && (
                             <div className="rounded-xl border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
-                                Hali qo‘shimcha ma’lumot kiritilmagan.
-                                Quyidagi maydonlarni to‘ldirib saqlang.
+                                {t('memberDetails.emptyHint')}
                             </div>
                         )}
 
@@ -264,7 +246,7 @@ export function MembershipDetailsForm({
                                 <Field
                                     key={field.key}
                                     htmlFor={`detail-${field.key}`}
-                                    label={field.label}
+                                    label={t(`memberDetails.fields.${field.key}`)}
                                 >
 
                                     {isSelectField(field.key) ? (
@@ -277,16 +259,17 @@ export function MembershipDetailsForm({
                                             options={membershipOptions(
                                                 field.key,
                                                 values[field.key],
+                                                t,
                                             )}
-                                            emptyOption="Ko‘rsatilmagan"
-                                            placeholder="Tanlang"
+                                            emptyOption={t('memberDetails.notSpecified')}
+                                            placeholder={t('memberDetails.choose')}
                                             disabled={saving}
                                         />
                                     ) : (
                                         <Input
                                             id={`detail-${field.key}`}
                                             value={values[field.key]}
-                                            placeholder={field.placeholder}
+                                            placeholder={field.key === 'position' || field.key === 'specialization' ? t(`memberDetails.placeholders.${field.key}`) : field.placeholder}
                                             maxLength={field.maxLength}
                                             disabled={saving}
                                             onChange={(event) =>
@@ -313,7 +296,7 @@ export function MembershipDetailsForm({
                                 disabled={saving}
                                 onClick={onCancel}
                             >
-                                Bekor qilish
+                                {t('common.cancel')}
                             </Button>
 
                             <Button
@@ -321,8 +304,8 @@ export function MembershipDetailsForm({
                                 disabled={saving}
                             >
                                 {saving
-                                    ? 'Saqlanmoqda...'
-                                    : 'Ma’lumotlarni saqlash'}
+                                    ? t('common.saving')
+                                    : t('memberDetails.save')}
                             </Button>
                         </div>
                     </>

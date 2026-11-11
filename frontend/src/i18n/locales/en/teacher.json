@@ -1,0 +1,61 @@
+{
+  "eyebrow": "Teacher cabinet",
+  "dashboard": {
+    "title": "My subjects and classes",
+    "description": "Subjects, classes and schools assigned to you.",
+    "schools": "Schools",
+    "classes": "Classes",
+    "subjects": "Subjects",
+    "searchTitle": "Search subjects and classes",
+    "search": "Search by subject, class or school",
+    "searchPlaceholder": "Subject, class or school…",
+    "academicYear": "Select academic year",
+    "allYears": "All academic years",
+    "noAssignmentsTitle": "No subjects or classes assigned yet",
+    "noAssignments": "They will appear here once the school administrator assigns them.",
+    "noResultsTitle": "No results found",
+    "noResults": "Change the search or academic year filter.",
+    "className": "Class {{name}}",
+    "subject": "Subject",
+    "journal": "E-journal",
+    "assignedAt": "Assigned on: {{date}}",
+    "endsAt": "Ends on: {{date}}"
+  },
+  "journal": {
+    "title": "My e-journal",
+    "description": "Lessons for the subjects and classes assigned to you.",
+    "back": "Back to cabinet",
+    "invalidId": "Invalid assignment ID.",
+    "date": "Lesson date",
+    "emptyTitle": "No lessons on this date",
+    "empty": "Try selecting another date.",
+    "lesson": "Lesson {{n}}",
+    "status": "Status",
+    "topic": "Lesson topic",
+    "noTopic": "No topic entered",
+    "homework": "Homework",
+    "noHomework": "No homework entered",
+    "create": "Add to journal",
+    "creating": "Creating…",
+    "createFailed": "Could not create the journal entry.",
+    "notCreated": "No journal entry yet."
+  },
+  "session": {
+    "statuses": {
+      "PLANNED": "Planned",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "saved": "Journal entry saved.",
+    "saveFailed": "Could not save.",
+    "textbookTopic": "Textbook topic",
+    "manual": "Enter manually",
+    "chooseTopic": "Choose a topic",
+    "manualTopic": "Enter topic manually",
+    "homework": "Homework",
+    "notes": "Teacher notes",
+    "status": "Lesson status",
+    "save": "Save journal"
+  }
+}

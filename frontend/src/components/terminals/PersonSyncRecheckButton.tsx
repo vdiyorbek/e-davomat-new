@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, RotateCw } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 import { Button } from "@/components/ui/button";
 import { authorizedGet, authorizedPost } from "@/lib/auth-session";
 
@@ -47,6 +49,7 @@ export function PersonSyncRecheckButton({
     terminalId: number;
     onFinished: () => void;
 }) {
+    const { t } = useTranslation();
     const [submitting, setSubmitting] = useState(false);
     const [jobId, setJobId] = useState<string | null>(null);
     const [state, setState] = useState<DisplayState>("idle");
@@ -81,10 +84,7 @@ export function PersonSyncRecheckButton({
 
             if (Date.now() - startedAt >= MAX_WATCH_MS) {
                 setState("stopped");
-                setMessage(
-                    "Kuzatish muddati tugadi. Vazifa Redis'da " +
-                    "hali ishlayotgan bo‘lishi mumkin.",
-                );
+                setMessage(t("terminals.recheck.timeout"));
                 return;
             }
 
@@ -98,21 +98,17 @@ export function PersonSyncRecheckButton({
 
                 if (data.terminalId !== terminalId) {
                     setState("failed");
-                    setMessage("Vazifa boshqa terminalga tegishli.");
+                    setMessage(t("terminals.recheck.otherTerminal"));
                     return;
                 }
 
                 if (data.state === "completed") {
                     if (data.result?.skipped) {
                         setState("failed");
-                        setMessage("Terminal tekshiruvi o'tkazib yuborilgan.");
+                        setMessage(t("terminals.recheck.skipped"));
                     } else {
                         setState("completed");
-                        setMessage(
-                            `Tekshiruv yakunlandi. ` +
-                            `Yetishmayotgan o‘qituvchilar: ` +
-                            `${data.result?.missingCount ?? "noma’lum"}.`,
-                        );
+                        setMessage(t("terminals.recheck.completed", { count: data.result?.missingCount ?? t("terminals.recheck.unknownCount") }));
                     }
 
                     onFinishedRef.current();
@@ -121,17 +117,17 @@ export function PersonSyncRecheckButton({
 
                 if (data.state === "failed") {
                     setState("failed");
-                    setMessage(data.error ?? "Tekshiruvda xatolik yuz berdi.");
+                    setMessage(data.error ?? t("terminals.recheck.failed"));
                     onFinishedRef.current();
                     return;
                 }
 
                 if (data.state === "active") {
                     setState("active");
-                    setMessage("Terminal tekshirilmoqda...");
+                    setMessage(t("terminals.recheck.active"));
                 } else {
                     setState("waiting");
-                    setMessage(`Redis holati: ${data.state}`);
+                    setMessage(t("terminals.recheck.queueState", { state: data.state }));
                 }
 
                 scheduleNext();
@@ -141,8 +137,8 @@ export function PersonSyncRecheckButton({
                 setState("stopped");
                 setMessage(
                     error instanceof Error
-                        ? `Kuzatishda xatolik: ${error.message}`
-                        : "Vazifa holatini olib bo‘lmadi.",
+                        ? t("terminals.recheck.watchFailed", { error: error.message })
+                        : t("terminals.recheck.stateFailed"),
                 );
             }
         }
@@ -157,7 +153,7 @@ export function PersonSyncRecheckButton({
                 clearTimeout(timer);
             }
         };
-    }, [jobId, terminalId]);
+    }, [jobId, terminalId, t]);
 
     async function handleCheck() {
         if (
@@ -184,8 +180,7 @@ export function PersonSyncRecheckButton({
                 if (response.state === "completed") {
                     setState("completed");
                     setMessage(
-                        "Ushbu 5 daqiqalik oraliqda terminal " +
-                        "allaqachon tekshirilgan. Yangi vazifa yaratilmadi.",
+                        t("terminals.recheck.alreadyChecked"),
                     );
                     onFinishedRef.current();
                     return;
@@ -194,8 +189,7 @@ export function PersonSyncRecheckButton({
                 if (response.state === "failed") {
                     setState("failed");
                     setMessage(
-                        "Ushbu oraliqdagi oldingi tekshiruv " +
-                        "xatolik bilan tugagan. Yangi vazifa yaratilmadi.",
+                        t("terminals.recheck.previousFailed"),
                     );
                     onFinishedRef.current();
                     return;
@@ -205,7 +199,7 @@ export function PersonSyncRecheckButton({
                     setJobId(response.jobId);
                     setState("waiting");
                     setMessage(
-                        "Terminal uchun mavjud Redis vazifasi kuzatilmoqda.",
+                        t("terminals.recheck.watchingExisting"),
                     );
                     return;
                 }
@@ -215,9 +209,8 @@ export function PersonSyncRecheckButton({
                 setState("failed");
                 setMessage(
                     response.reason === "TERMINAL_INACTIVE"
-                        ? "Terminal nofaol."
-                        : response.reason ??
-                        "Vazifa navbatga qo‘shilmadi.",
+                        ? t("terminals.recheck.inactive")
+                        : response.reason ?? t("terminals.recheck.notQueued"),
                 );
                 return;
             }
@@ -225,7 +218,7 @@ export function PersonSyncRecheckButton({
             setJobId(response.jobId);
             setState("waiting");
             setMessage(
-                "Yangi diagnostika vazifasi navbatga yuborildi.",
+                t("terminals.recheck.queued"),
             );
 
         } catch (error: unknown) {
@@ -233,7 +226,7 @@ export function PersonSyncRecheckButton({
             setMessage(
                 error instanceof Error
                     ? error.message
-                    : "Vazifani yuborib bo‘lmadi.",
+                    : t("terminals.recheck.sendFailed"),
             );
         } finally {
             submittingRef.current = false;
@@ -268,10 +261,10 @@ export function PersonSyncRecheckButton({
                     <RotateCw aria-hidden="true" className="size-4" />
                 )}
                 {submitting
-                    ? "Yuborilmoqda"
+                    ? t("terminals.recheck.sending")
                     : watching
-                        ? "Tekshirilmoqda"
-                        : "Qayta tekshirish"}
+                        ? t("terminals.recheck.checking")
+                        : t("terminals.recheck.button")}
             </Button>
 
             {message && (
