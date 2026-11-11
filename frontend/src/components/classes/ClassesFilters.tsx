@@ -97,9 +97,11 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
     }
 
     function clearFilters() {
-        // O‘quv yili saqlanadi — u filtr emas, ko‘rilayotgan davr.
+        // O‘quv yili va sahifa hajmi saqlanadi — ular filtr emas.
         const next = new URLSearchParams();
         if (searchParams.get('academicYear')) next.set('academicYear', academicYear);
+        const limit = searchParams.get('limit');
+        if (limit) next.set('limit', limit);
         setSearchParams(next);
     }
 

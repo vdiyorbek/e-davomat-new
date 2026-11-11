@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Plus, School as SchoolIcon, Search, TriangleAlert, Users } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-
+import { PageSizeSelect } from '@/components/common/PageSizeSelect';
+import { parsePageSize } from '@/lib/pagination';
 import { ClassesFilters } from '@/components/classes/ClassesFilters';
 import { CreateClassForm } from '@/components/classes/CreateClassForm';
 import { GradeLevelEditor } from '@/components/classes/GradeLevelEditor';
@@ -57,11 +58,12 @@ interface ResultsProps {
     hasFilters: boolean;
     gradeFilter: string;
     onPageChange: (page: number) => void;
+    onLimitChange: (limit: number) => void;
     onShowMissing: () => void;
     onClearFilters: () => void;
 }
 
-function ClassesResults({ path, canEdit, hasFilters, gradeFilter, onPageChange, onShowMissing, onClearFilters }: ResultsProps) {
+function ClassesResults({ path, canEdit, hasFilters, gradeFilter, onPageChange, onLimitChange, onShowMissing, onClearFilters }: ResultsProps) {
     const { t } = useTranslation();
     const { data, loading, error, retry } = useApiQuery<SchoolClassesPage>(path);
 
@@ -184,15 +186,19 @@ function ClassesResults({ path, canEdit, hasFilters, gradeFilter, onPageChange, 
                 </Table>
             </Card>
 
-            <Pagination
-                page={data.page}
-                totalPages={data.totalPages}
-                onPageChange={onPageChange}
-                total={data.total}
-                pageSize={data.limit}
-                shownCount={data.data.length}
-                label={t('classes.pagesLabel')}
-            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Pagination
+                    className="flex-1"
+                    page={data.page}
+                    totalPages={data.totalPages}
+                    onPageChange={onPageChange}
+                    total={data.total}
+                    pageSize={data.limit}
+                    shownCount={data.data.length}
+                    label={t('classes.pagesLabel')}
+                />
+                <PageSizeSelect value={data.limit} onChange={onLimitChange} />
+            </div>
         </div>
     );
 }
@@ -217,7 +223,7 @@ export function ClassesPage() {
     const schoolValue = searchParams.get('schoolId');
     const searchValue = searchParams.get('q') ?? '';
     const page = Number(pageValue);
-
+    const limit = parsePageSize(searchParams.get('limit'));
     const valid =
         /^\d+$/.test(pageValue) &&
         page >= 1 &&
@@ -227,7 +233,8 @@ export function ClassesPage() {
         validId(regionValue) &&
         validId(districtValue) &&
         validId(schoolValue) &&
-        searchValue.length <= 100;
+        searchValue.length <= 100 &&
+        limit !== null;
 
     const header = (
         <PageHeader
@@ -262,10 +269,17 @@ export function ClassesPage() {
         updateParams((next) => next.set('page', String(nextPage)));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    function changeLimit(nextLimit: number) {
+        updateParams((next) => {
+            next.set('limit', String(nextLimit));
+            next.set('page', '1');
+        });
+    }
 
     function clearFilters() {
         const next = new URLSearchParams();
         if (searchParams.get('academicYear')) next.set('academicYear', academicYear);
+        if (searchParams.get('limit')) next.set('limit', String(limit));
         setSearchParams(next);
     }
 
@@ -281,7 +295,7 @@ export function ClassesPage() {
         );
     }
 
-    const query = new URLSearchParams({ page: String(page), limit: '20', academicYear });
+    const query = new URLSearchParams({ page: String(page), limit: String(limit), academicYear });
     if (gradeValue) query.set('grade', gradeValue);
     if (regionValue) query.set('regionId', regionValue);
     if (districtValue) query.set('districtId', districtValue);
@@ -306,6 +320,7 @@ export function ClassesPage() {
                 hasFilters={hasFilters}
                 gradeFilter={gradeValue}
                 onPageChange={changePage}
+                onLimitChange={changeLimit}
                 onShowMissing={() =>
                     updateParams((next) => {
                         next.set('grade', 'NONE');

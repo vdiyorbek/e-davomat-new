@@ -232,6 +232,7 @@ export function SchoolsPage() {
     const districtValue = searchParams.get('districtId');
     const searchValue = searchParams.get('q') ?? '';
     const page = Number(pageValue);
+    const limit = parsePageSize(searchParams.get('limit'));
 
     const valid =
         /^\d+$/.test(pageValue) &&
@@ -239,7 +240,8 @@ export function SchoolsPage() {
         page <= 100000 &&
         validId(regionValue) &&
         validId(districtValue) &&
-        searchValue.length <= 100;
+        searchValue.length <= 100 &&
+        limit !== null;;
 
     const header = (
         <PageHeader
@@ -278,8 +280,16 @@ export function SchoolsPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function changeLimit(nextLimit: number) {
+        const next = new URLSearchParams(searchParams);
+        next.set('limit', String(nextLimit));
+        next.set('page', '1');
+        setSearchParams(next);
+    }
+
     function clearFilters() {
-        setSearchParams({});
+        const limitParam = searchParams.get('limit');
+        setSearchParams(limitParam ? { limit: limitParam } : {});
     }
 
     if (!valid) {
@@ -294,7 +304,7 @@ export function SchoolsPage() {
         );
     }
 
-    const query = new URLSearchParams({ page: String(page), limit: '20' });
+    const query = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (regionValue) query.set('regionId', regionValue);
     if (districtValue) query.set('districtId', districtValue);
     if (searchValue.trim()) query.set('q', searchValue.trim());
@@ -315,6 +325,7 @@ export function SchoolsPage() {
                 path={path}
                 hasFilters={hasFilters}
                 onPageChange={changePage}
+                onLimitChange={changeLimit}
                 onClearFilters={clearFilters}
                 {...(canCreate ? { onEdit: (school: School) => openForm(school) } : {})}
             />
