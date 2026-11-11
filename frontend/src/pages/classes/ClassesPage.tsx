@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Plus, School as SchoolIcon, Search, TriangleAlert, Users } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { PageSizeSelect } from '@/components/common/PageSizeSelect';
 import { parsePageSize } from '@/lib/pagination';
 import { ClassesFilters } from '@/components/classes/ClassesFilters';
 import { CreateClassForm } from '@/components/classes/CreateClassForm';

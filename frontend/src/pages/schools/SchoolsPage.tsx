@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Building2, MapPin, Pencil, Plus, Search } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { PageSizeSelect } from '@/components/common/PageSizeSelect';
 import { parsePageSize } from '@/lib/pagination';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
