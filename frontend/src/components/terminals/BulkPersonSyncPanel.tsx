@@ -95,10 +95,9 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                 <Field htmlFor={`${id}-type`} label={t('terminals.personSync.type')}>
                     <SelectField
                         id={`${id}-mode`}
-                        value={mode}
+                        value={type}
                         onValueChange={(value) => {
                             setType(value as SyncType);
-                            setMode(value as 'ALL' | 'LIMITED');
                             setPreview(null);
                             setResult(null);
                         }}
@@ -117,41 +116,51 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                             },
                         ]}
                     />
-                    {mode === 'LIMITED' && (
-                        <Field
-                            htmlFor={`${id}-limit`}
-                            label="Har terminal uchun"
-                        >
-                            <SelectField
-                                id={`${id}-limit`}
-                                value={String(limit)}
-                                onValueChange={(value) => {
-                                    setLimit(Number(value));
-                                    setPreview(null);
-                                    setResult(null);
-                                }}
-                                options={LIMITS.map((value) => ({
-                                    value: String(value),
-                                    label: `${value} ta`,
-                                }))}
-                            />
-                        </Field>
-                    )}
                 </Field>
-                <Field htmlFor={`${id}-limit`} label={t('terminals.personSync.limit')}>
+                <Field
+                    htmlFor={`${id}-mode`}
+                    label="Sinxronlash hajmi"
+                >
                     <SelectField
-                        id={`${id}-limit`}
-                        value={String(limit)}
+                        id={`${id}-mode`}
+                        value={mode}
                         onValueChange={(value) => {
-                            setLimit(Number(value));
+                            setMode(value as 'ALL' | 'LIMITED');
                             setPreview(null);
+                            setResult(null);
                         }}
-                        options={LIMITS.map((value) => ({
-                            value: String(value),
-                            label: t('terminals.personSync.limitOption', { count: value }),
-                        }))}
+                        options={[
+                            {
+                                value: 'ALL',
+                                label: 'Maktabdagi barcha faol shaxslar',
+                            },
+                            {
+                                value: 'LIMITED',
+                                label: 'Sinov uchun cheklangan miqdor',
+                            },
+                        ]}
                     />
                 </Field>
+                {mode === 'LIMITED' && (
+                    <Field
+                        htmlFor={`${id}-limit`}
+                        label="Har terminal uchun"
+                    >
+                        <SelectField
+                            id={`${id}-limit`}
+                            value={String(limit)}
+                            onValueChange={(value) => {
+                                setLimit(Number(value));
+                                setPreview(null);
+                                setResult(null);
+                            }}
+                            options={LIMITS.map((value) => ({
+                                value: String(value),
+                                label: `${value} ta`,
+                            }))}
+                        />
+                    </Field>
+                )}
             </div>
 
             {tooMany && (
