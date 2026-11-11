@@ -1,4 +1,5 @@
-import { Logger, HttpException } from '@nestjs/common';
+import { Logger, HttpException, OnApplicationBootstrap } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,7 +22,8 @@ import {
   TerminalPersonSyncCheck,
   TerminalPersonSyncCheckStatus,
 } from './terminal-person-sync-check.entity';
-
+const DEFAULT_CONCURRENCY = 3;
+const MAX_CONCURRENCY = 20;
 interface PersonSyncQueueJob {
   terminalId: number;
   personId?: number;
@@ -43,9 +45,12 @@ interface CheckRecordInput {
 }
 
 @Processor(PERSON_SYNC_QUEUE, {
-  concurrency: 3,
+  concurrency: DEFAULT_CONCURRENCY,
 })
-export class PersonSyncProcessor extends WorkerHost {
+export class PersonSyncProcessor
+  extends WorkerHost
+  implements OnApplicationBootstrap
+{
   private readonly logger = new Logger(PersonSyncProcessor.name);
 
   constructor(
@@ -65,8 +70,37 @@ export class PersonSyncProcessor extends WorkerHost {
     private readonly dispatcher: PersonSyncDispatcherService,
 
     private readonly clearHistory: TerminalClearHistoryService,
+
+    private readonly configService: ConfigService,
   ) {
     super();
+  }
+
+  onApplicationBootstrap(): void {
+    const configured = this.configService.get<string>(
+      'PERSON_SYNC_CONCURRENCY',
+    );
+
+    const concurrency =
+      configured === undefined || configured.trim() === ''
+        ? DEFAULT_CONCURRENCY
+        : Number(configured);
+
+    if (
+      !Number.isInteger(concurrency) ||
+      concurrency < 1 ||
+      concurrency > MAX_CONCURRENCY
+    ) {
+      throw new Error(
+        `PERSON_SYNC_CONCURRENCY 1 dan ${MAX_CONCURRENCY} gacha bo'lishi kerak`,
+      );
+    }
+
+    this.worker.concurrency = concurrency;
+
+    this.logger.log(
+      `PersonSync Worker ishga tushdi. Concurrency: ${this.worker.concurrency}`,
+    );
   }
 
   async process(job: Job<PersonSyncQueueJob>): Promise<unknown> {

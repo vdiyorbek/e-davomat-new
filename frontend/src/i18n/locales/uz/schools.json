@@ -20,6 +20,14 @@
   "editHint": "Maktab nomi yoki joylashgan tumanini yangilang.",
   "created": "«{{name}}» muvaffaqiyatli qo‘shildi.",
   "updated": "«{{name}}» ma’lumotlari yangilandi.",
+  "columns": {
+    "location": "Hudud",
+    "students": "O‘quvchilar",
+    "teachers": "O‘qituvchilar",
+    "terminals": "Terminallar"
+  },
+  "inactiveTerminals": "+{{count}} ta nofaol",
+  "pagesLabel": "Maktablar sahifalari",
   "form": {
     "name": "Maktab nomi",
     "namePlaceholder": "Masalan, Termiz shahar 1-son maktabi",

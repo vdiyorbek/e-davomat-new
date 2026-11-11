@@ -43,3 +43,22 @@ export interface UpdateSchoolInput {
   name?: string;
   districtId?: number;
 }
+
+export interface SchoolStats {
+  students: number;
+  teachers: number;
+  terminals: number;
+  activeTerminals: number;
+}
+
+export interface SchoolRow extends School {
+  stats: SchoolStats;
+}
+
+export interface SchoolsPage {
+  data: SchoolRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

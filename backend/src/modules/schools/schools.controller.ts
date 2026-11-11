@@ -18,6 +18,7 @@ import { SchoolsService } from './schools.service';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { GetSchoolsQueryDto } from './dto/get-schools-query.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
+import { GetSchoolsPageQueryDto } from './dto/get-schools-page-query.dto';
 
 @Controller('schools')
 @Roles(UserRole.SUPER_ADMIN)
@@ -42,6 +43,27 @@ export class SchoolsController {
     }
 
     return this.schoolsService.findAll(query, user);
+  }
+
+  /** Sahifalangan ro‘yxat: /schools sahifasi uchun. */
+  @Get('page')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  findPage(
+    @Query() query: GetSchoolsPageQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.schoolsService.findPage(query, user);
   }
 
   @Post()

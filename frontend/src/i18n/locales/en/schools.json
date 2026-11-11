@@ -20,6 +20,14 @@
   "editHint": "Update the school name or its district.",
   "created": "“{{name}}” was added.",
   "updated": "“{{name}}” was updated.",
+  "columns": {
+    "location": "Location",
+    "students": "Students",
+    "teachers": "Teachers",
+    "terminals": "Terminals"
+  },
+  "inactiveTerminals": "+{{count}} inactive",
+  "pagesLabel": "School pages",
   "form": {
     "name": "School name",
     "namePlaceholder": "e.g. Termez city school No. 1",

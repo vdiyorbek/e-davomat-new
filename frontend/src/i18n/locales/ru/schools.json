@@ -20,6 +20,14 @@
   "editHint": "Измените название школы или район.",
   "created": "Школа «{{name}}» добавлена.",
   "updated": "Данные школы «{{name}}» обновлены.",
+  "columns": {
+    "location": "Регион",
+    "students": "Ученики",
+    "teachers": "Учителя",
+    "terminals": "Терминалы"
+  },
+  "inactiveTerminals": "+{{count}} неактивн.",
+  "pagesLabel": "Страницы школ",
   "form": {
     "name": "Название школы",
     "namePlaceholder": "Например, Школа №1 г. Термез",
