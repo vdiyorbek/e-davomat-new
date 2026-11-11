@@ -94,6 +94,9 @@ export class TerminalSyncProcessor
 
     const cursorBefore = before?.eventsSyncedUntil ?? null;
 
+    let cursorAfter: Date | null = null;
+    let syncError: unknown = null;
+
     try {
       await this.terminalSyncService.run(terminalId);
 
@@ -101,42 +104,41 @@ export class TerminalSyncProcessor
         id: terminalId,
       });
 
-      const cursorAfter = after?.eventsSyncedUntil ?? null;
-
-      // Faqat cursor haqiqatda oldinga siljisa,
-      // muvaffaqiyatli sinxronlashni qayd etamiz.
-      const beforeMs = cursorBefore?.getTime() ?? 0;
-      const afterMs = cursorAfter?.getTime() ?? 0;
-
-      if (afterMs > beforeMs) {
-        await this.saveSyncHistory({
-          terminalId,
-          status: TerminalSyncRunStatus.SUCCESS,
-          startedAt,
-          cursorBefore,
-          cursorAfter,
-          errorCode: null,
-        });
-      }
+      cursorAfter = after?.eventsSyncedUntil ?? null;
     } catch (error: unknown) {
-      // Original xatolikni yo'qotmaymiz.
-      // Tarix yozishdagi xato asosiy xatoni almashtirmasin.
+      syncError = error;
+    }
+
+    // Tarix yozish asosiy sinxronlash natijasini
+    // o'zgartirmasligi kerak.
+    const beforeMs = cursorBefore?.getTime() ?? 0;
+    const afterMs = cursorAfter?.getTime() ?? 0;
+
+    const shouldSave = syncError !== null || afterMs > beforeMs;
+
+    if (shouldSave) {
       try {
         await this.saveSyncHistory({
           terminalId,
-          status: TerminalSyncRunStatus.FAILED,
+          status:
+            syncError === null
+              ? TerminalSyncRunStatus.SUCCESS
+              : TerminalSyncRunStatus.FAILED,
           startedAt,
           cursorBefore,
-          cursorAfter: null,
-          errorCode: 'SYNC_FAILED',
+          cursorAfter,
+          errorCode: syncError === null ? null : 'SYNC_FAILED',
         });
       } catch {
         this.logger.error(
           `Terminal ${terminalId}: sync tarixini saqlab bo‘lmadi`,
         );
       }
+    }
 
-      throw error;
+    // Faqat haqiqiy sinxronlash xatosi BullMQ'ga o'tadi.
+    if (syncError !== null) {
+      throw syncError;
     }
   }
 
