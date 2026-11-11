@@ -165,8 +165,9 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: ScanFace,
         roles: ADMIN_ROLES,
       },
+
       {
-        to: "/terminals/person-sync-history",
+        to: "/terminals/sync-history",
         key: "personSyncMonitoring",
         icon: Activity,
         roles: ["SUPER_ADMIN"],

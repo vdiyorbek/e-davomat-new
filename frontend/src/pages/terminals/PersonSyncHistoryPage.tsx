@@ -260,7 +260,11 @@ function BatchDetails({
     );
 }
 
-export function PersonSyncHistoryPage() {
+export function PersonSyncHistoryPage({
+    embedded = false,
+}: {
+    embedded?: boolean;
+}) {
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState("ALL");
     const [terminalInput, setTerminalInput] = useState("");
@@ -295,17 +299,24 @@ export function PersonSyncHistoryPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                eyebrow="E-Davomat / Hikvision"
-                title="Shaxslarni sinxronlash tarixi"
-                description="Terminallarga yuborilgan o‘quvchi va o‘qituvchilar bo‘yicha topshiriqlar, bajarilish jarayoni va natijalar."
-                actions={
-                    <Button type="button" variant="outline" onClick={retry}>
-                        <RefreshCw className="size-4" />
-                        Yangilash
-                    </Button>
-                }
-            />
+            {!embedded && (
+                <PageHeader
+                    eyebrow="E-Davomat / Hikvision"
+                    title="Shaxslarni sinxronlash tarixi"
+                    description="O‘quvchi va o‘qituvchilarni terminallarga yuborish tarixi."
+                    actions={
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={retry}
+                        >
+                            <RefreshCw className="size-4" />
+                            Yangilash
+                        </Button>
+                    }
+                />
+            )}
+
 
             <div className="flex flex-wrap items-end gap-3 rounded-xl border p-4">
                 <label className="space-y-1 text-sm">

@@ -44,11 +44,9 @@ const TeacherJournalPage = lazy(() =>
         .then((m) => ({ default: m.TeacherJournalPage }))
 );
 
-const PersonSyncHistoryPage = lazy(() =>
-    import("@/pages/terminals/PersonSyncHistoryPage").then(
-        (module) => ({
-            default: module.PersonSyncHistoryPage,
-        }),
+const SyncHistoryPage = lazy(() =>
+    import("@/pages/terminals/SyncHistoryPage").then(
+        (module) => ({ default: module.SyncHistoryPage }),
     ),
 );
 
@@ -167,19 +165,30 @@ export const router = createBrowserRouter([
                                         path: '/subjects',
                                         element: <SubjectsPage />,
                                     },
+
+                                    {
+                                        path: "/terminals/sync-history",
+                                        element: <SyncHistoryPage />,
+                                    },
                                     {
                                         path: "/terminals/person-sync-history",
-                                        element: <PersonSyncHistoryPage />,
+                                        element: (
+                                            <Navigate
+                                                to="/terminals/sync-history?tab=persons"
+                                                replace
+                                            />
+                                        ),
                                     },
                                     {
                                         path: "/terminals/person-sync-monitoring",
                                         element: (
                                             <Navigate
-                                                to="/terminals/person-sync-history"
+                                                to="/terminals/sync-history?tab=persons"
                                                 replace
                                             />
                                         ),
                                     },
+
                                 ],
                             },
                         ],
