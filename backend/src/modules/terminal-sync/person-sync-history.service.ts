@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 import {
   PersonSyncBatch,
@@ -10,8 +10,13 @@ import {
 
 import {
   PersonSyncBatchItem,
-  PersonSyncBatchItemStatus,
+  PersonSyncBatchItemStatus as Status,
 } from './person-sync-batch-item.entity';
+
+type FinalStatus =
+  Status.SUCCESS | Status.SKIPPED | Status.FAILED | Status.UNCERTAIN;
+
+const ACTIVE_STATUSES = [Status.PENDING, Status.QUEUED, Status.RUNNING];
 
 @Injectable()
 export class PersonSyncHistoryService {
@@ -52,7 +57,7 @@ export class PersonSyncHistoryService {
         terminalId,
         personId,
         jobId: null,
-        status: PersonSyncBatchItemStatus.PENDING,
+        status: Status.PENDING,
         attempts: 0,
         errorCode: null,
         startedAt: null,
@@ -61,89 +66,147 @@ export class PersonSyncHistoryService {
     );
   }
 
-  async markQueued(itemId: string, jobId: string): Promise<void> {
-    await this.items.update(
-      {
-        id: itemId,
-        status: PersonSyncBatchItemStatus.PENDING,
-      },
-      {
-        jobId,
-        status: PersonSyncBatchItemStatus.QUEUED,
+  // Barcha status o'zgarishlari:
+  // 1. Batchni bloklash
+  // 2. Itemni bloklash
+  // 3. Statusni yangilash
+  // 4. Batch hisoblagichlarini yangilash
+  //
+  // Hammasi bitta tranzaksiyada amalga oshadi.
+  private async changeItem(
+    itemId: string,
+    change: (
+      item: PersonSyncBatchItem,
+      manager: EntityManager,
+    ) => Promise<boolean>,
+  ): Promise<void> {
+    await this.batches.manager.transaction(
+      'READ COMMITTED',
+      async (manager) => {
+        // BatchId o'zgarmas maydon.
+        // Dastlab faqat qaysi batch ekanini aniqlaymiz.
+        const reference = await manager.findOneBy(PersonSyncBatchItem, {
+          id: itemId,
+        });
+
+        if (!reference) return;
+
+        // Muhim: hamma joyda avval batch,
+        // keyin item lock olinadi.
+        const batch = await manager
+          .getRepository(PersonSyncBatch)
+          .createQueryBuilder('batch')
+          .setLock('pessimistic_write')
+          .where('batch.id = :batchId', {
+            batchId: reference.batchId,
+          })
+          .getOne();
+
+        if (!batch) return;
+
+        const item = await manager
+          .getRepository(PersonSyncBatchItem)
+          .createQueryBuilder('item')
+          .setLock('pessimistic_write')
+          .where('item.id = :itemId', { itemId })
+          .getOne();
+
+        if (!item) return;
+
+        const changed = await change(item, manager);
+
+        if (!changed) return;
+
+        await this.refreshBatchLocked(manager, batch);
       },
     );
   }
 
+  async markQueued(itemId: string, jobId: string): Promise<void> {
+    await this.changeItem(itemId, async (item, manager) => {
+      // Worker tezroq yakunlagan bo'lsa,
+      // statusni orqaga qaytarmaymiz.
+      if (item.status !== Status.PENDING) {
+        return false;
+      }
+
+      await manager.update(
+        PersonSyncBatchItem,
+        { id: item.id },
+        {
+          jobId,
+          status: Status.QUEUED,
+        },
+      );
+
+      return true;
+    });
+  }
+
   async markRunning(itemId: string, attempts: number): Promise<void> {
-    await this.items.update(
-      {
-        id: itemId,
-        status: In([
-          PersonSyncBatchItemStatus.PENDING,
-          PersonSyncBatchItemStatus.QUEUED,
-          PersonSyncBatchItemStatus.RUNNING,
-        ]),
-      },
-      {
-        status: PersonSyncBatchItemStatus.RUNNING,
-        attempts,
-        startedAt: new Date(),
-      },
-    );
+    await this.changeItem(itemId, async (item, manager) => {
+      if (!ACTIVE_STATUSES.includes(item.status)) {
+        return false;
+      }
+
+      await manager.update(
+        PersonSyncBatchItem,
+        { id: item.id },
+        {
+          status: Status.RUNNING,
+          attempts: Math.max(item.attempts, attempts),
+          startedAt: item.startedAt ?? new Date(),
+        },
+      );
+
+      return true;
+    });
   }
 
   async markFinished(
     itemId: string,
-    status: PersonSyncBatchItemStatus,
+    status: Status,
     errorCode: string | null = null,
   ): Promise<void> {
-    const finalStatuses = [
-      PersonSyncBatchItemStatus.SUCCESS,
-      PersonSyncBatchItemStatus.SKIPPED,
-      PersonSyncBatchItemStatus.FAILED,
-      PersonSyncBatchItemStatus.UNCERTAIN,
+    const allowed: Status[] = [
+      Status.SUCCESS,
+      Status.SKIPPED,
+      Status.FAILED,
+      Status.UNCERTAIN,
     ];
 
-    if (!finalStatuses.includes(status)) {
+    if (!allowed.includes(status)) {
       throw new Error(`Yakuniy status noto‘g‘ri: ${status}`);
     }
 
-    const result = await this.items.update(
-      {
-        id: itemId,
-        status: In([
-          PersonSyncBatchItemStatus.PENDING,
-          PersonSyncBatchItemStatus.QUEUED,
-          PersonSyncBatchItemStatus.RUNNING,
-        ]),
-      },
-      {
-        status,
-        errorCode,
-        finishedAt: new Date(),
-      },
-    );
+    const finalStatus = status as FinalStatus;
 
-    if (result.affected !== 1) return;
+    await this.changeItem(itemId, async (item, manager) => {
+      // Yakuniy holat qayta yozilmaydi.
+      if (!ACTIVE_STATUSES.includes(item.status)) {
+        return false;
+      }
 
-    const item = await this.items.findOneBy({ id: itemId });
+      await manager.update(
+        PersonSyncBatchItem,
+        { id: item.id },
+        {
+          status: finalStatus,
+          errorCode: errorCode?.slice(0, 100) ?? null,
+          finishedAt: new Date(),
+        },
+      );
 
-    if (item) {
-      await this.refreshBatch(item.batchId);
-    }
+      return true;
+    });
   }
 
   async refreshBatch(batchId: string): Promise<void> {
     await this.batches.manager.transaction(
       'READ COMMITTED',
       async (manager) => {
-        const batchRepository = manager.getRepository(PersonSyncBatch);
-
-        const itemRepository = manager.getRepository(PersonSyncBatchItem);
-
-        // Bitta batch bo‘yicha parallel refresh
-        // chaqiruvlarini navbatga qo‘yamiz.
-        const batch = await batchRepository
+        const batch = await manager
+          .getRepository(PersonSyncBatch)
           .createQueryBuilder('batch')
           .setLock('pessimistic_write')
           .where('batch.id = :batchId', { batchId })
@@ -151,83 +214,82 @@ export class PersonSyncHistoryService {
 
         if (!batch) return;
 
-        // Batch hali shakllantirilayotgan bo‘lsa,
-        // uning yakuniy holatini hisoblamaymiz.
-        if (batch.status === PersonSyncBatchStatus.QUEUING) {
-          return;
-        }
+        await this.refreshBatchLocked(manager, batch);
+      },
+    );
+  }
 
-        // Shaxslarni xotiraga yuklamaymiz.
-        // Hisoblashni MySQL bajaradi.
-        const rows = await itemRepository
-          .createQueryBuilder('item')
-          .select('item.status', 'status')
-          .addSelect('COUNT(*)', 'count')
-          .where('item.batchId = :batchId', { batchId })
-          .groupBy('item.status')
-          .getRawMany<{
-            status: PersonSyncBatchItemStatus;
-            count: string;
-          }>();
+  // Bu metod faqat batch lock olingan
+  // tranzaksiya ichidan chaqiriladi.
+  private async refreshBatchLocked(
+    manager: EntityManager,
+    batch: PersonSyncBatch,
+  ): Promise<void> {
+    if (batch.status === PersonSyncBatchStatus.QUEUING) {
+      return;
+    }
 
-        const counts = new Map<PersonSyncBatchItemStatus, number>();
+    const rows = await manager
+      .getRepository(PersonSyncBatchItem)
+      .createQueryBuilder('item')
+      .select('item.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .where('item.batchId = :batchId', {
+        batchId: batch.id,
+      })
+      .groupBy('item.status')
+      .getRawMany<{
+        status: Status;
+        count: string;
+      }>();
 
-        let total = 0;
+    const counts = new Map<Status, number>();
+    let total = 0;
 
-        for (const row of rows) {
-          const count = Number(row.count);
+    for (const row of rows) {
+      const count = Number(row.count);
+      counts.set(row.status, count);
+      total += count;
+    }
 
-          counts.set(row.status, count);
-          total += count;
-        }
+    const get = (status: Status) => counts.get(status) ?? 0;
 
-        const get = (status: PersonSyncBatchItemStatus): number =>
-          counts.get(status) ?? 0;
+    const pending = get(Status.PENDING);
+    const running = get(Status.RUNNING);
 
-        const pending = get(PersonSyncBatchItemStatus.PENDING);
+    const success = get(Status.SUCCESS);
+    const skipped = get(Status.SKIPPED);
+    const failed = get(Status.FAILED);
+    const uncertain = get(Status.UNCERTAIN);
 
-        const running = get(PersonSyncBatchItemStatus.RUNNING);
+    const finished = success + skipped + failed + uncertain;
 
-        const success = get(PersonSyncBatchItemStatus.SUCCESS);
+    const allFinished = total === 0 || finished === total;
 
-        const skipped = get(PersonSyncBatchItemStatus.SKIPPED);
+    let status: PersonSyncBatchStatus;
+    let finishedAt: Date | null = null;
 
-        const failed = get(PersonSyncBatchItemStatus.FAILED);
+    if (allFinished) {
+      status =
+        failed > 0 || uncertain > 0
+          ? PersonSyncBatchStatus.PARTIAL
+          : PersonSyncBatchStatus.COMPLETED;
 
-        const uncertain = get(PersonSyncBatchItemStatus.UNCERTAIN);
+      finishedAt = batch.finishedAt ?? new Date();
+    } else if (running > 0) {
+      status = PersonSyncBatchStatus.RUNNING;
+    } else {
+      status = PersonSyncBatchStatus.QUEUED;
+    }
 
-        const finished = success + skipped + failed + uncertain;
-
-        const allFinished = total === 0 || finished === total;
-
-        let status: PersonSyncBatchStatus;
-        let finishedAt: Date | null = null;
-
-        if (allFinished) {
-          status =
-            failed > 0 || uncertain > 0
-              ? PersonSyncBatchStatus.PARTIAL
-              : PersonSyncBatchStatus.COMPLETED;
-
-          // Takroriy hisoblashda yakunlangan vaqtni
-          // qaytadan o‘zgartirmaymiz.
-          finishedAt = batch.finishedAt ?? new Date();
-        } else if (running > 0) {
-          status = PersonSyncBatchStatus.RUNNING;
-        } else {
-          // PENDING va QUEUED elementlar mavjud.
-          status = PersonSyncBatchStatus.QUEUED;
-        }
-
-        await batchRepository.update(
-          { id: batchId },
-          {
-            totalItems: total,
-            queuedItems: total - pending,
-            status,
-            finishedAt,
-          },
-        );
+    await manager.update(
+      PersonSyncBatch,
+      { id: batch.id },
+      {
+        totalItems: total,
+        queuedItems: total - pending,
+        status,
+        finishedAt,
       },
     );
   }
