@@ -354,7 +354,7 @@
       "failed": "Sinxronlash vaqtini saqlab bo‘lmadi."
     },
     "memory": {
-      "hint": "Qurilmalarda ro‘yxatdan o‘tgan shaxslar soni tekshiriladi. Hech narsa o‘chirilmaydi.",
+      "hint": "Avval qurilmalardagi shaxslar soni tekshiriladi. Shundan keyin xohlasangiz, xotirani tozalash mumkin.",
       "submit": "Tekshirish",
       "checking": "Tekshirilmoqda…",
       "persons": "{{count}} ta shaxs",
@@ -362,6 +362,22 @@
       "error": "Tekshirishda xatolik",
       "failed": "Terminal xotirasini tekshirib bo‘lmadi.",
       "noDelete": "Qurilmadan o‘chirish amali hozircha mavjud emas."
+    },
+    "clear": {
+      "title": "Tanlangan {{count}} ta terminal xotirasini tozalash",
+      "confirmWord": "TOZALASH",
+      "confirmLabel": "Tasdiqlash uchun {{word}} deb yozing",
+      "submit": "{{count}} ta terminalni tozalash",
+      "running": "Tozalanmoqda…",
+      "queued": "Navbatda",
+      "active": "Tozalanmoqda",
+      "done": "Tozalandi: {{before}} → {{after}}",
+      "partial": "To‘liq emas: {{count}} ta qoldi",
+      "skip": {
+        "NOT_FOUND": "Terminal topilmadi",
+        "INACTIVE": "Nofaol — o‘tkazib yuborildi",
+        "SYNC_IN_PROGRESS": "{{count}} ta shaxs yuklanmoqda — o‘tkazib yuborildi"
+      }
     },
     "activate": {
       "hint": "Tanlangan terminallarning tizim holati «Faol» qilinadi. Arxivlangan terminallar o‘zgarmaydi.",

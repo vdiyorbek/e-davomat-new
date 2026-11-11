@@ -17,45 +17,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authorizedGet, authorizedPost } from "@/lib/auth-session";
 import { cn } from "@/lib/utils";
-
-interface ClearResult {
-    usersBefore: number;
-    usersAfter: number;
-    facesAfter: number | null;
-    cleared: boolean;
-}
-
-interface JobResponse {
-    state: string;
-    error: string | null;
-    result: ClearResult | null;
-}
+import {
+    clearErrorKey,
+    sleep,
+    type ClearJobResponse,
+    type ClearResult,
+} from "@/lib/terminal-clear";
 
 type Phase = "idle" | "running" | "done" | "failed";
 
 const POLL_MS = 3000;
 const MAX_WAIT_MS = 12 * 60_000;
 
-const ERROR_KEYS: Record<string, string> = {
-    TERMINAL_BUSY: "terminals.clearPersons.errors.busy",
-    CLEAR_NOT_SUPPORTED: "terminals.clearPersons.errors.notSupported",
-    CLEAR_TIMEOUT: "terminals.clearPersons.errors.timeout",
-    DEVICE_AUTH_FAILED: "terminals.clearPersons.errors.auth",
-};
 
-function sleep(ms: number, signal: AbortSignal) {
-    return new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(resolve, ms);
-        signal.addEventListener(
-            "abort",
-            () => {
-                clearTimeout(timer);
-                reject(new DOMException("Aborted", "AbortError"));
-            },
-            { once: true },
-        );
-    });
-}
 
 export function TerminalClearPersonsAction({
     terminalId,
@@ -81,9 +55,8 @@ export function TerminalClearPersonsAction({
     const nameMatches = typed.trim() === terminalName.trim();
 
     function translateError(raw: string | null | undefined) {
-        if (!raw) return t("terminals.clearPersons.errors.generic");
-        const code = Object.keys(ERROR_KEYS).find((key) => raw.includes(key));
-        return code ? t(ERROR_KEYS[code]) : raw;
+        const key = clearErrorKey(raw);
+        return key ? t(key) : raw || t("terminals.clearPersons.errors.generic");
     }
 
     function reset() {
@@ -114,7 +87,7 @@ export function TerminalClearPersonsAction({
             while (Date.now() - startedAt < MAX_WAIT_MS) {
                 await sleep(POLL_MS, controller.signal);
 
-                const job = await authorizedGet<JobResponse>(
+                const job = await authorizedGet<ClearJobResponse>(
                     `/person-sync-queue/jobs/${encodeURIComponent(jobId)}`,
                     controller.signal,
                 );

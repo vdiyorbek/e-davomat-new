@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authorizedPost } from '@/lib/auth-session';
 import { formatDate, todayInTashkent } from '@/lib/date';
-
+import { BulkTerminalClear } from './BulkTerminalClear';
 import { BulkPersonSyncPanel } from './BulkPersonSyncPanel';
 
 interface PreviewResult {
@@ -60,7 +60,12 @@ export function TerminalBulkActions({ terminalIds, onSubmitted }: Props) {
     const [preview, setPreview] = useState<ClearPreviewResponse | null>(null);
     const [previewKey, setPreviewKey] = useState('');
     const selectionKey = [...terminalIds].sort((a, b) => a - b).join(',');
-
+    const clearableIds =
+        preview && previewKey === selectionKey
+            ? preview.results
+                .filter((item) => item.status === 'READY' && (item.personsCount ?? 0) > 0)
+                .map((item) => item.terminalId)
+            : [];
     // Sinxronlash vaqti
     const [syncStartDate, setSyncStartDate] = useState(todayInTashkent);
     const [savingSyncTime, setSavingSyncTime] = useState(false);
@@ -215,7 +220,13 @@ export function TerminalBulkActions({ terminalIds, onSubmitted }: Props) {
                 </TabsContent>
 
                 <TabsContent value="memory" className="space-y-4 pt-1">
-                    <p className="text-sm text-muted-foreground">{t('terminals.bulk.memory.hint')}</p>
+                    {clearableIds.length > 0 && (
+                        <BulkTerminalClear
+                            key={selectionKey}
+                            terminalIds={clearableIds}
+                            onFinished={onSubmitted}
+                        />
+                    )}
                     {count > MAX_MEMORY && <LimitHint max={MAX_MEMORY} />}
                     <Button
                         type="button"

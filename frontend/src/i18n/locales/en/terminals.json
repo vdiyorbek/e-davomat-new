@@ -354,15 +354,30 @@
       "done_one": "Sync time set for {{count}} terminal."
     },
     "memory": {
-      "hint": "Counts people registered on the devices. Nothing is deleted.",
+      "hint": "First, the number of people on each device is checked. After that you can clear the memory if needed.",
       "submit": "Check",
       "checking": "Checking…",
       "persons": "{{count}} people",
       "inactive": "Inactive",
       "error": "Check failed",
       "failed": "Could not check terminal memory.",
-      "noDelete": "Deleting from the device is not available yet.",
       "persons_one": "{{count}} person"
+    },
+    "clear": {
+      "title": "Clear memory of {{count}} selected terminals",
+      "confirmWord": "CLEAR",
+      "confirmLabel": "Type {{word}} to confirm",
+      "submit": "Clear {{count}} terminals",
+      "running": "Clearing…",
+      "queued": "Queued",
+      "active": "Clearing",
+      "done": "Cleared: {{before}} → {{after}}",
+      "partial": "Incomplete: {{count}} left",
+      "skip": {
+        "NOT_FOUND": "Terminal not found",
+        "INACTIVE": "Inactive — skipped",
+        "SYNC_IN_PROGRESS": "{{count}} people uploading — skipped"
+      }
     },
     "activate": {
       "hint": "Sets the system status of the selected terminals to Active. Archived terminals are not changed.",

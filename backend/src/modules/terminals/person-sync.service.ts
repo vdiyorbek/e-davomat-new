@@ -250,9 +250,11 @@ export class PersonSyncService {
     terminalId: number,
     assertOwned: () => Promise<void>,
   ) {
-    const terminal = await this.terminalsRepository.findOneBy({
-      id: terminalId,
-    });
+    const terminal = await this.terminalsRepository
+      .createQueryBuilder('terminal')
+      .addSelect('terminal.passwordEncrypted')
+      .where('terminal.id = :terminalId', { terminalId })
+      .getOne();
 
     if (!terminal) {
       throw new NotFoundException('Terminal topilmadi');
