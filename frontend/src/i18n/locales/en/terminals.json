@@ -492,6 +492,7 @@
     "sendFailed": "Could not send the job."
   },
   "clearPersons": {
+    "viewHistory": "View history",
     "zoneTitle": "Danger zone",
     "zoneHint": "These actions cannot be undone.",
     "button": "Clear terminal memory",

@@ -220,13 +220,7 @@ export function TerminalBulkActions({ terminalIds, onSubmitted }: Props) {
                 </TabsContent>
 
                 <TabsContent value="memory" className="space-y-4 pt-1">
-                    {clearableIds.length > 0 && (
-                        <BulkTerminalClear
-                            key={selectionKey}
-                            terminalIds={clearableIds}
-                            onFinished={onSubmitted}
-                        />
-                    )}
+                    <p className="text-sm text-muted-foreground">{t('terminals.bulk.memory.hint')}</p>
                     {count > MAX_MEMORY && <LimitHint max={MAX_MEMORY} />}
                     <Button
                         type="button"
@@ -256,7 +250,14 @@ export function TerminalBulkActions({ terminalIds, onSubmitted }: Props) {
                             ))}
                         </ul>
                     )}
-                    <p className="text-xs text-muted-foreground">{t('terminals.bulk.memory.noDelete')}</p>
+
+                    {clearableIds.length > 0 && (
+                        <BulkTerminalClear
+                            key={selectionKey}
+                            terminalIds={clearableIds}
+                            onFinished={onSubmitted}
+                        />
+                    )}
                 </TabsContent>
 
                 <TabsContent value="activate" className="space-y-4 pt-1">

@@ -1,4 +1,4 @@
-import { CalendarClock, ScanFace, Users } from 'lucide-react';
+import { CalendarClock, Eraser, ScanFace, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -6,15 +6,17 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { ClearHistorySection } from './ClearHistorySection';
 import { EventSyncHistorySection } from './EventSyncHistorySection';
 import { PersonSyncHistoryPage } from './PersonSyncHistoryPage';
 
-type Tab = 'events' | 'persons';
+type Tab = 'events' | 'persons' | 'clears';
 
 export function SyncHistoryPage() {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const tab: Tab = searchParams.get('tab') === 'persons' ? 'persons' : 'events';
+    const rawTab = searchParams.get('tab');
+    const tab: Tab = rawTab === 'persons' || rawTab === 'clears' ? rawTab : 'events';
 
     return (
         <div className="w-full min-w-0 space-y-5">
@@ -34,10 +36,10 @@ export function SyncHistoryPage() {
 
             <Tabs
                 value={tab}
-                onValueChange={(next) => setSearchParams(next === 'persons' ? { tab: 'persons' } : {})}
+                onValueChange={(next) => setSearchParams(next === 'events' ? {} : { tab: next })}
                 className="gap-5"
             >
-                <TabsList className="h-11 w-full sm:w-fit">
+                <TabsList className="h-auto w-full flex-wrap sm:h-11 sm:w-fit sm:flex-nowrap">
                     <TabsTrigger value="events" className="px-4">
                         <CalendarClock aria-hidden="true" />
                         {t('syncHistory.tabs.events')}
@@ -46,6 +48,10 @@ export function SyncHistoryPage() {
                         <Users aria-hidden="true" />
                         {t('syncHistory.tabs.persons')}
                     </TabsTrigger>
+                    <TabsTrigger value="clears" className="px-4">
+                        <Eraser aria-hidden="true" />
+                        {t('syncHistory.tabs.clears')}
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="events">
@@ -53,6 +59,9 @@ export function SyncHistoryPage() {
                 </TabsContent>
                 <TabsContent value="persons">
                     <PersonSyncHistoryPage embedded />
+                </TabsContent>
+                <TabsContent value="clears">
+                    <ClearHistorySection />
                 </TabsContent>
             </Tabs>
         </div>

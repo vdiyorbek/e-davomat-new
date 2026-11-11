@@ -489,6 +489,7 @@
     "sendFailed": "Vazifani yuborib bo‘lmadi."
   },
   "clearPersons": {
+    "viewHistory": "Tarixni ko‘rish",
     "zoneTitle": "Xavfli amallar",
     "zoneHint": "Bu amallarni qaytarib bo‘lmaydi.",
     "button": "Terminal xotirasini tozalash",

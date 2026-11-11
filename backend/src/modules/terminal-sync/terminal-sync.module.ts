@@ -30,6 +30,9 @@ import { PersonSyncBatchItem } from './person-sync-batch-item.entity';
 import { PersonSyncHistoryService } from './person-sync-history.service';
 import { PersonSyncReconciliationService } from './person-sync-reconciliation.service';
 import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
+import { TerminalClearRun } from './terminal-clear-run.entity';
+import { TerminalClearHistoryService } from './terminal-clear-history.service';
+import { TerminalClearHistoryController } from './terminal-clear-history.controller';
 
 @Module({
   imports: [
@@ -41,6 +44,7 @@ import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
       User,
       PersonSyncBatch,
       PersonSyncBatchItem,
+      TerminalClearRun,
     ]),
 
     // PersonSyncService shu moduldan export qilinadi.
@@ -88,6 +92,7 @@ import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
     TerminalSyncMonitoringController,
     BulkPersonSyncController,
     PersonSyncHistoryController,
+    TerminalClearHistoryController,
   ],
 
   providers: [
@@ -102,6 +107,7 @@ import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
     PersonSyncHistoryService,
     PersonSyncReconciliationService,
     PersonSyncDispatcherService,
+    TerminalClearHistoryService,
   ],
 })
 export class TerminalSyncModule {}

@@ -3,7 +3,8 @@
   "description": "Davomat eventlarini olish va shaxslarni terminallarga yuborish jarayonlari.",
   "tabs": {
     "events": "Davomat eventlari",
-    "persons": "Shaxslarni yuborish"
+    "persons": "Shaxslarni yuborish",
+    "clears": "Xotirani tozalash"
   },
   "filters": {
     "status": "Holat",
@@ -116,5 +117,47 @@
     "SKIPPED": "O‘tkazib yuborilgan",
     "FAILED": "Xatolik",
     "UNCERTAIN": "Tekshirish kerak"
+  },
+  "clears": {
+    "title": "Xotirani tozalash tarixi",
+    "hint": "Terminallardagi barcha shaxslarni o‘chirish amallari va ularning natijasi.",
+    "emptyTitle": "Tozalash amallari yo‘q",
+    "empty": "Terminal xotirasi hali tozalanmagan.",
+    "kpi": {
+      "total": "Jami amallar",
+      "running": "Jarayonda",
+      "success": "Tozalandi",
+      "problems": "Muammoli"
+    },
+    "columns": {
+      "terminal": "Terminal",
+      "status": "Holat",
+      "result": "Shaxslar (oldin → keyin)",
+      "requestedBy": "Kim tomonidan",
+      "time": "Vaqt",
+      "error": "Xato"
+    },
+    "statuses": {
+      "QUEUED": "Navbatda",
+      "RUNNING": "Tozalanmoqda",
+      "SUCCESS": "Tozalandi",
+      "PARTIAL": "To‘liq emas",
+      "FAILED": "Xato"
+    },
+    "facesLeft": "Qolgan yuz rasmlari: {{value}}",
+    "by": "Bajargan: {{name}}",
+    "unknownUser": "Noma’lum",
+    "errors": {
+      "TERMINAL_BUSY": "Terminal band edi",
+      "DEVICE_AUTH_FAILED": "Login yoki parol noto‘g‘ri",
+      "CLEAR_NOT_SUPPORTED": "Model qo‘llab-quvvatlamaydi",
+      "CLEAR_TIMEOUT": "10 daqiqada tugamadi",
+      "CLEAR_FAILED": "Terminal o‘chirishni bajara olmadi",
+      "CLEAR_REJECTED": "Terminal so‘rovni rad etdi",
+      "QUEUE_ERROR": "Navbatga qo‘yib bo‘lmadi",
+      "TIMEOUT": "Terminal javob bermadi",
+      "CONNECTION_ERROR": "Terminalga ulanib bo‘lmadi",
+      "PERSON_SYNC_LOCK_LOST": "Jarayon to‘xtab qoldi"
+    }
   }
 }

@@ -1,4 +1,3 @@
-
 import {
   Column,
   CreateDateColumn,
@@ -15,15 +14,10 @@ import { Person } from '../persons/person.entity';
 import { PersonSyncStatus } from './enums/person-sync-status.enum';
 
 @Entity('terminal_person_sync')
-@Index(
-  'UQ_terminal_person_sync_terminal_person',
-  ['terminalId', 'personId'],
-  { unique: true },
-)
-@Index(
-  'IDX_terminal_person_sync_status',
-  ['status', 'updatedAt'],
-)
+@Index('UQ_terminal_person_sync_terminal_person', ['terminalId', 'personId'], {
+  unique: true,
+})
+@Index('IDX_terminal_person_sync_status', ['status', 'updatedAt'])
 export class TerminalPersonSync {
   @PrimaryGeneratedColumn({
     type: 'bigint',
@@ -43,8 +37,7 @@ export class TerminalPersonSync {
   })
   @JoinColumn({
     name: 'terminalId',
-    foreignKeyConstraintName:
-      'FK_terminal_person_sync_terminal',
+    foreignKeyConstraintName: 'FK_terminal_person_sync_terminal',
   })
   terminal!: Terminal;
 
@@ -60,8 +53,7 @@ export class TerminalPersonSync {
   })
   @JoinColumn({
     name: 'personId',
-    foreignKeyConstraintName:
-      'FK_terminal_person_sync_person',
+    foreignKeyConstraintName: 'FK_terminal_person_sync_person',
   })
   person!: Person;
 

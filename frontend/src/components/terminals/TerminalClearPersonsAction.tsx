@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Eraser, Loader2 } from "lucide-react";
+import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -28,8 +29,6 @@ type Phase = "idle" | "running" | "done" | "failed";
 
 const POLL_MS = 3000;
 const MAX_WAIT_MS = 12 * 60_000;
-
-
 
 export function TerminalClearPersonsAction({
     terminalId,
@@ -81,6 +80,10 @@ export function TerminalClearPersonsAction({
                 `/person-sync-queue/terminals/${terminalId}/clear`,
                 { confirm: "CLEAR_TERMINAL_PERSONS" },
             );
+
+            if (!jobId) {
+                throw new Error(t("terminals.clearPersons.errors.generic"));
+            }
 
             const startedAt = Date.now();
 
@@ -227,6 +230,14 @@ export function TerminalClearPersonsAction({
                 )}
 
                 <AlertDialogFooter>
+                    {phase !== "idle" && !running && (
+                        <Button asChild variant="ghost">
+                            <Link to="/terminals/sync-history?tab=clears">
+                                {t("terminals.clearPersons.viewHistory")}
+                            </Link>
+                        </Button>
+                    )}
+
                     <AlertDialogCancel disabled={running}>
                         {phase === "idle"
                             ? t("terminals.clearPersons.cancel")
@@ -247,4 +258,4 @@ export function TerminalClearPersonsAction({
             </AlertDialogContent>
         </AlertDialog>
     );
-}
+}

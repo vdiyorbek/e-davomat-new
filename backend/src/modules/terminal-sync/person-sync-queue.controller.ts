@@ -24,6 +24,7 @@ import {
   PersonSyncBatchItemStatus,
 } from './person-sync-batch-item.entity';
 import { PersonSyncScheduler } from './person-sync.scheduler';
+import { TerminalClearHistoryService } from './terminal-clear-history.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from '../terminals/terminal.entity';
@@ -40,6 +41,7 @@ interface PersonSyncCheckJob {
   terminalId: number;
   personId?: number;
   requestedByUserId?: number;
+  clearRunId?: string;
 }
 
 type ClearQueueResult =
@@ -61,6 +63,8 @@ export class PersonSyncQueueController {
 
     @InjectRepository(PersonSyncBatchItem)
     private readonly batchItems: Repository<PersonSyncBatchItem>,
+
+    private readonly clearHistory: TerminalClearHistoryService,
   ) {}
 
   @Post('terminals/:id/check')
@@ -226,9 +230,6 @@ export class PersonSyncQueueController {
     };
   }
 
-  /** Terminal xotirasidagi barcha shaxslarni o‘chirish (qaytarib bo‘lmaydi). */
-  @Post('terminals/:id/clear')
-  @HttpCode(202)
   /** Bitta terminalni tozalash vazifasini navbatga qo‘yadi (tekshiruvlar bilan). */
   private async queueClear(
     terminalId: number,
@@ -265,16 +266,28 @@ export class PersonSyncQueueController {
 
     const jobId = `clear-terminal-${terminalId}-${Date.now()}`;
 
-    await this.queue.add(
-      PERSON_SYNC_JOB.CLEAR_TERMINAL,
-      { terminalId, requestedByUserId: actorId },
-      {
-        jobId,
-        attempts: 1,
-        removeOnComplete: { age: 86400, count: 1000 },
-        removeOnFail: { age: 86400, count: 1000 },
-      },
-    );
+    // Avval tarixga yozamiz — keyin navbatga qo‘yamiz.
+    const run = await this.clearHistory.create(terminalId, actorId, jobId);
+
+    try {
+      await this.queue.add(
+        PERSON_SYNC_JOB.CLEAR_TERMINAL,
+        { terminalId, requestedByUserId: actorId, clearRunId: run.id },
+        {
+          jobId,
+          attempts: 1,
+          removeOnComplete: { age: 86400, count: 1000 },
+          removeOnFail: { age: 86400, count: 1000 },
+        },
+      );
+    } catch (error: unknown) {
+      await this.clearHistory.markFailed(
+        run.id,
+        'QUEUE_ERROR',
+        error instanceof Error ? error.message : String(error),
+      );
+      throw error;
+    }
 
     return { terminalId, status: 'QUEUED', jobId };
   }

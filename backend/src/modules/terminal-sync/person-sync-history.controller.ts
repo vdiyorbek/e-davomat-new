@@ -24,7 +24,7 @@ import {
 
 const STATUSES = Object.values(PersonSyncBatchStatus);
 
-function positiveInteger(
+export function positiveInteger(
   value: string | undefined,
   fallback: number,
   maximum: number,

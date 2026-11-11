@@ -52,7 +52,10 @@ export class AttendanceEventsController {
     let terminalId: number | undefined;
 
     if (terminalIdRaw !== undefined && terminalIdRaw !== '') {
-      if (!/^[1-9]\d*$/.test(terminalIdRaw) || Number(terminalIdRaw) > 4294967295) {
+      if (
+        !/^[1-9]\d*$/.test(terminalIdRaw) ||
+        Number(terminalIdRaw) > 4294967295
+      ) {
         throw new BadRequestException('Terminal ID noto‘g‘ri');
       }
 

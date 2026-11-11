@@ -3,7 +3,8 @@
   "description": "Attendance event fetching and pushing people to terminals.",
   "tabs": {
     "events": "Attendance events",
-    "persons": "People sync"
+    "persons": "People sync",
+    "clears": "Memory clearing"
   },
   "filters": {
     "status": "Status",
@@ -117,5 +118,47 @@
     "SKIPPED": "Skipped",
     "FAILED": "Failed",
     "UNCERTAIN": "Needs review"
+  },
+  "clears": {
+    "title": "Memory clearing history",
+    "hint": "Operations that deleted all people from terminals, and their results.",
+    "emptyTitle": "No clearing operations",
+    "empty": "No terminal memory has been cleared yet.",
+    "kpi": {
+      "total": "Total operations",
+      "running": "In progress",
+      "success": "Cleared",
+      "problems": "With problems"
+    },
+    "columns": {
+      "terminal": "Terminal",
+      "status": "Status",
+      "result": "People (before → after)",
+      "requestedBy": "Started by",
+      "time": "Time",
+      "error": "Error"
+    },
+    "statuses": {
+      "QUEUED": "Queued",
+      "RUNNING": "Clearing",
+      "SUCCESS": "Cleared",
+      "PARTIAL": "Incomplete",
+      "FAILED": "Failed"
+    },
+    "facesLeft": "Face photos left: {{value}}",
+    "by": "Started by: {{name}}",
+    "unknownUser": "Unknown",
+    "errors": {
+      "TERMINAL_BUSY": "Terminal was busy",
+      "DEVICE_AUTH_FAILED": "Wrong login or password",
+      "CLEAR_NOT_SUPPORTED": "Model not supported",
+      "CLEAR_TIMEOUT": "Didn't finish within 10 minutes",
+      "CLEAR_FAILED": "Terminal failed to delete",
+      "CLEAR_REJECTED": "Terminal rejected the request",
+      "QUEUE_ERROR": "Couldn't queue the task",
+      "TIMEOUT": "Terminal didn't respond",
+      "CONNECTION_ERROR": "Couldn't connect to the terminal",
+      "PERSON_SYNC_LOCK_LOST": "Process was interrupted"
+    }
   }
 }

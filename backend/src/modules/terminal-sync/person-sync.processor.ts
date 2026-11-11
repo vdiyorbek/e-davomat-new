@@ -10,6 +10,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request
 import { User } from '../users/user.entity';
 import { PersonSyncHistoryService } from './person-sync-history.service';
 import { PersonSyncDispatcherService } from './person-sync-dispatcher.service';
+import { TerminalClearHistoryService } from './terminal-clear-history.service';
 import { PersonSyncBatchItemStatus } from './person-sync-batch-item.entity';
 import { UserRole } from '../users/enums/user-role.enum';
 import {
@@ -26,6 +27,7 @@ interface PersonSyncQueueJob {
   personId?: number;
   requestedByUserId?: number;
   historyItemId?: string;
+  clearRunId?: string;
 }
 
 interface CheckRecordInput {
@@ -61,6 +63,8 @@ export class PersonSyncProcessor extends WorkerHost {
     private readonly history: PersonSyncHistoryService,
 
     private readonly dispatcher: PersonSyncDispatcherService,
+
+    private readonly clearHistory: TerminalClearHistoryService,
   ) {
     super();
   }
@@ -143,13 +147,23 @@ export class PersonSyncProcessor extends WorkerHost {
 
       case PERSON_SYNC_JOB.CLEAR_TERMINAL: {
         const terminalId = job.data.terminalId;
+        const runId = job.data.clearRunId;
+
+        if (runId) {
+          await this.clearHistory.markRunning(runId);
+        }
 
         const locked = await this.terminalLock.run(terminalId, (assertOwned) =>
           this.personSyncService.clearTerminalPersons(terminalId, assertOwned),
         );
 
+        // Xato bo‘lsa, tarixni onFailed() yangilaydi.
         if (!locked.acquired) {
           throw new UnrecoverableError('TERMINAL_BUSY');
+        }
+
+        if (runId && locked.result) {
+          await this.clearHistory.markFinished(runId, locked.result);
         }
 
         this.logger.warn(
@@ -472,6 +486,31 @@ export class PersonSyncProcessor extends WorkerHost {
         `jobId=${job?.id ?? '?'}, ` +
         `error=${error.message}`,
     );
+
+    // Tozalash vazifasi xato bilan tugasa (worker qotib qolganda ham)
+    // tarixdagi yozuv "Navbatda/Tozalanmoqda"da osilib qolmasin.
+    const runId = job?.data?.clearRunId;
+
+    if (job?.name === PERSON_SYNC_JOB.CLEAR_TERMINAL && runId) {
+      void this.clearHistory
+        .markFailed(runId, this.clearErrorCode(error), error.message)
+        .catch((caught: unknown) => {
+          this.logger.error(
+            `Tozalash tarixini yangilab bo‘lmadi: ${
+              caught instanceof Error ? caught.message : String(caught)
+            }`,
+          );
+        });
+    }
+  }
+
+  private clearErrorCode(error: Error): string {
+    const known =
+      /^(TERMINAL_BUSY|DEVICE_AUTH_FAILED|CLEAR_NOT_SUPPORTED|CLEAR_TIMEOUT|CLEAR_FAILED|CLEAR_REJECTED|PERSON_SYNC_LOCK_LOST)/.exec(
+        error.message,
+      );
+
+    return known ? known[1] : this.getSyncErrorCode(error);
   }
 
   @OnWorkerEvent('error')
