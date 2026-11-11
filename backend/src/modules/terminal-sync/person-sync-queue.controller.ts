@@ -42,6 +42,11 @@ interface PersonSyncCheckJob {
   requestedByUserId?: number;
 }
 
+type ClearQueueResult =
+  | { terminalId: number; status: 'QUEUED'; jobId: string }
+  | { terminalId: number; status: 'NOT_FOUND' | 'INACTIVE' }
+  | { terminalId: number; status: 'SYNC_IN_PROGRESS'; count: number };
+
 @Controller('person-sync-queue')
 @Roles(UserRole.SUPER_ADMIN)
 export class PersonSyncQueueController {
@@ -224,6 +229,59 @@ export class PersonSyncQueueController {
   /** Terminal xotirasidagi barcha shaxslarni o‘chirish (qaytarib bo‘lmaydi). */
   @Post('terminals/:id/clear')
   @HttpCode(202)
+  /** Bitta terminalni tozalash vazifasini navbatga qo‘yadi (tekshiruvlar bilan). */
+  private async queueClear(
+    terminalId: number,
+    actorId: number,
+  ): Promise<ClearQueueResult> {
+    const terminal = await this.terminalsRepository.findOneBy({
+      id: terminalId,
+    });
+
+    if (!terminal) {
+      return { terminalId, status: 'NOT_FOUND' };
+    }
+
+    if (!terminal.isActive || terminal.archivedAt) {
+      return { terminalId, status: 'INACTIVE' };
+    }
+
+    // Yuklash ketayotganda tozalasak, navbatdagilar
+    // yarim-yarti yuklanib qoladi.
+    const count = await this.batchItems.count({
+      where: {
+        terminalId,
+        status: In([
+          PersonSyncBatchItemStatus.PENDING,
+          PersonSyncBatchItemStatus.QUEUED,
+          PersonSyncBatchItemStatus.RUNNING,
+        ]),
+      },
+    });
+
+    if (count > 0) {
+      return { terminalId, status: 'SYNC_IN_PROGRESS', count };
+    }
+
+    const jobId = `clear-terminal-${terminalId}-${Date.now()}`;
+
+    await this.queue.add(
+      PERSON_SYNC_JOB.CLEAR_TERMINAL,
+      { terminalId, requestedByUserId: actorId },
+      {
+        jobId,
+        attempts: 1,
+        removeOnComplete: { age: 86400, count: 1000 },
+        removeOnFail: { age: 86400, count: 1000 },
+      },
+    );
+
+    return { terminalId, status: 'QUEUED', jobId };
+  }
+
+  /** Bitta terminal xotirasini tozalash (qaytarib bo‘lmaydi). */
+  @Post('terminals/:id/clear')
+  @HttpCode(202)
   async enqueueClear(
     @Param('id', ParseIntPipe) terminalId: number,
     @Body() body: unknown,
@@ -243,53 +301,69 @@ export class PersonSyncQueueController {
       );
     }
 
-    const terminal = await this.terminalsRepository.findOneBy({
-      id: terminalId,
-    });
+    const result = await this.queueClear(terminalId, actor.id);
 
-    if (!terminal) {
-      throw new NotFoundException('Terminal topilmadi');
+    switch (result.status) {
+      case 'NOT_FOUND':
+        throw new NotFoundException('Terminal topilmadi');
+      case 'INACTIVE':
+        throw new BadRequestException('Terminal faol emas');
+      case 'SYNC_IN_PROGRESS':
+        throw new ConflictException({
+          code: 'SYNC_IN_PROGRESS',
+          count: result.count,
+          message: `Bu terminalga ${result.count} ta shaxs yuklanmoqda. Avval yuklash tugashini kuting.`,
+        });
+      default:
+        return { terminalId, queued: true, jobId: result.jobId };
+    }
+  }
+
+  /** Tanlangan 1–5 ta terminal xotirasini tozalash (qaytarib bo‘lmaydi). */
+  @Post('terminals/bulk-clear')
+  @HttpCode(202)
+  async enqueueBulkClear(
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    const input =
+      body !== null && typeof body === 'object' && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+
+    if (input.confirm !== 'CLEAR_SELECTED_TERMINALS') {
+      throw new BadRequestException(
+        'confirm: CLEAR_SELECTED_TERMINALS talab etiladi',
+      );
     }
 
-    if (!terminal.isActive || terminal.archivedAt) {
-      throw new BadRequestException('Terminal faol emas');
+    const ids = input.terminalIds;
+
+    if (
+      !Array.isArray(ids) ||
+      ids.length < 1 ||
+      ids.length > 5 ||
+      !ids.every(
+        (id): id is number =>
+          typeof id === 'number' && Number.isSafeInteger(id) && id > 0,
+      ) ||
+      new Set(ids).size !== ids.length
+    ) {
+      throw new BadRequestException(
+        '1–5 ta takrorlanmagan terminal ID kiriting',
+      );
     }
 
-    // Yuklash ketayotganda tozalasak, navbatdagilar
-    // yarim-yarti yuklanib qoladi.
-    const inProgress = await this.batchItems.count({
-      where: {
-        terminalId,
-        status: In([
-          PersonSyncBatchItemStatus.PENDING,
-          PersonSyncBatchItemStatus.QUEUED,
-          PersonSyncBatchItemStatus.RUNNING,
-        ]),
-      },
-    });
+    const results: ClearQueueResult[] = [];
 
-    if (inProgress > 0) {
-      throw new ConflictException({
-        code: 'SYNC_IN_PROGRESS',
-        count: inProgress,
-        message: `Bu terminalga ${inProgress} ta shaxs yuklanmoqda. Avval yuklash tugashini kuting.`,
-      });
+    for (const terminalId of ids) {
+      results.push(await this.queueClear(terminalId, actor.id));
     }
 
-    const jobId = `clear-terminal-${terminalId}-${Date.now()}`;
-
-    await this.queue.add(
-      PERSON_SYNC_JOB.CLEAR_TERMINAL,
-      { terminalId, requestedByUserId: actor.id },
-      {
-        jobId,
-        attempts: 1,
-        removeOnComplete: { age: 86400, count: 1000 },
-        removeOnFail: { age: 86400, count: 1000 },
-      },
-    );
-
-    return { terminalId, queued: true, jobId };
+    return { results };
   }
 
   @Get('jobs/:jobId')
