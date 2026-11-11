@@ -277,8 +277,10 @@ export class PersonSyncService {
       password,
     );
 
-    const existingUser = terminalUsers.find(
-      (item) => item.employeeNo === person.pnfl,
+    const existingUser = await this.hikvision.findTerminalUser(
+      terminal,
+      password,
+      person.pnfl,
     );
 
     return {
@@ -1041,9 +1043,13 @@ export class PersonSyncService {
     password: string,
     employeeNo: string,
   ) {
-    const users = await this.hikvision.getAllTerminalUsers(terminal, password);
+    const terminalUser = await this.hikvision.findTerminalUser(
+      terminal,
+      password,
+      employeeNo,
+    );
 
-    const userExists = users.some((item) => item.employeeNo === employeeNo);
+    const userExists = terminalUser !== null;
 
     const face = await this.hikvision.searchTerminalFace(
       terminal,
@@ -1265,12 +1271,13 @@ export class PersonSyncService {
           userCreatedThisAttempt = true;
 
           // Yaratishdan so‘ng terminaldan qayta o‘qiymiz.
-          const users = await this.hikvision.getAllTerminalUsers(
+          const createdUser = await this.hikvision.findTerminalUser(
             terminal,
             password,
+            person.pnfl,
           );
 
-          if (!users.some((item) => item.employeeNo === person.pnfl)) {
+          if (!createdUser) {
             throw new Error('USER_NOT_CONFIRMED');
           }
 

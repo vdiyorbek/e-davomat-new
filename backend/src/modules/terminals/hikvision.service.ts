@@ -41,6 +41,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 @Injectable()
 export class HikvisionService {
+  private readonly userFilterUnsupported = new Set<number>();
   async getDeviceInfo(
     terminal: Terminal,
     password: string,
@@ -525,6 +526,7 @@ export class HikvisionService {
     position = 0,
     pageSize = 30,
     searchID = randomUUID(),
+    employeeNo?: string,
   ): Promise<HikvisionUsersPage> {
     if (
       !Number.isSafeInteger(position) ||
@@ -551,6 +553,7 @@ export class HikvisionService {
         searchID,
         searchResultPosition: position,
         maxResults: pageSize,
+        ...(employeeNo ? { EmployeeNoList: [{ employeeNo }] } : {}),
       },
     });
 
@@ -653,6 +656,77 @@ export class HikvisionService {
       totalMatches: result.totalMatches,
       nextPosition: next < result.totalMatches ? next : null,
     };
+  }
+
+  /**
+   * Terminaldagi bitta shaxsni employeeNo (PNFL) bo‘yicha qidiradi.
+   *
+   * Avval bitta shaxsni tekshirish uchun terminaldagi BARCHA
+   * foydalanuvchilar 30 tadan sahifalab o‘qilar edi (2268 kishida
+   * 76 so‘rov, ~16 s). ISAPI’ning EmployeeNoList filtri bilan — 1 so‘rov.
+   *
+   * Ba’zi eski proshivkalar filtrni e’tiborsiz qoldiradi va hammani
+   * qaytaradi. Buni sezsak, shu terminal uchun to‘liq o‘qishga o‘tamiz.
+   */
+  async findTerminalUser(
+    terminal: Terminal,
+    password: string,
+    employeeNo: string,
+  ): Promise<HikvisionTerminalUser | null> {
+    if (!employeeNo || employeeNo.length > 64) {
+      throw new Error('EmployeeNo qiymati noto‘g‘ri');
+    }
+
+    if (!this.userFilterUnsupported.has(terminal.id)) {
+      const startedAt = Date.now();
+
+      try {
+        const page = await this.getTerminalUsersPage(
+          terminal,
+          password,
+          0,
+          30,
+          randomUUID(),
+          employeeNo,
+        );
+
+        // Filtr ishladi: 0 yoki 1 ta natija va u aynan so‘ralgan shaxs.
+        const filterApplied =
+          page.totalMatches <= 1 &&
+          page.users.every((item) => item.employeeNo === employeeNo);
+
+        if (filterApplied) {
+          console.log('HIKVISION USER LOOKUP:', {
+            terminalId: terminal.id,
+            found: page.users.length === 1,
+            durationMs: Date.now() - startedAt,
+          });
+
+          return page.users[0] ?? null;
+        }
+      } catch (error: unknown) {
+        // Tarmoq xatolari yuqoriga uzatiladi. Faqat terminal so‘rovni
+        // rad etgan (HTTP 4xx/5xx) bo‘lsa — filtr qo‘llab-quvvatlanmaydi.
+        const rejected =
+          error instanceof Error &&
+          error.message.startsWith('Foydalanuvchilarni olishda HTTP');
+
+        if (!rejected) {
+          throw error;
+        }
+      }
+
+      this.userFilterUnsupported.add(terminal.id);
+
+      console.warn('HIKVISION USER FILTER UNSUPPORTED:', {
+        terminalId: terminal.id,
+        message: 'EmployeeNoList filtri ishlamadi, to‘liq o‘qishga o‘tildi',
+      });
+    }
+
+    const users = await this.getAllTerminalUsers(terminal, password);
+
+    return users.find((item) => item.employeeNo === employeeNo) ?? null;
   }
 
   async getAllTerminalUsers(
