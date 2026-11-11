@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import {
   PersonSyncBatch,
@@ -76,7 +76,14 @@ export class PersonSyncHistoryService {
 
   async markRunning(itemId: string, attempts: number): Promise<void> {
     await this.items.update(
-      { id: itemId },
+      {
+        id: itemId,
+        status: In([
+          PersonSyncBatchItemStatus.PENDING,
+          PersonSyncBatchItemStatus.QUEUED,
+          PersonSyncBatchItemStatus.RUNNING,
+        ]),
+      },
       {
         status: PersonSyncBatchItemStatus.RUNNING,
         attempts,
@@ -90,14 +97,34 @@ export class PersonSyncHistoryService {
     status: PersonSyncBatchItemStatus,
     errorCode: string | null = null,
   ): Promise<void> {
-    await this.items.update(
-      { id: itemId },
+    const finalStatuses = [
+      PersonSyncBatchItemStatus.SUCCESS,
+      PersonSyncBatchItemStatus.SKIPPED,
+      PersonSyncBatchItemStatus.FAILED,
+      PersonSyncBatchItemStatus.UNCERTAIN,
+    ];
+
+    if (!finalStatuses.includes(status)) {
+      throw new Error(`Yakuniy status noto‘g‘ri: ${status}`);
+    }
+
+    const result = await this.items.update(
+      {
+        id: itemId,
+        status: In([
+          PersonSyncBatchItemStatus.PENDING,
+          PersonSyncBatchItemStatus.QUEUED,
+          PersonSyncBatchItemStatus.RUNNING,
+        ]),
+      },
       {
         status,
         errorCode,
         finishedAt: new Date(),
       },
     );
+
+    if (result.affected !== 1) return;
 
     const item = await this.items.findOneBy({ id: itemId });
 

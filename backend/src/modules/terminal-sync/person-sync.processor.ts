@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, HttpException } from '@nestjs/common';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,7 +15,6 @@ import {
   PERSON_SYNC_JOB,
   PERSON_SYNC_QUEUE,
 } from '../terminals/person-sync.constants';
-
 import {
   TerminalPersonSyncCheck,
   TerminalPersonSyncCheckStatus,
@@ -178,9 +177,11 @@ export class PersonSyncProcessor extends WorkerHost {
           const message =
             error instanceof Error ? error.message : String(error);
 
+          const errorCode = this.getSyncErrorCode(error);
+
           const uncertain =
-            message.includes('SYNC_RESULT_UNCERTAIN') ||
-            message.includes('SYNC_RECONCILIATION_REQUIRED');
+            errorCode === 'SYNC_RESULT_UNCERTAIN' ||
+            errorCode === 'SYNC_RECONCILIATION_REQUIRED';
 
           if (historyItemId && uncertain) {
             await this.history.markFinished(
@@ -205,7 +206,7 @@ export class PersonSyncProcessor extends WorkerHost {
             await this.history.markFinished(
               historyItemId,
               PersonSyncBatchItemStatus.FAILED,
-              message.slice(0, 100),
+              errorCode,
             );
           }
 
@@ -216,6 +217,37 @@ export class PersonSyncProcessor extends WorkerHost {
       default:
         throw new Error('Noma’lum PersonSync vazifasi');
     }
+  }
+
+  private getSyncErrorCode(error: unknown): string {
+    if (error instanceof HttpException) {
+      const response = error.getResponse();
+
+      if (
+        response !== null &&
+        typeof response === 'object' &&
+        'code' in response &&
+        typeof response.code === 'string'
+      ) {
+        return response.code;
+      }
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes('TERMINAL_BUSY')) {
+      return 'TERMINAL_BUSY';
+    }
+
+    if (/timeout|ETIMEDOUT|ECONNABORTED/i.test(message)) {
+      return 'TIMEOUT';
+    }
+
+    if (/ECONNREFUSED|EHOSTUNREACH|ENETUNREACH/i.test(message)) {
+      return 'CONNECTION_ERROR';
+    }
+
+    return 'SYNC_FAILED';
   }
 
   /** Vazifani yuborgan foydalanuvchi hali ham faol SUPER_ADMIN bo'lishi shart. */

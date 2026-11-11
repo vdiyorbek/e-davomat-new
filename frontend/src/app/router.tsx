@@ -44,11 +44,14 @@ const TeacherJournalPage = lazy(() =>
         .then((m) => ({ default: m.TeacherJournalPage }))
 );
 
-const PersonSyncMonitoringPage = lazy(() =>
-    import("@/pages/terminals/PersonSyncMonitoringPage").then(
-        (m) => ({ default: m.PersonSyncMonitoringPage }),
+const PersonSyncHistoryPage = lazy(() =>
+    import("@/pages/terminals/PersonSyncHistoryPage").then(
+        (module) => ({
+            default: module.PersonSyncHistoryPage,
+        }),
     ),
 );
+
 
 export const router = createBrowserRouter([
     {
@@ -165,8 +168,17 @@ export const router = createBrowserRouter([
                                         element: <SubjectsPage />,
                                     },
                                     {
+                                        path: "/terminals/person-sync-history",
+                                        element: <PersonSyncHistoryPage />,
+                                    },
+                                    {
                                         path: "/terminals/person-sync-monitoring",
-                                        element: <PersonSyncMonitoringPage />,
+                                        element: (
+                                            <Navigate
+                                                to="/terminals/person-sync-history"
+                                                replace
+                                            />
+                                        ),
                                     },
                                 ],
                             },

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-
+import { PersonSyncHistoryController } from './person-sync-history.controller';
 import { Terminal } from '../terminals/terminal.entity';
 import { TerminalsModule } from '../terminals/terminals.module';
 import { TerminalPersonSyncCheck } from './terminal-person-sync-check.entity';
@@ -27,6 +27,7 @@ import { BulkPersonSyncController } from './bulk-person-sync.controller';
 import { PersonSyncBatch } from './person-sync-batch.entity';
 import { PersonSyncBatchItem } from './person-sync-batch-item.entity';
 import { PersonSyncHistoryService } from './person-sync-history.service';
+import { PersonSyncReconciliationService } from './person-sync-reconciliation.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -82,6 +83,7 @@ import { PersonSyncHistoryService } from './person-sync-history.service';
     PersonSyncQueueController,
     TerminalSyncMonitoringController,
     BulkPersonSyncController,
+    PersonSyncHistoryController,
   ],
 
   providers: [
@@ -94,6 +96,7 @@ import { PersonSyncHistoryService } from './person-sync-history.service';
     PersonSyncTerminalLockService,
     TerminalSyncHistoryCleanupService,
     PersonSyncHistoryService,
+    PersonSyncReconciliationService,
   ],
 })
 export class TerminalSyncModule {}
