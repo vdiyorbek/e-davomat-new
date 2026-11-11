@@ -95,20 +95,24 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                 <Field htmlFor={`${id}-type`} label={t('terminals.personSync.type')}>
                     <SelectField
                         id={`${id}-mode`}
-                        value={mode}
+                        value={type}
                         onValueChange={(value) => {
-                            setMode(value as 'ALL' | 'LIMITED');
+                            setType(value as SyncType);
                             setPreview(null);
                             setResult(null);
                         }}
                         options={[
                             {
-                                value: 'ALL',
-                                label: 'Maktabdagi barcha faol shaxslar',
+                                value: 'BOTH',
+                                label: 'O‘quvchi va o‘qituvchilar',
                             },
                             {
-                                value: 'LIMITED',
-                                label: 'Sinov uchun cheklangan miqdor',
+                                value: 'STUDENT',
+                                label: 'Faqat o‘quvchilar',
+                            },
+                            {
+                                value: 'TEACHER',
+                                label: 'Faqat o‘qituvchilar',
                             },
                         ]}
                     />

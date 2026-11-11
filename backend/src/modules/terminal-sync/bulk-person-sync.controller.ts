@@ -193,22 +193,23 @@ export class BulkPersonSyncController {
         )
         .andWhere('person.deletedAt IS NULL')
         .orderBy('membership.personId', 'ASC');
+      const limitedCount =
+        body.mode === 'LIMITED' ? body.limitPerTerminal! : null;
 
-      if (body.mode === 'LIMITED') {
-        query.limit(body.limitPerTerminal! + 1);
+      if (limitedCount !== null) {
+        query.limit(limitedCount + 1);
       }
 
       const rows = await query.getRawMany<{
         personId: number | string;
       }>();
-
-      const hasMore =
-        body.mode === 'LIMITED' && rows.length > body.limitPerTerminal!;
-
+      const hasMore = limitedCount !== null && rows.length > limitedCount;
       const selectedRows =
-        body.mode === 'LIMITED' ? rows.slice(0, body.limitPerTerminal!) : rows;
-
+        limitedCount !== null ? rows.slice(0, limitedCount) : rows;
       const personIds = selectedRows.map((row) => Number(row.personId));
+      if (body.mode === 'LIMITED') {
+        query.limit(body.limitPerTerminal! + 1);
+      }
 
       let queued = 0;
       let reused = 0;
