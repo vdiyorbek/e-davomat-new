@@ -20,6 +20,7 @@ import { PersonSyncProcessor } from './person-sync.processor';
 import { PersonSyncScheduler } from './person-sync.scheduler';
 import { PersonSyncQueueController } from './person-sync-queue.controller';
 import { TerminalSyncMonitoringController } from './terminal-sync-monitoring.controller';
+import { TerminalSyncHistoryCleanupService } from './terminal-sync-history-cleanup.service';
 import { TerminalSyncRun } from './terminal-sync-run.entity';
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { TerminalSyncRun } from './terminal-sync-run.entity';
     PersonSyncProcessor,
     PersonSyncScheduler,
     PersonSyncTerminalLockService,
+    TerminalSyncHistoryCleanupService,
   ],
 })
 export class TerminalSyncModule {}
