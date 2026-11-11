@@ -22,12 +22,15 @@ import { PersonSyncQueueController } from './person-sync-queue.controller';
 import { TerminalSyncMonitoringController } from './terminal-sync-monitoring.controller';
 import { TerminalSyncHistoryCleanupService } from './terminal-sync-history-cleanup.service';
 import { TerminalSyncRun } from './terminal-sync-run.entity';
+import { SchoolMembership } from '../school-memberships/school-membership.entity';
+import { BulkPersonSyncController } from './bulk-person-sync.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Terminal,
       TerminalPersonSyncCheck,
       TerminalSyncRun,
+      SchoolMembership,
       User,
     ]),
 
@@ -70,7 +73,11 @@ import { TerminalSyncRun } from './terminal-sync-run.entity';
     ),
   ],
 
-  controllers: [PersonSyncQueueController, TerminalSyncMonitoringController],
+  controllers: [
+    PersonSyncQueueController,
+    TerminalSyncMonitoringController,
+    BulkPersonSyncController,
+  ],
 
   providers: [
     TerminalSyncService,

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TerminalPhotoStats } from "@/components/terminals/TerminalPhotoStats";
+import { BulkPersonSyncPanel } from "@/components/terminals/BulkPersonSyncPanel";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Pagination } from "@/components/common/Pagination";
 import { SelectField } from "@/components/common/SelectField";
@@ -445,7 +446,7 @@ export function TerminalsPage() {
     const canSelectDistrict = canSelectRegion || role === "REGION_ADMIN";
     const canSelectSchool = canSelectDistrict || role === "DISTRICT_ADMIN";
     const [syncNow, setSyncNow] = useState(() => Date.now());
-
+    const [selectedTerminalIds, setSelectedTerminalIds] = useState<number[]>([]);
     useEffect(() => {
         const interval = window.setInterval(() => {
             setSyncNow(Date.now());
@@ -519,6 +520,49 @@ export function TerminalsPage() {
         const interval = window.setInterval(() => retryRef.current(), 30_000);
         return () => window.clearInterval(interval);
     }, []);
+
+    const selectableTerminals =
+        terminals.data?.data.filter(
+            (terminal) =>
+                terminal.isActive &&
+                !isArchived(terminal),
+        ) ?? [];
+
+    const currentPageIds = selectableTerminals.map(
+        (terminal) => terminal.id,
+    );
+
+    const allPageSelected =
+        currentPageIds.length > 0 &&
+        currentPageIds.every((id) =>
+            selectedTerminalIds.includes(id),
+        );
+
+    function toggleTerminal(id: number, checked: boolean) {
+        setSelectedTerminalIds((previous) => {
+            if (checked) {
+                return previous.includes(id)
+                    ? previous
+                    : [...previous, id];
+            }
+
+            return previous.filter((item) => item !== id);
+        });
+    }
+
+    function toggleCurrentPage(checked: boolean) {
+        setSelectedTerminalIds((previous) => {
+            if (checked) {
+                return Array.from(
+                    new Set([...previous, ...currentPageIds]),
+                );
+            }
+
+            return previous.filter(
+                (id) => !currentPageIds.includes(id),
+            );
+        });
+    }
 
     function refresh() {
         terminals.retry();
@@ -715,6 +759,12 @@ export function TerminalsPage() {
                                 Yangilash
                             </Button>
                         </div>
+                        {canManage && selectedTerminalIds.length > 0 && (
+                            <BulkPersonSyncPanel
+                                terminalIds={selectedTerminalIds}
+                                onSubmitted={refresh}
+                            />
+                        )}
                     </div>
                     {monitoring.error && (
                         <p role="alert" className="text-sm text-destructive">
@@ -733,6 +783,21 @@ export function TerminalsPage() {
                                 <table className="w-full min-w-[1250px] text-left text-sm">
                                     <thead className="bg-muted/60 text-xs text-muted-foreground">
                                         <tr>
+                                            {canManage && (
+                                                <th className="px-3 py-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        aria-label="Joriy sahifadagi faol terminallarni tanlash"
+                                                        checked={allPageSelected}
+                                                        disabled={currentPageIds.length === 0}
+                                                        onChange={(event) =>
+                                                            toggleCurrentPage(event.target.checked)
+                                                        }
+                                                        className="size-4 accent-primary"
+                                                    />
+                                                </th>
+                                            )}
+
                                             <th className="px-3 py-3">ID</th>
                                             <th className="px-3 py-3">Maktab</th>
                                             <th className="px-3 py-3">Tuman</th>
@@ -752,6 +817,27 @@ export function TerminalsPage() {
                                             const eventStats = monitoringById.get(terminal.id);
                                             return (
                                                 <tr key={terminal.id} className="border-t hover:bg-muted/25">
+
+                                                    {canManage && (
+                                                        <td className="px-3 py-3">
+                                                            <input
+                                                                type="checkbox"
+                                                                aria-label={`${terminal.name} terminalini tanlash`}
+                                                                checked={selectedTerminalIds.includes(terminal.id)}
+                                                                disabled={
+                                                                    !terminal.isActive || isArchived(terminal)
+                                                                }
+                                                                onChange={(event) =>
+                                                                    toggleTerminal(
+                                                                        terminal.id,
+                                                                        event.target.checked,
+                                                                    )
+                                                                }
+                                                                className="size-4 accent-primary"
+                                                            />
+                                                        </td>
+                                                    )}
+
                                                     <td className="px-3 py-3 font-mono text-xs">{terminal.id}</td>
                                                     <td className="px-3 py-3 font-medium">{terminal.school.name}</td>
                                                     <td className="px-3 py-3">{terminal.school.district.name}</td>
@@ -871,6 +957,28 @@ export function TerminalsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {canManage && selectedTerminalIds.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+                    <div className="text-sm font-medium">
+                        Tanlangan terminallar:{" "}
+                        <span className="font-bold">
+                            {selectedTerminalIds.length}
+                        </span>{" "}
+                        ta
+                    </div>
+
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedTerminalIds([])}
+                    >
+                        Tanlovni tozalash
+                    </Button>
+                </div>
+            )}
+
 
             {selected && (
                 <TerminalDetails
