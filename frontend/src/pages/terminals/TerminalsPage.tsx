@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TerminalPhotoStats } from "@/components/terminals/TerminalPhotoStats";
-import { BulkPersonSyncPanel } from "@/components/terminals/BulkPersonSyncPanel";
+import { TerminalBulkActions } from "@/components/terminals/TerminalBulkActions";
+
 import { PageHeader } from "@/components/common/PageHeader";
 import { Pagination } from "@/components/common/Pagination";
 import { SelectField } from "@/components/common/SelectField";
@@ -294,6 +295,7 @@ function TerminalDetails({
     onChanged: () => void;
 }) {
     const archived = isArchived(terminal);
+    const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 
     return (
         <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -388,46 +390,55 @@ function TerminalDetails({
                     </div>
                 </div>
 
-                {canManage && !archived && (
-                    <TerminalPhotoStats
-                        key={terminal.id}
-                        terminalId={terminal.id}
-                        canManage={canManage}
-                    />
-                )}
-                {canManage && !archived && (
-                    <TerminalSyncMonitoring terminalId={terminal.id} />
-                )}
+
 
                 {canManage && !archived && (
-                    <TerminalSyncHistory
-                        key={terminal.id}
-                        terminalId={terminal.id}
-                    />
-                )}
-
-                {canManage && !archived && (
-                    <details className="rounded-xl border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
-                            Qo‘shimcha sozlamalar va diagnostika
+                    <details
+                        open={diagnosticsOpen}
+                        onToggle={(event) => {
+                            setDiagnosticsOpen(event.currentTarget.open);
+                        }}
+                        className="rounded-xl border p-4"
+                    >
+                        <summary className="cursor-pointer font-medium">
+                            Texnik diagnostika
                         </summary>
 
-                        <div className="mt-3 space-y-3 border-t pt-3">
-                            <CheckTerminalButton terminalId={terminal.id} />
-
-                            {!terminal.syncStartAt && (
-                                <StartTerminalSyncForm
+                        {diagnosticsOpen && (
+                            <div className="mt-4 space-y-4">
+                                <TerminalSyncMonitoring
                                     terminalId={terminal.id}
-                                    isActive={terminal.isActive}
-                                    onStarted={() => {
-                                        onChanged();
-                                        onClose();
-                                    }}
                                 />
-                            )}
-                        </div>
+
+                                <TerminalSyncHistory
+                                    terminalId={terminal.id}
+                                />
+
+                                <TerminalPhotoStats
+                                    terminalId={terminal.id}
+                                    canManage={canManage}
+                                />
+
+                                <CheckTerminalButton
+                                    terminalId={terminal.id}
+                                />
+
+                                {!terminal.syncStartAt && (
+                                    <StartTerminalSyncForm
+                                        terminalId={terminal.id}
+                                        isActive={terminal.isActive}
+                                        onStarted={() => {
+                                            onChanged();
+                                            onClose();
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        )}
                     </details>
                 )}
+
+
 
                 <div className="flex justify-end">
                     <Button type="button" variant="outline" onClick={onClose}>Yopish</Button>
@@ -523,9 +534,7 @@ export function TerminalsPage() {
 
     const selectableTerminals =
         terminals.data?.data.filter(
-            (terminal) =>
-                terminal.isActive &&
-                !isArchived(terminal),
+            (terminal) => !isArchived(terminal),
         ) ?? [];
 
     const currentPageIds = selectableTerminals.map(
@@ -760,9 +769,10 @@ export function TerminalsPage() {
                             </Button>
                         </div>
                         {canManage && selectedTerminalIds.length > 0 && (
-                            <BulkPersonSyncPanel
+                            <TerminalBulkActions
                                 terminalIds={selectedTerminalIds}
                                 onSubmitted={refresh}
+                                onClear={() => setSelectedTerminalIds([])}
                             />
                         )}
                     </div>
@@ -824,9 +834,7 @@ export function TerminalsPage() {
                                                                 type="checkbox"
                                                                 aria-label={`${terminal.name} terminalini tanlash`}
                                                                 checked={selectedTerminalIds.includes(terminal.id)}
-                                                                disabled={
-                                                                    !terminal.isActive || isArchived(terminal)
-                                                                }
+                                                                disabled={isArchived(terminal)}
                                                                 onChange={(event) =>
                                                                     toggleTerminal(
                                                                         terminal.id,

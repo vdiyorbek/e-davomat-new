@@ -14,6 +14,8 @@ import { SchoolMembership } from '../school-memberships/school-membership.entity
 import { TerminalHealthScheduler } from './terminal-health.scheduler';
 import { Person } from '../persons/person.entity';
 import { PersonSyncService } from './person-sync.service';
+import { BulkTerminalManagementController } from './bulk-terminal-management.controller';
+import { BulkTerminalStatusController } from './bulk-terminal-status.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -24,7 +26,11 @@ import { PersonSyncService } from './person-sync.service';
       TerminalPersonSync,
     ]),
   ],
-  controllers: [TerminalsController],
+  controllers: [
+    TerminalsController,
+    BulkTerminalManagementController,
+    BulkTerminalStatusController,
+  ],
   providers: [
     TerminalCryptoService,
     TerminalsService,
