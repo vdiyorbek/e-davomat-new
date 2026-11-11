@@ -1,14 +1,14 @@
 import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
+import { FilterSearchForm } from '@/components/common/FilterSearchForm';
+import { FilterToggle } from '@/components/common/FilterToggle';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { academicYearOptions } from '@/lib/date';
@@ -17,46 +17,6 @@ import { schoolScopeOptions } from '@/lib/school-scope';
 import type { School } from '@/types/school';
 
 type FilterName = 'q' | 'academicYear' | 'grade' | 'regionId' | 'districtId' | 'schoolId';
-
-function SearchForm({ initialValue, onSearch }: { initialValue: string; onSearch: (value: string) => void }) {
-    const { t } = useTranslation();
-    const id = useId();
-    const [value, setValue] = useState(initialValue);
-
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        onSearch(value.trim().replace(/\s+/g, ' '));
-    }
-
-    return (
-        <form onSubmit={handleSubmit} role="search" className="min-w-0">
-            <label htmlFor={id} className="sr-only">
-                {t('classes.search')}
-            </label>
-            <div className="flex gap-2">
-                <div className="relative min-w-0 flex-1">
-                    <Search
-                        aria-hidden="true"
-                        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <Input
-                        id={id}
-                        type="search"
-                        value={value}
-                        onChange={(event) => setValue(event.target.value)}
-                        maxLength={100}
-                        placeholder={t('classes.searchPlaceholder')}
-                        className="pl-10"
-                    />
-                </div>
-                <Button type="submit" className="h-11 shrink-0">
-                    <Search aria-hidden="true" className="sm:hidden" />
-                    <span className="max-sm:sr-only">{t('common.search')}</span>
-                </Button>
-            </div>
-        </form>
-    );
-}
 
 export function ClassesFilters({ academicYear }: { academicYear: string }) {
     const { t } = useTranslation();
@@ -77,6 +37,9 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
     const regionId = searchParams.get('regionId') ?? '';
     const districtId = searchParams.get('districtId') ?? '';
     const schoolId = searchParams.get('schoolId') ?? '';
+
+    const advancedCount = [regionId, districtId, schoolId].filter(Boolean).length;
+    const [expanded, setExpanded] = useState(advancedCount > 0);
 
     const scope = schoolScopeOptions(schools, regionId, districtId);
     const optionsDisabled = loading || Boolean(error);
@@ -112,9 +75,17 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
             aria-label={t('common.filters')}
             className="space-y-4 rounded-2xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5"
         >
-            <SearchForm key={search} initialValue={search} onSearch={(value) => changeFilter('q', value)} />
+            {/* Asosiy qator: qidiruv, o‘quv yili, daraja va «Ko‘proq filtr» */}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+                <FilterSearchForm
+                    key={search}
+                    className="sm:col-span-2 xl:col-span-1"
+                    label={t('classes.search')}
+                    placeholder={t('classes.searchPlaceholder')}
+                    initialValue={search}
+                    onSearch={(value) => changeFilter('q', value)}
+                />
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <Field htmlFor={`${ids}-year`} label={t('members.academicYear')}>
                     <SelectField
                         id={`${ids}-year`}
@@ -134,33 +105,46 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
                     />
                 </Field>
 
-                {canSelectRegion && (
-                    <Field htmlFor={`${ids}-region`} label={t('common.region')}>
-                        <SelectField
-                            id={`${ids}-region`}
-                            value={regionId}
-                            onValueChange={(value) => changeFilter('regionId', value)}
-                            emptyOption={t('filters.allRegions')}
-                            options={scope.regions}
-                            disabled={optionsDisabled}
-                        />
-                    </Field>
-                )}
-
-                {canSelectDistrict && (
-                    <Field htmlFor={`${ids}-district`} label={t('common.district')}>
-                        <SelectField
-                            id={`${ids}-district`}
-                            value={districtId}
-                            onValueChange={(value) => changeFilter('districtId', value)}
-                            emptyOption={t('filters.allDistricts')}
-                            options={scope.districts}
-                            disabled={optionsDisabled}
-                        />
-                    </Field>
-                )}
-
                 {canSelectSchool && (
+                    <FilterToggle
+                        className="sm:col-span-2 md:w-full xl:col-span-1 xl:w-auto"
+                        expanded={expanded}
+                        count={advancedCount}
+                        controls={`${ids}-advanced`}
+                        onToggle={() => setExpanded((value) => !value)}
+                    />
+                )}
+            </div>
+
+            {/* Kengaytirilgan: viloyat → tuman → maktab */}
+            {canSelectSchool && (
+                <div id={`${ids}-advanced`} hidden={!expanded} className="grid gap-4 border-t pt-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {canSelectRegion && (
+                        <Field htmlFor={`${ids}-region`} label={t('common.region')}>
+                            <SelectField
+                                id={`${ids}-region`}
+                                value={regionId}
+                                onValueChange={(value) => changeFilter('regionId', value)}
+                                emptyOption={t('filters.allRegions')}
+                                options={scope.regions}
+                                disabled={optionsDisabled}
+                            />
+                        </Field>
+                    )}
+
+                    {canSelectDistrict && (
+                        <Field htmlFor={`${ids}-district`} label={t('common.district')}>
+                            <SelectField
+                                id={`${ids}-district`}
+                                value={districtId}
+                                onValueChange={(value) => changeFilter('districtId', value)}
+                                emptyOption={t('filters.allDistricts')}
+                                options={scope.districts}
+                                disabled={optionsDisabled}
+                            />
+                        </Field>
+                    )}
+
                     <Field htmlFor={`${ids}-school`} label={t('common.school')}>
                         <SelectField
                             id={`${ids}-school`}
@@ -171,10 +155,14 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
                             disabled={optionsDisabled}
                         />
                     </Field>
-                )}
-            </div>
 
-            {error && canSelectSchool && <ErrorState message={error} onRetry={retry} />}
+                    {error && (
+                        <div className="sm:col-span-2 xl:col-span-3">
+                            <ErrorState message={error} onRetry={retry} />
+                        </div>
+                    )}
+                </div>
+            )}
 
             {hasFilters && (
                 <div className="flex justify-end">
