@@ -42,7 +42,6 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
     const [type, setType] = useState<SyncType>('BOTH');
     const [limit, setLimit] = useState(10);
     const [preview, setPreview] = useState<BulkSyncResponse | null>(null);
-    const [previewIds, setPreviewIds] = useState<number[]>([]);
     const [previewSignature, setPreviewSignature] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
@@ -83,7 +82,6 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
             if (dryRun) {
                 setPreview(response);
                 setPreviewSignature(currentSignature);
-                setPreviewIds([...terminalIds]);
                 setResult(null);
 
             } else {
