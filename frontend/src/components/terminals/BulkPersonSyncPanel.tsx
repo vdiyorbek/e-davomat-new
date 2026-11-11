@@ -199,14 +199,14 @@ export function BulkPersonSyncPanel({ terminalIds, onSubmitted }: Props) {
                     <Button type="button" disabled={!canApply || busy || mode === 'ALL'} onClick={() => void submit(false)}>
                         <Send aria-hidden="true" />
                         {busy ? t('terminals.personSync.applying') : t('terminals.personSync.apply')}
-                        {mode === 'ALL' && (
-                            <p className="text-xs text-muted-foreground">
-                                Barcha nomzodlar aniqlandi.
-                                To‘liq yuborish navbat dispatcheriga
-                                ulangandan so‘ng faollashadi.
-                            </p>
-                        )}
                     </Button>
+                    {mode === 'ALL' && (
+                        <p className="text-xs text-muted-foreground">
+                            Barcha nomzodlar aniqlandi.
+                            To‘liq yuborish navbat dispatcheriga
+                            ulangandan so‘ng faollashadi.
+                        </p>
+                    )}
                 </div>
             )}
 
