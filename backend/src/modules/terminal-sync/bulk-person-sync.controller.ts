@@ -210,30 +210,6 @@ export class BulkPersonSyncController {
 
       const personIds = selectedRows.map((row) => Number(row.personId));
 
-      const rows = await this.memberships
-        .createQueryBuilder('membership')
-        .innerJoin('membership.person', 'person')
-        .select('membership.personId', 'personId')
-        .distinct(true)
-        .where('membership.schoolId = :schoolId', {
-          schoolId: terminal.schoolId,
-        })
-        .andWhere('membership.type IN (:...types)', { types })
-        .andWhere('membership.startDate <= :today', { today })
-        .andWhere(
-          '(membership.endDate IS NULL OR membership.endDate > :today)',
-          { today },
-        )
-        .andWhere('person.deletedAt IS NULL')
-        .orderBy('membership.personId', 'ASC')
-        .limit(body.limitPerTerminal + 1)
-        .getRawMany<{ personId: number | string }>();
-
-      const hasMore = rows.length > body.limitPerTerminal;
-      const personIds = rows
-        .slice(0, body.limitPerTerminal)
-        .map((row) => Number(row.personId));
-
       let queued = 0;
       let reused = 0;
       let failed = 0;
