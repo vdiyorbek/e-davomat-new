@@ -57,7 +57,7 @@ export class TerminalSyncMonitoringController {
       attemptsMade: job?.attemptsMade ?? 0,
       maxAttempts: job?.opts.attempts ?? 0,
       jobId: job?.id ?? null,
-      lastFailedReason: job?.failedReason ?? null,
+      lastFailedReason: null,
       queue: {
         waiting: counts.waiting ?? 0,
         active: counts.active ?? 0,
