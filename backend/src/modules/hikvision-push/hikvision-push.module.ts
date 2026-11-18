@@ -6,7 +6,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Terminal } from '../terminals/terminal.entity';
 import { AttendanceEvent } from '../attendance-events/attendance-event.entity';
-
+import { RedisModule } from '../../redis/redis.module';
+import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.module';
+import { HikvisionPushRebuildService } from './hikvision-push-rebuild.service';
 import { HikvisionPushController } from './hikvision-push.controller';
 import { HikvisionPushProcessor } from './hikvision-push.processor';
 import { HIKVISION_PUSH_QUEUE } from './hikvision-push.types';
@@ -16,6 +18,8 @@ import { HIKVISION_PUSH_QUEUE } from './hikvision-push.types';
     TypeOrmModule.forFeature([
       Terminal,
       AttendanceEvent,
+      RedisModule,
+      DailyAttendanceModule,
     ]),
 
     BullModule.registerQueueAsync({
@@ -82,6 +86,7 @@ import { HIKVISION_PUSH_QUEUE } from './hikvision-push.types';
 
   providers: [
     HikvisionPushProcessor,
+    HikvisionPushRebuildService,
   ],
 })
 export class HikvisionPushModule { }
