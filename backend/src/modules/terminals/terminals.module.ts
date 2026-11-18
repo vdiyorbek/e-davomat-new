@@ -17,6 +17,9 @@ import { Person } from '../persons/person.entity';
 import { PersonSyncService } from './person-sync.service';
 import { BulkTerminalManagementController } from './bulk-terminal-management.controller';
 import { BulkTerminalStatusController } from './bulk-terminal-status.controller';
+import { TerminalPushController } from './terminal-push.controller';
+import { TerminalPushCredentialsService } from './terminal-push-credentials.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -32,6 +35,7 @@ import { BulkTerminalStatusController } from './bulk-terminal-status.controller'
     TerminalsController,
     BulkTerminalManagementController,
     BulkTerminalStatusController,
+    TerminalPushController,
   ],
   providers: [
     TerminalCryptoService,
@@ -42,6 +46,7 @@ import { BulkTerminalStatusController } from './bulk-terminal-status.controller'
     PersonSyncService,
     TerminalHealthScheduler,
     TerminalStatusHistoryService,
+    TerminalPushCredentialsService,
   ],
   exports: [
     TerminalCryptoService,
@@ -50,4 +55,4 @@ import { BulkTerminalStatusController } from './bulk-terminal-status.controller'
     PersonSyncService,
   ],
 })
-export class TerminalsModule {}
+export class TerminalsModule { }

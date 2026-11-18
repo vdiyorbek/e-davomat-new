@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
-
+import { Public } from '../auth/decorators/public.decorator';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 import { createHash, randomUUID } from 'node:crypto';
@@ -44,6 +44,7 @@ export class HikvisionPushController {
   ) { }
 
   @Post(':token')
+  @Public()
   @HttpCode(HttpStatus.OK)
   async receive(
     @Req() req: Request,
