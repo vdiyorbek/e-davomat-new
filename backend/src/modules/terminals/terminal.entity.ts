@@ -149,6 +149,36 @@ export class Terminal {
   })
   eventsSyncedUntil!: Date | null;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  pushEnabled!: boolean;
+
+  @Column({
+    type: 'char',
+    length: 64,
+    charset: 'ascii',
+    collation: 'ascii_bin',
+    nullable: true,
+    select: false,
+  })
+  pushTokenHash!: string | null;
+
+  @Column({
+    type: 'datetime',
+    precision: 3,
+    nullable: true,
+  })
+  pushLastReceivedAt!: Date | null;
+
+  @Column({
+    type: 'datetime',
+    precision: 3,
+    nullable: true,
+  })
+  pushLastEventAt!: Date | null;
+
   @CreateDateColumn({
     type: 'datetime',
     precision: 3,
