@@ -15,13 +15,16 @@ const StudentsPage = lazy(() => import('@/pages/students/StudentsPage').then((m)
 const TeachersPage = lazy(() => import('@/pages/teachers/TeachersPage').then((m) => ({ default: m.TeachersPage })));
 const PersonDetailsPage = lazy(() => import('@/pages/persons/PersonDetailsPage').then((m) => ({ default: m.PersonDetailsPage })));
 const TerminalsPage = lazy(() => import('@/pages/terminals/TerminalsPage').then((m) => ({ default: m.TerminalsPage })));
-const AttendancePage = lazy(() => import('@/pages/attendance/AttendancePage').then((m) => ({ default: m.AttendancePage })));
+const AttendanceOverviewPage = lazy(() =>
+    import('@/pages/attendance/AttendanceOverviewPage').then((m) => ({ default: m.AttendanceOverviewPage })),
+);
 const ClassesPage = lazy(() => import('@/pages/classes/ClassesPage').then((m) => ({ default: m.ClassesPage })));
 const UsersPage = lazy(() => import('@/pages/users/UsersPage').then((m) => ({ default: m.UsersPage })));
 const AttendanceExcusesPage = lazy(() => import('@/pages/attendance/AttendanceExcusesPage').then((m) => ({ default: m.AttendanceExcusesPage })));
 const StudentAttendancePage = lazy(() => import('@/pages/attendance/StudentAttendancePage').then((m) => ({ default: m.StudentAttendancePage })));
 const TeacherAttendancePage = lazy(() => import('@/pages/attendance/TeacherAttendancePage').then((m) => ({ default: m.TeacherAttendancePage })));
 const AttendanceCalendarPage = lazy(() => import('@/pages/attendance/AttendanceCalendarPage').then((m) => ({ default: m.AttendanceCalendarPage })));
+const HolidaysPage = lazy(() => import('@/pages/attendance/HolidaysPage').then((m) => ({ default: m.HolidaysPage })));
 const TeacherAssignmentsPage = lazy(() => import('@/pages/teacher-assignments/TeacherAssignmentsPage').then((m) => ({ default: m.TeacherAssignmentsPage })));
 const TextbooksPage = lazy(() => import('@/pages/textbooks/TextbooksPage').then((m) => ({ default: m.TextbooksPage })));
 const LessonSchedulesPage = lazy(() => import('@/pages/lesson-schedules/LessonSchedulesPage').then((m) => ({ default: m.LessonSchedulesPage })));
@@ -114,7 +117,7 @@ export const router = createBrowserRouter([
                             },
                             {
                                 path: '/attendance',
-                                element: <AttendancePage />,
+                                element: <AttendanceOverviewPage />,
                             },
                             {
                                 path: '/attendance/students',
@@ -127,6 +130,10 @@ export const router = createBrowserRouter([
                             {
                                 path: '/attendance/calendar',
                                 element: <AttendanceCalendarPage />,
+                            },
+                            {
+                                path: '/attendance/holidays',
+                                element: <HolidaysPage />,
                             },
                             { path: '/classes', element: <ClassesPage /> },
                             {

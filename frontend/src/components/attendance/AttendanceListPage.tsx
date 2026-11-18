@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { AttendanceFilters } from '@/components/attendance/AttendanceFilters';
+import { AttendanceKpis } from '@/components/attendance/AttendanceKpis';
 import type { AttendanceFilterValues } from '@/components/attendance/AttendanceFilters';
 import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -144,7 +145,7 @@ export function AttendanceListPage({ mode }: { mode: Mode }) {
     const pageText = searchParams.get('page') ?? '1';
     const limitText = searchParams.get('limit') ?? '20';
 
-    const allowedStatuses = students ? ['inside', 'left', 'excused', 'absent'] : ['inside', 'left', 'absent'];
+    const allowedStatuses = ['inside', 'left', 'excused', 'absent'];
 
     const valid =
         isValidDate(date) &&
@@ -247,6 +248,25 @@ export function AttendanceListPage({ mode }: { mode: Mode }) {
                     for (const [name, value] of Object.entries(values)) {
                         if (name !== 'date' && value !== '') next.set(name, value);
                     }
+                    setSearchParams(next);
+                }}
+            />
+
+            <AttendanceKpis
+                key={[mode, date, regionId, districtId, schoolId, classId].join('|')}
+                mode={mode}
+                date={date}
+                regionId={regionId}
+                districtId={districtId}
+                schoolId={schoolId}
+                classId={classId}
+                status={attendanceStatus}
+                onStatusChange={(status) => {
+                    const next = new URLSearchParams(searchParams);
+                    next.set('date', date);
+                    next.set('page', '1');
+                    if (status) next.set('attendanceStatus', status);
+                    else next.delete('attendanceStatus');
                     setSearchParams(next);
                 }}
             />

@@ -37,7 +37,9 @@
     "personSyncMonitoring": "Terminal Monitoring",
     "inspectorStudents": "Neighbourhood students",
     "inspectorTalks": "Preventive talks",
-    "syncHistory": "Sync history"
+    "syncHistory": "Sync history",
+    "attendanceOverview": "By region",
+    "holidays": "Days off"
   },
   "short": {
     "profile": "Profile",

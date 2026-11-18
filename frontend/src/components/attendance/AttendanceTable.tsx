@@ -1,5 +1,5 @@
+import { useState } from 'react';
 import { LogIn, LogOut } from 'lucide-react';
-import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -13,6 +13,7 @@ import type { DailyAttendance } from '@/types/daily-attendance';
 
 import { AttendanceDetailsDialog } from './AttendanceDetailsDialog';
 import { AttendanceExcuseDialog } from './AttendanceExcuseDialog';
+import { PersonAttendanceDialog } from './PersonAttendanceDialog';
 import { ATTENDANCE_STRIPE, ATTENDANCE_TONE } from './status';
 
 interface Props {
@@ -27,10 +28,11 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
     const { session } = useAuth();
     const profile = session?.profile;
     const students = mode === 'students';
+    const [selected, setSelected] = useState<DailyAttendance | null>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     function canCreateExcuse(item: DailyAttendance) {
         return (
-            students &&
             Boolean(item.person) &&
             item.attendanceStatus === 'absent' &&
             !item.firstInTime &&
@@ -43,15 +45,22 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
         return item.attendanceStatus === 'excused' && item.excuseReason ? t(`excuses.reason.${item.excuseReason}`) : null;
     }
 
-    function NameCell({ item }: { item: DailyAttendance }) {
+    function openPerson(item: DailyAttendance) {
+        setSelected(item);
+        setDialogOpen(true);
+    }
+
+    /** F.I.Sh. — bosilganda batafsil davomat oynasi ochiladi. */
+    function renderName(item: DailyAttendance) {
         const name = personFullName(item.person, t('attendance.noPerson'));
         return item.person ? (
-            <Link
-                to={`/persons/${item.person.id}`}
-                className="font-semibold underline-offset-4 hover:text-primary hover:underline"
+            <button
+                type="button"
+                onClick={() => openPerson(item)}
+                className="text-left font-semibold text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
             >
                 {name}
-            </Link>
+            </button>
         ) : (
             <span className="text-muted-foreground">{name}</span>
         );
@@ -69,9 +78,7 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                                 <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', ATTENDANCE_STRIPE[item.attendanceStatus])} />
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                        <p className="leading-6 [overflow-wrap:anywhere]">
-                                            <NameCell item={item} />
-                                        </p>
+                                        <p className="leading-6 [overflow-wrap:anywhere]">{renderName(item)}</p>
                                         <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">
                                             {item.school.name}
                                             {students && item.className && ` · ${item.className}`}
@@ -106,7 +113,7 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
 
             {/* Kompyuter: jadval */}
             <Card className="hidden py-0 xl:flex">
-                <Table className={students ? 'min-w-[900px]' : 'min-w-[760px]'}>
+                <Table className={students ? 'min-w-[980px]' : 'min-w-[860px]'}>
                     <TableHeader className="bg-muted/50">
                         <TableRow className="hover:bg-transparent">
                             <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
@@ -115,7 +122,7 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                             {students && <TableHead className="w-20">{t('common.class')}</TableHead>}
                             <TableHead className="w-20">{t('attendance.in')}</TableHead>
                             <TableHead className="w-20">{t('attendance.out')}</TableHead>
-                            <TableHead className="w-36">{t('common.status')}</TableHead>
+                            <TableHead className="w-40">{t('common.status')}</TableHead>
                             <TableHead className="pr-5 text-right">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -123,16 +130,27 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                         {items.map((item, index) => {
                             const reason = reasonOf(item);
                             return (
-                                <TableRow key={item.id}>
+                                <TableRow key={item.id} className={cn(item.attendanceStatus === 'absent' && 'bg-destructive/[0.03]')}>
                                     <TableCell className="pl-5 text-muted-foreground tabular-nums">{startIndex + index}</TableCell>
-                                    <TableCell className="max-w-64 whitespace-normal">
-                                        <NameCell item={item} />
+                                    <TableCell className="max-w-72 whitespace-normal">
+                                        {renderName(item)}
+                                        <span className="mt-0.5 block text-xs text-muted-foreground tabular-nums">{item.pnfl}</span>
                                     </TableCell>
                                     <TableCell className="max-w-64 whitespace-normal">
                                         <span className="font-medium">{item.school.name}</span>
                                         <span className="mt-0.5 block text-xs text-muted-foreground">{item.district.name}</span>
                                     </TableCell>
-                                    {students && <TableCell>{item.className ?? '—'}</TableCell>}
+                                    {students && (
+                                        <TableCell>
+                                            {item.className ? (
+                                                <span className="inline-flex rounded-md bg-muted px-2 py-0.5 text-xs font-semibold">
+                                                    {item.className}
+                                                </span>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </TableCell>
+                                    )}
                                     <TableCell className="font-semibold tabular-nums">{formatTime(item.firstInTime)}</TableCell>
                                     <TableCell className="font-semibold tabular-nums">{formatTime(item.lastOutTime)}</TableCell>
                                     <TableCell>
@@ -143,8 +161,8 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                                     </TableCell>
                                     <TableCell className="pr-5">
                                         <div className="flex items-center justify-end gap-2">
-                                            <AttendanceDetailsDialog item={item} mode={mode} iconOnly />
                                             {canCreateExcuse(item) && <AttendanceExcuseDialog item={item} onSaved={onExcuseSaved} />}
+                                            <AttendanceDetailsDialog item={item} mode={mode} iconOnly />
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -153,6 +171,19 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                     </TableBody>
                 </Table>
             </Card>
+
+            {selected && (
+                <PersonAttendanceDialog
+                    key={selected.id}
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    pnfl={selected.pnfl}
+                    name={personFullName(selected.person, t('attendance.noPerson'))}
+                    schoolName={selected.school.name}
+                    mode={mode}
+                    endDate={selected.date}
+                />
+            )}
         </>
     );
 }

@@ -75,7 +75,7 @@ function ClassFilter({
 }
 
 const STUDENT_STATUSES = ['inside', 'left', 'excused', 'absent'] as const;
-const TEACHER_STATUSES = ['inside', 'left', 'absent'] as const;
+const TEACHER_STATUSES = ['inside', 'left', 'excused', 'absent'] as const;
 
 export function AttendanceFilters({ values, onApply, mode = 'students' }: Props) {
     const { t } = useTranslation();

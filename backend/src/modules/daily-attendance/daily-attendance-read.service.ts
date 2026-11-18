@@ -377,6 +377,7 @@ export class DailyAttendanceReadService {
       ON excusePerson.id = excuseFilter.personId
     WHERE excuseFilter.schoolId = daily.schoolId
       AND excusePerson.pnfl = daily.pnfl
+      AND excuseFilter.membershipType = daily.membershipType
       AND excuseFilter.status = :activeExcuseStatus
       AND excuseFilter.startDate <= daily.date
       AND excuseFilter.endDate >= daily.date
@@ -384,15 +385,6 @@ export class DailyAttendanceReadService {
 `;
 
     const status = query.attendanceStatus;
-
-    if (
-      membershipType === MembershipType.TEACHER &&
-      status === AttendanceStatusFilter.EXCUSED
-    ) {
-      throw new BadRequestException(
-        'O‘qituvchilar uchun sababli status mavjud emas',
-      );
-    }
 
     if (status === AttendanceStatusFilter.INSIDE) {
       // "Kelgan" filtri ketganlarni ham qamrab oladi.
@@ -422,18 +414,14 @@ export class DailyAttendanceReadService {
         .andWhere('daily.lastOutTime IS NULL')
         .andWhere(workday.sql, workday.params);
 
-      if (membershipType === MembershipType.STUDENT) {
-        builder.setParameter(
-          'activeExcuseStatus',
-          AttendanceExcuseStatus.ACTIVE,
-        );
+      // Sababli arizalar o‘quvchilar va o‘qituvchilar uchun.
+      builder.setParameter('activeExcuseStatus', AttendanceExcuseStatus.ACTIVE);
 
-        builder.andWhere(
-          status === AttendanceStatusFilter.EXCUSED
-            ? excuseExists
-            : `NOT ${excuseExists}`,
-        );
-      }
+      builder.andWhere(
+        status === AttendanceStatusFilter.EXCUSED
+          ? excuseExists
+          : `NOT ${excuseExists}`,
+      );
     }
 
     return builder;
@@ -551,9 +539,7 @@ export class DailyAttendanceReadService {
     // Sahifadagi barcha o‘quvchilar uchun sababli
     // arizalarni bitta so‘rovda olamiz.
     const excuses =
-      membershipType === MembershipType.STUDENT &&
-      personIds.length > 0 &&
-      schoolIds.length > 0
+      personIds.length > 0 && schoolIds.length > 0
         ? await this.dataSource.getRepository(AttendanceExcuse).find({
             select: {
               id: true,
@@ -564,6 +550,7 @@ export class DailyAttendanceReadService {
             where: {
               personId: In(personIds),
               schoolId: In(schoolIds),
+              membershipType,
               status: AttendanceExcuseStatus.ACTIVE,
               startDate: LessThanOrEqual(query.date),
               endDate: MoreThanOrEqual(query.date),
@@ -618,8 +605,7 @@ export class DailyAttendanceReadService {
                     ? 'conflict'
                     : calendarStatus === 'UNCONFIGURED'
                       ? 'unconfigured'
-                      : membershipType === MembershipType.STUDENT &&
-                          hasActiveExcuse
+                      : hasActiveExcuse
                         ? 'excused'
                         : 'absent';
 

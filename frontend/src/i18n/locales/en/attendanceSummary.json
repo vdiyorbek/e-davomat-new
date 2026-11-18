@@ -1,0 +1,86 @@
+{
+  "title": "Attendance by region",
+  "subtitle": "Attendance by region, district, school and class. Click a card to drill down.",
+  "typeLabel": "Whose attendance",
+  "type": {
+    "STUDENT": "Students",
+    "TEACHER": "Teachers"
+  },
+  "period": {
+    "label": "Period",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7": "Last 7 days",
+    "week": "This week",
+    "month": "This month",
+    "custom": "Custom range"
+  },
+  "from": "From",
+  "to": "To",
+  "rangeErrors": {
+    "invalid": "Enter a valid date.",
+    "order": "The start date can't be after the end date.",
+    "future": "Future dates can't be selected.",
+    "tooLong": "The period can't exceed {{max}} days."
+  },
+  "refresh": "Refresh",
+  "updatedAt": "Updated: {{time}}",
+  "autoRefresh": "refreshes every minute",
+  "kpi": {
+    "persons": "Total",
+    "present": "Present",
+    "absent": "Unexcused",
+    "excused": "Excused",
+    "dayOff": "Day off",
+    "rate": "Attendance",
+    "personDaysHint": "{{days}} days, in person-days",
+    "rateHint": "Present and excused / working days"
+  },
+  "personsCount": {
+    "STUDENT": "{{formatted}} students",
+    "TEACHER": "{{formatted}} teachers"
+  },
+  "bands": {
+    "ALL": "All",
+    "LOW": "Poor",
+    "MEDIUM": "Good",
+    "HIGH": "Excellent",
+    "NONE": "No data"
+  },
+  "bandRange": {
+    "LOW": "<{{low}}%",
+    "MEDIUM": "{{low}}–{{high}}%",
+    "HIGH": ">{{high}}%"
+  },
+  "bandFilter": "Filter by attendance level",
+  "sort": {
+    "label": "Sort",
+    "rateAsc": "Lowest first",
+    "rateDesc": "Highest first",
+    "name": "By name"
+  },
+  "search": "Search the list",
+  "searchPlaceholder": "By name…",
+  "level": {
+    "REGION": "Regions",
+    "DISTRICT": "Districts and cities",
+    "SCHOOL": "Schools",
+    "CLASS": "Classes"
+  },
+  "breadcrumbRoot": "All regions",
+  "breadcrumbLabel": "Selected area",
+  "noClass": "No class assigned",
+  "stats": {
+    "present": "Present",
+    "absent": "Unexc.",
+    "excused": "Excused",
+    "dayOff": "Off"
+  },
+  "drill": "Details",
+  "openList": "Open list",
+  "unknownWarning": "The school calendar isn't configured for {{formatted}} person-days — they were left out of the percentage.",
+  "emptyTitle": "No data found",
+  "empty": "There is no calculated attendance for the selected period and area.",
+  "noMatch": "Nothing matches the filter.",
+  "loadFailed": "Couldn't load attendance figures."
+}

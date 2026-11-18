@@ -1,0 +1,84 @@
+{
+  "title": "Dam olish va bayram kunlari",
+  "subtitle": "Bayramlar, ta’tillar va qo‘shimcha o‘quv kunlari. O‘quvchilar, o‘qituvchilar yoki hammasi uchun belgilanadi.",
+  "create": "Dam olish kunini qo‘shish",
+  "audience": "Kimlar uchun",
+  "year": "Yil",
+  "period": "Sana oralig‘i",
+  "place": "Hudud",
+  "createdBy": "Kim kiritdi",
+  "national": "Respublika bo‘yicha",
+  "mandatory": "Majburiy",
+  "allScopes": "Barcha darajalar",
+  "allDayTypes": "Barcha turlar",
+  "listTitle": "{{year}}-yil ro‘yxati",
+  "daysCount": "{{count}} kun",
+  "viewOnly": "Faqat ko‘rish",
+  "emptyTitle": "Dam olish kunlari yo‘q",
+  "empty": "Tanlangan filtrlar bo‘yicha qoidalar topilmadi.",
+  "created": "Dam olish kuni saqlandi.",
+  "cancel": "Bekor qilish",
+  "cancelling": "Bekor qilinmoqda…",
+  "cancelTitle": "Qoidani bekor qilasizmi?",
+  "cancelConfirm": "«{{reason}}» qoidasi bekor qilinadi. Davomat hisobi qayta hisoblanadi.",
+  "cancelled": "Qoida bekor qilindi.",
+  "cancelFailed": "Qoidani bekor qilib bo‘lmadi.",
+  "audiences": {
+    "ALL": "Hammasi",
+    "STUDENT": "O‘quvchilar",
+    "TEACHER": "O‘qituvchilar",
+    "BOTH": "Hammasi uchun"
+  },
+  "audienceHints": {
+    "STUDENT": "Faqat o‘quvchilar dam oladi",
+    "TEACHER": "Faqat o‘qituvchilar",
+    "BOTH": "O‘quvchi va o‘qituvchilar"
+  },
+  "scopes": {
+    "GLOBAL": "Respublika",
+    "REGION": "Viloyat",
+    "DISTRICT": "Tuman",
+    "SCHOOL": "Maktab"
+  },
+  "dayTypes": {
+    "DAY_OFF": "Dam olish kuni",
+    "WORK_DAY": "O‘quv / ish kuni"
+  },
+  "dayTypeHints": {
+    "DAY_OFF": "Bu kunlarda kelmaganlar sababsiz hisoblanmaydi.",
+    "WORK_DAY": "Masalan, ko‘chirilgan ish kuni (shanba o‘rniga)."
+  },
+  "timing": {
+    "past": "O‘tgan",
+    "current": "Davom etmoqda",
+    "upcoming": "Kelgusi"
+  },
+  "form": {
+    "title": "Yangi dam olish / bayram kuni",
+    "description": "Sana oralig‘ini, kimlar uchunligini va qaysi hududga tegishliligini belgilang.",
+    "audience": "Kimlar uchun",
+    "startDate": "Boshlanish sanasi",
+    "endDate": "Tugash sanasi",
+    "dayType": "Kun turi",
+    "scope": "Qoida hududi",
+    "chooseRegion": "Viloyatni tanlang",
+    "chooseDistrict": "Tumanni tanlang",
+    "chooseSchool": "Maktabni tanlang",
+    "allClasses": "Barcha sinflar",
+    "classHint": "Sinf tanlanmasa, qoida butun maktab o‘quvchilariga tegishli bo‘ladi.",
+    "mandatory": "Majburiy respublika qoidasi",
+    "mandatoryHint": "Majburiy qoidani quyi hududlar o‘zgartira olmaydi.",
+    "reason": "Sabab",
+    "reasonPlaceholder": "Masalan: Mustaqillik kuni",
+    "submit": "Saqlash"
+  },
+  "errors": {
+    "range": "Sana oralig‘ini to‘g‘ri kiriting.",
+    "tooLong": "Oraliq {{max}} kundan oshmasligi kerak.",
+    "region": "Viloyatni tanlang.",
+    "district": "Tumanni tanlang.",
+    "school": "Maktabni tanlang.",
+    "reason": "Sababni 3–500 ta belgi oralig‘ida kiriting.",
+    "saveFailed": "Qoidani saqlashda xatolik yuz berdi."
+  }
+}

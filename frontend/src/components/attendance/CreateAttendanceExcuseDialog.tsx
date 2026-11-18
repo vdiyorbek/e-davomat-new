@@ -27,21 +27,32 @@ import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-mem
 import { AttendanceExcuseForm } from './AttendanceExcuseForm';
 import type { ExcuseStudentSelection } from './AttendanceExcuseForm';
 
+type ExcuseMembershipType = 'STUDENT' | 'TEACHER';
+
 interface Props {
     onSaved: () => void;
+    /** Kim uchun ariza yaratiladi: o‘quvchi yoki o‘qituvchi. */
+    membershipType?: ExcuseMembershipType;
 }
 
-function StudentSearchResults({
+/** O‘qituvchilar uchun alohida matnlar `excuses.create.teacher.*` ostida. */
+function createKey(membershipType: ExcuseMembershipType, key: string) {
+    return membershipType === 'TEACHER' ? `excuses.create.teacher.${key}` : `excuses.create.${key}`;
+}
+
+function MemberSearchResults({
     schoolId,
     query,
+    membershipType,
     onSelect,
 }: {
     schoolId: number;
     query: string;
+    membershipType: ExcuseMembershipType;
     onSelect: (membership: SchoolMembership) => void;
 }) {
     const { t } = useTranslation();
-    const params = new URLSearchParams({ schoolId: String(schoolId), type: 'STUDENT', q: query, page: '1', limit: '50' });
+    const params = new URLSearchParams({ schoolId: String(schoolId), type: membershipType, q: query, page: '1', limit: '50' });
     const { data, loading, error, retry } = useApiQuery<SchoolMembershipsPage>(`/school-memberships?${params.toString()}`);
 
     // O‘quvchi sinf almashtirgan bo‘lishi mumkin — ro‘yxatda takrorlamaymiz.
@@ -53,14 +64,14 @@ function StudentSearchResults({
     if (loading) {
         return (
             <div role="status" className="space-y-2">
-                <span className="sr-only">{t('excuses.create.searching')}</span>
+                <span className="sr-only">{t(createKey(membershipType, 'searching'))}</span>
                 <Skeleton className="h-14 w-full rounded-xl" />
                 <Skeleton className="h-14 w-full rounded-xl" />
             </div>
         );
     }
     if (error) return <ErrorState message={error} onRetry={retry} />;
-    if (unique.size === 0) return <p className="text-sm text-muted-foreground">{t('excuses.create.noStudents')}</p>;
+    if (unique.size === 0) return <p className="text-sm text-muted-foreground">{t(createKey(membershipType, 'noStudents'))}</p>;
 
     return (
         <div className="space-y-2">
@@ -96,7 +107,7 @@ function StudentSearchResults({
     );
 }
 
-export function CreateAttendanceExcuseDialog({ onSaved }: Props) {
+export function CreateAttendanceExcuseDialog({ onSaved, membershipType = 'STUDENT' }: Props) {
     const { t } = useTranslation();
     const id = useId();
     const { session } = useAuth();
@@ -141,8 +152,9 @@ export function CreateAttendanceExcuseDialog({ onSaved }: Props) {
             schoolId: selectedSchool.id,
             name: personFullName(membership.person),
             schoolName: selectedSchool.name,
-            className: membership.schoolClass?.name ?? null,
+            className: membershipType === 'STUDENT' ? (membership.schoolClass?.name ?? null) : null,
             defaultDate: todayInTashkent(),
+            membershipType,
         });
     }
 
@@ -161,15 +173,15 @@ export function CreateAttendanceExcuseDialog({ onSaved }: Props) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>{t('excuses.create.title')}</DialogTitle>
-                    <DialogDescription>{t('excuses.create.description')}</DialogDescription>
+                    <DialogTitle>{t(createKey(membershipType, 'title'))}</DialogTitle>
+                    <DialogDescription>{t(createKey(membershipType, 'description'))}</DialogDescription>
                 </DialogHeader>
 
                 {student ? (
                     <div className="space-y-4">
                         <Button type="button" variant="outline" size="sm" onClick={() => setStudent(null)}>
                             <ArrowLeft aria-hidden="true" />
-                            {t('excuses.create.another')}
+                            {t(createKey(membershipType, 'another'))}
                         </Button>
                         <AttendanceExcuseForm
                             selection={student}
@@ -202,7 +214,7 @@ export function CreateAttendanceExcuseDialog({ onSaved }: Props) {
 
                         {selectedSchool && (
                             <form onSubmit={handleSearch}>
-                                <Field htmlFor={`${id}-search`} label={t('excuses.create.searchLabel')} error={searchError || undefined}>
+                                <Field htmlFor={`${id}-search`} label={t(createKey(membershipType, 'searchLabel'))} error={searchError || undefined}>
                                     <div className="flex gap-2">
                                         <Input
                                             id={`${id}-search`}
@@ -226,15 +238,16 @@ export function CreateAttendanceExcuseDialog({ onSaved }: Props) {
                         )}
 
                         {selectedSchool && appliedSearch && (
-                            <StudentSearchResults
-                                key={`${schoolId}|${appliedSearch}`}
+                            <MemberSearchResults
+                                key={`${membershipType}|${schoolId}|${appliedSearch}`}
                                 schoolId={selectedSchool.id}
                                 query={appliedSearch}
+                                membershipType={membershipType}
                                 onSelect={handleSelect}
                             />
                         )}
 
-                        <p className="text-xs leading-5 text-muted-foreground">{t('excuses.create.note')}</p>
+                        <p className="text-xs leading-5 text-muted-foreground">{t(createKey(membershipType, 'note'))}</p>
                     </div>
                 )}
             </DialogContent>

@@ -34,7 +34,9 @@ export function AttendanceExcuseDialog({ item, onSaved }: Props) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>{t('excuses.markTitle')}</DialogTitle>
+                    <DialogTitle>
+                        {item.membershipType === 'TEACHER' ? t('excuses.markTitleTeacher') : t('excuses.markTitle')}
+                    </DialogTitle>
                     <DialogDescription>{t('excuses.markDescription')}</DialogDescription>
                 </DialogHeader>
                 {open && (

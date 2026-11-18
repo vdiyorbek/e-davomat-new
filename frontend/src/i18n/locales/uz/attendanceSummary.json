@@ -1,0 +1,86 @@
+{
+  "title": "Hududlar kesimida davomat",
+  "subtitle": "Viloyat, tuman, maktab va sinflar bo‘yicha davomat ko‘rsatkichlari. Batafsil ko‘rish uchun kartani bosing.",
+  "typeLabel": "Kimlar davomati",
+  "type": {
+    "STUDENT": "O‘quvchilar",
+    "TEACHER": "O‘qituvchilar"
+  },
+  "period": {
+    "label": "Davr",
+    "today": "Bugun",
+    "yesterday": "Kecha",
+    "last7": "Oxirgi 7 kun",
+    "week": "Shu hafta",
+    "month": "Shu oy",
+    "custom": "Oraliqni tanlash"
+  },
+  "from": "Boshlanishi",
+  "to": "Tugashi",
+  "rangeErrors": {
+    "invalid": "Sanani to‘g‘ri kiriting.",
+    "order": "Boshlanish sanasi tugash sanasidan keyin bo‘lmasligi kerak.",
+    "future": "Kelajakdagi sanani tanlab bo‘lmaydi.",
+    "tooLong": "Davr {{max}} kundan oshmasligi kerak."
+  },
+  "refresh": "Yangilash",
+  "updatedAt": "Yangilangan: {{time}}",
+  "autoRefresh": "har daqiqada yangilanadi",
+  "kpi": {
+    "persons": "Jami",
+    "present": "Kelgan",
+    "absent": "Sababsiz",
+    "excused": "Sababli",
+    "dayOff": "Dam olishda",
+    "rate": "Davomat",
+    "personDaysHint": "{{days}} kun, kishi-kun hisobida",
+    "rateHint": "Kelgan va sababli / ish kunlari"
+  },
+  "personsCount": {
+    "STUDENT": "{{formatted}} ta o‘quvchi",
+    "TEACHER": "{{formatted}} ta o‘qituvchi"
+  },
+  "bands": {
+    "ALL": "Barchasi",
+    "LOW": "Yomon",
+    "MEDIUM": "Yaxshi",
+    "HIGH": "A’lo",
+    "NONE": "Ma’lumot yo‘q"
+  },
+  "bandRange": {
+    "LOW": "<{{low}}%",
+    "MEDIUM": "{{low}}–{{high}}%",
+    "HIGH": ">{{high}}%"
+  },
+  "bandFilter": "Davomat darajasi bo‘yicha filtr",
+  "sort": {
+    "label": "Saralash",
+    "rateAsc": "Avval pastlari",
+    "rateDesc": "Avval yuqorilari",
+    "name": "Nomi bo‘yicha"
+  },
+  "search": "Ro‘yxatdan qidirish",
+  "searchPlaceholder": "Nomi bo‘yicha…",
+  "level": {
+    "REGION": "Viloyatlar",
+    "DISTRICT": "Tuman va shaharlar",
+    "SCHOOL": "Maktablar",
+    "CLASS": "Sinflar"
+  },
+  "breadcrumbRoot": "Barcha hududlar",
+  "breadcrumbLabel": "Tanlangan hudud",
+  "noClass": "Sinf biriktirilmagan",
+  "stats": {
+    "present": "Kelgan",
+    "absent": "Sababsiz",
+    "excused": "Sababli",
+    "dayOff": "Dam"
+  },
+  "drill": "Batafsil",
+  "openList": "Ro‘yxatni ochish",
+  "unknownWarning": "{{formatted}} kishi-kun uchun o‘quv kalendari sozlanmagan — ular foizga qo‘shilmadi.",
+  "emptyTitle": "Ma’lumot topilmadi",
+  "empty": "Tanlangan davr va hudud uchun hisoblangan davomat yo‘q.",
+  "noMatch": "Filtrga mos natija yo‘q.",
+  "loadFailed": "Davomat ko‘rsatkichlarini olib bo‘lmadi."
+}

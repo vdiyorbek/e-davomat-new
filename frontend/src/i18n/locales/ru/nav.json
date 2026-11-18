@@ -37,7 +37,9 @@
     "personSyncMonitoring": "Мониторинг терминалов",
     "inspectorStudents": "Ученики махалли",
     "inspectorTalks": "Профилактические беседы",
-    "syncHistory": "История синхронизации"
+    "syncHistory": "История синхронизации",
+    "attendanceOverview": "По регионам",
+    "holidays": "Выходные дни"
   },
   "short": {
     "profile": "Профиль",

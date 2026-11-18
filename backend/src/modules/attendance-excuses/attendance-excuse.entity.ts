@@ -12,6 +12,7 @@ import {
 import { Person } from '../persons/person.entity';
 import { School } from '../schools/school.entity';
 import { User } from '../users/user.entity';
+import { MembershipType } from '../school-memberships/school-membership.entity';
 
 export enum AttendanceExcuseReason {
   ILLNESS = 'ILLNESS',
@@ -33,6 +34,11 @@ export enum AttendanceExcuseStatus {
   'endDate',
 ])
 @Index('IDX_excuses_person_dates', ['personId', 'startDate', 'endDate'])
+@Index('IDX_excuses_type_school_status', [
+  'membershipType',
+  'schoolId',
+  'status',
+])
 export class AttendanceExcuse {
   @PrimaryGeneratedColumn({
     type: 'int',
@@ -63,6 +69,14 @@ export class AttendanceExcuse {
     foreignKeyConstraintName: 'FK_excuses_school',
   })
   school!: School;
+
+  /** Ariza kim uchun: o‘quvchi yoki o‘qituvchi. */
+  @Column({
+    type: 'enum',
+    enum: MembershipType,
+    default: MembershipType.STUDENT,
+  })
+  membershipType!: MembershipType;
 
   @Column({
     type: 'enum',

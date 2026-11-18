@@ -6,12 +6,16 @@ export interface AttendanceExcuse {
   id: number;
   personId: number;
   schoolId: number;
+  membershipType: "STUDENT" | "TEACHER";
+  /** Ariza sanasidagi sinf (faqat o‘quvchilar uchun). */
+  className: string | null;
 
   person: {
     id: number;
     firstName: string;
     lastName: string;
     middleName: string | null;
+    pnfl: string | null;
   } | null;
 
   school: {
@@ -27,6 +31,7 @@ export interface AttendanceExcuse {
 
   pdfOriginalName: string;
   uploadedByUserId: number;
+  uploadedBy: { id: number; name: string } | null;
   cancelledByUserId: number | null;
   cancelledAt: string | null;
   cancellationReason: string | null;

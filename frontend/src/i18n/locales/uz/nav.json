@@ -37,7 +37,9 @@
     "personSyncMonitoring": "Terminallar monitoringi",
     "inspectorStudents": "Mahalla o‘quvchilari",
     "inspectorTalks": "Profilaktik suhbatlar",
-    "syncHistory": "Sinxronlash tarixi"
+    "syncHistory": "Sinxronlash tarixi",
+    "attendanceOverview": "Hududlar kesimida",
+    "holidays": "Dam olish kunlari"
   },
   "short": {
     "profile": "Profil",

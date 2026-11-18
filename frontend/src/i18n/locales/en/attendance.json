@@ -50,5 +50,33 @@
     "day_off": "Day off",
     "unconfigured": "Schedule not set",
     "conflict": "Calendar conflict"
+  },
+  "person": {
+    "loadFailed": "Could not load attendance history.",
+    "inactive": "Inactive",
+    "openProfile": "Open profile",
+    "personal": "Personal details",
+    "days": "Daily attendance",
+    "range": "Period",
+    "ranges": {
+      "last7": "Last 7 days",
+      "last14": "Last 14 days",
+      "month": "This month",
+      "last30": "Last 30 days"
+    },
+    "stats": {
+      "present": "Present: {{count}}",
+      "absent": "Absent: {{count}}",
+      "excused": "Excused: {{count}}",
+      "dayOff": "Days off: {{count}}"
+    },
+    "date": "Date",
+    "reason": "Reason",
+    "document": "Document",
+    "daysHint": "Days are listed newest first. Days off are taken from the calendar.",
+    "kind": {
+      "students": "Student",
+      "teachers": "Teacher"
+    }
   }
 }

@@ -24,7 +24,12 @@
     "personIdPlaceholder": "e.g. 125",
     "invalidPersonId": "Invalid student ID.",
     "status": "Request status",
-    "all": "All requests"
+    "all": "All requests",
+    "searchStudent": "Search student",
+    "searchTeacher": "Search teacher",
+    "searchPlaceholder": "Full name or PINFL",
+    "from": "From",
+    "to": "To"
   },
   "markExcused": "Mark excused",
   "markTitle": "Mark student as excused",
@@ -76,6 +81,29 @@
     "noStudents": "No student found.",
     "select": "Select",
     "first50": "Showing the first 50 results. Refine your search.",
-    "note": "Past memberships may also appear. The request dates must fall within the student’s period at this school."
-  }
+    "note": "Past memberships may also appear. The request dates must fall within the student’s period at this school.",
+    "teacher": {
+      "title": "Excuse request for a teacher",
+      "description": "Choose a teacher and upload the supporting PDF.",
+      "another": "Choose another teacher",
+      "searchLabel": "Search teacher by full name or PINFL",
+      "searching": "Searching teachers…",
+      "noStudents": "No teacher found.",
+      "note": "The request dates must fall within the teacher’s employment period at this school."
+    }
+  },
+  "selectedTeacher": "Selected teacher",
+  "markTitleTeacher": "Mark teacher as excused",
+  "subtitleBoth": "Excused-absence requests for students and teachers, with supporting documents.",
+  "typeLabel": "Requests for",
+  "types": {
+    "STUDENT": "Students",
+    "TEACHER": "Teachers"
+  },
+  "listTitleStudent": "Student requests",
+  "listTitleTeacher": "Teacher requests",
+  "teacher": "Teacher",
+  "uploadedBy": "Uploaded by",
+  "daysCount_one": "{{count}} day",
+  "daysCount": "{{count}} days"
 }

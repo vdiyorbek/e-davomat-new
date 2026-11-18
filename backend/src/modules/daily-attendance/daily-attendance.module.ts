@@ -6,6 +6,8 @@ import { DailyAttendanceController } from './daily-attendance.controller';
 import { DailyAttendanceService } from './daily-attendance.service';
 import { DailyAttendanceReadService } from './daily-attendance-read.service';
 import { DailyAttendanceExportService } from './daily-attendance-export.service';
+import { DailyAttendanceSummaryService } from './daily-attendance-summary.service';
+import { DailyAttendancePersonService } from './daily-attendance-person.service';
 import { AttendanceCalendarModule } from '../attendance-calendar/attendance-calendar.module';
 
 @Module({
@@ -18,6 +20,8 @@ import { AttendanceCalendarModule } from '../attendance-calendar/attendance-cale
     DailyAttendanceService,
     DailyAttendanceReadService,
     DailyAttendanceExportService,
+    DailyAttendanceSummaryService,
+    DailyAttendancePersonService,
   ],
   exports: [DailyAttendanceService],
 })

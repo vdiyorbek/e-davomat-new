@@ -39,8 +39,8 @@ export class AttendanceExcusesController {
       limits: {
         fileSize: 5 * 1024 * 1024,
         files: 1,
-        fields: 6,
-        parts: 7,
+        fields: 7,
+        parts: 8,
       },
     }),
   )

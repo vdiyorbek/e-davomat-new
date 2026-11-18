@@ -24,7 +24,12 @@
     "personIdPlaceholder": "Masalan: 125",
     "invalidPersonId": "O‘quvchi ID noto‘g‘ri.",
     "status": "Ariza holati",
-    "all": "Barcha arizalar"
+    "all": "Barcha arizalar",
+    "searchStudent": "O‘quvchini qidirish",
+    "searchTeacher": "O‘qituvchini qidirish",
+    "searchPlaceholder": "F.I.Sh. yoki PNFL",
+    "from": "Sanadan",
+    "to": "Sanagacha"
   },
   "markExcused": "Sababli qilish",
   "markTitle": "O‘quvchini sababli belgilash",
@@ -76,6 +81,28 @@
     "noStudents": "O‘quvchi topilmadi.",
     "select": "Tanlash",
     "first50": "Birinchi 50 ta natija ko‘rsatildi. Qidiruvni aniqlashtiring.",
-    "note": "Tarixiy o‘quvchilik bog‘lanishlari ham qidiruvda ko‘rinishi mumkin. Ariza sanasi o‘quvchining shu maktabdagi o‘qish davriga mos bo‘lishi kerak."
-  }
+    "note": "Tarixiy o‘quvchilik bog‘lanishlari ham qidiruvda ko‘rinishi mumkin. Ariza sanasi o‘quvchining shu maktabdagi o‘qish davriga mos bo‘lishi kerak.",
+    "teacher": {
+      "title": "O‘qituvchi uchun sababli ariza",
+      "description": "O‘qituvchini tanlang va asoslovchi PDF hujjatni yuklang.",
+      "another": "Boshqa o‘qituvchini tanlash",
+      "searchLabel": "O‘qituvchini F.I.Sh. yoki PNFL orqali qidirish",
+      "searching": "O‘qituvchilar qidirilmoqda…",
+      "noStudents": "O‘qituvchi topilmadi.",
+      "note": "Ariza sanasi o‘qituvchining shu maktabda ishlagan davriga mos bo‘lishi kerak."
+    }
+  },
+  "selectedTeacher": "Tanlangan o‘qituvchi",
+  "markTitleTeacher": "O‘qituvchini sababli belgilash",
+  "subtitleBoth": "O‘quvchi va o‘qituvchilarning sababli arizalari hamda asoslovchi hujjatlari.",
+  "typeLabel": "Ariza egasi",
+  "types": {
+    "STUDENT": "O‘quvchilar",
+    "TEACHER": "O‘qituvchilar"
+  },
+  "listTitleStudent": "O‘quvchilar arizalari",
+  "listTitleTeacher": "O‘qituvchilar arizalari",
+  "teacher": "O‘qituvchi",
+  "uploadedBy": "Kim yukladi",
+  "daysCount": "{{count}} kun"
 }

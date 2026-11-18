@@ -23,6 +23,8 @@ export interface ExcuseStudentSelection {
     schoolName: string;
     className: string | null;
     defaultDate: string;
+    /** Kim uchun ariza: o‘quvchi (standart) yoki o‘qituvchi. */
+    membershipType?: 'STUDENT' | 'TEACHER';
 }
 
 type Props = {
@@ -53,6 +55,7 @@ export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Pro
                 schoolName: item.school.name,
                 className: item.className,
                 defaultDate: item.date,
+                membershipType: item.membershipType,
             }
             : null);
 
@@ -81,6 +84,7 @@ export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Pro
         const payload = new FormData();
         payload.append('personId', String(student.personId));
         payload.append('schoolId', String(student.schoolId));
+        payload.append('membershipType', student.membershipType ?? 'STUDENT');
         payload.append('reason', reason);
         payload.append('startDate', startDate);
         payload.append('endDate', endDate);
@@ -101,7 +105,9 @@ export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Pro
     return (
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
             <div className="rounded-xl border bg-muted/40 px-4 py-3">
-                <p className="text-xs text-muted-foreground">{t('excuses.selectedStudent')}</p>
+                <p className="text-xs text-muted-foreground">
+                    {student?.membershipType === 'TEACHER' ? t('excuses.selectedTeacher') : t('excuses.selectedStudent')}
+                </p>
                 <p className="mt-1 font-semibold [overflow-wrap:anywhere]">{student?.name ?? t('excuses.unknownStudent')}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                     {student?.schoolName ?? '—'}

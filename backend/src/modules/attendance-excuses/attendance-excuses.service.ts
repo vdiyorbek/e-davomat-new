@@ -95,7 +95,7 @@ export class AttendanceExcusesService {
         schoolId: dto.schoolId,
       })
       .andWhere('membership.type = :type', {
-        type: MembershipType.STUDENT,
+        type: dto.membershipType,
       })
       .andWhere('person.deletedAt IS NULL')
       .andWhere('membership.startDate <= :endDate', {
@@ -130,7 +130,9 @@ export class AttendanceExcusesService {
 
     if (coveredUntil <= dto.endDate) {
       throw new BadRequestException(
-        'Ariza sanalari o‘quvchining ushbu maktabdagi o‘qish davriga mos emas',
+        dto.membershipType === MembershipType.TEACHER
+          ? 'Ariza sanalari o‘qituvchining ushbu maktabdagi ish davriga mos emas'
+          : 'Ariza sanalari o‘quvchining ushbu maktabdagi o‘qish davriga mos emas',
       );
     }
 
@@ -143,6 +145,9 @@ export class AttendanceExcusesService {
       })
       .andWhere('excuse.schoolId = :schoolId', {
         schoolId: dto.schoolId,
+      })
+      .andWhere('excuse.membershipType = :membershipType', {
+        membershipType: dto.membershipType,
       })
       .andWhere('excuse.status = :status', {
         status: AttendanceExcuseStatus.ACTIVE,
@@ -181,6 +186,7 @@ export class AttendanceExcusesService {
       const excuse = this.excusesRepository.create({
         personId: dto.personId,
         schoolId: dto.schoolId,
+        membershipType: dto.membershipType,
         reason: dto.reason,
         reasonNote: dto.reasonNote ?? null,
         startDate: dto.startDate,
@@ -206,6 +212,7 @@ export class AttendanceExcusesService {
         id: saved.id,
         personId: saved.personId,
         schoolId: saved.schoolId,
+        membershipType: saved.membershipType,
         reason: saved.reason,
         reasonNote: saved.reasonNote,
         startDate: saved.startDate,
@@ -240,7 +247,14 @@ export class AttendanceExcusesService {
     const builder = this.excusesRepository
       .createQueryBuilder('excuse')
       .leftJoinAndSelect('excuse.person', 'person')
-      .leftJoinAndSelect('excuse.school', 'school');
+      .leftJoinAndSelect('excuse.school', 'school')
+      .leftJoin('excuse.uploadedBy', 'uploadedBy')
+      .addSelect([
+        'uploadedBy.id',
+        'uploadedBy.login',
+        'uploadedBy.firstName',
+        'uploadedBy.lastName',
+      ]);
 
     if (actor.role === UserRole.SCHOOL_ADMIN) {
       if (!actor.schoolId) {
@@ -272,6 +286,44 @@ export class AttendanceExcusesService {
       builder.andWhere('excuse.status = :status', { status: query.status });
     }
 
+    if (query.membershipType !== undefined) {
+      builder.andWhere('excuse.membershipType = :membershipType', {
+        membershipType: query.membershipType,
+      });
+    }
+
+    // Tanlangan oraliq bilan kesishgan arizalar.
+    if (query.from !== undefined) {
+      builder.andWhere('excuse.endDate >= :filterFrom', {
+        filterFrom: query.from,
+      });
+    }
+
+    if (query.to !== undefined) {
+      builder.andWhere('excuse.startDate <= :filterTo', {
+        filterTo: query.to,
+      });
+    }
+
+    if (query.q) {
+      const words = query.q.split(/\s+/).filter(Boolean);
+
+      words.forEach((word, index) => {
+        const escaped = word.replace(/[!%_]/g, '!$&');
+        const parameterName = `excuseSearch${index}`;
+
+        builder.andWhere(
+          `(
+            person.firstName LIKE :${parameterName} ESCAPE '!'
+            OR person.lastName LIKE :${parameterName} ESCAPE '!'
+            OR person.middleName LIKE :${parameterName} ESCAPE '!'
+            OR person.pnfl LIKE :${parameterName} ESCAPE '!'
+          )`,
+          { [parameterName]: `%${escaped}%` },
+        );
+      });
+    }
+
     const [rows, total] = await builder
       .orderBy('excuse.createdAt', 'DESC')
       .addOrderBy('excuse.id', 'DESC')
@@ -279,18 +331,33 @@ export class AttendanceExcusesService {
       .take(query.limit)
       .getManyAndCount();
 
+    const classNames = await this.loadClassNames(rows);
+
     return {
       data: rows.map((item) => ({
         id: item.id,
         personId: item.personId,
         schoolId: item.schoolId,
+        membershipType: item.membershipType,
+        className: classNames.get(item.id) ?? null,
 
         person: item.person
           ? {
               id: item.person.id,
+              pnfl: item.person.pnfl,
               firstName: item.person.firstName,
               lastName: item.person.lastName,
               middleName: item.person.middleName,
+            }
+          : null,
+
+        uploadedBy: item.uploadedBy
+          ? {
+              id: item.uploadedBy.id,
+              name:
+                [item.uploadedBy.lastName, item.uploadedBy.firstName]
+                  .filter(Boolean)
+                  .join(' ') || item.uploadedBy.login,
             }
           : null,
 
@@ -317,6 +384,50 @@ export class AttendanceExcusesService {
       limit: query.limit,
       totalPages: Math.ceil(total / query.limit),
     };
+  }
+
+  /**
+   * O‘quvchi arizalari uchun ariza boshlangan kundagi sinf nomi.
+   * Sahifadagi barcha arizalar uchun bitta so‘rov.
+   */
+  private async loadClassNames(
+    rows: AttendanceExcuse[],
+  ): Promise<Map<number, string>> {
+    const result = new Map<number, string>();
+    const students = rows.filter(
+      (row) => row.membershipType === MembershipType.STUDENT,
+    );
+
+    if (students.length === 0) {
+      return result;
+    }
+
+    const memberships = await this.membershipsRepository
+      .createQueryBuilder('membership')
+      .leftJoinAndSelect('membership.schoolClass', 'schoolClass')
+      .where('membership.personId IN (:...personIds)', {
+        personIds: [...new Set(students.map((row) => row.personId))],
+      })
+      .andWhere('membership.type = :type', { type: MembershipType.STUDENT })
+      .orderBy('membership.startDate', 'DESC')
+      .addOrderBy('membership.id', 'DESC')
+      .getMany();
+
+    for (const row of students) {
+      const membership = memberships.find(
+        (item) =>
+          item.personId === row.personId &&
+          item.schoolId === row.schoolId &&
+          item.startDate <= row.startDate &&
+          (item.endDate === null || item.endDate > row.startDate),
+      );
+
+      if (membership?.schoolClass) {
+        result.set(row.id, membership.schoolClass.name);
+      }
+    }
+
+    return result;
   }
 
   // PDF arizani xavfsiz o‘qish

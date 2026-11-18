@@ -23,7 +23,7 @@ interface Props {
     onChanged: () => void;
 }
 
-function PdfPreview({ excuseId }: { excuseId: number }) {
+export function PdfPreview({ excuseId }: { excuseId: number }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [url, setUrl] = useState('');

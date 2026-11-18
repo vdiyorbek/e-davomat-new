@@ -31,6 +31,7 @@ export interface DailyAttendance {
   calendarStatus: CalendarStatus;
   excuseId: number | null;
   excuseReason: "ILLNESS" | "OLYMPIAD" | "FAMILY" | "OTHER" | null;
+  membershipType: "STUDENT" | "TEACHER";
 
   person: {
     id: number;

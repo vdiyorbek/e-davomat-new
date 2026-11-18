@@ -1,0 +1,85 @@
+{
+  "title": "Days off and holidays",
+  "subtitle": "Holidays, breaks and extra school days — for students, teachers or everyone.",
+  "create": "Add day off",
+  "audience": "Applies to",
+  "year": "Year",
+  "period": "Period",
+  "place": "Area",
+  "createdBy": "Added by",
+  "national": "Nationwide",
+  "mandatory": "Mandatory",
+  "allScopes": "All levels",
+  "allDayTypes": "All types",
+  "listTitle": "{{year}} list",
+  "daysCount_one": "{{count}} day",
+  "daysCount": "{{count}} days",
+  "viewOnly": "View only",
+  "emptyTitle": "No days off",
+  "empty": "No rules match the selected filters.",
+  "created": "Day off saved.",
+  "cancel": "Cancel",
+  "cancelling": "Cancelling…",
+  "cancelTitle": "Cancel this rule?",
+  "cancelConfirm": "The rule “{{reason}}” will be cancelled and attendance recalculated.",
+  "cancelled": "Rule cancelled.",
+  "cancelFailed": "Could not cancel the rule.",
+  "audiences": {
+    "ALL": "All",
+    "STUDENT": "Students",
+    "TEACHER": "Teachers",
+    "BOTH": "Everyone"
+  },
+  "audienceHints": {
+    "STUDENT": "Only students are off",
+    "TEACHER": "Only teachers",
+    "BOTH": "Students and teachers"
+  },
+  "scopes": {
+    "GLOBAL": "Nationwide",
+    "REGION": "Region",
+    "DISTRICT": "District",
+    "SCHOOL": "School"
+  },
+  "dayTypes": {
+    "DAY_OFF": "Day off",
+    "WORK_DAY": "School / work day"
+  },
+  "dayTypeHints": {
+    "DAY_OFF": "Absences on these days are not counted as unexcused.",
+    "WORK_DAY": "E.g. a moved working day (instead of Saturday)."
+  },
+  "timing": {
+    "past": "Past",
+    "current": "Ongoing",
+    "upcoming": "Upcoming"
+  },
+  "form": {
+    "title": "New day off / holiday",
+    "description": "Set the dates, who it applies to and which area it covers.",
+    "audience": "Applies to",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "dayType": "Day type",
+    "scope": "Rule level",
+    "chooseRegion": "Choose region",
+    "chooseDistrict": "Choose district",
+    "chooseSchool": "Choose school",
+    "allClasses": "All classes",
+    "classHint": "With no class selected, the rule covers all students of the school.",
+    "mandatory": "Mandatory national rule",
+    "mandatoryHint": "Lower levels cannot override a mandatory rule.",
+    "reason": "Reason",
+    "reasonPlaceholder": "E.g. Independence Day",
+    "submit": "Save"
+  },
+  "errors": {
+    "range": "Enter a valid date range.",
+    "tooLong": "The range must not exceed {{max}} days.",
+    "region": "Choose a region.",
+    "district": "Choose a district.",
+    "school": "Choose a school.",
+    "reason": "Reason must be 3–500 characters.",
+    "saveFailed": "Could not save the rule."
+  }
+}

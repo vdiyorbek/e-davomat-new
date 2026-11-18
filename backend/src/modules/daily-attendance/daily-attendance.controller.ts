@@ -23,6 +23,10 @@ import { DailyAttendanceReadService } from './daily-attendance-read.service';
 import { MembershipType } from '../school-memberships/school-membership.entity';
 import { RebuildDailyAttendanceDto } from './dto/rebuild-daily-attendance.dto';
 import { GetDailyAttendanceQueryDto } from './dto/get-daily-attendance-query.dto';
+import { GetAttendanceSummaryQueryDto } from './dto/get-attendance-summary-query.dto';
+import { DailyAttendanceSummaryService } from './daily-attendance-summary.service';
+import { DailyAttendancePersonService } from './daily-attendance-person.service';
+import { GetPersonAttendanceQueryDto } from './dto/get-person-attendance-query.dto';
 
 @Controller('daily-attendance')
 @Roles(UserRole.SUPER_ADMIN)
@@ -31,12 +35,54 @@ export class DailyAttendanceController {
     private readonly dailyAttendanceService: DailyAttendanceService,
     private readonly dailyAttendanceReadService: DailyAttendanceReadService,
     private readonly exportService: DailyAttendanceExportService,
+    private readonly summaryService: DailyAttendanceSummaryService,
+    private readonly personService: DailyAttendancePersonService,
   ) {}
 
   @Post('rebuild')
   @HttpCode(200)
   rebuild(@Body() dto: RebuildDailyAttendanceDto) {
     return this.dailyAttendanceService.rebuild(dto);
+  }
+
+  /** Hududlar kesimida davomat: viloyat → tuman → maktab → sinf. */
+  @Get('summary')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  summary(
+    @Query() query: GetAttendanceSummaryQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.summaryService.summary(query, request.authUser);
+  }
+
+  /** Bitta shaxsning davr bo‘yicha davomati va shaxsiy ma’lumotlari. */
+  @Get('person-history')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  personHistory(
+    @Query() query: GetPersonAttendanceQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.personService.history(query, request.authUser);
   }
 
   @Get('students/export')

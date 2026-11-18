@@ -24,6 +24,7 @@ import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.
 import { CreateWeeklyScheduleDto } from './dto/create-weekly-schedule.dto';
 import { GetWeeklySchedulesDto } from './dto/get-weekly-schedules.dto';
 import { UpdateWeeklyScheduleDto } from './dto/update-weekly-schedule.dto';
+import { ListCalendarRulesDto } from './dto/list-calendar-rules.dto';
 
 @Controller('attendance-calendar')
 @Roles(
@@ -39,6 +40,19 @@ export class AttendanceCalendarController {
     private readonly weeklySchedulesService: AttendanceWeeklySchedulesService,
     private readonly calendarResolver: CalendarResolverService,
   ) {}
+
+  /** Dam olish va bayram kunlari: barcha hududlar bo‘yicha ro‘yxat. */
+  @Get('rules/list')
+  listRules(
+    @Query() query: ListCalendarRulesDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.calendarService.listRules(query, request.authUser);
+  }
 
   @Get('rules')
   findRules(

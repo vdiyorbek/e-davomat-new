@@ -1,14 +1,15 @@
 import { useId, useState } from 'react';
-import { FileCheck2, RotateCw } from 'lucide-react';
-import { Link } from 'react-router';
+import { CalendarRange, FileCheck2, GraduationCap, Presentation, RotateCw, X } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { AttendanceExcuseActions } from '@/components/attendance/AttendanceExcuseActions';
 import { CreateAttendanceExcuseDialog } from '@/components/attendance/CreateAttendanceExcuseDialog';
 import { Field } from '@/components/common/Field';
+import { FilterSearchForm } from '@/components/common/FilterSearchForm';
+import { FilterToggle } from '@/components/common/FilterToggle';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
-import { DetailItem, DetailList } from '@/components/common/ResponsiveDetails';
 import { SelectField } from '@/components/common/SelectField';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -16,60 +17,160 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { formatDate } from '@/lib/date';
+import { useAuth } from '@/hooks/useAuth';
+import { daysInRange, isIsoDate } from '@/lib/attendance-summary';
+import { formatDate, formatDateTime } from '@/lib/date';
+import { DEFAULT_PAGE_SIZE, parsePageSize } from '@/lib/pagination';
 import { personFullName } from '@/lib/person';
-import type { AttendanceExcuse, AttendanceExcusesPageResponse, ExcuseStatus } from '@/types/attendance-excuse';
+import type { AttendanceExcuse, AttendanceExcusesPageResponse, ExcuseReason } from '@/types/attendance-excuse';
 import type { School } from '@/types/school';
 
-interface AppliedFilters {
-    schoolId: string;
-    personId: string;
-    status: string;
+type ExcuseType = 'STUDENT' | 'TEACHER';
+type StatusFilter = 'ACTIVE' | 'CANCELLED' | 'all';
+
+const FILTER_KEYS = ['schoolId', 'status', 'q', 'from', 'to'] as const;
+
+const REASON_TONES: Record<ExcuseReason, 'danger' | 'info' | 'warning' | 'neutral'> = {
+    ILLNESS: 'danger',
+    OLYMPIAD: 'info',
+    FAMILY: 'warning',
+    OTHER: 'neutral',
+};
+
+function readType(value: string | null): ExcuseType {
+    return value === 'TEACHER' ? 'TEACHER' : 'STUDENT';
 }
 
-const DEFAULT_FILTERS: AppliedFilters = { schoolId: '', personId: '', status: 'ACTIVE' };
+function readStatus(value: string | null): StatusFilter {
+    return value === 'CANCELLED' || value === 'all' ? value : 'ACTIVE';
+}
+
+function readPositive(value: string | null, fallback: number) {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+/** Sana oralig‘i: ikki qatorda, kunlar soni bilan — jadval kengayib ketmaydi. */
+function PeriodBadge({ item }: { item: AttendanceExcuse }) {
+    const { t } = useTranslation();
+    const days = daysInRange(item.startDate, item.endDate);
+    const single = item.startDate === item.endDate;
+
+    return (
+        <div className="inline-flex max-w-full items-start gap-2 rounded-xl border bg-muted/40 px-2.5 py-1.5">
+            <CalendarRange aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0 text-sm leading-5 tabular-nums">
+                <p className="whitespace-nowrap">
+                    {formatDate(item.startDate)}
+                    {!single && <span className="text-muted-foreground"> —</span>}
+                </p>
+                {!single && <p className="whitespace-nowrap">{formatDate(item.endDate)}</p>}
+                <p className="text-xs text-muted-foreground">{t('excuses.daysCount', { count: days })}</p>
+            </div>
+        </div>
+    );
+}
 
 export function AttendanceExcusesPage() {
     const { t } = useTranslation();
-    const id = useId();
-    const [draft, setDraft] = useState<AppliedFilters>(DEFAULT_FILTERS);
-    const [filters, setFilters] = useState<AppliedFilters>(DEFAULT_FILTERS);
-    const [page, setPage] = useState(1);
-    const [filterError, setFilterError] = useState('');
+    const ids = useId();
+    const { session } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    const { data: schools } = useApiQuery<School[]>('/schools');
+    const role = session?.profile.role;
+    const canChooseSchool = role === 'SUPER_ADMIN';
 
-    const query = new URLSearchParams({ page: String(page), limit: '20' });
-    if (filters.schoolId) query.set('schoolId', filters.schoolId);
-    if (filters.personId) query.set('personId', filters.personId);
-    if (filters.status) query.set('status', filters.status);
+    const type = readType(searchParams.get('type'));
+    const status = readStatus(searchParams.get('status'));
+    const schoolId = searchParams.get('schoolId') ?? '';
+    const search = searchParams.get('q') ?? '';
+    const fromParam = searchParams.get('from') ?? '';
+    const toParam = searchParams.get('to') ?? '';
+    const from = isIsoDate(fromParam) ? fromParam : '';
+    const to = isIsoDate(toParam) ? toParam : '';
+    const page = readPositive(searchParams.get('page'), 1);
+    const limit = parsePageSize(searchParams.get('limit')) ?? DEFAULT_PAGE_SIZE;
+
+    const advancedCount = [schoolId, from, to, status !== 'ACTIVE' ? status : ''].filter(Boolean).length;
+    const [expanded, setExpanded] = useState(advancedCount > 0);
+    const rangeInvalid = Boolean(from && to && from > to);
+
+    const { data: schools, loading: schoolsLoading } = useApiQuery<School[]>('/schools');
+
+    const query = new URLSearchParams({ page: String(page), limit: String(limit), membershipType: type });
+    if (schoolId) query.set('schoolId', schoolId);
+    if (status !== 'all') query.set('status', status);
+    if (search.length >= 2) query.set('q', search);
+    if (!rangeInvalid) {
+        if (from) query.set('from', from);
+        if (to) query.set('to', to);
+    }
 
     const { data, loading, error, retry } = useApiQuery<AttendanceExcusesPageResponse>(`/attendance-excuses?${query.toString()}`);
 
-    function applyFilters() {
-        if (draft.personId && (!/^[1-9]\d*$/.test(draft.personId) || Number(draft.personId) > 4294967295)) {
-            setFilterError(t('excuses.filters.invalidPersonId'));
-            return;
+    function update(changes: Record<string, string>, resetPage = true) {
+        const next = new URLSearchParams(searchParams);
+        for (const [key, value] of Object.entries(changes)) {
+            if (value) next.set(key, value);
+            else next.delete(key);
         }
-        setFilterError('');
-        setPage(1);
-        setFilters({ ...draft });
+        if (resetPage) next.set('page', '1');
+        setSearchParams(next);
     }
+
+    function clearFilters() {
+        const next = new URLSearchParams(searchParams);
+        FILTER_KEYS.forEach((key) => next.delete(key));
+        next.set('page', '1');
+        setSearchParams(next);
+    }
+
+    const hasFilters = Boolean(schoolId || search || from || to || status !== 'ACTIVE');
+    const isTeacher = type === 'TEACHER';
 
     function statusBadge(item: AttendanceExcuse) {
         return (
-            <StatusBadge tone={item.status === 'ACTIVE' ? 'primary' : 'neutral'}>
-                {t(`excuses.status.${item.status}`)}
-            </StatusBadge>
+            <StatusBadge tone={item.status === 'ACTIVE' ? 'success' : 'neutral'}>{t(`excuses.status.${item.status}`)}</StatusBadge>
         );
     }
 
-    function nameLink(item: AttendanceExcuse) {
+    function reasonBlock(item: AttendanceExcuse) {
         return (
-            <Link to={`/persons/${item.personId}`} className="font-semibold underline-offset-4 hover:text-primary hover:underline">
-                {personFullName(item.person, t('common.personMissing'))}
-            </Link>
+            <div className="min-w-0 space-y-1">
+                <StatusBadge tone={REASON_TONES[item.reason]}>{t(`excuses.reason.${item.reason}`)}</StatusBadge>
+                {item.reasonNote && (
+                    <p className="line-clamp-2 text-xs leading-5 text-muted-foreground [overflow-wrap:anywhere]" title={item.reasonNote}>
+                        {item.reasonNote}
+                    </p>
+                )}
+            </div>
+        );
+    }
+
+    function personBlock(item: AttendanceExcuse) {
+        return (
+            <div className="min-w-0">
+                <Link
+                    to={`/persons/${item.personId}`}
+                    className="font-semibold leading-6 underline-offset-4 [overflow-wrap:anywhere] hover:text-primary hover:underline"
+                >
+                    {personFullName(item.person, t('common.personMissing'))}
+                </Link>
+                <p className="text-xs text-muted-foreground tabular-nums">
+                    {item.person?.pnfl ? `${t('common.pnfl')}: ${item.person.pnfl}` : t('excuses.number', { id: item.id })}
+                </p>
+            </div>
+        );
+    }
+
+    function uploadedBlock(item: AttendanceExcuse) {
+        return (
+            <div className="min-w-0 text-sm">
+                <p className="[overflow-wrap:anywhere]">{item.uploadedBy?.name ?? '—'}</p>
+                <p className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">{formatDateTime(item.createdAt)}</p>
+            </div>
         );
     }
 
@@ -78,14 +179,14 @@ export function AttendanceExcusesPage() {
             <PageHeader
                 eyebrow={t('nav.groups.attendance')}
                 title={t('excuses.title')}
-                description={t('excuses.subtitle')}
+                description={t('excuses.subtitleBoth')}
                 actions={
                     <>
                         <CreateAttendanceExcuseDialog
+                            key={type}
+                            membershipType={type}
                             onSaved={() => {
-                                setPage(1);
-                                setDraft((previous) => ({ ...previous, status: 'ACTIVE' }));
-                                setFilters((previous) => ({ ...previous, status: 'ACTIVE' }));
+                                update({ status: '' });
                                 retry();
                             }}
                         />
@@ -96,62 +197,97 @@ export function AttendanceExcusesPage() {
                 }
             />
 
-            <form
-                className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
-                onSubmit={(event) => {
-                    event.preventDefault();
-                    applyFilters();
-                }}
-            >
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Field htmlFor={`${id}-school`} label={t('common.school')}>
-                        <SelectField
-                            id={`${id}-school`}
-                            value={draft.schoolId}
-                            onValueChange={(value) => setDraft((previous) => ({ ...previous, schoolId: value }))}
-                            emptyOption={t('filters.allSchools')}
-                            options={(schools ?? []).map((school) => ({ value: String(school.id), label: school.name }))}
-                        />
-                    </Field>
-                    <Field htmlFor={`${id}-person`} label={`${t('excuses.filters.personId')} (${t('common.optional')})`} error={filterError || undefined}>
-                        <Input
-                            id={`${id}-person`}
-                            inputMode="numeric"
-                            value={draft.personId}
-                            placeholder={t('excuses.filters.personIdPlaceholder')}
-                            onChange={(event) => setDraft((previous) => ({ ...previous, personId: event.target.value.replace(/\D/g, '') }))}
-                        />
-                    </Field>
-                    <Field htmlFor={`${id}-status`} label={t('excuses.filters.status')}>
-                        <SelectField
-                            id={`${id}-status`}
-                            value={draft.status}
-                            onValueChange={(value) => setDraft((previous) => ({ ...previous, status: value }))}
-                            emptyOption={t('excuses.filters.all')}
-                            options={(['ACTIVE', 'CANCELLED'] as const).map((value) => ({ value, label: t(`excuses.status.${value}`) }))}
-                        />
-                    </Field>
+            <Tabs value={type} onValueChange={(value) => update({ type: value === 'TEACHER' ? 'TEACHER' : '' })}>
+                <TabsList aria-label={t('excuses.typeLabel')} className="w-full sm:w-fit">
+                    <TabsTrigger value="STUDENT" className="px-4">
+                        <GraduationCap aria-hidden="true" />
+                        {t('excuses.types.STUDENT')}
+                    </TabsTrigger>
+                    <TabsTrigger value="TEACHER" className="px-4">
+                        <Presentation aria-hidden="true" />
+                        {t('excuses.types.TEACHER')}
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+
+            <section aria-label={t('common.filters')} className="space-y-4 rounded-2xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5">
+                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                    <FilterSearchForm
+                        key={search}
+                        label={isTeacher ? t('excuses.filters.searchTeacher') : t('excuses.filters.searchStudent')}
+                        placeholder={t('excuses.filters.searchPlaceholder')}
+                        initialValue={search}
+                        onSearch={(value) => update({ q: value.length >= 2 ? value : '' })}
+                    />
+                    <FilterToggle
+                        expanded={expanded}
+                        count={advancedCount}
+                        controls={`${ids}-advanced`}
+                        onToggle={() => setExpanded((value) => !value)}
+                    />
                 </div>
-                <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                            setDraft(DEFAULT_FILTERS);
-                            setFilters(DEFAULT_FILTERS);
-                            setPage(1);
-                            setFilterError('');
-                        }}
+
+                <div
+                    id={`${ids}-advanced`}
+                    hidden={!expanded}
+                    className={`grid gap-4 border-t pt-4 sm:grid-cols-2 ${canChooseSchool ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}
+                >
+                    {canChooseSchool && (
+                        <Field htmlFor={`${ids}-school`} label={t('common.school')}>
+                            <SelectField
+                                id={`${ids}-school`}
+                                value={schoolId}
+                                searchable
+                                disabled={schoolsLoading}
+                                onValueChange={(value) => update({ schoolId: value })}
+                                emptyOption={t('filters.allSchools')}
+                                options={(schools ?? []).map((school) => ({
+                                    value: String(school.id),
+                                    label: school.name,
+                                    keywords: `${school.name} ${school.district.name}`,
+                                }))}
+                            />
+                        </Field>
+                    )}
+                    <Field htmlFor={`${ids}-status`} label={t('excuses.filters.status')}>
+                        <SelectField
+                            id={`${ids}-status`}
+                            value={status}
+                            onValueChange={(value) => update({ status: value === 'ACTIVE' ? '' : value })}
+                            options={[
+                                { value: 'ACTIVE', label: t('excuses.status.ACTIVE') },
+                                { value: 'CANCELLED', label: t('excuses.status.CANCELLED') },
+                                { value: 'all', label: t('excuses.filters.all') },
+                            ]}
+                        />
+                    </Field>
+                    <Field htmlFor={`${ids}-from`} label={t('excuses.filters.from')}>
+                        <Input id={`${ids}-from`} type="date" value={from} max={to || undefined} onChange={(event) => update({ from: event.target.value })} />
+                    </Field>
+                    <Field
+                        htmlFor={`${ids}-to`}
+                        label={t('excuses.filters.to')}
+                        error={rangeInvalid ? t('excuses.errors.range') : undefined}
                     >
-                        {t('common.clearFilters')}
-                    </Button>
-                    <Button type="submit">{t('common.show')}</Button>
+                        <Input id={`${ids}-to`} type="date" value={to} min={from || undefined} onChange={(event) => update({ to: event.target.value })} />
+                    </Field>
                 </div>
-            </form>
+
+                {hasFilters && (
+                    <div className="flex justify-end">
+                        <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                            <X aria-hidden="true" />
+                            {t('common.clearFilters')}
+                        </Button>
+                    </div>
+                )}
+            </section>
 
             <section className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                    <h2 className="font-heading text-lg font-bold">{t('excuses.listTitle')}</h2>
+                    <h2 className="font-heading text-lg font-bold">
+                        {isTeacher ? t('excuses.listTitleTeacher') : t('excuses.listTitleStudent')}
+                    </h2>
                     {data && <span className="text-sm text-muted-foreground">{t('common.total', { count: data.total })}</span>}
                 </div>
 
@@ -163,67 +299,66 @@ export function AttendanceExcusesPage() {
                     <EmptyState icon={FileCheck2} title={t('excuses.emptyTitle')} description={t('excuses.empty')} />
                 ) : (
                     <>
+                        {/* Mobil va planshet: ixcham kartalar */}
                         <ul className="grid list-none gap-3 sm:grid-cols-2 xl:hidden">
                             {data.data.map((item) => (
                                 <li key={item.id}>
-                                    <Card size="sm" className="gap-3 px-4">
+                                    <Card size="sm" className="h-full gap-3 px-4">
                                         <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <p className="leading-6 [overflow-wrap:anywhere]">{nameLink(item)}</p>
-                                                <p className="text-xs text-muted-foreground">{t('excuses.number', { id: item.id })}</p>
-                                            </div>
+                                            {personBlock(item)}
                                             {statusBadge(item)}
                                         </div>
-                                        <DetailList>
-                                            <DetailItem label={t('excuses.reasonType')}>{t(`excuses.reason.${item.reason}`)}</DetailItem>
-                                            <DetailItem label={t('excuses.period')}>
-                                                <span className="tabular-nums">
-                                                    {formatDate(item.startDate)} — {formatDate(item.endDate)}
-                                                </span>
-                                            </DetailItem>
-                                            <DetailItem label={t('common.school')} wide>
-                                                {item.school.name}
-                                            </DetailItem>
-                                        </DetailList>
-                                        <div className="border-t pt-3">
-                                            <AttendanceExcuseActions excuseId={item.id} status={item.status as ExcuseStatus} onChanged={retry} />
+                                        <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                                            {item.school.name}
+                                            {item.className ? ` · ${item.className}` : ''}
+                                        </p>
+                                        <div className="flex flex-wrap items-start gap-3">
+                                            <PeriodBadge item={item} />
+                                            {reasonBlock(item)}
+                                        </div>
+                                        <div className="mt-auto flex flex-wrap items-end justify-between gap-3 border-t pt-3">
+                                            {uploadedBlock(item)}
+                                            <AttendanceExcuseActions excuseId={item.id} status={item.status} onChanged={retry} />
                                         </div>
                                     </Card>
                                 </li>
                             ))}
                         </ul>
 
+                        {/* Katta ekran: jadval */}
                         <Card className="hidden py-0 xl:flex">
-                            <Table className="min-w-[880px]">
+                            <Table className="min-w-[1040px] table-fixed">
                                 <TableHeader className="bg-muted/50">
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
-                                        <TableHead>{t('excuses.student')}</TableHead>
-                                        <TableHead>{t('common.school')}</TableHead>
-                                        <TableHead>{t('excuses.reasonType')}</TableHead>
-                                        <TableHead>{t('excuses.period')}</TableHead>
-                                        <TableHead>{t('common.status')}</TableHead>
-                                        <TableHead className="pr-5 text-right">{t('common.actions')}</TableHead>
+                                        <TableHead className="w-12 pl-5">{t('common.number')}</TableHead>
+                                        <TableHead className="w-[22%]">{isTeacher ? t('excuses.teacher') : t('excuses.student')}</TableHead>
+                                        <TableHead className="w-[18%]">{isTeacher ? t('common.school') : `${t('common.school')} / ${t('common.class')}`}</TableHead>
+                                        <TableHead className="w-[17%]">{t('excuses.reasonType')}</TableHead>
+                                        <TableHead className="w-40">{t('excuses.period')}</TableHead>
+                                        <TableHead className="w-[14%]">{t('excuses.uploadedBy')}</TableHead>
+                                        <TableHead className="w-28">{t('common.status')}</TableHead>
+                                        <TableHead className="w-48 pr-5 text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {data.data.map((item, index) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="pl-5 text-muted-foreground tabular-nums">
+                                        <TableRow key={item.id} className="align-top">
+                                            <TableCell className="pt-4 pl-5 text-muted-foreground tabular-nums">
                                                 {(data.page - 1) * data.limit + index + 1}
                                             </TableCell>
-                                            <TableCell className="max-w-60 whitespace-normal">
-                                                {nameLink(item)}
-                                                <p className="mt-0.5 text-xs text-muted-foreground">{t('excuses.number', { id: item.id })}</p>
+                                            <TableCell className="whitespace-normal">{personBlock(item)}</TableCell>
+                                            <TableCell className="whitespace-normal">
+                                                <p className="text-sm [overflow-wrap:anywhere]">{item.school.name}</p>
+                                                {item.className && <p className="text-xs text-muted-foreground">{item.className}</p>}
                                             </TableCell>
-                                            <TableCell className="max-w-60 whitespace-normal">{item.school.name}</TableCell>
-                                            <TableCell>{t(`excuses.reason.${item.reason}`)}</TableCell>
-                                            <TableCell className="tabular-nums">
-                                                {formatDate(item.startDate)} — {formatDate(item.endDate)}
+                                            <TableCell className="whitespace-normal">{reasonBlock(item)}</TableCell>
+                                            <TableCell className="whitespace-normal">
+                                                <PeriodBadge item={item} />
                                             </TableCell>
+                                            <TableCell className="whitespace-normal">{uploadedBlock(item)}</TableCell>
                                             <TableCell>{statusBadge(item)}</TableCell>
                                             <TableCell className="pr-5">
-                                                <AttendanceExcuseActions excuseId={item.id} status={item.status as ExcuseStatus} onChanged={retry} />
+                                                <AttendanceExcuseActions excuseId={item.id} status={item.status} onChanged={retry} />
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -237,7 +372,8 @@ export function AttendanceExcusesPage() {
                     <Pagination
                         page={data.page}
                         totalPages={Math.max(1, data.totalPages)}
-                        onPageChange={setPage}
+                        onPageChange={(next) => update({ page: String(next) }, false)}
+                        onPageSizeChange={(size) => update({ limit: String(size) })}
                         total={data.total}
                         pageSize={data.limit}
                         shownCount={data.data.length}

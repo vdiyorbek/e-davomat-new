@@ -16,6 +16,8 @@ import {
   UserCog,
   UserRound,
   LayoutDashboard,
+  MapPinned,
+  PartyPopper,
   History,
   UsersRound,
   MessagesSquare,
@@ -79,6 +81,12 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "attendance",
     items: [
       {
+        to: "/attendance",
+        key: "attendanceOverview",
+        icon: MapPinned,
+        roles: ADMIN_ROLES,
+      },
+      {
         to: "/attendance/students",
         key: "studentAttendance",
         icon: ClipboardCheck,
@@ -97,6 +105,12 @@ export const NAV_GROUPS: NavGroup[] = [
         key: "excuses",
         icon: FileCheck2,
         roles: EXCUSE_ROLES,
+      },
+      {
+        to: "/attendance/holidays",
+        key: "holidays",
+        icon: PartyPopper,
+        roles: ADMIN_ROLES,
       },
       {
         to: "/attendance/calendar",

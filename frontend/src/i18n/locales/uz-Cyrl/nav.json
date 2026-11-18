@@ -37,7 +37,9 @@
     "inspectorStudents": "Маҳалла ўқувчилари",
     "inspectorTalks": "Профилактик суҳбатлар",
     "personSyncMonitoring": "Терминаллар мониторинги",
-    "syncHistory": "Синхронлаш тарихи"
+    "syncHistory": "Синхронлаш тарихи",
+    "attendanceOverview": "Ҳудудлар кесимида",
+    "holidays": "Дам олиш кунлари"
   },
   "short": {
     "profile": "Профил",
