@@ -31,6 +31,8 @@ import { TeacherModule } from './modules/teacher/teacher.module';
 import { MembershipDetailsModule } from './modules/membership-details/membership-details.module';
 import { MemberAccountsModule } from './modules/member-accounts/member-accounts.module';
 import { InspectorsModule } from './modules/inspectors/inspectors.module';
+import { HikvisionPushModule } from './modules/hikvision-push/hikvision-push.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -66,6 +68,7 @@ import { InspectorsModule } from './modules/inspectors/inspectors.module';
     TeacherModule,
     MembershipDetailsModule,
     MemberAccountsModule,
+    HikvisionPushModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -103,4 +106,4 @@ import { InspectorsModule } from './modules/inspectors/inspectors.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

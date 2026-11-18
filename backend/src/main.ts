@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-
+import { raw } from "express";
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -12,6 +12,14 @@ async function bootstrap() {
   // Proxy yuborgan X-Forwarded-For orqali mijozning haqiqiy IP manzilini
   // olamiz, aks holda login limiti barcha foydalanuvchilar uchun umumiy bo'ladi.
   app.set('trust proxy', 1);
+
+  app.use(
+    '/api/hikvision-push',
+    raw({
+      type: () => true,
+      limit: '2mb',
+    }),
+  );
 
   app.use(cookieParser());
   const config = app.get(ConfigService);
