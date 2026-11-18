@@ -3,7 +3,9 @@ jest.mock('@nestjs/bullmq', () => ({
     Processor: () => () => undefined,
     WorkerHost: class MockWorkerHost { },
 }));
-
+jest.mock('@nestjs/schedule', () => ({
+    Interval: () => () => undefined,
+}));
 import { HikvisionPushProcessor } from './hikvision-push.processor';
 import { HikvisionPushRebuildService } from './hikvision-push-rebuild.service';
 import { HIKVISION_PUSH_JOB } from './hikvision-push.types';

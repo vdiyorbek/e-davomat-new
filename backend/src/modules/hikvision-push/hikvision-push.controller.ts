@@ -153,9 +153,23 @@ export class HikvisionPushController {
         'Eventni navbatga saqlab bo‘lmadi',
       );
     }
-
-    // Terminalga 200 OK faqat BullMQ qabul qilgach
-    // qaytariladi. MySQL yozuvi keyin workerda bajariladi.
+    try {
+      await this.terminals
+        .createQueryBuilder()
+        .update(Terminal)
+        .set({
+          pushLastReceivedAt: () =>
+            'CURRENT_TIMESTAMP(3)',
+        })
+        .where('id = :id', { id: terminal.id })
+        .execute();
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Terminal ${terminal.id}: Push monitoring vaqtini ` +
+        `yangilab bo‘lmadi: ${error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
+    }
     return { accepted: true };
   }
 }
