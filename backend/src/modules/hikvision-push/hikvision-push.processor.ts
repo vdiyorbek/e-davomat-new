@@ -9,15 +9,22 @@ import { EventPhotoStatus } from '../attendance-events/enums/event-photo-status.
 import { HIKVISION_PUSH_JOB, HIKVISION_PUSH_QUEUE } from './hikvision-push.types';
 import type { PushJob } from './hikvision-push.types';
 import { parsePush } from './hikvision-push.parser';
-
+import { HikvisionPushRebuildService } from './hikvision-push-rebuild.service';
 @Processor(HIKVISION_PUSH_QUEUE, { concurrency: 8 })
 export class HikvisionPushProcessor extends WorkerHost {
   private readonly logger = new Logger(HikvisionPushProcessor.name);
 
   constructor(
-    @InjectRepository(Terminal) private readonly terminals: Repository<Terminal>,
-    @InjectRepository(AttendanceEvent) private readonly events: Repository<AttendanceEvent>,
-  ) { super(); }
+    @InjectRepository(Terminal)
+    private readonly terminals: Repository<Terminal>,
+
+    @InjectRepository(AttendanceEvent)
+    private readonly events: Repository<AttendanceEvent>,
+
+    private readonly rebuildService: HikvisionPushRebuildService,
+  ) {
+    super();
+  }
 
   async process(job: Job<PushJob>): Promise<void> {
     if (job.name !== HIKVISION_PUSH_JOB) throw new Error('Unexpected job name');
@@ -43,7 +50,7 @@ export class HikvisionPushProcessor extends WorkerHost {
       return;
     }
     if (!event.serialNo || !/^\d{1,20}$/.test(event.serialNo) ||
-        BigInt(event.serialNo) > 18446744073709551615n) {
+      BigInt(event.serialNo) > 18446744073709551615n) {
       this.logger.warn(`Terminal ${terminalId}: invalid event serialNo`);
       return;
     }
@@ -54,14 +61,14 @@ export class HikvisionPushProcessor extends WorkerHost {
     const eventAt = new Date(event.time);
     const eventMs = eventAt.getTime();
     if (!Number.isFinite(eventMs) || eventAt.getUTCFullYear() < 1000 ||
-        eventAt.getUTCFullYear() > 9999 || eventMs > Date.now() + 300_000) {
+      eventAt.getUTCFullYear() > 9999 || eventMs > Date.now() + 300_000) {
       this.logger.warn(`Terminal ${terminalId}: invalid/future event timestamp`);
       return;
     }
     // Do not rewrite old events as 'today'. Database unique index protects
     // against concurrent polling and push duplicates.
     const photo = event.pictureURL?.trim() || null;
-    await this.events.createQueryBuilder()
+    const insertResult = await this.events.createQueryBuilder()
       .insert()
       .into(AttendanceEvent)
       .values({
@@ -82,5 +89,27 @@ export class HikvisionPushProcessor extends WorkerHost {
       })
       .orIgnore()
       .execute();
+
+    // MySQL'da yangi yozuv qo‘shilganligini aniqlaymiz.
+    // MySQL INSERT IGNORE: 1 = yangi, 0 = takroriy.
+    const affectedRows = Number(
+      (insertResult.raw as { affectedRows?: number } | undefined)
+        ?.affectedRows ?? -1,
+    );
+
+    if (affectedRows === 1) {
+      this.logger.debug(
+        `Push event saqlandi: terminal=${terminalId}, ` +
+        `serial=${event.serialNo}`,
+      );
+    }
+
+    // Takroriy event bo‘lsa ham rebuild belgisi tiklanadi.
+    // Bu MySQL yozuvi muvaffaqiyatli, Redis esa vaqtincha
+    // ishlamagan vaziyatni tiklashga yordam beradi.
+    await this.rebuildService.schedule(
+      terminal.schoolId,
+      eventAt,
+    );
   }
 }

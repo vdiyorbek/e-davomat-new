@@ -1,9 +1,11 @@
+
 jest.mock('@nestjs/bullmq', () => ({
     Processor: () => () => undefined,
-
     WorkerHost: class MockWorkerHost { },
 }));
+
 import { HikvisionPushProcessor } from './hikvision-push.processor';
+import { HikvisionPushRebuildService } from './hikvision-push-rebuild.service';
 import { HIKVISION_PUSH_JOB } from './hikvision-push.types';
 import type { PushJob } from './hikvision-push.types';
 import type { Job } from 'bullmq';
@@ -12,7 +14,14 @@ import { Terminal } from '../terminals/terminal.entity';
 import { AttendanceEvent } from '../attendance-events/attendance-event.entity';
 
 describe('HikvisionPushProcessor', () => {
-    const execute = jest.fn().mockResolvedValue({});
+    const rebuildService = {
+        schedule: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const execute = jest.fn().mockResolvedValue({
+        raw: { affectedRows: 1 },
+    });
+
     const orIgnore = jest.fn().mockReturnValue({ execute });
     const values = jest.fn().mockReturnValue({ orIgnore });
     const into = jest.fn().mockReturnValue({ values });
@@ -31,6 +40,12 @@ describe('HikvisionPushProcessor', () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
+        execute.mockResolvedValue({
+            raw: { affectedRows: 1 },
+        });
+
+        rebuildService.schedule.mockResolvedValue(undefined);
+
         terminals.findOneBy.mockResolvedValue({
             id: 1,
             schoolId: 17,
@@ -42,6 +57,7 @@ describe('HikvisionPushProcessor', () => {
         processor = new HikvisionPushProcessor(
             terminals as unknown as Repository<Terminal>,
             events as unknown as Repository<AttendanceEvent>,
+            rebuildService as unknown as HikvisionPushRebuildService,
         );
     });
 
@@ -77,7 +93,7 @@ describe('HikvisionPushProcessor', () => {
         } as Job<PushJob>;
     }
 
-    it('muvaffaqiyatli yuz eventini MySQL insertga uzatadi', async () => {
+    it('yuz eventini MySQL insertga uzatadi va rebuild belgilaydi', async () => {
         await processor.process(makeJob(75));
 
         expect(values).toHaveBeenCalledWith(
@@ -90,19 +106,46 @@ describe('HikvisionPushProcessor', () => {
             }),
         );
 
-        expect(orIgnore).toHaveBeenCalled();
+        expect(orIgnore).toHaveBeenCalledTimes(1);
         expect(execute).toHaveBeenCalledTimes(1);
+
+        expect(rebuildService.schedule).toHaveBeenCalledWith(
+            17,
+            new Date('2026-11-18T11:41:23+05:00'),
+        );
     });
 
     it('boshqa access-control eventini saqlamaydi', async () => {
         await processor.process(makeJob(22));
 
         expect(events.createQueryBuilder).not.toHaveBeenCalled();
+        expect(rebuildService.schedule).not.toHaveBeenCalled();
     });
 
     it('face bo‘lmagan verification eventini saqlamaydi', async () => {
         await processor.process(makeJob(75, 'card'));
 
         expect(events.createQueryBuilder).not.toHaveBeenCalled();
+        expect(rebuildService.schedule).not.toHaveBeenCalled();
+    });
+
+    it('takroriy event uchun ham rebuild belgisini tiklaydi', async () => {
+        execute.mockResolvedValue({
+            raw: { affectedRows: 0 },
+        });
+
+        await processor.process(makeJob(75));
+
+        expect(execute).toHaveBeenCalledTimes(1);
+        expect(rebuildService.schedule).toHaveBeenCalledTimes(1);
+    });
+
+    it('Redis rebuild belgilashda xato bo‘lsa, xatoni yuqoriga uzatadi', async () => {
+        rebuildService.schedule.mockRejectedValueOnce(
+            new Error('Redis unavailable'),
+        );
+
+        await expect(processor.process(makeJob(75)))
+            .rejects.toThrow('Redis unavailable');
     });
 });
