@@ -18,9 +18,10 @@ import { HIKVISION_PUSH_QUEUE } from './hikvision-push.types';
     TypeOrmModule.forFeature([
       Terminal,
       AttendanceEvent,
-      RedisModule,
-      DailyAttendanceModule,
     ]),
+
+    RedisModule,
+    DailyAttendanceModule,
 
     BullModule.registerQueueAsync({
       name: HIKVISION_PUSH_QUEUE,
