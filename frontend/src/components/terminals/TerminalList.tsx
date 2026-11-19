@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, Building2, Info, LogIn, LogOut, Pencil, ScanFace } from 'lucide-react';
+import { Archive, ArchiveRestore, Building2, Info, LogIn, LogOut, Pencil, RadioTower, RefreshCw, ScanFace } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -58,6 +58,18 @@ function DirectionChip({ direction }: { direction: Terminal['direction'] }) {
         >
             <Icon aria-hidden="true" className="size-3" />
             {t(`terminals.directions.${direction}`)}
+        </span>
+    );
+}
+
+/** Eventlarni olish usuli: Push yoki Polling. */
+function SourceChip({ source }: { source: Terminal['eventSource'] }) {
+    const { t } = useTranslation();
+    const Icon = source === 'PUSH' ? RadioTower : RefreshCw;
+    return (
+        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            <Icon aria-hidden="true" className="size-3" />
+            {t(`terminals.eventSource.${source}`)}
         </span>
     );
 }
@@ -240,6 +252,7 @@ function TerminalTable({
                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                                         <span className="font-mono">#{terminal.id}</span>
                                         <DirectionChip direction={terminal.direction} />
+                                        <SourceChip source={terminal.eventSource} />
                                     </div>
                                 </td>
                                 <td className="px-3 py-3">
@@ -346,6 +359,7 @@ function TerminalCard({
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         <span className="font-mono">#{terminal.id}</span>
                         <DirectionChip direction={terminal.direction} />
+                        <SourceChip source={terminal.eventSource} />
                     </div>
                 </div>
             </header>

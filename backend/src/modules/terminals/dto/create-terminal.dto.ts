@@ -14,6 +14,7 @@ import {
 
 import { TerminalDirection } from '../enums/terminal-direction.enum';
 import { TerminalProtocol } from '../enums/terminal-protocol.enum';
+import { TerminalEventSource } from '../enums/terminal-event-source.enum';
 
 function trimText({ value }: { value: unknown }): unknown {
   return typeof value === 'string' ? value.trim() : value;
@@ -64,4 +65,11 @@ export class CreateTerminalDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Yuborilmasa — PUSH. */
+  @IsOptional()
+  @IsEnum(TerminalEventSource, {
+    message: 'eventSource PUSH yoki POLLING bo‘lishi kerak',
+  })
+  eventSource?: TerminalEventSource;
 }

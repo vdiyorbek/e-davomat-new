@@ -10,8 +10,9 @@ import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/component
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { TeacherLoadPanel } from '@/components/schedule/TeacherLoadPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authorizedPost } from '@/lib/auth-session';
 import { academicYearFor, academicYearOptions, formatDate, todayInTashkent, weekdayName } from '@/lib/date';
 import { localizedName } from '@/lib/localized';
@@ -411,7 +412,18 @@ export function LessonSchedulesPage() {
             </div>
 
             {schoolId ? (
-                <SchoolSchedule key={`${schoolId}-${academicYear}`} schoolId={Number(schoolId)} academicYear={academicYear} />
+                <Tabs defaultValue="classes">
+                    <TabsList>
+                        <TabsTrigger value="classes">{t('workload.tabs.classes')}</TabsTrigger>
+                        <TabsTrigger value="teachers">{t('workload.tabs.teachers')}</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="classes" className="pt-4">
+                        <SchoolSchedule key={`${schoolId}-${academicYear}`} schoolId={Number(schoolId)} academicYear={academicYear} />
+                    </TabsContent>
+                    <TabsContent value="teachers" className="pt-4">
+                        <TeacherLoadPanel key={`${schoolId}-${academicYear}`} schoolId={Number(schoolId)} academicYear={academicYear} />
+                    </TabsContent>
+                </Tabs>
             ) : (
                 <EmptyState icon={CalendarClock} title={t('calendar.chooseTitle')} description={t('schedule.chooseSchool')} />
             )}

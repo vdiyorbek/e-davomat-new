@@ -57,6 +57,7 @@ import type { School } from '@/types/school';
 import type {
     Terminal,
     TerminalDirection,
+    TerminalEventSource,
     TerminalMonitoringResponse,
     TerminalsPageResponse,
     TerminalStatusFilter,
@@ -85,6 +86,7 @@ export function TerminalsPage() {
     const [districtId, setDistrictId] = useState('');
     const [schoolId, setSchoolId] = useState('');
     const [direction, setDirection] = useState<TerminalDirection | ''>('');
+    const [eventSource, setEventSource] = useState<TerminalEventSource | ''>('');
     const [archiveStatus, setArchiveStatus] = useState<ArchiveStatus>('ACTIVE');
     const [statusFilter, setStatusFilter] = useState<TerminalStatusFilter>('');
     const [searchInput, setSearchInput] = useState('');
@@ -128,6 +130,7 @@ export function TerminalsPage() {
     if (districtId) filterParams.set('districtId', districtId);
     if (schoolId) filterParams.set('schoolId', schoolId);
     if (direction) filterParams.set('direction', direction);
+    if (eventSource) filterParams.set('eventSource', eventSource);
     if (search) filterParams.set('search', search);
 
     // Ro‘yxat uchun: sahifa va karta bosilganda tanlangan holat ham qo‘shiladi.
@@ -152,13 +155,15 @@ export function TerminalsPage() {
     useInterval(monitoring.retry, 60_000);
 
     const rows = terminals.data?.data ?? [];
+    // Ro‘yxat yangilanganda ochiq oyna ham yangi ma’lumotni ko‘rsatsin (masalan, token yaratilgach).
+    const selectedFresh = selected ? (rows.find((terminal) => terminal.id === selected.id) ?? selected) : null;
     const pageIds = rows.filter((terminal) => !isArchived(terminal)).map((terminal) => terminal.id);
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
     const somePageSelected = !allPageSelected && pageIds.some((id) => selectedIds.includes(id));
 
 
     const hasFilters = Boolean(
-        regionId || districtId || schoolId || direction || search || statusFilter || archiveStatus !== 'ACTIVE',
+        regionId || districtId || schoolId || direction || eventSource || search || statusFilter || archiveStatus !== 'ACTIVE',
     );
 
     function toggleStatusFilter(value: Exclude<TerminalStatusFilter, ''>) {
@@ -169,7 +174,7 @@ export function TerminalsPage() {
     const kpiHint = (value: Exclude<TerminalStatusFilter, ''>) =>
         statusFilter === value ? t('terminals.kpi.activeFilter') : t('terminals.kpi.clickToFilter');
 
-    const activeSelectFilters = [regionId, districtId, schoolId, direction].filter(Boolean).length;
+    const activeSelectFilters = [regionId, districtId, schoolId, direction, eventSource].filter(Boolean).length;
     const refreshing = terminals.refreshing || monitoring.refreshing;
 
     function toggleTerminal(id: number, checked: boolean) {
@@ -196,6 +201,7 @@ export function TerminalsPage() {
         setDistrictId('');
         setSchoolId('');
         setDirection('');
+        setEventSource('');
         setSearchInput('');
         setSearch('');
         setArchiveStatus('ACTIVE');
@@ -423,6 +429,23 @@ export function TerminalsPage() {
                                 aria-label={t('terminals.direction')}
                             />
                         </div>
+                        <div className={cn('xl:col-span-2', !filtersOpen && 'max-sm:hidden')}>
+                            <SelectField
+                                value={eventSource}
+                                onValueChange={(value) => {
+                                    if (value === '' || value === 'PUSH' || value === 'POLLING') {
+                                        setEventSource(value);
+                                        setPage(1);
+                                    }
+                                }}
+                                emptyOption={t('terminals.eventSource.all')}
+                                options={[
+                                    { value: 'PUSH', label: t('terminals.eventSource.PUSH') },
+                                    { value: 'POLLING', label: t('terminals.eventSource.POLLING') },
+                                ]}
+                                aria-label={t('terminals.eventSource.label')}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -598,9 +621,9 @@ export function TerminalsPage() {
                 </div>
             )}
 
-            {selected && (
+            {selectedFresh && (
                 <TerminalDetailsDialog
-                    terminal={selected}
+                    terminal={selectedFresh}
                     canManage={canManage}
                     now={now}
                     onClose={() => setSelected(null)}
@@ -653,11 +676,13 @@ export function TerminalsPage() {
                     {createOpen && (
                         <CreateTerminalForm
                             onCancel={() => setCreateOpen(false)}
-                            onSaved={() => {
+                            onSaved={(created) => {
                                 setCreateOpen(false);
                                 setSuccess(t('terminals.page.created'));
                                 setPage(1);
                                 refresh();
+                                // Push terminal uchun darhol token olish oynasi.
+                                if (created.eventSource === 'PUSH') setSelected(created);
                             }}
                         />
                     )}

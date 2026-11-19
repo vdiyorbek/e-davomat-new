@@ -211,6 +211,32 @@ export class TeacherAssignmentsService {
     }
   }
 
+  async setWeeklyHours(
+    id: number,
+    weeklyHours: number | null,
+    user: AuthenticatedUser,
+  ) {
+    const repository = this.dataSource.getRepository(TeacherClassSubject);
+    const assignment = await repository.findOne({
+      where: { id },
+      relations: { schoolClass: true },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Fan va sinf biriktirmasi topilmadi');
+    }
+
+    await this.checkSchoolAccess(
+      assignment.schoolClass.schoolId,
+      user,
+      this.dataSource.manager,
+    );
+
+    await repository.update(id, { weeklyHours });
+
+    return { id, weeklyHours };
+  }
+
   async findAll(dto: ListTeacherAssignmentsDto, user: AuthenticatedUser) {
     this.getAcademicYearBounds(dto.academicYear);
 
@@ -287,6 +313,7 @@ export class TeacherAssignmentsService {
       },
       startDate: item.startDate,
       endDate: item.endDate,
+      weeklyHours: item.weeklyHours,
     }));
   }
 }

@@ -13,6 +13,7 @@ import {
 
 import { TerminalDirection } from '../enums/terminal-direction.enum';
 import { TerminalProtocol } from '../enums/terminal-protocol.enum';
+import { TerminalEventSource } from '../enums/terminal-event-source.enum';
 
 const trimText = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
@@ -59,4 +60,10 @@ export class UpdateTerminalDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsEnum(TerminalEventSource, {
+    message: 'eventSource PUSH yoki POLLING bo‘lishi kerak',
+  })
+  eventSource?: TerminalEventSource;
 }

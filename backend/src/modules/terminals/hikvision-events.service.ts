@@ -79,13 +79,46 @@ export class HikvisionEventsService {
       throw new Error('Bitta event qidiruvi 24 soatdan oshmasligi kerak');
     }
 
+    yield* this.search(terminal, password, { startTime, endTime });
+  }
+
+  /**
+   * Serial raqam oralig‘i bo‘yicha qidiruv (beginSerialNo/endSerialNo).
+   * Push'da rasmsiz kelgan eventning pictureURL'ini aniq topish uchun.
+   */
+  async *readEventsBySerial(
+    terminal: Terminal,
+    password: string,
+    beginSerialNo: number,
+    endSerialNo: number,
+  ): AsyncGenerator<HikvisionEventsBatch> {
+    if (
+      !Number.isSafeInteger(beginSerialNo) ||
+      !Number.isSafeInteger(endSerialNo) ||
+      beginSerialNo < 1 ||
+      endSerialNo < beginSerialNo
+    ) {
+      throw new Error('Serial raqam oralig‘i noto‘g‘ri');
+    }
+
+    yield* this.search(terminal, password, { beginSerialNo, endSerialNo });
+  }
+
+  private async *search(
+    terminal: Terminal,
+    password: string,
+    range:
+      | { startTime: string; endTime: string }
+      | { beginSerialNo: number; endSerialNo: number },
+  ): AsyncGenerator<HikvisionEventsBatch> {
     const searchID = randomUUID();
-    const pageSize = 100;
+    // Terminallar (masalan DS-K1T671) bir sahifada ko‘pi bilan 30 ta event beradi.
+    const pageSize = 30;
 
     let position = 0;
 
     // Terminal noto‘g‘ri MORE qaytarsa, cheksiz aylanmaymiz.
-    const maxPages = 1000;
+    const maxPages = 3000;
     const seenPages = new Set<string>();
 
     for (let pageIndex = 0; pageIndex < maxPages; pageIndex++) {
@@ -95,8 +128,7 @@ export class HikvisionEventsService {
         maxResults: pageSize,
         major: 5,
         minor: 75,
-        startTime,
-        endTime,
+        ...range,
         picEnable: true,
       });
 
@@ -144,8 +176,10 @@ export class HikvisionEventsService {
       maxResults: number;
       major: number;
       minor: number;
-      startTime: string;
-      endTime: string;
+      startTime?: string;
+      endTime?: string;
+      beginSerialNo?: number;
+      endSerialNo?: number;
       picEnable: boolean;
     },
   ): Promise<HikvisionEventsPage> {

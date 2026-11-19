@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventSyncTerminalLockService } from '../attendance-events/event-sync-terminal-lock.service';
+import { TerminalEventSource } from '../terminals/enums/terminal-event-source.enum';
 import { Terminal } from '../terminals/terminal.entity';
 import { AttendanceEventsService } from '../attendance-events/attendance-events.service';
 import { DailyAttendanceService } from '../daily-attendance/daily-attendance.service';
@@ -171,7 +172,13 @@ export class TerminalSyncService {
           id: terminalId,
         });
 
-        if (!terminal || !terminal.isActive || !terminal.syncStartAt) {
+        // Navbatdagi vazifa bajarilguncha terminal push’ga o‘tgan bo‘lishi mumkin.
+        if (
+          !terminal ||
+          !terminal.isActive ||
+          !terminal.syncStartAt ||
+          terminal.eventSource !== TerminalEventSource.POLLING
+        ) {
           return summary;
         }
 

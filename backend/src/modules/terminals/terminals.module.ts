@@ -19,6 +19,7 @@ import { BulkTerminalManagementController } from './bulk-terminal-management.con
 import { BulkTerminalStatusController } from './bulk-terminal-status.controller';
 import { TerminalPushController } from './terminal-push.controller';
 import { TerminalPushCredentialsService } from './terminal-push-credentials.service';
+import { RedisModule } from '../../redis/redis.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TerminalPushCredentialsService } from './terminal-push-credentials.serv
       TerminalPersonSync,
       TerminalStatusPeriod,
     ]),
+    RedisModule,
   ],
   controllers: [
     TerminalsController,

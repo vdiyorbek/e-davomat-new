@@ -1,0 +1,133 @@
+{
+  "eyebrow": "Bosh sahifa",
+  "title": "Davomat statistikasi",
+  "updatedAt": "yangilangan: {{time}}",
+  "noStats": "Bu kun uchun statistika hali hisoblanmagan yoki kutilgan ishtirokchi yo‘q. Ma’lumotlar har 20 daqiqada yangilanadi.",
+  "openDetailed": "Batafsil jadvalni ochish →",
+  "legend": "Belgilar",
+  "tableView": "Jadval ko‘rinishida",
+  "date": "Sana",
+  "dates": {
+    "today": "Bugun",
+    "yesterday": "Kecha",
+    "pick": "Sanani tanlash"
+  },
+  "scope": {
+    "country": "O‘zbekiston",
+    "label": "Hudud tanlovi"
+  },
+  "series": {
+    "students": "O‘quvchilar",
+    "teachers": "O‘qituvchilar"
+  },
+  "units": {
+    "regions": "Viloyatlar",
+    "districts": "Tumanlar",
+    "schools": "Maktablar",
+    "classes": "Sinflar"
+  },
+  "kpi": {
+    "rate": "Davomat",
+    "present": "Kelgan",
+    "absent": "Kelmagan",
+    "excused": "Sababli",
+    "late": "Kechikkan",
+    "lateShare": "kelganlarning {{value}}",
+    "vs": "{{date}} bilan solishtirganda",
+    "points": "p.p.",
+    "better": "yaxshilangan",
+    "worse": "pasaygan",
+    "noChange": "o‘zgarishsiz",
+    "inside": "Hozir maktab ichida: {{count}}",
+    "noData": "Terminal ma’lumoti kelmagan maktablardagi {{count}} kishi hisobga olinmadi",
+    "unknown": "Kalendari aniq bo‘lmagan {{count}} kishi hisobga olinmadi"
+  },
+  "map": {
+    "title": "Hududlar xaritasi",
+    "description": "Rang — o‘quvchilar davomati. Hududni bosib ichiga kiring.",
+    "label": "O‘zbekiston xaritasi: hududlar kesimida davomat",
+    "legend": "Davomat foizi",
+    "noData": "Ma’lumot yo‘q",
+    "noUnit": "Bazada bu hudud topilmadi",
+    "unitLabel": "{{name}}: {{rate}}",
+    "loadFailed": "Xaritani yuklab bo‘lmadi.",
+    "regionNotOnMap": "Bu hudud xaritada topilmadi — ro‘yxatdan foydalaning.",
+    "unmatched": "Xaritaga bog‘lanmagan hududlar: {{count}}",
+    "assign": "Bog‘lash",
+    "assignFor": "«{{name}}» uchun xarita shakli",
+    "chooseShape": "Shaklni tanlang"
+  },
+  "ranking": {
+    "title": "{{unit}} reytingi",
+    "order": "Tartib",
+    "worst": "Eng past",
+    "best": "Eng yuqori",
+    "absentN": "{{count}} kelmagan",
+    "empty": "Ma’lumot yo‘q.",
+    "missing": "Yana {{count}} ta {{unit}} ma’lumotsiz"
+  },
+  "classes": {
+    "title": "Sinflar kesimida",
+    "description": "Rang — sinf davomati. Dam olish kunidagi sinflar rangsiz.",
+    "empty": "Sinflar topilmadi.",
+    "dayOff": "Dam olish",
+    "detail": "kelmagan {{absent}} · kechikkan {{late}}"
+  },
+  "late": {
+    "title": "Kechikish chegarasi",
+    "schoolsTitle": "Maktablarning kechikish chegarasi",
+    "schoolsDescription": "Har maktab o‘zi belgilaydi; zarur bo‘lsa shu yerdan o‘zgartirish mumkin.",
+    "hint": "Smena (o‘qituvchilar uchun birinchi dars) boshlanishidan shuncha daqiqadan keyin kelgan kishi kechikkan hisoblanadi. O‘zgarish bugundan boshlab qo‘llanadi.",
+    "value": "{{count}} daqiqa",
+    "minutes": "daqiqa",
+    "minutesLabel": "Kechikish chegarasi (daqiqa)",
+    "change": "O‘zgartirish",
+    "default": "Standart qiymat (hali o‘zgartirilmagan)",
+    "changedBy": "{{name}} ({{role}}) · {{date}}",
+    "invalid": "0 dan 120 gacha butun son kiriting.",
+    "saveFailed": "Saqlab bo‘lmadi."
+  },
+  "trend": {
+    "title": "So‘nggi 30 kun",
+    "description": "Davomat foizi; dam olish kunlari ko‘rsatilmaydi.",
+    "label": "Davomat foizi dinamikasi",
+    "keyboard": "Kunlar bo‘yicha o‘tish uchun chap/o‘ng tugmalari",
+    "empty": "Bu davr uchun ma’lumot yo‘q."
+  },
+  "shifts": {
+    "title": "Smenalar kesimida",
+    "empty": "Smena ma’lumoti yo‘q.",
+    "detail": "{{present}} / {{expected}} keldi · {{late}} kechikkan"
+  },
+  "health": {
+    "title": "Tizim holati",
+    "schools": "Maktablar",
+    "withoutData": "Bugun ma’lumot kelmagan maktablar: {{count}}",
+    "calendarAssumed": "Kalendari sozlanmagan (taxminiy ish kuni): {{count}}",
+    "terminalsTotal": "Terminallar: {{total}} (push {{push}}, polling {{polling}})",
+    "online": "Onlayn",
+    "offline": "Oflayn",
+    "unknown": "Noma’lum",
+    "openTerminals": "Terminallarni ochish"
+  },
+  "arrivals": {
+    "title": "Kelish vaqti",
+    "description": "10 daqiqalik oraliqlarda birinchi kirishlar soni.",
+    "who": "Kimlar",
+    "label": "Kelish vaqti taqsimoti",
+    "people": "Kishi",
+    "empty": "Bu kun kirishlar qayd etilmagan.",
+    "shiftStart": "{{code}}-smena {{time}}"
+  },
+  "streaks": {
+    "title": "Ketma-ket 5 kun kelmaganlar",
+    "description": "Faqat sinfning o‘quv kunlari hisoblanadi; sababli kun ketma-ketlikni uzadi.",
+    "emptyTitle": "Bunday o‘quvchi yo‘q",
+    "empty": "Ketma-ket 5 o‘quv kuni kelmagan o‘quvchi topilmadi.",
+    "student": "O‘quvchi",
+    "mahalla": "Mahalla",
+    "days": "Kunlar",
+    "daysN": "{{count}} kun",
+    "since": "{{date}} dan beri"
+  }
+}

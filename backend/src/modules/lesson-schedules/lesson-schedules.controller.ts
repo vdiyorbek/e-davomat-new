@@ -21,6 +21,7 @@ import { CreateLessonScheduleDto } from './dto/create-lesson-schedule.dto';
 import { ListLessonSchedulesDto } from './dto/list-lesson-schedules.dto';
 import { CancelLessonScheduleDto } from './dto/cancel-lesson-schedule.dto';
 import { UpdateLessonScheduleDto } from './dto/update-lesson-schedule.dto';
+import { TeacherLoadQueryDto } from './dto/teacher-load-query.dto';
 
 @Controller('lesson-schedules')
 @Roles(
@@ -42,6 +43,19 @@ export class LessonSchedulesController {
     }
 
     return this.service.create(dto, request.authUser);
+  }
+
+  /** O‘qituvchilar haftalik yuklamasi: rejadagi va jadvalga qo‘yilgan soatlar. */
+  @Get('teacher-load')
+  teacherLoad(
+    @Query() dto: TeacherLoadQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.service.teacherLoad(dto, request.authUser);
   }
 
   @Get()

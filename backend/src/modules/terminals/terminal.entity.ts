@@ -12,6 +12,7 @@ import {
 import { School } from 'src/modules/schools/school.entity';
 import { TerminalDirection } from './enums/terminal-direction.enum';
 import { TerminalProtocol } from './enums/terminal-protocol.enum';
+import { TerminalEventSource } from './enums/terminal-event-source.enum';
 
 @Entity('terminals')
 @Index('UQ_terminals_host_port', ['host', 'port'], {
@@ -148,6 +149,14 @@ export class Terminal {
     nullable: true,
   })
   eventsSyncedUntil!: Date | null;
+
+  /** Eventlarni olish usuli: HTTP Push yoki polling. */
+  @Column({
+    type: 'enum',
+    enum: TerminalEventSource,
+    default: TerminalEventSource.PUSH,
+  })
+  eventSource!: TerminalEventSource;
 
   @Column({
     type: 'boolean',

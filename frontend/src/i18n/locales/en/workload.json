@@ -1,0 +1,18 @@
+{
+  "tabs": {
+    "classes": "Class timetables",
+    "teachers": "Teacher workload"
+  },
+  "hint": "Enter the weekly curriculum hours for each subject and class — they're compared with the lessons in the timetable.",
+  "summary": "{{scheduled}} h scheduled · {{planned}} h planned",
+  "byDay": "Lessons by weekday",
+  "complete": "Complete",
+  "missing": "{{count}} h short",
+  "extra": "{{count}} h over",
+  "scheduledN": "scheduled: {{count}}",
+  "plannedFor": "{{name}} — hours per week",
+  "hoursInvalid": "0 to 40",
+  "saveFailed": "Could not save.",
+  "emptyTitle": "No teacher assignments",
+  "empty": "Assign subjects to teachers in “Subject & class assignments” first."
+}

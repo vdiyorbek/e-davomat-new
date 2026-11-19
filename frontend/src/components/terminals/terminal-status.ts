@@ -36,7 +36,20 @@ export function systemBadge(terminal: Terminal, t: TFunction): BadgeInfo {
     return { text: t('terminals.system.active'), tone: 'info' };
 }
 
-export type SyncKind = 'disabled' | 'notStarted' | 'unknown' | 'pending' | 'healthy' | 'delayed';
+export type SyncKind =
+    | 'disabled'
+    | 'notStarted'
+    | 'unknown'
+    | 'pending'
+    | 'healthy'
+    | 'delayed'
+    | 'pushNoToken'
+    | 'pushWaiting'
+    | 'pushActive'
+    | 'pushIdle';
+
+/** Push terminal shu muddatda so‘rov yuborgan bo‘lsa — faol. */
+const PUSH_ACTIVE_SECONDS = 10 * 60;
 
 export interface SyncInfo extends BadgeInfo {
     kind: SyncKind;
@@ -63,6 +76,20 @@ export function syncInfo(terminal: Terminal, now: number, t: TFunction): SyncInf
     });
 
     if (isArchived(terminal) || !terminal.isActive) return make('disabled', 'neutral');
+
+    // Push terminalda kursor yo‘q: oxirgi kelgan so‘rov vaqti ko‘rsatiladi.
+    // Hech kim o‘tmasa terminal jim turadi — bu xato emas (neytral).
+    if (terminal.eventSource === 'PUSH') {
+        if (!terminal.pushEnabled) return make('pushNoToken', 'warning');
+        if (!terminal.pushLastReceivedAt) return make('pushWaiting', 'warning');
+        const last = new Date(terminal.pushLastReceivedAt).getTime();
+        if (!Number.isFinite(last)) return make('unknown', 'neutral');
+        const ago = Math.max(0, Math.floor((now - last) / 1000));
+        return ago <= PUSH_ACTIVE_SECONDS
+            ? make('pushActive', 'success', formatDelay(ago, t))
+            : make('pushIdle', 'neutral', formatDelay(ago, t));
+    }
+
     if (!terminal.syncStartAt) return make('notStarted', 'warning');
 
     const cursor = new Date(terminal.eventsSyncedUntil ?? terminal.syncStartAt).getTime();

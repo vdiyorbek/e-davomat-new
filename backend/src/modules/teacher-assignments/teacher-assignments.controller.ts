@@ -2,6 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -15,6 +18,7 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { TeacherAssignmentsService } from './teacher-assignments.service';
 import { CreateTeacherAssignmentDto } from './dto/create-teacher-assignment.dto';
 import { ListTeacherAssignmentsDto } from './dto/list-teacher-assignments.dto';
+import { UpdateWeeklyHoursDto } from './dto/update-weekly-hours.dto';
 
 @Controller('teacher-assignments')
 @Roles(
@@ -25,6 +29,20 @@ import { ListTeacherAssignmentsDto } from './dto/list-teacher-assignments.dto';
 )
 export class TeacherAssignmentsController {
   constructor(private readonly service: TeacherAssignmentsService) {}
+
+  /** O‘quv rejasi bo‘yicha haftalik soat (yuklama hisobi uchun). */
+  @Patch(':id/weekly-hours')
+  setWeeklyHours(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateWeeklyHoursDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.service.setWeeklyHours(id, dto.weeklyHours, request.authUser);
+  }
 
   @Get()
   findAll(

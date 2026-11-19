@@ -37,6 +37,9 @@ import type { Terminal } from '@/types/terminal';
 import { CheckTerminalButton } from './CheckTerminalButton';
 import { StatTile } from './StatTile';
 import { StartTerminalSyncForm } from './StartTerminalSyncForm';
+import { TerminalEventBackfill } from './TerminalEventBackfill';
+import { TerminalPushPanel } from './TerminalPushPanel';
+import { useAuth } from '@/hooks/useAuth';
 import { TerminalPhotoStats } from './TerminalPhotoStats';
 import { TerminalSyncHistory } from './TerminalSyncHistory';
 import { TerminalSyncMonitoring } from './TerminalSyncMonitoring';
@@ -197,6 +200,8 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
     const system = systemBadge(terminal, t);
     const sync = syncInfo(terminal, now, t);
     const showDiagnostics = canManage && !archived;
+    const { session } = useAuth();
+    const isSuperAdmin = session?.profile.role === 'SUPER_ADMIN';
 
     return (
         <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -223,6 +228,7 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                         <StatusBadge tone={terminal.direction === 'IN' ? 'success' : 'primary'} dot={false}>
                             {t(`terminals.directions.${terminal.direction}`)}
                         </StatusBadge>
+                        <StatusBadge tone="info" dot={false}>{t(`terminals.eventSource.${terminal.eventSource}`)}</StatusBadge>
                         <StatusBadge tone={connection.tone}>{connection.text}</StatusBadge>
                         <StatusBadge tone={system.tone} dot={false}>{system.text}</StatusBadge>
                         <StatusBadge tone={sync.tone}>
@@ -256,6 +262,10 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
 
                     <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
                         <TabsContent value="overview" className="space-y-4">
+                            {terminal.eventSource === 'PUSH' && !archived && (
+                                <TerminalPushPanel terminal={terminal} canManage={canManage} onChanged={onChanged} />
+                            )}
+                            {terminal.eventSource === 'PUSH' && !archived && isSuperAdmin && <TerminalEventBackfill terminalId={terminal.id} />}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <InfoList title={t('terminals.details.device')}>
                                     <InfoRow label={t('terminals.details.address')} mono>
@@ -269,9 +279,16 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                 <InfoList title={t('terminals.details.status')}>
                                     <InfoRow label={t('terminals.lastCheck')}>{formatDateTime(terminal.lastCheckedAt)}</InfoRow>
                                     <InfoRow label={t('terminals.details.lastSeen')}>{formatDateTime(terminal.lastSeenAt)}</InfoRow>
-                                    <InfoRow label={t('terminals.details.syncStarted')}>{formatDateTime(terminal.syncStartAt)}</InfoRow>
-                                    <InfoRow label={t('terminals.details.eventsUntil')}>{formatDateTime(terminal.eventsSyncedUntil)}</InfoRow>
-                                    <InfoRow label={t('terminals.details.lastSync')}>{formatDateTime(terminal.lastSuccessfulSyncAt)}</InfoRow>
+                                    <InfoRow label={t('terminals.eventSource.label')}>{t(`terminals.eventSource.${terminal.eventSource}`)}</InfoRow>
+                                    {terminal.eventSource === 'POLLING' ? (
+                                        <>
+                                            <InfoRow label={t('terminals.details.syncStarted')}>{formatDateTime(terminal.syncStartAt)}</InfoRow>
+                                            <InfoRow label={t('terminals.details.eventsUntil')}>{formatDateTime(terminal.eventsSyncedUntil)}</InfoRow>
+                                            <InfoRow label={t('terminals.details.lastSync')}>{formatDateTime(terminal.lastSuccessfulSyncAt)}</InfoRow>
+                                        </>
+                                    ) : (
+                                        <InfoRow label={t('terminals.push.lastReceived')}>{formatDateTime(terminal.pushLastReceivedAt)}</InfoRow>
+                                    )}
                                 </InfoList>
                             </div>
                             {!archived && <TerminalStatusTimeline terminalId={terminal.id} />}
@@ -300,9 +317,9 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                         <h3 className="text-sm font-semibold">{t('terminals.details.actionsTitle')}</h3>
                                         <p className="mt-1 text-xs text-muted-foreground">{t('terminals.details.actionsHint')}</p>
                                     </div>
-                                    <div className={cn('grid items-start gap-3', !terminal.syncStartAt && 'md:grid-cols-2')}>
+                                    <div className={cn('grid items-start gap-3', !terminal.syncStartAt && terminal.eventSource === 'POLLING' && 'md:grid-cols-2')}>
                                         <CheckTerminalButton terminalId={terminal.id} />
-                                        {!terminal.syncStartAt && (
+                                        {!terminal.syncStartAt && terminal.eventSource === 'POLLING' && (
                                             <StartTerminalSyncForm
                                                 terminalId={terminal.id}
                                                 isActive={terminal.isActive}

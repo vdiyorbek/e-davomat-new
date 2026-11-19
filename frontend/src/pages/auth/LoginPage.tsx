@@ -8,7 +8,8 @@ export function LoginPage() {
   const { session } = useAuth();
 
   if (session) {
-    return <Navigate to="/me" replace />;
+    // Bosh sahifa rolga qarab kabinetga yo‘naltiradi (HomeRedirect).
+    return <Navigate to="/" replace />;
   }
 
   return (

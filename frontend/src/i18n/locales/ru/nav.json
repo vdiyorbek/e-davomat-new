@@ -39,7 +39,15 @@
     "inspectorTalks": "Профилактические беседы",
     "syncHistory": "История синхронизации",
     "attendanceOverview": "По регионам",
-    "holidays": "Выходные дни"
+    "holidays": "Выходные дни",
+    "live": "Прямой эфир",
+    "teacherTimetable": "Моё расписание",
+    "teacherAssessments": "Тесты ЧСБ / БСБ",
+    "studentHome": "Мой день",
+    "studentSchedule": "Расписание уроков",
+    "studentTests": "Мои тесты",
+    "myAttendance": "Моя посещаемость",
+    "dashboard": "Дашборд"
   },
   "short": {
     "profile": "Профиль",
@@ -48,6 +56,13 @@
     "schools": "Школы",
     "more": "Меню",
     "lessonSchedules": "Расписание",
-    "inspectorStudents": "Махалля"
+    "inspectorStudents": "Махалля",
+    "teacherTimetable": "Расписание",
+    "teacherAssessments": "Тесты",
+    "studentHome": "Главная",
+    "studentSchedule": "Расписание",
+    "studentTests": "Тесты",
+    "myAttendance": "Посещаемость",
+    "dashboard": "Главная"
   }
 }

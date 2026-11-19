@@ -1,0 +1,75 @@
+{
+  "eyebrow": "Student cabinet",
+  "home": {
+    "greeting": "Hi, {{name}}!",
+    "classN": "Class {{name}}",
+    "openTests": "Open tests",
+    "noLessons": "No lessons in the timetable today.",
+    "topicPending": "Topic not set yet",
+    "attendanceToday": "Today's attendance",
+    "arrivedAt": "Arrived: {{time}}",
+    "leftAt": "Left: {{time}}",
+    "notArrived": "You haven't passed the terminal today yet.",
+    "homework": "Homework",
+    "noHomework": "No homework in recent days."
+  },
+  "attendance": {
+    "title": "My attendance",
+    "description": "Last 30 days: when you arrived and left.",
+    "open": "Attendance history",
+    "emptyTitle": "No data",
+    "empty": "No attendance records for this period.",
+    "statuses": {
+      "PRESENT": "Present",
+      "EXCUSED": "Excused",
+      "ABSENT": "Absent"
+    }
+  },
+  "tests": {
+    "title": "My tests",
+    "description": "CHSB and BSB tests, results and grades.",
+    "emptyTitle": "No tests",
+    "empty": "Tests appear here when your teacher publishes them.",
+    "all": "All tests",
+    "start": "Start test",
+    "continue": "Continue",
+    "viewResult": "Result",
+    "yourGrade": "Your grade:",
+    "until": "until {{date}} {{time}}",
+    "states": {
+      "UPCOMING": "Upcoming",
+      "OPEN": "Open",
+      "IN_PROGRESS": "In progress",
+      "SUBMITTED": "Submitted",
+      "MISSED": "Missed"
+    }
+  },
+  "test": {
+    "intro": "You have {{minutes}} minutes. Once you start, the timer doesn't stop.",
+    "rule1": "Every answer saves automatically — even if the internet drops.",
+    "rule2": "When time runs out, the test submits itself.",
+    "rule3": "You can submit the test only once.",
+    "answered": "Answered: {{count}} / {{total}}",
+    "saving": "saving…",
+    "saved": "saved",
+    "saveError": "not saved, will retry",
+    "submit": "Submit",
+    "confirmUnanswered": "{{count}} questions are unanswered. Submit anyway?",
+    "navigator": "Questions",
+    "goTo": "Go to question {{n}}",
+    "questionN": "Question {{n}}",
+    "prev": "Previous",
+    "next": "Next",
+    "submitFailed": "Could not submit, try again.",
+    "startFailed": "Could not start the test.",
+    "notFound": "Test not found.",
+    "upcoming": "The test opens on {{date}}.",
+    "missed": "This test's window has passed.",
+    "submittedAt": "Submitted: {{date}}",
+    "correctOf": "{{correct}} of {{total}} correct",
+    "grade": "Grade: {{grade}}",
+    "answersLater": "Correct answers are shown after the test closes ({{date}}).",
+    "yourAnswer": "Your answer",
+    "notAnswered": "Not answered"
+  }
+}

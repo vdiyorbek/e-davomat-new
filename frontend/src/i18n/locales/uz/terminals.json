@@ -180,7 +180,11 @@
     "unknown": "Noma’lum",
     "pending": "Kutilmoqda",
     "healthy": "Me’yorda",
-    "delayed": "Kechikmoqda"
+    "delayed": "Kechikmoqda",
+    "pushNoToken": "Push: token yo‘q",
+    "pushWaiting": "Push: kutilmoqda",
+    "pushActive": "Push: faol",
+    "pushIdle": "Push: jim"
   },
   "delay": {
     "label": "Kechikish",
@@ -516,6 +520,67 @@
       "auth": "Terminal login yoki paroli noto‘g‘ri.",
       "watchTimeout": "Natijani kutish vaqti tugadi. Birozdan keyin shaxslar sonini tekshiring.",
       "generic": "Tozalashda xatolik yuz berdi."
+    }
+  },
+  "eventSource": {
+    "label": "Eventlarni olish usuli",
+    "PUSH": "HTTP Push",
+    "POLLING": "Polling",
+    "recommended": "tavsiya",
+    "all": "Barcha usullar",
+    "hints": {
+      "PUSH": "Terminal har bir o‘tishni o‘zi darhol yuboradi. Server yuklamasi past, kechikish yo‘q.",
+      "POLLING": "Server terminaldan eventlarni har necha soniyada so‘raydi. Push’ni qo‘llamaydigan modellar uchun."
+    },
+    "switchToPolling": "Push tokeni bekor qilinadi va server terminalni so‘ray boshlaydi. Terminal sozlamasidagi HTTP Listening’ni o‘chirib qo‘ying.",
+    "switchToPush": "Polling to‘xtaydi. Saqlagandan keyin terminal tafsilotlarida token yarating va uni terminalga kiriting."
+  },
+  "push": {
+    "title": "HTTP Push",
+    "enabled": "Token yoqilgan — terminal eventlarni shu tokenga yuboradi.",
+    "noToken": "Token hali yaratilmagan. Token yaratib, manzilni terminal sozlamasiga kiriting.",
+    "lastReceived": "Oxirgi so‘rov",
+    "lastEvent": "Oxirgi event",
+    "generate": "Token yaratish",
+    "regenerate": "Yangi token",
+    "disable": "Tokenni bekor qilish",
+    "confirmRegenerate": "Eski token darhol ishlamay qoladi — terminal sozlamasini yangi manzil bilan yangilashingiz kerak. Davom etasizmi?",
+    "confirmDisable": "Terminal yuborgan eventlar qabul qilinmay qoladi. Davom etasizmi?",
+    "failed": "Amalni bajarib bo‘lmadi.",
+    "onceWarning": "Bu manzil faqat hozir ko‘rsatiladi. Nusxalab, terminalga kiriting.",
+    "fullUrl": "To‘liq manzil",
+    "path": "URL (terminalning «URL» maydoni)",
+    "noPublicUrl": "Serverda PUSH_PUBLIC_URL sozlanmagan — to‘liq manzil o‘rniga faqat URL yo‘li ko‘rsatildi.",
+    "copy": "{{label}} — nusxalash",
+    "steps": {
+      "open": "Terminal veb-paneli: Configuration → Network → Advanced Settings → HTTP Listening (yoki Event → Alarm Server).",
+      "address": "Destination IP: {{host}}, Port: {{port}}, Protocol: HTTP.",
+      "addressGeneric": "Destination IP va Port — push serveri manzili (PUSH_PORT), Protocol: HTTP.",
+      "url": "URL maydoniga yuqoridagi URL yo‘lini kiriting va saqlang.",
+      "picture": "«Upload picture» bo‘lsa — yoqing: yuz rasmi event bilan birga keladi.",
+      "test": "Terminaldan bir marta o‘ting — «Oxirgi so‘rov» vaqti yangilanadi."
+    }
+  },
+  "backfill": {
+    "title": "Eventlarni terminaldan qayta olish",
+    "description": "Push navbatida qolib ketgan yoki bazadan o‘chib ketgan kunlarni terminal xotirasidan qaytaradi. Takroriy eventlar qayta yozilmaydi; kunlik davomat va dashboard avtomatik yangilanadi. Eski eventlarning rasmi terminalda bo‘lmasligi mumkin.",
+    "from": "Boshlanish sanasi",
+    "to": "Tugash sanasi",
+    "start": "Eventlarni olish",
+    "running": "Olinmoqda…",
+    "confirm": "{{from}} – {{to}} oralig‘idagi eventlar terminaldan qayta olinadi. Davom etasizmi?",
+    "failed": "Boshlab bo‘lmadi.",
+    "progress": "Hozir olinayotgan kun: {{date}}. Sahifani yopsangiz ham jarayon davom etadi.",
+    "state": {
+      "done": "Tugadi ({{time}}).",
+      "failed": "Tugadi, lekin ayrim kunlarda xato bor ({{time}}).",
+      "running": "Davom etmoqda."
+    },
+    "columns": {
+      "date": "Sana",
+      "fetched": "Terminalda",
+      "inserted": "Yangi",
+      "duplicates": "Allaqachon bor"
     }
   }
 }

@@ -39,7 +39,15 @@
     "inspectorTalks": "Profilaktik suhbatlar",
     "syncHistory": "Sinxronlash tarixi",
     "attendanceOverview": "Hududlar kesimida",
-    "holidays": "Dam olish kunlari"
+    "holidays": "Dam olish kunlari",
+    "live": "Jonli efir",
+    "teacherTimetable": "Haftalik jadvalim",
+    "teacherAssessments": "CHSB / BSB testlar",
+    "studentHome": "Mening kunim",
+    "studentSchedule": "Dars jadvalim",
+    "studentTests": "Testlarim",
+    "myAttendance": "Davomatim",
+    "dashboard": "Dashboard"
   },
   "short": {
     "profile": "Profil",
@@ -48,6 +56,13 @@
     "schools": "Maktablar",
     "more": "Menyu",
     "lessonSchedules": "Jadval",
-    "inspectorStudents": "Mahalla"
+    "inspectorStudents": "Mahalla",
+    "teacherTimetable": "Jadval",
+    "teacherAssessments": "Testlar",
+    "studentHome": "Bosh sahifa",
+    "studentSchedule": "Jadval",
+    "studentTests": "Testlar",
+    "myAttendance": "Davomat",
+    "dashboard": "Bosh sahifa"
   }
 }

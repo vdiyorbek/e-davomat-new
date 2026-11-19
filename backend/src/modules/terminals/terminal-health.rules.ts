@@ -77,6 +77,7 @@ export function healthStatusSql(alias: string): string {
 export function syncDelayedSql(alias: string): string {
   return `(${alias}.archivedAt IS NULL
     AND ${alias}.isActive = 1
+    AND ${alias}.eventSource = 'POLLING'
     AND ${alias}.eventsSyncedUntil IS NOT NULL
     AND ${alias}.eventsSyncedUntil < :syncDelayedBefore)`;
 }

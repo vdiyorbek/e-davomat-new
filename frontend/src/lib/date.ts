@@ -144,3 +144,14 @@ export function isValidAcademicYear(value: string): boolean {
     const [from, to] = value.split('-').map(Number);
     return to === from + 1;
 }
+
+/** Hozirgi Toshkent vaqti `SS:DD` ko‘rinishida (dars hozir ketyaptimi — tekshirish uchun). */
+export function nowTimeInTashkent(): string {
+    const { hour, minute } = tashkentParts(new Date());
+    return `${hour}:${minute}`;
+}
+
+/** Berilgan sana haftasining dushanbasi. */
+export function weekStart(isoDate: string): string {
+    return addDays(isoDate, -weekdayIndex(isoDate));
+}

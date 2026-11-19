@@ -9,11 +9,13 @@ import { DailyAttendanceExportService } from './daily-attendance-export.service'
 import { DailyAttendanceSummaryService } from './daily-attendance-summary.service';
 import { DailyAttendancePersonService } from './daily-attendance-person.service';
 import { AttendanceCalendarModule } from '../attendance-calendar/attendance-calendar.module';
+import { DashboardStatsQueueModule } from '../dashboard/dashboard-stats.queue';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([DailyAttendance]),
     AttendanceCalendarModule,
+    DashboardStatsQueueModule,
   ],
   controllers: [DailyAttendanceController],
   providers: [

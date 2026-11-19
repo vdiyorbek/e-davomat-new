@@ -21,6 +21,10 @@ import {
   History,
   UsersRound,
   MessagesSquare,
+  ClipboardList,
+  CalendarRange,
+  Home,
+  Radio,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -49,6 +53,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "personal",
     items: [
+      {
+        to: "/dashboard",
+        key: "dashboard",
+        icon: LayoutDashboard,
+        roles: ADMIN_ROLES,
+        mobilePriority: 0,
+      },
       { to: "/me", key: "profile", icon: UserRound, mobilePriority: 9 },
       {
         to: "/teacher/dashboard",
@@ -56,6 +67,48 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
         roles: ["TEACHER"],
         mobilePriority: 1,
+      },
+      {
+        to: "/teacher/timetable",
+        key: "teacherTimetable",
+        icon: CalendarRange,
+        roles: ["TEACHER"],
+        mobilePriority: 2,
+      },
+      {
+        to: "/teacher/assessments",
+        key: "teacherAssessments",
+        icon: ClipboardList,
+        roles: ["TEACHER"],
+        mobilePriority: 3,
+      },
+      {
+        to: "/student",
+        key: "studentHome",
+        icon: Home,
+        roles: ["STUDENT"],
+        mobilePriority: 1,
+      },
+      {
+        to: "/student/schedule",
+        key: "studentSchedule",
+        icon: CalendarRange,
+        roles: ["STUDENT"],
+        mobilePriority: 2,
+      },
+      {
+        to: "/student/assessments",
+        key: "studentTests",
+        icon: ClipboardList,
+        roles: ["STUDENT"],
+        mobilePriority: 3,
+      },
+      {
+        to: "/student/attendance",
+        key: "myAttendance",
+        icon: ClipboardCheck,
+        roles: ["STUDENT"],
+        mobilePriority: 4,
       },
     ],
   },
@@ -84,6 +137,12 @@ export const NAV_GROUPS: NavGroup[] = [
         to: "/attendance",
         key: "attendanceOverview",
         icon: MapPinned,
+        roles: ADMIN_ROLES,
+      },
+      {
+        to: "/live",
+        key: "live",
+        icon: Radio,
         roles: ADMIN_ROLES,
       },
       {

@@ -16,7 +16,11 @@
     "hoursMinutes": "{{h}} h {{m}} min",
     "minutes": "{{m}} min",
     "lessThanMinute": "less than a minute",
-    "legend": { "ONLINE": "Online", "OFFLINE": "Offline", "UNKNOWN": "No data" }
+    "legend": {
+      "ONLINE": "Online",
+      "OFFLINE": "Offline",
+      "UNKNOWN": "No data"
+    }
   },
   "title": "Terminals",
   "subtitle": "Manage Face ID terminals at school entrances and exits.",
@@ -176,7 +180,11 @@
     "unknown": "Unknown",
     "pending": "Pending",
     "healthy": "Healthy",
-    "delayed": "Delayed"
+    "delayed": "Delayed",
+    "pushNoToken": "Push: no token",
+    "pushWaiting": "Push: waiting",
+    "pushActive": "Push: active",
+    "pushIdle": "Push: idle"
   },
   "delay": {
     "label": "Delay",
@@ -521,5 +529,66 @@
       "generic": "Clearing failed."
     }
   },
-  "total_one": "Total: {{count}} terminal"
+  "total_one": "Total: {{count}} terminal",
+  "eventSource": {
+    "label": "How events are received",
+    "PUSH": "HTTP Push",
+    "POLLING": "Polling",
+    "recommended": "recommended",
+    "all": "All methods",
+    "hints": {
+      "PUSH": "The terminal sends every pass instantly. Low server load, no delay.",
+      "POLLING": "The server asks the terminal for events every few seconds. For models without Push support."
+    },
+    "switchToPolling": "The push token will be revoked and the server will start polling the terminal. Turn off HTTP Listening on the terminal.",
+    "switchToPush": "Polling stops. After saving, create a token in the terminal details and enter it on the terminal."
+  },
+  "push": {
+    "title": "HTTP Push",
+    "enabled": "Token is active — the terminal sends events with this token.",
+    "noToken": "No token yet. Create one and enter the address in the terminal settings.",
+    "lastReceived": "Last request",
+    "lastEvent": "Last event",
+    "generate": "Create token",
+    "regenerate": "New token",
+    "disable": "Revoke token",
+    "confirmRegenerate": "The old token stops working immediately — update the address on the terminal. Continue?",
+    "confirmDisable": "Events from this terminal will no longer be accepted. Continue?",
+    "failed": "Could not complete the action.",
+    "onceWarning": "This address is shown only now. Copy it and enter it on the terminal.",
+    "fullUrl": "Full address",
+    "path": "URL (terminal “URL” field)",
+    "noPublicUrl": "PUSH_PUBLIC_URL isn't set on the server — only the URL path is shown.",
+    "copy": "Copy {{label}}",
+    "steps": {
+      "open": "Terminal web panel: Configuration → Network → Advanced Settings → HTTP Listening (or Event → Alarm Server).",
+      "address": "Destination IP: {{host}}, Port: {{port}}, Protocol: HTTP.",
+      "addressGeneric": "Destination IP and Port — the push server address (PUSH_PORT), Protocol: HTTP.",
+      "url": "Enter the URL path above in the URL field and save.",
+      "picture": "If there's “Upload picture”, turn it on — the face photo arrives with the event.",
+      "test": "Pass the terminal once — “Last request” updates."
+    }
+  },
+  "backfill": {
+    "title": "Re-fetch events from the terminal",
+    "description": "Pulls days from the terminal’s memory that dropped out of the push queue or were removed from the database. Duplicates are not written again; daily attendance and the dashboard refresh automatically. Photos of old events may no longer exist on the terminal.",
+    "from": "Start date",
+    "to": "End date",
+    "start": "Fetch events",
+    "running": "Fetching…",
+    "confirm": "Events from {{from}} to {{to}} will be re-fetched from the terminal. Continue?",
+    "failed": "Could not start.",
+    "progress": "Fetching day: {{date}}. It keeps running even if you close this page.",
+    "state": {
+      "done": "Finished ({{time}}).",
+      "failed": "Finished, but some days have errors ({{time}}).",
+      "running": "In progress."
+    },
+    "columns": {
+      "date": "Date",
+      "fetched": "On terminal",
+      "inserted": "New",
+      "duplicates": "Already stored"
+    }
+  }
 }

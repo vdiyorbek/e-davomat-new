@@ -12,10 +12,12 @@ import { Switch } from '@/components/ui/switch';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { createTerminal } from '@/lib/terminals-api';
 import type { School } from '@/types/school';
-import type { TerminalDirection, TerminalProtocol } from '@/types/terminal';
+import type { Terminal, TerminalDirection, TerminalEventSource, TerminalProtocol } from '@/types/terminal';
+import { EventSourcePicker } from './EventSourcePicker';
 
 interface CreateTerminalFormProps {
-    onSaved: () => void;
+    /** Yaratilgan terminal — push bo‘lsa sahifa token oynasini ochadi. */
+    onSaved: (terminal: Terminal) => void;
     onCancel: () => void;
 }
 
@@ -33,6 +35,7 @@ export function CreateTerminalForm({ onSaved, onCancel }: CreateTerminalFormProp
     const [username, setUsername] = useState('admin');
     const [password, setPassword] = useState('');
     const [isActive, setIsActive] = useState(true);
+    const [eventSource, setEventSource] = useState<TerminalEventSource>('PUSH');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
@@ -52,8 +55,9 @@ export function CreateTerminalForm({ onSaved, onCancel }: CreateTerminalFormProp
 
         busyRef.current = true;
         setBusy(true);
+        let created: Terminal;
         try {
-            await createTerminal({
+            created = await createTerminal({
                 name: name.trim(),
                 schoolId: school.id,
                 direction,
@@ -63,6 +67,7 @@ export function CreateTerminalForm({ onSaved, onCancel }: CreateTerminalFormProp
                 username: username.trim(),
                 password,
                 isActive,
+                eventSource,
             });
         } catch (err) {
             setError(err instanceof Error ? err.message : t('terminals.form.errors.saveFailed'));
@@ -71,7 +76,7 @@ export function CreateTerminalForm({ onSaved, onCancel }: CreateTerminalFormProp
             busyRef.current = false;
             setBusy(false);
         }
-        onSaved();
+        onSaved(created);
     }
 
     return (
@@ -196,6 +201,8 @@ export function CreateTerminalForm({ onSaved, onCancel }: CreateTerminalFormProp
                         />
                     </Field>
                 </div>
+
+                <EventSourcePicker value={eventSource} onChange={setEventSource} />
 
                 <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 px-4 py-3">
                     <Label htmlFor={`${formId}-active`} className="leading-5">

@@ -28,6 +28,8 @@ import { GetTerminalsQueryDto } from './dto/get-terminals-query.dto';
 import { HikvisionService } from './hikvision.service';
 import type { HikvisionDeviceInfo } from './hikvision.service';
 import { StartTerminalSyncDto } from './dto/start-terminal-sync.dto';
+import { TerminalEventSource } from './enums/terminal-event-source.enum';
+import { TerminalPushCredentialsService } from './terminal-push-credentials.service';
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
@@ -47,6 +49,8 @@ export class TerminalsService {
     private readonly terminalCrypto: TerminalCryptoService,
 
     private readonly hikvision: HikvisionService,
+
+    private readonly pushCredentials: TerminalPushCredentialsService,
   ) {}
 
   async create(dto: CreateTerminalDto) {
@@ -73,6 +77,7 @@ export class TerminalsService {
       username: dto.username,
       passwordEncrypted: this.terminalCrypto.encrypt(dto.password),
       isActive: dto.isActive ?? true,
+      eventSource: dto.eventSource ?? TerminalEventSource.PUSH,
       model: null,
       serialNumber: null,
       lastCheckedAt: null,
@@ -157,12 +162,37 @@ export class TerminalsService {
       terminal.passwordEncrypted = this.terminalCrypto.encrypt(dto.password);
     }
 
+    const previousSource = terminal.eventSource;
+    const previousActive = terminal.isActive;
+
     if (dto.isActive !== undefined) {
       terminal.isActive = dto.isActive;
     }
 
+    if (dto.eventSource !== undefined && dto.eventSource !== terminal.eventSource) {
+      terminal.eventSource = dto.eventSource;
+
+      if (dto.eventSource === TerminalEventSource.POLLING) {
+        // Push tokeni bekor qilinadi: terminal endi faqat so‘raladi.
+        terminal.pushEnabled = false;
+        terminal.pushTokenHash = null;
+
+        // Hech qachon polling qilinmagan bo‘lsa — hozirdan boshlaydi.
+        // Avval polling’da bo‘lgan bo‘lsa, to‘xtagan joyidan davom etib,
+        // push davridagi bo‘shliqni ham to‘ldiradi (takrorlar yozilmaydi).
+        if (terminal.syncStartAt === null && terminal.eventsSyncedUntil === null) {
+          terminal.syncStartAt = new Date();
+        }
+      }
+    }
+
     try {
       const saved = await this.terminalsRepository.save(terminal);
+
+      // Push qabul qiluvchi token keshini darhol yangilasin.
+      if (saved.eventSource !== previousSource || saved.isActive !== previousActive) {
+        await this.pushCredentials.notifyIngest();
+      }
 
       return this.toResponse(saved);
     } catch (error: unknown) {
@@ -353,6 +383,12 @@ export class TerminalsService {
         filterDirection: query.direction,
       });
     }
+
+    if (query.eventSource !== undefined) {
+      builder.andWhere('terminal.eventSource = :filterEventSource', {
+        filterEventSource: query.eventSource,
+      });
+    }
     if (withStatusFilters && query.healthStatus !== undefined) {
       builder.andWhere(`${healthStatusSql('terminal')} = :filterHealthStatus`, {
         ...healthSqlParams(),
@@ -471,10 +507,18 @@ export class TerminalsService {
           ? Math.max(0, Math.floor((now - syncedUntil) / 1000))
           : null;
 
-      let syncStatus: 'DISABLED' | 'NOT_STARTED' | 'HEALTHY' | 'DELAYED';
+      let syncStatus:
+        | 'DISABLED'
+        | 'NOT_STARTED'
+        | 'HEALTHY'
+        | 'DELAYED'
+        | 'PUSH';
 
       if (!terminal.isActive) {
         syncStatus = 'DISABLED';
+      } else if (terminal.eventSource === TerminalEventSource.PUSH) {
+        // Push terminalda «sinxronlash kechikishi» tushunchasi yo‘q.
+        syncStatus = 'PUSH';
       } else if (syncedUntil === null) {
         syncStatus = 'NOT_STARTED';
       } else if (syncDelaySeconds !== null && syncDelaySeconds <= 600) {
@@ -489,6 +533,8 @@ export class TerminalsService {
         school: terminal.school,
         direction: terminal.direction,
         isActive: terminal.isActive,
+        eventSource: terminal.eventSource,
+        pushLastReceivedAt: terminal.pushLastReceivedAt,
         model: terminal.model,
         totalEvents: stats.totalEvents,
         repeatedEvents: stats.repeatedEvents,
@@ -540,6 +586,10 @@ export class TerminalsService {
       serialNumber: terminal.serialNumber,
       archivedAt: terminal.archivedAt,
       healthStatus: getTerminalHealthStatus(terminal),
+      eventSource: terminal.eventSource,
+      pushEnabled: terminal.pushEnabled,
+      pushLastReceivedAt: terminal.pushLastReceivedAt,
+      pushLastEventAt: terminal.pushLastEventAt,
       lastSeenAt: terminal.lastSeenAt,
       lastError: terminal.lastError,
       consecutiveFailures: terminal.consecutiveFailures,

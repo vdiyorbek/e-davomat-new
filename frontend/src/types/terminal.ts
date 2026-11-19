@@ -1,5 +1,7 @@
 export type TerminalDirection = "IN" | "OUT";
 export type TerminalProtocol = "HTTP" | "HTTPS";
+/** PUSH — terminal o‘zi yuboradi; POLLING — server so‘raydi. */
+export type TerminalEventSource = "PUSH" | "POLLING";
 
 export interface Terminal {
   id: number;
@@ -21,6 +23,10 @@ export interface Terminal {
   createdAt: string;
   updatedAt: string;
   healthStatus: "ONLINE" | "OFFLINE" | "UNKNOWN" | "DISABLED" | "ARCHIVED";
+  eventSource: TerminalEventSource;
+  pushEnabled: boolean;
+  pushLastReceivedAt: string | null;
+  pushLastEventAt: string | null;
 
   lastSeenAt: string | null;
   lastError: string | null;
@@ -58,6 +64,7 @@ export interface CreateTerminalInput {
   username: string;
   password: string;
   isActive: boolean;
+  eventSource: TerminalEventSource;
 }
 
 export type TerminalCheckResponse =
@@ -87,7 +94,7 @@ export interface TerminalMonitoringItem {
   lastSuccessfulSyncAt: string | null;
   eventsSyncedUntil: string | null;
   syncDelaySeconds: number | null;
-  syncStatus: "DISABLED" | "NOT_STARTED" | "HEALTHY" | "DELAYED";
+  syncStatus: "DISABLED" | "NOT_STARTED" | "HEALTHY" | "DELAYED" | "PUSH";
 }
 
 export interface TerminalMonitoringResponse {

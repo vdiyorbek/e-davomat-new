@@ -7,10 +7,12 @@ import {
     RefreshCw,
     School,
     Search,
-    NotebookPen
+    NotebookPen,
+    ClipboardList,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import { PageHeader } from '@/components/common/PageHeader';
+import { TeacherTodayLessons } from '@/components/cabinet/TeacherTodayLessons';
 import { SelectField } from '@/components/common/SelectField';
 import {
     EmptyState,
@@ -122,17 +124,27 @@ export function TeacherDashboardPage() {
                 title={t('teacher.dashboard.title')}
                 description={t('teacher.dashboard.description')}
                 actions={
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={assignmentsQuery.retry}
-                        disabled={assignmentsQuery.loading}
-                    >
-                        <RefreshCw aria-hidden="true" />
-                        {t('common.refresh')}
-                    </Button>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button asChild>
+                            <Link to="/teacher/assessments">
+                                <ClipboardList aria-hidden="true" />
+                                {t('assessments.title')}
+                            </Link>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={assignmentsQuery.retry}
+                            disabled={assignmentsQuery.loading}
+                        >
+                            <RefreshCw aria-hidden="true" />
+                            {t('common.refresh')}
+                        </Button>
+                    </div>
                 }
             />
+
+            <TeacherTodayLessons />
 
             {assignmentsQuery.loading && (
                 <LoadingState rows={5} />

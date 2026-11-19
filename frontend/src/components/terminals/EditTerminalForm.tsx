@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { updateTerminal } from '@/lib/terminals-api';
-import type { Terminal, TerminalDirection, TerminalProtocol } from '@/types/terminal';
+import type { Terminal, TerminalDirection, TerminalEventSource, TerminalProtocol } from '@/types/terminal';
+import { EventSourcePicker } from './EventSourcePicker';
 
 interface Props {
     terminal: Terminal;
@@ -31,6 +32,7 @@ export function EditTerminalForm({ terminal, onSaved, onCancel }: Props) {
     const [username, setUsername] = useState(terminal.username);
     const [password, setPassword] = useState('');
     const [isActive, setIsActive] = useState(terminal.isActive);
+    const [eventSource, setEventSource] = useState<TerminalEventSource>(terminal.eventSource);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -59,6 +61,7 @@ export function EditTerminalForm({ terminal, onSaved, onCancel }: Props) {
                 port: portNumber,
                 username: username.trim(),
                 isActive,
+                eventSource,
                 ...(password ? { password } : {}),
             });
             onSaved();
@@ -172,6 +175,13 @@ export function EditTerminalForm({ terminal, onSaved, onCancel }: Props) {
                         />
                     </Field>
                 </div>
+
+                <EventSourcePicker value={eventSource} onChange={setEventSource} />
+                {eventSource !== terminal.eventSource && (
+                    <p role="status" className="rounded-lg bg-warning/10 px-3 py-2 text-xs">
+                        {eventSource === 'POLLING' ? t('terminals.eventSource.switchToPolling') : t('terminals.eventSource.switchToPush')}
+                    </p>
+                )}
 
                 <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 px-4 py-3">
                     <div className="min-w-0">

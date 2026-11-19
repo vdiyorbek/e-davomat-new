@@ -17,6 +17,7 @@ import { AttendanceEvent } from '../attendance-events/attendance-event.entity';
 import { TerminalDirection } from '../terminals/enums/terminal-direction.enum';
 
 import { DailyAttendance } from './daily-attendance.entity';
+import { DashboardStatsQueue } from '../dashboard/dashboard-stats.queue';
 import { RebuildDailyAttendanceDto } from './dto/rebuild-daily-attendance.dto';
 import {
   MembershipType,
@@ -31,9 +32,19 @@ interface PersonDayEvents {
 @Injectable()
 export class DailyAttendanceService {
   private readonly logger = new Logger(DailyAttendanceService.name);
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly statsQueue: DashboardStatsQueue,
+  ) {}
 
   async rebuild(dto: RebuildDailyAttendanceDto) {
+    const result = await this.rebuildDay(dto);
+    // Dashboard ko‘rsatkichlari ham yangilansin.
+    await this.statsQueue.mark([{ schoolId: dto.schoolId, date: dto.date }]);
+    return result;
+  }
+
+  private async rebuildDay(dto: RebuildDailyAttendanceDto) {
     // Hozirgi Toshkent vaqti: UTC+05:00.
     const startAt = new Date(`${dto.date}T00:00:00+05:00`);
 

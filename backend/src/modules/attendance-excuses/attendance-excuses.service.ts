@@ -28,6 +28,8 @@ import { CreateAttendanceExcuseDto } from './dto/create-attendance-excuse.dto';
 
 const MAX_PDF_SIZE = 5 * 1024 * 1024;
 
+import { DashboardStatsQueue } from '../dashboard/dashboard-stats.queue';
+
 @Injectable()
 export class AttendanceExcusesService {
   private readonly directory = join(
@@ -42,7 +44,23 @@ export class AttendanceExcusesService {
 
     @InjectRepository(SchoolMembership)
     private readonly membershipsRepository: Repository<SchoolMembership>,
+
+    private readonly statsQueue: DashboardStatsQueue,
   ) {}
+
+  /** Ariza oralig‘idagi (bugungacha, ko‘pi bilan 62 kun) kunlar statistikasi qayta hisoblanadi. */
+  private markStats(schoolId: number, startDate: string, endDate: string): void {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tashkent' }).format(new Date());
+    const days: { schoolId: number; date: string }[] = [];
+    const end = endDate < today ? endDate : today;
+    for (let date = startDate; date <= end && days.length < 62; ) {
+      days.push({ schoolId, date });
+      const next = new Date(`${date}T00:00:00Z`);
+      next.setUTCDate(next.getUTCDate() + 1);
+      date = next.toISOString().slice(0, 10);
+    }
+    void this.statsQueue.mark(days, 5_000);
+  }
 
   async create(
     dto: CreateAttendanceExcuseDto,
@@ -206,6 +224,7 @@ export class AttendanceExcusesService {
       });
 
       const saved = await this.excusesRepository.save(excuse);
+      this.markStats(saved.schoolId, saved.startDate, saved.endDate);
 
       // Ichki fayl manzilini mijozga qaytarmaymiz.
       return {
@@ -508,6 +527,8 @@ export class AttendanceExcusesService {
     if (result.affected !== 1) {
       throw new ConflictException('Ariza holati o‘zgargan. Qayta tekshiring.');
     }
+
+    this.markStats(excuse.schoolId, excuse.startDate, excuse.endDate);
 
     return {
       id,

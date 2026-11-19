@@ -19,6 +19,7 @@ import { ListSchoolClassesDto } from './dto/list-school-classes.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
 import { UpdateSchoolClassGradeDto } from './dto/update-school-class-grade.dto';
+import { ClassShiftsService } from './class-shifts.service';
 
 /** Sinf va maktab nomi birga, apostroflarsiz: «Qo‘rg‘on» = «Qorgon». */
 const SEARCH_TEXT_SQL = ["'", '‘', '’', 'ʻ', 'ʼ', '`'].reduce(
@@ -47,6 +48,8 @@ export class ClassesService {
 
     @InjectRepository(School)
     private readonly schoolsRepository: Repository<School>,
+
+    private readonly classShifts: ClassShiftsService,
   ) {}
 
   async create(
@@ -305,6 +308,27 @@ export class ClassesService {
       .andWhere('schoolClass.gradeLevel IS NULL')
       .getCount();
 
+    // Bugungi smenasi yo‘q sinflar — admin ogohlantirishi uchun.
+    const shiftToday = todayInTashkent();
+    const CURRENT_SHIFT_SQL = (code: string | null) =>
+      `EXISTS (SELECT 1 FROM school_class_shifts cs ` +
+      `INNER JOIN school_shifts ss ON ss.id = cs.shiftId ` +
+      `WHERE cs.classId = schoolClass.id AND cs.startDate <= :shiftToday ` +
+      `AND (cs.endDate IS NULL OR cs.endDate > :shiftToday)` +
+      (code ? ` AND ss.code = ${code}` : '') +
+      `)`;
+
+    const missingShift = await builder
+      .clone()
+      .andWhere(`NOT ${CURRENT_SHIFT_SQL(null)}`, { shiftToday })
+      .getCount();
+
+    if (query.shift === 'NONE') {
+      builder.andWhere(`NOT ${CURRENT_SHIFT_SQL(null)}`, { shiftToday });
+    } else if (query.shift === '1' || query.shift === '2') {
+      builder.andWhere(CURRENT_SHIFT_SQL(query.shift), { shiftToday });
+    }
+
     if (query.grade === 'NONE') {
       builder.andWhere('schoolClass.gradeLevel IS NULL');
     } else if (query.grade) {
@@ -322,7 +346,11 @@ export class ClassesService {
       .take(limit)
       .getManyAndCount();
 
-    const students = await this.countStudents(classes.map((item) => item.id));
+    const classIds = classes.map((item) => item.id);
+    const [students, shifts] = await Promise.all([
+      this.countStudents(classIds),
+      this.classShifts.currentShifts(classIds, shiftToday),
+    ]);
 
     return {
       data: classes.map((item) => ({
@@ -332,6 +360,7 @@ export class ClassesService {
         name: item.name,
         gradeLevel: item.gradeLevel,
         school: item.school,
+        shift: shifts.get(item.id) ?? null,
         stats: { students: students.get(item.id) ?? 0 },
       })),
       total,
@@ -339,6 +368,7 @@ export class ClassesService {
       limit,
       totalPages: Math.ceil(total / limit),
       missingGrade,
+      missingShift,
     };
   }
 

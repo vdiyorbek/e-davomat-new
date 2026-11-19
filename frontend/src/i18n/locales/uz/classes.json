@@ -34,5 +34,28 @@
   "columns": {
     "class": "Sinf",
     "students": "O‘quvchilar"
+  },
+  "shift": {
+    "column": "Smena",
+    "nameN": "{{code}}-smena",
+    "none": "Smena belgilanmagan",
+    "all": "Barcha smenalar",
+    "missing": "Smenasiz: {{count}}",
+    "settings": "Smena vaqtlari",
+    "settingsDescription": "1- va 2-smena boshlanish va tugash vaqtlarini kiriting.",
+    "start": "Boshlanishi",
+    "end": "Tugashi",
+    "defaultHint": "Hali saqlanmagan — standart vaqt ko‘rsatilmoqda.",
+    "timeOrder": "{{code}}-smena: boshlanish vaqti tugashdan oldin bo‘lishi kerak.",
+    "saved": "Smena vaqtlari saqlandi.",
+    "saveFailed": "Smena vaqtlarini saqlab bo‘lmadi.",
+    "selected": "{{count}} ta sinf tanlandi",
+    "moveTo": "{{code}}-smenaga o‘tkazish",
+    "assigned": "{{count}} ta sinf bugundan {{code}}-smenaga o‘tkazildi.",
+    "assignFailed": "Smenani belgilab bo‘lmadi.",
+    "barLabel": "Tanlangan sinflar smenasi",
+    "clearSelection": "Tanlovni bekor qilish",
+    "selectClass": "{{name}} sinfini tanlash",
+    "selectPage": "Sahifadagi barcha sinflarni tanlash"
   }
 }

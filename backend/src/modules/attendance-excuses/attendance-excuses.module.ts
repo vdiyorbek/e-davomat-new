@@ -6,9 +6,13 @@ import { AttendanceExcuse } from './attendance-excuse.entity';
 
 import { AttendanceExcusesController } from './attendance-excuses.controller';
 import { AttendanceExcusesService } from './attendance-excuses.service';
+import { DashboardStatsQueueModule } from '../dashboard/dashboard-stats.queue';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AttendanceExcuse, SchoolMembership])],
+  imports: [
+    TypeOrmModule.forFeature([AttendanceExcuse, SchoolMembership]),
+    DashboardStatsQueueModule,
+  ],
   controllers: [AttendanceExcusesController],
   providers: [AttendanceExcusesService],
   exports: [AttendanceExcusesService],

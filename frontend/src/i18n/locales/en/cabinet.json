@@ -1,0 +1,26 @@
+{
+  "today": {
+    "title": "Today's lessons",
+    "emptyTitle": "No lessons today",
+    "empty": "There are no lessons in the timetable today.",
+    "now": "Now",
+    "next": "Next",
+    "currentNoTopic": "{{name}} is in progress — choose the topic."
+  },
+  "lesson": {
+    "chooseTopic": "Choose topic",
+    "edit": "Edit",
+    "start": "Open lesson in journal",
+    "noSession": "This lesson is not in the journal yet. Open it, then choose a topic from the textbook."
+  },
+  "timetable": {
+    "title": "Weekly timetable",
+    "teacherDescription": "Lessons across all your classes. Click a lesson to set its topic and homework.",
+    "studentDescription": "Your class lessons, covered topics and homework.",
+    "open": "Weekly timetable",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "thisWeek": "This week",
+    "noLessons": "No lessons"
+  }
+}

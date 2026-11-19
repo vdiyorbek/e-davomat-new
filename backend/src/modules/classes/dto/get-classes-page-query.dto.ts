@@ -63,6 +63,13 @@ export class GetClassesPageQueryDto {
   })
   grade?: string;
 
+  /** '1', '2' yoki 'NONE' — smenasi belgilanmaganlar. */
+  @IsOptional()
+  @IsIn(['1', '2', 'NONE'], {
+    message: 'shift 1, 2 yoki NONE bo‘lishi kerak',
+  })
+  shift?: string;
+
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : value,

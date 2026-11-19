@@ -79,6 +79,14 @@ export class TeacherClassSubject {
   })
   subject!: Subject;
 
+  // O‘quv rejasi bo‘yicha haftalik dars soati (NULL — kiritilmagan)
+  @Column({
+    type: 'tinyint',
+    unsigned: true,
+    nullable: true,
+  })
+  weeklyHours!: number | null;
+
   // Biriktirish amal qilish davri
   @Column({
     type: 'date',

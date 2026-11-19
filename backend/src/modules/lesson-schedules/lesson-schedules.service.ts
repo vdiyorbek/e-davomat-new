@@ -20,6 +20,7 @@ import { UpdateLessonScheduleDto } from './dto/update-lesson-schedule.dto';
 import { LessonSchedule } from './lesson-schedule.entity';
 import { CreateLessonScheduleDto } from './dto/create-lesson-schedule.dto';
 import { ListLessonSchedulesDto } from './dto/list-lesson-schedules.dto';
+import { TeacherLoadQueryDto } from './dto/teacher-load-query.dto';
 
 @Injectable()
 export class LessonSchedulesService {
@@ -84,6 +85,143 @@ export class LessonSchedulesService {
         'Dars jadvali sanalari o‘quv yiliga mos emas',
       );
     }
+  }
+
+  /**
+   * O‘qituvchilar haftalik yuklamasi. Har bir fan-sinf biriktirmasi uchun
+   * o‘quv rejasidagi soat (weeklyHours) va jadvalga haqiqatda qo‘yilgan
+   * darslar soni, hamda hafta kunlari bo‘yicha taqsimot.
+   */
+  async teacherLoad(dto: TeacherLoadQueryDto, user: AuthenticatedUser) {
+    await this.checkSchoolAccess(dto.schoolId, user, this.dataSource.manager);
+
+    const match = /^(\d{4})-(\d{4})$/.exec(dto.academicYear);
+    if (!match || Number(match[2]) !== Number(match[1]) + 1) {
+      throw new BadRequestException('O‘quv yili noto‘g‘ri');
+    }
+
+    const yearStart = `${match[1]}-09-01`;
+    const yearLast = `${match[2]}-08-31`;
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tashkent',
+    }).format(new Date());
+    // Bugun o‘quv yilidan tashqarida bo‘lsa, yilning chegarasini olamiz.
+    const date =
+      dto.date ??
+      (today < yearStart ? yearStart : today > yearLast ? yearLast : today);
+
+    const rows: {
+      assignmentId: number;
+      teacherMembershipId: number;
+      personId: number;
+      firstName: string;
+      lastName: string;
+      middleName: string | null;
+      classId: number;
+      className: string;
+      subjectId: number;
+      subjectName: string;
+      weeklyHours: number | null;
+      scheduled: string | number;
+    }[] = await this.dataSource.query(
+      `SELECT a.id AS assignmentId, a.teacherMembershipId, p.id AS personId,
+              p.firstName, p.lastName, p.middleName,
+              c.id AS classId, c.name AS className,
+              s.id AS subjectId, s.nameUz AS subjectName, a.weeklyHours,
+              (SELECT COUNT(*) FROM lesson_schedules ls
+                WHERE ls.teacherAssignmentId = a.id AND ls.isActive = 1
+                  AND ls.startDate <= ? AND (ls.endDate IS NULL OR ls.endDate > ?)
+              ) AS scheduled
+         FROM teacher_class_subjects a
+         JOIN school_memberships m ON m.id = a.teacherMembershipId
+         JOIN persons p ON p.id = m.personId
+         JOIN school_classes c ON c.id = a.classId
+         JOIN curriculum_subjects s ON s.id = a.subjectId
+        WHERE c.schoolId = ? AND m.schoolId = ? AND c.academicYear = ?
+          AND a.startDate <= ? AND (a.endDate IS NULL OR a.endDate > ?)
+        ORDER BY p.lastName, p.firstName, c.name, s.nameUz`,
+      [date, date, dto.schoolId, dto.schoolId, dto.academicYear, date, date],
+    );
+
+    const days: {
+      teacherMembershipId: number;
+      dayOfWeek: number;
+      lessons: string | number;
+    }[] = await this.dataSource.query(
+      `SELECT a.teacherMembershipId, ls.dayOfWeek, COUNT(*) AS lessons
+         FROM lesson_schedules ls
+         JOIN teacher_class_subjects a ON a.id = ls.teacherAssignmentId
+         JOIN school_classes c ON c.id = ls.classId
+        WHERE c.schoolId = ? AND c.academicYear = ? AND ls.isActive = 1
+          AND ls.startDate <= ? AND (ls.endDate IS NULL OR ls.endDate > ?)
+        GROUP BY a.teacherMembershipId, ls.dayOfWeek`,
+      [dto.schoolId, dto.academicYear, date, date],
+    );
+
+    const teachers = new Map<
+      number,
+      {
+        teacherMembershipId: number;
+        personId: number;
+        firstName: string;
+        lastName: string;
+        middleName: string | null;
+        plannedHours: number;
+        scheduledHours: number;
+        byDay: number[];
+        assignments: {
+          id: number;
+          classId: number;
+          className: string;
+          subjectId: number;
+          subjectName: string;
+          weeklyHours: number | null;
+          scheduled: number;
+        }[];
+      }
+    >();
+
+    for (const row of rows) {
+      const key = Number(row.teacherMembershipId);
+      let teacher = teachers.get(key);
+      if (!teacher) {
+        teacher = {
+          teacherMembershipId: key,
+          personId: Number(row.personId),
+          firstName: row.firstName,
+          lastName: row.lastName,
+          middleName: row.middleName,
+          plannedHours: 0,
+          scheduledHours: 0,
+          byDay: [0, 0, 0, 0, 0, 0],
+          assignments: [],
+        };
+        teachers.set(key, teacher);
+      }
+
+      const scheduled = Number(row.scheduled);
+      teacher.plannedHours += row.weeklyHours ?? 0;
+      teacher.scheduledHours += scheduled;
+      teacher.assignments.push({
+        id: Number(row.assignmentId),
+        classId: Number(row.classId),
+        className: row.className,
+        subjectId: Number(row.subjectId),
+        subjectName: row.subjectName,
+        weeklyHours: row.weeklyHours === null ? null : Number(row.weeklyHours),
+        scheduled,
+      });
+    }
+
+    for (const day of days) {
+      const teacher = teachers.get(Number(day.teacherMembershipId));
+      const index = Number(day.dayOfWeek) - 1;
+      if (teacher && index >= 0 && index < 6) {
+        teacher.byDay[index] = Number(day.lessons);
+      }
+    }
+
+    return { date, teachers: [...teachers.values()] };
   }
 
   async create(dto: CreateLessonScheduleDto, user: AuthenticatedUser) {

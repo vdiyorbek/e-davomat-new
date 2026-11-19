@@ -7,6 +7,7 @@ import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 
 import { Terminal } from '../terminals/terminal.entity';
+import { TerminalEventSource } from '../terminals/enums/terminal-event-source.enum';
 
 import { TERMINAL_SYNC_QUEUE } from './terminal-sync.constants';
 import type { TerminalSyncJob } from './terminal-sync.constants';
@@ -96,6 +97,10 @@ export class TerminalSyncScheduler {
           active: true,
         })
         .andWhere('terminal.archivedAt IS NULL')
+        // Push terminallar eventlarni o‘zi yuboradi — ularni so‘ramaymiz.
+        .andWhere('terminal.eventSource = :polling', {
+          polling: TerminalEventSource.POLLING,
+        })
         .andWhere('terminal.syncStartAt IS NOT NULL')
         .orderBy('terminal.id', 'ASC')
         .getMany();

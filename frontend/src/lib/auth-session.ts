@@ -1,4 +1,5 @@
 import {
+  API_BASE_URL,
   ApiError,
   apiGet,
   apiPost,
@@ -559,6 +560,76 @@ export async function authorizedPut<T>(
       }
 
       throw retryError;
+    }
+  }
+}
+
+/**
+ * Server-Sent Events oqimi (Authorization sarlavhasi bilan — EventSource
+ * buni qo‘llab-quvvatlamaydi). Ulanish uzilganda resolve bo‘ladi; qayta
+ * ulanishni chaqiruvchi boshqaradi.
+ */
+export async function authorizedEventStream(
+  path: string,
+  signal: AbortSignal,
+  onEvent: (type: string, data: string) => void,
+): Promise<void> {
+  const requestGeneration = generation;
+  let current = state.session;
+
+  if (!current) {
+    throw new ApiError(i18n.t("common.session.signInFirst"), 401);
+  }
+
+  if (current.expiresAt <= Date.now() + 30_000) {
+    current = await refreshCurrentSession();
+  }
+
+  const open = (token: string) =>
+    fetch(`${API_BASE_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+      credentials: "include",
+      signal,
+    });
+
+  let response = await open(current.token);
+
+  if (response.status === 401) {
+    current = await refreshCurrentSession(current.token);
+    response = await open(current.token);
+  }
+
+  if (requestGeneration !== generation || !state.session) {
+    throw new DOMException(i18n.t("common.session.changed"), "AbortError");
+  }
+
+  if (!response.ok || !response.body) {
+    throw new ApiError(
+      i18n.t("common.network.failedStatus", { status: response.status }),
+      response.status,
+    );
+  }
+
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) return;
+    buffer += value;
+
+    let index: number;
+    while ((index = buffer.indexOf("\n\n")) !== -1) {
+      const block = buffer.slice(0, index);
+      buffer = buffer.slice(index + 2);
+
+      let type = "message";
+      const data: string[] = [];
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event:")) type = line.slice(6).trim();
+        else if (line.startsWith("data:")) data.push(line.slice(5).replace(/^ /, ""));
+      }
+      if (data.length > 0) onEvent(type, data.join("\n"));
     }
   }
 }

@@ -101,6 +101,19 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(1 0 0 / 8%);
     --sidebar-ring: oklch(0.7 0.15 268);
+    /* Dashboard grafiklari — tekshirilgan palitra (status ranglaridan alohida).
+       Xarita: 5 bosqichli bitta rang (past davomat — och, yuqori — to‘q). */
+    --viz-series-1: #2a78d6;
+    --viz-series-2: #eb6834;
+    --viz-seq-1: #86b6ef;
+    --viz-seq-2: #5598e7;
+    --viz-seq-3: #2a78d6;
+    --viz-seq-4: #1c5cab;
+    --viz-seq-5: #0d366b;
+    --viz-nodata: #e1e0d9;
+    --viz-nodata-ink: #c3c2b7;
+    --viz-grid: #e1e0d9;
+    --viz-axis: #c3c2b7;
 }
 
 .dark {
@@ -146,6 +159,18 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(1 0 0 / 7%);
     --sidebar-ring: oklch(0.65 0.18 259);
+    /* Qorong‘i rejim: o‘sha shkala, past qiymat fonga yaqin (to‘q), yuqori — och. */
+    --viz-series-1: #3987e5;
+    --viz-series-2: #d95926;
+    --viz-seq-1: #1c5cab;
+    --viz-seq-2: #2a78d6;
+    --viz-seq-3: #5598e7;
+    --viz-seq-4: #86b6ef;
+    --viz-seq-5: #b7d3f6;
+    --viz-nodata: #383835;
+    --viz-nodata-ink: #52514e;
+    --viz-grid: #2c3446;
+    --viz-axis: #3a4458;
 }
 
 @layer base {
@@ -214,4 +239,14 @@
 @media print {
   aside, header, nav, footer { display: none !important; }
   .paper { background: white !important; }
+}
+
+/* Testni chop etish: varaq to‘liq kenglikda, o‘quvchi nusxasida javob kaliti yo‘q */
+@media print {
+  body.printing-assessment .paper { display: block !important; }
+  body.printing-assessment main { padding: 0 !important; }
+  body.printing-assessment article { box-shadow: none !important; }
+  body.hide-answer-key .answer-key { background: transparent !important; border-color: var(--border) !important; }
+  body.hide-answer-key svg.answer-key,
+  body.hide-answer-key p.answer-key { display: none !important; }
 }

@@ -16,7 +16,7 @@ import { useGradeOptions } from '@/lib/grades';
 import { schoolScopeOptions } from '@/lib/school-scope';
 import type { School } from '@/types/school';
 
-type FilterName = 'q' | 'academicYear' | 'grade' | 'regionId' | 'districtId' | 'schoolId';
+type FilterName = 'q' | 'academicYear' | 'grade' | 'shift' | 'regionId' | 'districtId' | 'schoolId';
 
 export function ClassesFilters({ academicYear }: { academicYear: string }) {
     const { t } = useTranslation();
@@ -34,6 +34,7 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
 
     const search = searchParams.get('q') ?? '';
     const grade = searchParams.get('grade') ?? '';
+    const shift = searchParams.get('shift') ?? '';
     const regionId = searchParams.get('regionId') ?? '';
     const districtId = searchParams.get('districtId') ?? '';
     const schoolId = searchParams.get('schoolId') ?? '';
@@ -68,7 +69,7 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
         setSearchParams(next);
     }
 
-    const hasFilters = Boolean(search || grade || regionId || districtId || schoolId);
+    const hasFilters = Boolean(search || grade || shift || regionId || districtId || schoolId);
 
     return (
         <section
@@ -76,7 +77,7 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
             className="space-y-4 rounded-2xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5"
         >
             {/* Asosiy qator: qidiruv, o‘quv yili, daraja va «Ko‘proq filtr» */}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
                 <FilterSearchForm
                     key={search}
                     className="sm:col-span-2 xl:col-span-1"
@@ -102,6 +103,20 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
                         onValueChange={(value) => changeFilter('grade', value)}
                         emptyOption={t('classes.allGrades')}
                         options={[...gradeOptions, { value: 'NONE', label: t('classes.gradeMissing') }]}
+                    />
+                </Field>
+
+                <Field htmlFor={`${ids}-shift`} label={t('classes.shift.column')}>
+                    <SelectField
+                        id={`${ids}-shift`}
+                        value={shift}
+                        onValueChange={(value) => changeFilter('shift', value)}
+                        emptyOption={t('classes.shift.all')}
+                        options={[
+                            { value: '1', label: t('classes.shift.nameN', { code: 1 }) },
+                            { value: '2', label: t('classes.shift.nameN', { code: 2 }) },
+                            { value: 'NONE', label: t('classes.shift.none') },
+                        ]}
                     />
                 </Field>
 
@@ -174,4 +189,4 @@ export function ClassesFilters({ academicYear }: { academicYear: string }) {
             )}
         </section>
     );
-}
+}

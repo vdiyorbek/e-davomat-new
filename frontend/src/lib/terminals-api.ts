@@ -14,6 +14,23 @@ export function createTerminal(input: CreateTerminalInput): Promise<Terminal> {
   return authorizedPost<Terminal>("/terminals", input);
 }
 
+export interface PushTokenResponse {
+  terminalId: number;
+  pushEnabled: boolean;
+  token: string;
+  path: string;
+  url: string | null;
+}
+
+/** Yangi push token (eskisi bekor bo‘ladi). Token faqat shu javobda ko‘rinadi. */
+export function generatePushToken(terminalId: number): Promise<PushTokenResponse> {
+  return authorizedPost<PushTokenResponse>(`/terminals/${terminalId}/push/token`, {});
+}
+
+export function disablePushToken(terminalId: number): Promise<{ pushEnabled: boolean }> {
+  return authorizedPost<{ pushEnabled: boolean }>(`/terminals/${terminalId}/push/disable`, {});
+}
+
 export function checkTerminal(
   terminalId: number,
 ): Promise<TerminalCheckResponse> {

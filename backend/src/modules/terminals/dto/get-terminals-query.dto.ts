@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 
 import { TerminalDirection } from '../enums/terminal-direction.enum';
+import { TerminalEventSource } from '../enums/terminal-event-source.enum';
 
 export class GetTerminalsQueryDto {
   @Type(() => Number)
@@ -56,6 +57,10 @@ export class GetTerminalsQueryDto {
   @IsOptional()
   @IsEnum(TerminalDirection)
   direction?: TerminalDirection;
+
+  @IsOptional()
+  @IsEnum(TerminalEventSource)
+  eventSource?: TerminalEventSource;
 
   @IsOptional()
   @Matches(/^20\d{2}-\d{2}-\d{2}$/)

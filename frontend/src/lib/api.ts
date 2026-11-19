@@ -3,10 +3,12 @@ import type { AxiosRequestConfig } from "axios";
 import type { LoginResponse, Profile } from "@/types/auth";
 import i18n from "@/i18n";
 
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ?? "http://localhost:3000/api"
+).replace(/\/+$/, "");
+
 const http = axios.create({
-  baseURL: (
-    import.meta.env.VITE_API_URL ?? "http://localhost:3000/api"
-  ).replace(/\/+$/, ""),
+  baseURL: API_BASE_URL,
   timeout: 15000,
   withCredentials: true,
 });

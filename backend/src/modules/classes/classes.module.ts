@@ -9,6 +9,10 @@ import { SchoolClassShift } from './school-class-shift.entity';
 
 import { ClassesController } from './classes.controller';
 import { ClassesService } from './classes.service';
+import { ClassShiftsController } from './class-shifts.controller';
+import { SchoolShiftsController } from './school-shifts.controller';
+import { SchoolShiftsService } from './school-shifts.service';
+import { ClassShiftsService } from './class-shifts.service';
 
 @Module({
   imports: [
@@ -19,7 +23,16 @@ import { ClassesService } from './classes.service';
       SchoolClassShift,
     ]),
   ],
-  controllers: [ClassesController],
-  providers: [ClassesService],
+  controllers: [
+    ClassesController,
+    SchoolShiftsController,
+    ClassShiftsController,
+  ],
+  providers: [
+    ClassesService,
+    SchoolShiftsService,
+    ClassShiftsService,
+  ],
+  exports: [ClassShiftsService],
 })
-export class ClassesModule { }
+export class ClassesModule {}

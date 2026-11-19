@@ -4,7 +4,6 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { raw } from "express";
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -13,13 +12,8 @@ async function bootstrap() {
   // olamiz, aks holda login limiti barcha foydalanuvchilar uchun umumiy bo'ladi.
   app.set('trust proxy', 1);
 
-  app.use(
-    '/api/hikvision-push',
-    raw({
-      type: () => true,
-      limit: '2mb',
-    }),
-  );
+  // Terminal HTTP Push bu yerda emas: u alohida portda ishlaydi
+  // (src/push-ingest/main.ts, PUSH_PORT).
 
   app.use(cookieParser());
   const config = app.get(ConfigService);

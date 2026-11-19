@@ -34,5 +34,30 @@
   "columns": {
     "class": "Class",
     "students": "Students"
+  },
+  "shift": {
+    "column": "Shift",
+    "nameN": "Shift {{code}}",
+    "none": "No shift",
+    "all": "All shifts",
+    "missing": "Without shift: {{count}}",
+    "settings": "Shift times",
+    "settingsDescription": "Set start and end times for shift 1 and shift 2.",
+    "start": "Starts",
+    "end": "Ends",
+    "defaultHint": "Not saved yet — showing default times.",
+    "timeOrder": "Shift {{code}}: start must be before end.",
+    "saved": "Shift times saved.",
+    "saveFailed": "Could not save shift times.",
+    "moveTo": "Move to shift {{code}}",
+    "assignFailed": "Could not assign the shift.",
+    "barLabel": "Shift of selected classes",
+    "clearSelection": "Clear selection",
+    "selectClass": "Select class {{name}}",
+    "selectPage": "Select all classes on this page",
+    "selected_one": "{{count}} class selected",
+    "selected_other": "{{count}} classes selected",
+    "assigned_one": "{{count}} class moved to shift {{code}} from today.",
+    "assigned_other": "{{count}} classes moved to shift {{code}} from today."
   }
 }

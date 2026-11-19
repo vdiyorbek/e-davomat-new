@@ -1,0 +1,118 @@
+{
+  "title": "CHSB / BSB tests",
+  "subtitle": "Build tests from textbook topics with AI, review them and run them online.",
+  "allAssignments": "All subjects and classes",
+  "emptyTitle": "No tests yet",
+  "empty": "Create your first CHSB or BSB test — AI drafts questions from the textbook topics.",
+  "open": "Open",
+  "back": "All tests",
+  "quarter": "Quarter",
+  "quarterN": "Quarter {{n}}",
+  "questionsN": "{{count}} questions",
+  "minutes": "{{count}} min",
+  "submittedN": "Submitted: {{count}}",
+  "average": "average {{value}}%",
+  "window": "Test window: {{from}} — {{to}}",
+  "reviewHint": "Review the AI-drafted questions: fix or delete anything wrong or unclear, then publish.",
+  "types": {
+    "CHSB": "CHSB — quarterly summative",
+    "BSB": "BSB — unit summative"
+  },
+  "typeHints": {
+    "CHSB": "Covers topics taught during the quarter.",
+    "BSB": "Covers the topics of one unit (chapter)."
+  },
+  "difficulty": {
+    "EASY": "Easy",
+    "MEDIUM": "Medium",
+    "HARD": "Hard"
+  },
+  "status": {
+    "GENERATING": "Generating",
+    "DRAFT": "Draft",
+    "PUBLISHED": "Published",
+    "CLOSED": "Closed",
+    "FAILED": "Failed"
+  },
+  "tabs": {
+    "results": "Results",
+    "questions": "Questions"
+  },
+  "create": {
+    "open": "New test",
+    "title": "New AI test",
+    "description": "Choose the subject and class, test type and topics. Questions are drafted from the textbook pages.",
+    "assignment": "Subject and class",
+    "type": "Test type",
+    "topics": "Topics (those taught this quarter are marked)",
+    "topicsBsb": "Unit topics (one chapter)",
+    "noTopics": "There are no approved textbook topics for this subject and grade. An administrator must upload the textbook and approve its topics.",
+    "noGrade": "The class grade is not set — contact the administrator.",
+    "selected": "Selected: {{count}}",
+    "selectTaught": "Taught in lessons ({{count}})",
+    "selectChapter": "Select chapter {{name}}",
+    "taughtOn": "Taught: {{date}}",
+    "questionCount": "Questions",
+    "difficulty": "Difficulty",
+    "duration": "Duration",
+    "aiNote": "Questions are drafted by AI from the textbook. Review every question before publishing — students cannot see the test until you publish it.",
+    "chooseTopics": "Choose at least one topic.",
+    "submit": "Build test",
+    "submitting": "Sending…",
+    "failed": "Could not create the test."
+  },
+  "generating": {
+    "title": "AI is building the test…",
+    "hint": "Usually takes 20–60 seconds. You can close this page; it keeps going.",
+    "failed": "Could not build the test."
+  },
+  "actions": {
+    "regenerate": "Regenerate",
+    "confirmRegenerate": "Current questions will be deleted and AI will draft new ones. Continue?",
+    "close": "Close test",
+    "confirmClose": "The test will close: students who haven't started can't take it, started attempts are graded with saved answers.",
+    "delete": "Delete",
+    "confirmDelete": "The test will be permanently deleted. Continue?"
+  },
+  "publish": {
+    "title": "Publish to students",
+    "hint": "Students start the test within this window; once started they get {{minutes}} minutes (never past the window end).",
+    "startsAt": "Starts",
+    "endsAt": "Ends",
+    "submit": "Publish",
+    "failed": "Could not publish."
+  },
+  "print": {
+    "forStudents": "Print (student copy)",
+    "withKey": "Print (with answer key)",
+    "studentLine": "Name: ______________________   Date: __________"
+  },
+  "question": {
+    "text": "Question text",
+    "option": "Option {{letter}}",
+    "correctOption": "{{letter}} — correct answer",
+    "markCorrect": "Mark the correct answer",
+    "explanation": "Explanation",
+    "correct": "Correct answer",
+    "edit": "Edit question {{n}}",
+    "delete": "Delete question {{n}}",
+    "confirmDelete": "Delete this question?",
+    "saveFailed": "Could not save the question."
+  },
+  "results": {
+    "submitted": "Submitted",
+    "average": "Average score",
+    "grades": "Grades",
+    "student": "Student",
+    "status": "Status",
+    "score": "Score",
+    "grade": "Grade",
+    "byQuestion": "By question",
+    "byQuestionHint": "A low percentage means the class hasn't mastered the topic — or the question is unclear.",
+    "statuses": {
+      "NOT_STARTED": "Not started",
+      "IN_PROGRESS": "In progress",
+      "SUBMITTED": "Submitted"
+    }
+  }
+}

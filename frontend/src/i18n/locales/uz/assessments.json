@@ -1,0 +1,118 @@
+{
+  "title": "CHSB / BSB testlar",
+  "subtitle": "Darslikdagi mavzular asosida AI yordamida test tuzing, tekshiring va onlayn o‘tkazing.",
+  "allAssignments": "Barcha fan va sinflar",
+  "emptyTitle": "Hali test yo‘q",
+  "empty": "Birinchi CHSB yoki BSB testini yarating — AI darslik mavzularidan savollar tuzib beradi.",
+  "open": "Ochish",
+  "back": "Testlar ro‘yxati",
+  "quarter": "Chorak",
+  "quarterN": "{{n}}-chorak",
+  "questionsN": "{{count}} ta savol",
+  "minutes": "{{count}} daqiqa",
+  "submittedN": "Topshirgan: {{count}}",
+  "average": "o‘rtacha {{value}}%",
+  "window": "Test oynasi: {{from}} — {{to}}",
+  "reviewHint": "AI tuzgan savollarni tekshiring: noto‘g‘ri yoki noaniq savolni tahrirlang yoki o‘chiring, so‘ng nashr qiling.",
+  "types": {
+    "CHSB": "CHSB — choraklik summativ",
+    "BSB": "BSB — bo‘lim bo‘yicha summativ"
+  },
+  "typeHints": {
+    "CHSB": "Chorak davomida o‘tilgan mavzular bo‘yicha.",
+    "BSB": "Bitta bo‘lim (bob) mavzulari bo‘yicha."
+  },
+  "difficulty": {
+    "EASY": "Oson",
+    "MEDIUM": "O‘rtacha",
+    "HARD": "Murakkab"
+  },
+  "status": {
+    "GENERATING": "Tayyorlanmoqda",
+    "DRAFT": "Qoralama",
+    "PUBLISHED": "Nashr qilingan",
+    "CLOSED": "Yopilgan",
+    "FAILED": "Xatolik"
+  },
+  "tabs": {
+    "results": "Natijalar",
+    "questions": "Savollar"
+  },
+  "create": {
+    "open": "Yangi test",
+    "title": "AI bilan yangi test",
+    "description": "Fan-sinf, test turi va mavzularni tanlang. Savollar darslik sahifalari asosida tuziladi.",
+    "assignment": "Fan va sinf",
+    "type": "Test turi",
+    "topics": "Mavzular (chorakda o‘tilganlar belgilangan)",
+    "topicsBsb": "Bo‘lim mavzulari (bitta bobdan)",
+    "noTopics": "Bu fan va sinf darajasi uchun tasdiqlangan darslik mavzulari yo‘q. Administrator darslikni yuklab, mavzularni tasdiqlashi kerak.",
+    "noGrade": "Sinf darajasi belgilanmagan — administratorga murojaat qiling.",
+    "selected": "Tanlangan: {{count}}",
+    "selectTaught": "Darsda o‘tilganlar ({{count}})",
+    "selectChapter": "{{name}} bobini tanlash",
+    "taughtOn": "O‘tilgan: {{date}}",
+    "questionCount": "Savollar soni",
+    "difficulty": "Qiyinlik",
+    "duration": "Davomiyligi",
+    "aiNote": "Savollar AI tomonidan darslik asosida tuziladi. Nashr qilishdan oldin har bir savolni tekshiring — siz tasdiqlamaguningizcha test o‘quvchilarga ko‘rinmaydi.",
+    "chooseTopics": "Kamida bitta mavzu tanlang.",
+    "submit": "Testni tuzish",
+    "submitting": "Yuborilmoqda…",
+    "failed": "Testni yaratib bo‘lmadi."
+  },
+  "generating": {
+    "title": "AI test tuzmoqda…",
+    "hint": "Odatda 20–60 soniya davom etadi. Sahifani yopsangiz ham jarayon davom etadi.",
+    "failed": "Testni tuzib bo‘lmadi."
+  },
+  "actions": {
+    "regenerate": "Qayta tuzish",
+    "confirmRegenerate": "Joriy savollar o‘chiriladi va AI yangi savollar tuzadi. Davom etasizmi?",
+    "close": "Testni yopish",
+    "confirmClose": "Test yopiladi: boshlamaganlar endi topshira olmaydi, davom etayotganlar saqlangan javoblari bilan baholanadi.",
+    "delete": "O‘chirish",
+    "confirmDelete": "Test butunlay o‘chiriladi. Davom etasizmi?"
+  },
+  "publish": {
+    "title": "O‘quvchilarga nashr qilish",
+    "hint": "O‘quvchi shu oraliqda testni boshlaydi; boshlagandan keyin {{minutes}} daqiqa vaqt beriladi (oyna tugashidan oshmaydi).",
+    "startsAt": "Boshlanishi",
+    "endsAt": "Tugashi",
+    "submit": "Nashr qilish",
+    "failed": "Nashr qilib bo‘lmadi."
+  },
+  "print": {
+    "forStudents": "Chop etish (o‘quvchilar uchun)",
+    "withKey": "Chop etish (javob kaliti bilan)",
+    "studentLine": "F.I.Sh.: ______________________   Sana: __________"
+  },
+  "question": {
+    "text": "Savol matni",
+    "option": "{{letter}} varianti",
+    "correctOption": "{{letter}} — to‘g‘ri javob",
+    "markCorrect": "To‘g‘ri javobni belgilang",
+    "explanation": "Izoh",
+    "correct": "To‘g‘ri javob",
+    "edit": "{{n}}-savolni tahrirlash",
+    "delete": "{{n}}-savolni o‘chirish",
+    "confirmDelete": "Savol o‘chirilsinmi?",
+    "saveFailed": "Savolni saqlab bo‘lmadi."
+  },
+  "results": {
+    "submitted": "Topshirganlar",
+    "average": "O‘rtacha natija",
+    "grades": "Baholar",
+    "student": "O‘quvchi",
+    "status": "Holati",
+    "score": "Natija",
+    "grade": "Baho",
+    "byQuestion": "Savollar kesimida",
+    "byQuestionHint": "Past foizli savollar — sinf o‘zlashtira olmagan mavzular yoki savolning o‘zi noaniq.",
+    "statuses": {
+      "NOT_STARTED": "Boshlamagan",
+      "IN_PROGRESS": "Ishlayapti",
+      "SUBMITTED": "Topshirgan"
+    }
+  }
+}

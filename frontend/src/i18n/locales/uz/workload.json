@@ -1,0 +1,18 @@
+{
+  "tabs": {
+    "classes": "Sinflar jadvali",
+    "teachers": "O‘qituvchilar yuklamasi"
+  },
+  "hint": "Har bir fan-sinf uchun o‘quv rejasidagi haftalik soatni kiriting — jadvalga qo‘yilgan darslar bilan solishtiriladi.",
+  "summary": "Jadvalda {{scheduled}} soat · rejada {{planned}} soat",
+  "byDay": "Hafta kunlari bo‘yicha darslar",
+  "complete": "To‘liq",
+  "missing": "{{count}} soat yetishmaydi",
+  "extra": "{{count}} soat ortiqcha",
+  "scheduledN": "jadvalda: {{count}}",
+  "plannedFor": "{{name}} — haftalik soat",
+  "hoursInvalid": "0–40 oralig‘ida",
+  "saveFailed": "Saqlab bo‘lmadi.",
+  "emptyTitle": "O‘qituvchi biriktirmalari yo‘q",
+  "empty": "Avval «Fan va sinf biriktirish» bo‘limida o‘qituvchilarga fan biriktiring."
+}

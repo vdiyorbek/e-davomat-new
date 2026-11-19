@@ -1,0 +1,75 @@
+{
+  "eyebrow": "O‘quvchi kabineti",
+  "home": {
+    "greeting": "Salom, {{name}}!",
+    "classN": "{{name}} sinf",
+    "openTests": "Ochiq testlar",
+    "noLessons": "Bugun jadvalda dars yo‘q.",
+    "topicPending": "Mavzu hali kiritilmagan",
+    "attendanceToday": "Bugungi davomat",
+    "arrivedAt": "Keldi: {{time}}",
+    "leftAt": "Ketdi: {{time}}",
+    "notArrived": "Bugun hali terminaldan o‘tmadingiz.",
+    "homework": "Uy vazifalari",
+    "noHomework": "So‘nggi kunlarda uy vazifasi berilmagan."
+  },
+  "attendance": {
+    "title": "Mening davomatim",
+    "description": "Oxirgi 30 kun: maktabga kelgan va ketgan vaqtlaringiz.",
+    "open": "Davomat tarixi",
+    "emptyTitle": "Ma’lumot yo‘q",
+    "empty": "Bu davrda davomat yozuvlari topilmadi.",
+    "statuses": {
+      "PRESENT": "Kelgan",
+      "EXCUSED": "Sababli",
+      "ABSENT": "Kelmagan"
+    }
+  },
+  "tests": {
+    "title": "Mening testlarim",
+    "description": "CHSB va BSB testlari, natijalar va baholar.",
+    "emptyTitle": "Test yo‘q",
+    "empty": "O‘qituvchingiz test e’lon qilganda shu yerda paydo bo‘ladi.",
+    "all": "Barcha testlar",
+    "start": "Testni boshlash",
+    "continue": "Davom ettirish",
+    "viewResult": "Natija",
+    "yourGrade": "Bahoyingiz:",
+    "until": "{{date}} {{time}} gacha",
+    "states": {
+      "UPCOMING": "Kutilmoqda",
+      "OPEN": "Ochiq",
+      "IN_PROGRESS": "Davom etmoqda",
+      "SUBMITTED": "Topshirilgan",
+      "MISSED": "O‘tkazib yuborilgan"
+    }
+  },
+  "test": {
+    "intro": "Testga {{minutes}} daqiqa vaqt beriladi. Boshlaganingizdan so‘ng taymer to‘xtamaydi.",
+    "rule1": "Har bir javob avtomatik saqlanadi — internet uzilsa ham yo‘qolmaydi.",
+    "rule2": "Vaqt tugaganda test o‘zi topshiriladi.",
+    "rule3": "Testni faqat bir marta topshirish mumkin.",
+    "answered": "Javob berildi: {{count}} / {{total}}",
+    "saving": "saqlanmoqda…",
+    "saved": "saqlandi",
+    "saveError": "saqlanmadi, qayta urinadi",
+    "submit": "Topshirish",
+    "confirmUnanswered": "{{count}} ta savolga javob berilmagan. Baribir topshirasizmi?",
+    "navigator": "Savollar",
+    "goTo": "{{n}}-savolga o‘tish",
+    "questionN": "{{n}}-savol",
+    "prev": "Oldingi",
+    "next": "Keyingi",
+    "submitFailed": "Topshirib bo‘lmadi, qayta urinib ko‘ring.",
+    "startFailed": "Testni boshlab bo‘lmadi.",
+    "notFound": "Test topilmadi.",
+    "upcoming": "Test {{date}} da ochiladi.",
+    "missed": "Bu test muddati o‘tgan.",
+    "submittedAt": "Topshirildi: {{date}}",
+    "correctOf": "{{total}} tadan {{correct}} ta to‘g‘ri",
+    "grade": "Baho: {{grade}}",
+    "answersLater": "To‘g‘ri javoblar test yopilgandan keyin ({{date}}) ko‘rsatiladi.",
+    "yourAnswer": "Sizning javobingiz",
+    "notAnswered": "Javob berilmagan"
+  }
+}

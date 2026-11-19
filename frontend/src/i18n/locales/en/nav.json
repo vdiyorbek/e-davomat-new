@@ -39,7 +39,15 @@
     "inspectorTalks": "Preventive talks",
     "syncHistory": "Sync history",
     "attendanceOverview": "By region",
-    "holidays": "Days off"
+    "holidays": "Days off",
+    "live": "Live",
+    "teacherTimetable": "My timetable",
+    "teacherAssessments": "CHSB / BSB tests",
+    "studentHome": "My day",
+    "studentSchedule": "My timetable",
+    "studentTests": "My tests",
+    "myAttendance": "My attendance",
+    "dashboard": "Dashboard"
   },
   "short": {
     "profile": "Profile",
@@ -48,6 +56,13 @@
     "schools": "Schools",
     "more": "Menu",
     "lessonSchedules": "Schedule",
-    "inspectorStudents": "Students"
+    "inspectorStudents": "Students",
+    "teacherTimetable": "Timetable",
+    "teacherAssessments": "Tests",
+    "studentHome": "Home",
+    "studentSchedule": "Timetable",
+    "studentTests": "Tests",
+    "myAttendance": "Attendance",
+    "dashboard": "Home"
   }
 }

@@ -14,6 +14,8 @@ interface Props {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     showTrigger?: boolean;
+    /** Standart — admin manzili; o‘qituvchi uchun `/teacher/me/textbooks/:id/pdf`. */
+    endpoint?: string;
 }
 
 /**
@@ -21,7 +23,7 @@ interface Props {
  * iframe ichida PDF ko‘rsatmaydi, shuning uchun «Yangi oynada ochish» va
  * «Yuklab olish» tugmalari ham bor.
  */
-export function TextbookPdfViewer({ textbookId, title, page, open: controlledOpen, onOpenChange, showTrigger = true }: Props) {
+export function TextbookPdfViewer({ textbookId, title, page, open: controlledOpen, onOpenChange, showTrigger = true, endpoint }: Props) {
     const { t } = useTranslation();
     const [internalOpen, setInternalOpen] = useState(false);
     const [url, setUrl] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function TextbookPdfViewer({ textbookId, title, page, open: controlledOpe
             setError('');
             setUrl(null);
             try {
-                const blob = await authorizedGet<Blob>(`/textbooks/${textbookId}/pdf`, controller.signal, 'blob', 120000);
+                const blob = await authorizedGet<Blob>(endpoint ?? `/textbooks/${textbookId}/pdf`, controller.signal, 'blob', 120000);
                 if (controller.signal.aborted) return;
                 if (blob.type && !blob.type.toLowerCase().includes('pdf')) throw new Error(t('textbooks.pdf.notPdf'));
                 objectUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));

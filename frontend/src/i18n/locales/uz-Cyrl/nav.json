@@ -39,7 +39,15 @@
     "personSyncMonitoring": "Терминаллар мониторинги",
     "syncHistory": "Синхронлаш тарихи",
     "attendanceOverview": "Ҳудудлар кесимида",
-    "holidays": "Дам олиш кунлари"
+    "holidays": "Дам олиш кунлари",
+    "live": "Жонли эфир",
+    "teacherTimetable": "Ҳафталик жадвалим",
+    "teacherAssessments": "ЧСБ / БСБ тестлар",
+    "studentHome": "Менинг куним",
+    "studentSchedule": "Дарс жадвалим",
+    "studentTests": "Тестларим",
+    "myAttendance": "Давоматим",
+    "dashboard": "Дашборд"
   },
   "short": {
     "profile": "Профил",
@@ -48,6 +56,13 @@
     "schools": "Мактаблар",
     "more": "Меню",
     "lessonSchedules": "Жадвал",
-    "inspectorStudents": "Маҳалла"
+    "inspectorStudents": "Маҳалла",
+    "teacherTimetable": "Жадвал",
+    "teacherAssessments": "Тестлар",
+    "studentHome": "Бош саҳифа",
+    "studentSchedule": "Жадвал",
+    "studentTests": "Тестлар",
+    "myAttendance": "Давомат",
+    "dashboard": "Бош саҳифа"
   }
 }

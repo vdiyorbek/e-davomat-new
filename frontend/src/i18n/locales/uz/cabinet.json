@@ -1,0 +1,26 @@
+{
+  "today": {
+    "title": "Bugungi darslar",
+    "emptyTitle": "Bugun dars yo‘q",
+    "empty": "Jadvalda bugun uchun dars topilmadi.",
+    "now": "Hozir",
+    "next": "Keyingi",
+    "currentNoTopic": "Hozir {{name}} darsi ketyapti — mavzuni tanlang."
+  },
+  "lesson": {
+    "chooseTopic": "Mavzuni tanlash",
+    "edit": "Tahrirlash",
+    "start": "Darsni jurnalga ochish",
+    "noSession": "Bu dars hali jurnalga ochilmagan. Ochganingizdan so‘ng darslikdan mavzu tanlaysiz."
+  },
+  "timetable": {
+    "title": "Haftalik dars jadvali",
+    "teacherDescription": "Barcha sinflaringizdagi darslar. Darsni bosib mavzu va uy vazifasini kiriting.",
+    "studentDescription": "Sinfingiz darslari, o‘tilgan mavzular va uy vazifalari.",
+    "open": "Haftalik jadval",
+    "prevWeek": "Oldingi hafta",
+    "nextWeek": "Keyingi hafta",
+    "thisWeek": "Shu hafta",
+    "noLessons": "Dars yo‘q"
+  }
+}

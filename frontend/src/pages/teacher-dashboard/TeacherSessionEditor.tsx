@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { TextbookPdfViewer } from '@/pages/textbooks/TextbookPdfViewer';
 import { authorizedPatch } from '@/lib/auth-session';
 
 type SessionStatus =
@@ -35,6 +36,8 @@ interface Topic {
     id: number;
     title: string;
     orderIndex: number;
+    chapterTitle?: string | null;
+    pageStart?: number | null;
     textbook: {
         id: number;
         title: string;
@@ -154,6 +157,25 @@ export function TeacherSessionEditor({
                     }))}
                 />
             </Field>
+
+            {(() => {
+                const topic = topics.find((item) => String(item.id) === topicId);
+                return topic ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/50 px-3 py-2 text-sm">
+                        <span className="min-w-0 text-muted-foreground">
+                            {topic.textbook.title}
+                            {topic.pageStart ? ` · ${t('textbooks.pdf.pageN', { page: topic.pageStart })}` : ''}
+                        </span>
+                        <TextbookPdfViewer
+                            key={topic.id}
+                            textbookId={topic.textbook.id}
+                            title={topic.textbook.title}
+                            page={topic.pageStart ?? null}
+                            endpoint={`/teacher/me/textbooks/${topic.textbook.id}/pdf`}
+                        />
+                    </div>
+                ) : null;
+            })()}
 
             {topicsQuery.error && (
                 <ErrorState

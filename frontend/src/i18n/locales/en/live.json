@@ -1,0 +1,44 @@
+{
+  "title": "Live",
+  "subtitle": "Terminal camera and students and teachers passing attendance in real time.",
+  "chooseSchool": "Choose a school to watch.",
+  "chooseSchoolTitle": "No school selected",
+  "cameras": "Terminal cameras",
+  "chooseCamera": "Choose camera",
+  "firstCameras": "First two cameras",
+  "noTerminalsTitle": "No terminals",
+  "noTerminals": "This school has no active terminals.",
+  "latest": "Latest pass",
+  "feed": "Pass feed",
+  "emptyTitle": "No passes yet",
+  "empty": "Nobody has passed a terminal today yet. New passes appear here instantly.",
+  "in": "In",
+  "out": "Out",
+  "directionIn": "Entry terminal",
+  "directionOut": "Exit terminal",
+  "student": "Student",
+  "teacher": "Teacher",
+  "notMember": "Not a school member",
+  "unknownPerson": "Unknown person",
+  "cameraOf": "{{name}} camera",
+  "cameraFailed": "Could not get a camera frame. Check the terminal network.",
+  "connecting": "Connecting to camera…",
+  "paused": "Paused",
+  "pause": "Pause",
+  "resume": "Resume",
+  "status": {
+    "connecting": "Connecting…",
+    "live": "Live",
+    "reconnecting": "Reconnecting…"
+  },
+  "kpi": {
+    "passes": "Passes in feed",
+    "students": "Students in feed",
+    "teachers": "Teachers in feed"
+  },
+  "lag": {
+    "agoHm": "{{h}} h {{m}} min",
+    "agoM": "{{m}} min",
+    "text": "The terminal is still sending old passes (its stored backlog). Last received pass: {{time}} ({{ago}} ago). The server pulls today’s passes from the terminal itself (every 2 minutes), so the counters keep growing; the live feed only shows current passes."
+  }
+}

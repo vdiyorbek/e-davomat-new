@@ -1,0 +1,44 @@
+{
+  "title": "Jonli efir",
+  "subtitle": "Terminal kamerasi va davomatdan o‘tayotgan o‘quvchi va o‘qituvchilar real vaqtda.",
+  "chooseSchool": "Kuzatish uchun maktabni tanlang.",
+  "chooseSchoolTitle": "Maktab tanlanmagan",
+  "cameras": "Terminal kameralari",
+  "chooseCamera": "Kamerani tanlash",
+  "firstCameras": "Birinchi ikkita kamera",
+  "noTerminalsTitle": "Terminal yo‘q",
+  "noTerminals": "Ushbu maktabda faol terminal topilmadi.",
+  "latest": "Oxirgi o‘tgan",
+  "feed": "O‘tishlar oqimi",
+  "emptyTitle": "Hali o‘tish yo‘q",
+  "empty": "Bugun hali hech kim terminaldan o‘tmadi. Yangi o‘tishlar shu yerda darhol paydo bo‘ladi.",
+  "in": "Kirdi",
+  "out": "Chiqdi",
+  "directionIn": "Kirish terminali",
+  "directionOut": "Chiqish terminali",
+  "student": "O‘quvchi",
+  "teacher": "O‘qituvchi",
+  "notMember": "Maktab a’zosi emas",
+  "unknownPerson": "Noma’lum shaxs",
+  "cameraOf": "{{name}} kamerasi",
+  "cameraFailed": "Kamera kadrini olib bo‘lmadi. Terminal tarmog‘ini tekshiring.",
+  "connecting": "Kameraga ulanmoqda…",
+  "paused": "Pauza",
+  "pause": "Pauza",
+  "resume": "Davom ettirish",
+  "status": {
+    "connecting": "Ulanmoqda…",
+    "live": "Real vaqtda",
+    "reconnecting": "Qayta ulanmoqda…"
+  },
+  "kpi": {
+    "passes": "Ro‘yxatdagi o‘tishlar",
+    "students": "Lentadagi o‘quvchilar",
+    "teachers": "Lentadagi o‘qituvchilar"
+  },
+  "lag": {
+    "agoHm": "{{h}} soat {{m}} daqiqa",
+    "agoM": "{{m}} daqiqa",
+    "text": "Terminal hozir eski o‘tishlarni yubormoqda (xotiradagi navbat). Oxirgi qabul qilingan o‘tish: {{time}} ({{ago}} oldin). Server bugungi o‘tishlarni terminaldan o‘zi olib turadi (har 2 daqiqada), shuning uchun hisoblagichlar o‘sishda davom etadi; efirda esa faqat hozirgi o‘tishlar ko‘rinadi."
+  }
+}
