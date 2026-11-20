@@ -39,6 +39,15 @@ export const SETTINGS: SettingDefinition[] = [
     getDefault: () => 1,
   },
   {
+    key: 'photosWorkers',
+    group: 'photos',
+    type: 'int',
+    min: 1,
+    max: 12,
+    unit: 'count',
+    getDefault: () => 2,
+  },
+  {
     key: 'photosBatchSize',
     group: 'photos',
     type: 'int',

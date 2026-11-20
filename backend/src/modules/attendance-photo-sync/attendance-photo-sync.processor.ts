@@ -32,6 +32,12 @@ export class AttendancePhotoSyncProcessor extends WorkerHost {
 
     const terminalId = job.data.terminalId;
 
+    // Bir vaqtda nechta terminal ishlashi — tizim sozlamasidan (BullMQ ishchisi jonli o‘zgaradi).
+    const workers = this.settings.getInt('photosWorkers');
+    if (this.worker.concurrency !== workers) {
+      this.worker.concurrency = workers;
+    }
+
     if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
       throw new Error('Terminal ID noto‘g‘ri');
     }
@@ -80,9 +86,9 @@ export class AttendancePhotoSyncProcessor extends WorkerHost {
         break;
       }
 
-      // Terminal yoki rasm olishda muammo bo‘lsa,
-      // qolganlarini keyingi navbatga qoldiramiz.
-      if (result.failed > 0) {
+      // Terminal javob bermayotgan bo‘lsa (paketdagi hammasi xato) to‘xtaymiz.
+      // Alohida rasm topilmasa (eski event), qolganlarini davom ettiramiz.
+      if (result.failed > 0 && result.failed >= result.processed) {
         break;
       }
     }

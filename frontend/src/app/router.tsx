@@ -38,7 +38,6 @@ const AttendanceExcusesPage = lazy(() => import('@/pages/attendance/AttendanceEx
 const StudentAttendancePage = lazy(() => import('@/pages/attendance/StudentAttendancePage').then((m) => ({ default: m.StudentAttendancePage })));
 const TeacherAttendancePage = lazy(() => import('@/pages/attendance/TeacherAttendancePage').then((m) => ({ default: m.TeacherAttendancePage })));
 const AttendanceCalendarPage = lazy(() => import('@/pages/attendance/AttendanceCalendarPage').then((m) => ({ default: m.AttendanceCalendarPage })));
-const HolidaysPage = lazy(() => import('@/pages/attendance/HolidaysPage').then((m) => ({ default: m.HolidaysPage })));
 const TeacherAssignmentsPage = lazy(() => import('@/pages/teacher-assignments/TeacherAssignmentsPage').then((m) => ({ default: m.TeacherAssignmentsPage })));
 const TextbooksPage = lazy(() => import('@/pages/textbooks/TextbooksPage').then((m) => ({ default: m.TextbooksPage })));
 const LessonSchedulesPage = lazy(() => import('@/pages/lesson-schedules/LessonSchedulesPage').then((m) => ({ default: m.LessonSchedulesPage })));
@@ -177,7 +176,7 @@ export const router = createBrowserRouter([
                             },
                             {
                                 path: '/attendance/holidays',
-                                element: <HolidaysPage />,
+                                element: <Navigate to="/attendance/calendar" replace />,
                             },
                             { path: '/classes', element: <ClassesPage /> },
                             { path: '/live', element: <LivePage /> },

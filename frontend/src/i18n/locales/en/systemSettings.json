@@ -47,6 +47,10 @@
       "label": "Parallel downloads",
       "hint": "How many photos are downloaded from one terminal at the same time. Terminals are small devices; more than 3 is not recommended."
     },
+    "photosWorkers": {
+      "label": "Terminals processed at once",
+      "hint": "How many terminals the photo download queue works on at the same time. Raise it when you have many terminals (usually 4–8) and watch the server network and MySQL load."
+    },
     "photosBatchSize": {
       "label": "Batch size",
       "hint": "How many photos are taken from the queue per request."

@@ -47,6 +47,10 @@
       "label": "Parallel yuklash soni",
       "hint": "Bir terminaldan bir vaqtda nechta rasm yuklanadi. Terminal kichik qurilma, 3 dan oshirmaslik tavsiya etiladi."
     },
+    "photosWorkers": {
+      "label": "Bir vaqtda ishlaydigan terminallar",
+      "hint": "Rasm yuklash navbatida bir vaqtning o‘zida nechta terminal ishlanadi. Terminallar ko‘p bo‘lsa oshiring (odatda 4–8); serverning tarmog‘i va MySQL yuklanishini kuzating."
+    },
     "photosBatchSize": {
       "label": "Paket hajmi",
       "hint": "Bir so‘rovda navbatdan nechta rasm olinadi."

@@ -100,25 +100,27 @@ export function UserAccessForm({ user, onUpdated, onCancel }: Props) {
 
     const allowedRoles: UserRole[] =
         currentRole === 'SUPER_ADMIN'
-            ? ['USER', 'SCHOOL_ADMIN', 'DISTRICT_ADMIN', 'REGION_ADMIN', 'MAHALLA_INSPECTOR']
+            ? ['USER', 'SCHOOL_ADMIN', 'DISTRICT_ADMIN', 'REGION_ADMIN']
             : currentRole === 'REGION_ADMIN'
-                ? ['USER', 'SCHOOL_ADMIN', 'DISTRICT_ADMIN', 'MAHALLA_INSPECTOR']
+                ? ['USER', 'SCHOOL_ADMIN', 'DISTRICT_ADMIN']
                 : currentRole === 'DISTRICT_ADMIN'
-                    ? ['USER', 'SCHOOL_ADMIN', 'MAHALLA_INSPECTOR']
+                    ? ['USER', 'SCHOOL_ADMIN']
                     : [];
 
     const editable =
         user.isActive &&
+        // Uchastkavoylar faqat «Uchastkavoylar» sahifasida boshqariladi.
+        user.role !== 'MAHALLA_INSPECTOR' &&
         user.id !== currentId &&
         allowedRoles.length > 0 &&
         (currentRole === 'SUPER_ADMIN' ||
             (currentRole === 'REGION_ADMIN' && !['REGION_ADMIN', 'SUPER_ADMIN'].includes(user.role)) ||
-            (currentRole === 'DISTRICT_ADMIN' && ['USER', 'SCHOOL_ADMIN', 'MAHALLA_INSPECTOR'].includes(user.role)));
+            (currentRole === 'DISTRICT_ADMIN' && ['USER', 'SCHOOL_ADMIN'].includes(user.role)));
 
     const scopeType: ScopeKind =
         role === 'REGION_ADMIN'
             ? 'REGION'
-            : role === 'DISTRICT_ADMIN' || role === 'MAHALLA_INSPECTOR'
+            : role === 'DISTRICT_ADMIN'
                 ? 'DISTRICT'
                 : role === 'SCHOOL_ADMIN'
                     ? 'SCHOOL'

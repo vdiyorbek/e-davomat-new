@@ -479,7 +479,10 @@ export class AttendanceEventPhotosService {
             retry6h,
           },
         )
-        .orderBy('event.id', 'ASC')
+        // Eng yangi eventlardan boshlanadi: eski (rasmi terminaldan o‘chgan) eventlar
+        // bugungi rasmlarning yo‘lini to‘smasin.
+        .orderBy('event.eventAt', 'DESC')
+        .addOrderBy('event.id', 'DESC')
         .take(dto.limit)
         .getMany();
 

@@ -76,7 +76,7 @@ function RangeBadge({ rule }: { rule: HolidayRule }) {
     );
 }
 
-export function HolidaysPage() {
+export function HolidaysPage({ embedded = false }: { embedded?: boolean } = {}) {
     const { t } = useTranslation();
     const ids = useId();
     const { confirm, dialog } = useConfirm();
@@ -227,11 +227,10 @@ export function HolidaysPage() {
     return (
         <div className="space-y-6">
             {dialog}
-            <PageHeader
-                eyebrow={t('nav.groups.attendance')}
-                title={t('holidays.title')}
-                description={t('holidays.subtitle')}
-                actions={
+            {embedded ? (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="max-w-2xl text-sm text-muted-foreground">{t('holidays.subtitle')}</p>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <>
                         <CreateHolidayDialog
                             onCreated={() => {
@@ -244,8 +243,29 @@ export function HolidaysPage() {
                             <RotateCw aria-hidden="true" />
                         </Button>
                     </>
-                }
-            />
+                    </div>
+                </div>
+            ) : (
+                <PageHeader
+                    eyebrow={t('nav.groups.attendance')}
+                    title={t('holidays.title')}
+                    description={t('holidays.subtitle')}
+                    actions={
+                        <>
+                            <CreateHolidayDialog
+                                onCreated={() => {
+                                    setActionError('');
+                                    setNotice(t('holidays.created'));
+                                    retry();
+                                }}
+                            />
+                            <Button type="button" variant="outline" size="icon" className="bg-card" aria-label={t('common.refresh')} onClick={retry}>
+                                <RotateCw aria-hidden="true" />
+                            </Button>
+                        </>
+                    }
+                />
+            )}
 
             <section aria-label={t('common.filters')} className="space-y-4 rounded-2xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">

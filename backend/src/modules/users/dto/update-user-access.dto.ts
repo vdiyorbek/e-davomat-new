@@ -8,7 +8,6 @@ export class UpdateUserAccessDto {
       UserRole.REGION_ADMIN,
       UserRole.DISTRICT_ADMIN,
       UserRole.SCHOOL_ADMIN,
-      UserRole.MAHALLA_INSPECTOR,
     ],
     {
       message: 'Ruxsat etilgan boshqaruv rolini tanlang',

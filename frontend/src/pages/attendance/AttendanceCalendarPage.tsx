@@ -1,9 +1,9 @@
 import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CalendarDays, CalendarRange, PartyPopper, RotateCw } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
-import { CalendarSpecialDays } from '@/components/attendance/CalendarSpecialDays';
 import { Field } from '@/components/common/Field';
 import { PageHeader } from '@/components/common/PageHeader';
 import { SelectField } from '@/components/common/SelectField';
@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { authorizedPost } from '@/lib/auth-session';
 import { academicYearFor, academicYearOptions, formatDate, isValidAcademicYear, todayInTashkent, weekdayName } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import { HolidaysPage } from '@/pages/attendance/HolidaysPage';
 import type { School } from '@/types/school';
 
 type MembershipType = 'STUDENT' | 'TEACHER';
@@ -260,6 +261,8 @@ export function AttendanceCalendarPage() {
     const { t } = useTranslation();
     const id = useId();
     const { session } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tab = searchParams.get('tab') === 'weekly' ? 'weekly' : 'holidays';
     const schoolsQuery = useApiQuery<School[]>('/schools');
     const [selectedSchoolId, setSelectedSchoolId] = useState('');
     const [academicYear, setAcademicYear] = useState(() => academicYearFor(todayInTashkent()));
@@ -268,56 +271,63 @@ export function AttendanceCalendarPage() {
     const validYear = isValidAcademicYear(academicYear);
     const selectedSchool = (schoolsQuery.data ?? []).find((school) => String(school.id) === schoolId);
 
+    function changeTab(value: string) {
+        // Tab almashganda faqat `tab` qoladi: ro‘yxat filtrlari boshqa yorliqqa o‘tib ketmasin.
+        setSearchParams(value === 'weekly' ? { tab: 'weekly' } : {});
+    }
+
     return (
         <div className="space-y-6">
             <PageHeader eyebrow={t('nav.groups.attendance')} title={t('calendar.title')} description={t('calendar.subtitle')} />
 
-            <div className="grid gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                <Field htmlFor={`${id}-school`} label={t('common.school')} error={schoolsQuery.error || undefined}>
-                    <SelectField
-                        id={`${id}-school`}
-                        value={schoolId}
-                        onValueChange={setSelectedSchoolId}
-                        disabled={schoolsQuery.loading}
-                        placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
-                        options={(schoolsQuery.data ?? []).map((school) => ({
-                            value: String(school.id),
-                            label: `${school.name} — ${school.district.name}`,
-                        }))}
-                    />
-                </Field>
-                <Field htmlFor={`${id}-year`} label={t('members.academicYear')}>
-                    <SelectField
-                        id={`${id}-year`}
-                        value={academicYear}
-                        onValueChange={setAcademicYear}
-                        options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
-                    />
-                </Field>
-            </div>
+            <Tabs value={tab} onValueChange={changeTab}>
+                <TabsList className="w-full sm:w-fit">
+                    <TabsTrigger value="holidays">
+                        <PartyPopper aria-hidden="true" />
+                        {t('calendar.tabs.special')}
+                    </TabsTrigger>
+                    <TabsTrigger value="weekly">
+                        <CalendarRange aria-hidden="true" />
+                        {t('calendar.tabs.weekly')}
+                    </TabsTrigger>
+                </TabsList>
 
-            {selectedSchool && validYear ? (
-                <Tabs defaultValue="weekly">
-                    <TabsList className="w-full sm:w-fit">
-                        <TabsTrigger value="weekly">
-                            <CalendarRange aria-hidden="true" />
-                            {t('calendar.tabs.weekly')}
-                        </TabsTrigger>
-                        <TabsTrigger value="special">
-                            <PartyPopper aria-hidden="true" />
-                            {t('calendar.tabs.special')}
-                        </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="weekly" className="pt-2">
+                <TabsContent value="holidays" className="pt-4">
+                    <HolidaysPage embedded />
+                </TabsContent>
+
+                <TabsContent value="weekly" className="space-y-6 pt-4">
+                    <div className="grid gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                        <Field htmlFor={`${id}-school`} label={t('common.school')} error={schoolsQuery.error || undefined}>
+                            <SelectField
+                                id={`${id}-school`}
+                                value={schoolId}
+                                onValueChange={setSelectedSchoolId}
+                                disabled={schoolsQuery.loading}
+                                placeholder={schoolsQuery.loading ? t('common.loading') : t('members.chooseSchool')}
+                                options={(schoolsQuery.data ?? []).map((school) => ({
+                                    value: String(school.id),
+                                    label: `${school.name} — ${school.district.name}`,
+                                }))}
+                            />
+                        </Field>
+                        <Field htmlFor={`${id}-year`} label={t('members.academicYear')}>
+                            <SelectField
+                                id={`${id}-year`}
+                                value={academicYear}
+                                onValueChange={setAcademicYear}
+                                options={academicYearOptions(academicYear).map((year) => ({ value: year, label: year }))}
+                            />
+                        </Field>
+                    </div>
+
+                    {selectedSchool && validYear ? (
                         <WeeklySchedules key={`${selectedSchool.id}-${academicYear}`} schoolId={selectedSchool.id} academicYear={academicYear} />
-                    </TabsContent>
-                    <TabsContent value="special" className="pt-2">
-                        <CalendarSpecialDays key={`${selectedSchool.id}-${academicYear}`} school={selectedSchool} academicYear={academicYear} />
-                    </TabsContent>
-                </Tabs>
-            ) : (
-                <EmptyState icon={CalendarDays} title={t('calendar.chooseTitle')} description={t('calendar.choose')} />
-            )}
+                    ) : (
+                        <EmptyState icon={CalendarDays} title={t('calendar.chooseTitle')} description={t('calendar.choose')} />
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
