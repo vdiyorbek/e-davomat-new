@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
+import { request } from 'node:http';
 
 import { createPushServer } from './server';
 
@@ -24,13 +25,15 @@ const faceEvent = (serialNo: number) =>
 
 describe('Push ingest server', () => {
   let server: Server;
+  let stats: { aborted: number };
+  let abortedByTerminal: Map<number, number>;
   let url: string;
   const xadd = jest.fn().mockResolvedValue('1-0');
   const xlen = jest.fn().mockResolvedValue(0);
   const markReceived = jest.fn();
 
   beforeAll(async () => {
-    ({ server } = createPushServer({
+    ({ server, stats, abortedByTerminal } = createPushServer({
       config: {
         bodyLimit: 64 * 1024,
         maxInFlight: 100,
@@ -118,5 +121,30 @@ describe('Push ingest server', () => {
     xadd.mockRejectedValueOnce(new Error('down'));
     const response = await post(`/api/hikvision-push/${TOKEN}`, faceEvent(3));
     expect(response.status).toBe(503);
+  });
+  it('terminal tanani yubormay uzsa — xato emas, terminal bo‘yicha sanaladi', async () => {
+    const before = stats.aborted;
+    await new Promise<void>((resolve) => {
+      const req = request(
+        `${url}/api/hikvision-push/${TOKEN}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': 500,
+          },
+        },
+        () => undefined,
+      );
+      req.on('error', () => resolve());
+      // Tananing faqat bir qismini yuboramiz va ulanishni uzamiz.
+      req.write('0123456789', () => setTimeout(() => req.destroy(), 50));
+    });
+    for (let i = 0; i < 40 && stats.aborted === before; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    expect(stats.aborted).toBe(before + 1);
+    expect(abortedByTerminal.get(7)).toBeGreaterThanOrEqual(1);
+    expect(xadd).not.toHaveBeenCalled();
   });
 });

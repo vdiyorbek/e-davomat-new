@@ -208,6 +208,11 @@
       "duplicates": "Duplicates",
       "photos": "Photo: yes / no",
       "lag": "Max lag"
+    },
+    "aborted": {
+      "title": "Aborted requests (today)",
+      "hint": "The terminal closed the connection before sending the whole request body: {{total}} in total across {{terminals}} terminals. Events are not lost (the terminal resends), but many aborts point to a network (VPN/Wi-Fi) problem.",
+      "count": "{{count}} aborts"
     }
   }
 }

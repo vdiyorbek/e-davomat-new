@@ -49,6 +49,19 @@ export interface IngestStats {
   withPicture: number;
   withPictureUrl: number;
   withoutPicture: number;
+  /** Terminal tanani to‘liq yubormay ulanishni uzgan so‘rovlar (aborted/ECONNRESET). */
+  aborted: number;
+}
+
+/** Uzilgan so‘rovmi: klient tanani yuborib bo‘lmasdan ulanishni yopgan. */
+export function isClientAbort(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const { message, code } = error as { message?: unknown; code?: unknown };
+  return (
+    message === 'aborted' ||
+    code === 'ECONNRESET' ||
+    code === 'ERR_STREAM_PREMATURE_CLOSE'
+  );
 }
 
 function reply(res: ServerResponse, status: number, body: string): void {
@@ -84,6 +97,10 @@ function readBody(req: IncomingMessage, limit: number): Promise<Buffer | null> {
     });
     req.on('end', () => resolve(Buffer.concat(chunks, size)));
     req.on('error', reject);
+    // Ba’zi Node versiyalarida uzilganda 'error' chiqmaydi, faqat 'close'.
+    req.on('close', () => {
+      if (!req.complete) reject(new Error('aborted'));
+    });
   });
 }
 
@@ -97,6 +114,8 @@ function readBody(req: IncomingMessage, limit: number): Promise<Buffer | null> {
 export function createPushServer(deps: IngestDeps): {
   server: Server;
   stats: IngestStats;
+  /** Terminal bo‘yicha uzilishlar (oxirgi tozalashdan beri); tashqi oqim uni Redis'ga yozadi. */
+  abortedByTerminal: Map<number, number>;
 } {
   const { config, registry, redis, photos, log } = deps;
   const runtime: PushRuntime = deps.runtime ?? {
@@ -112,7 +131,9 @@ export function createPushServer(deps: IngestDeps): {
     withPicture: 0,
     withPictureUrl: 0,
     withoutPicture: 0,
+    aborted: 0,
   };
+  const abortedByTerminal = new Map<number, number>();
   // Rasm yubormayotgan terminal haqida 10 daqiqada bir marta ogohlantiriladi.
   const noPictureWarnedAt = new Map<number, number>();
 
@@ -191,7 +212,21 @@ export function createPushServer(deps: IngestDeps): {
       return;
     }
 
-    const body = await readBody(req, config.bodyLimit);
+    let body: Buffer | null;
+    try {
+      body = await readBody(req, config.bodyLimit);
+    } catch (error: unknown) {
+      if (isClientAbort(error)) {
+        // Terminal ulanishni uzdi: javob berishning ma‘nosi yo‘q, qayta yuboradi.
+        stats.aborted++;
+        abortedByTerminal.set(
+          terminal.id,
+          (abortedByTerminal.get(terminal.id) ?? 0) + 1,
+        );
+        return;
+      }
+      throw error;
+    }
     if (!body || body.length === 0) {
       stats.rejected++;
       reply(res, 413, '{"message":"HTTP body bo‘sh yoki hajmi oshgan"}');
@@ -303,5 +338,5 @@ export function createPushServer(deps: IngestDeps): {
   server.keepAliveTimeout = 65_000;
   server.maxHeadersCount = 50;
 
-  return { server, stats };
+  return { server, stats, abortedByTerminal };
 }

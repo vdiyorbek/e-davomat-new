@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, AlertTriangle, DownloadCloud, History, PauseCircle, RadioTower, RefreshCw, X } from 'lucide-react';
+import { Activity, AlertTriangle, Unplug, DownloadCloud, History, PauseCircle, RadioTower, RefreshCw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
@@ -41,6 +41,7 @@ interface ActivityResponse {
 }
 
 interface Summary {
+    aborted: { total: number; terminals: number; top: { id: number; name: string; schoolName: string | null; count: number }[] };
     terminals: { total: number; realtime: number; lagging: number; idle: number; never: number };
     attention: {
         id: number;
@@ -157,6 +158,36 @@ export function PushActivitySection() {
                                     <span>{t('syncHistory.push.attention.lastRequest', { value: formatDateTime(terminal.lastReceivedAt) })}</span>
                                     <StatusBadge tone={STATUS_TONE[terminal.status]}>{t(`syncHistory.push.status.${terminal.status}`)}</StatusBadge>
                                 </span>
+                            </li>
+                        ))}
+                    </ul>
+                </Card>
+            )}
+
+            {summary.data && summary.data.aborted.total > 0 && (
+                <Card className="gap-0 py-0">
+                    <div className="border-b p-4">
+                        <h2 className="flex items-center gap-2 font-heading text-base font-bold">
+                            <Unplug aria-hidden="true" className="size-4 text-warning" />
+                            {t('syncHistory.push.aborted.title')}
+                        </h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {t('syncHistory.push.aborted.hint', {
+                                total: formatNumber(summary.data.aborted.total),
+                                terminals: formatNumber(summary.data.aborted.terminals),
+                            })}
+                        </p>
+                    </div>
+                    <ul className="list-none divide-y">
+                        {summary.data.aborted.top.map((terminal) => (
+                            <li key={terminal.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                                <span className="min-w-0">
+                                    <span className="font-semibold">{terminal.name}</span>
+                                    <span className="text-xs text-muted-foreground"> · #{terminal.id}{terminal.schoolName ? ` · ${terminal.schoolName}` : ''}</span>
+                                </span>
+                                <StatusBadge tone={terminal.count >= 50 ? 'danger' : 'warning'}>
+                                    {t('syncHistory.push.aborted.count', { count: terminal.count })}
+                                </StatusBadge>
                             </li>
                         ))}
                     </ul>

@@ -207,6 +207,11 @@
       "duplicates": "Takror",
       "photos": "Rasm: bor / yo‘q",
       "lag": "Eng katta kechikish"
+    },
+    "aborted": {
+      "title": "Uzilgan so‘rovlar (bugun)",
+      "hint": "Terminal so‘rov tanasini to‘liq yubormay ulanishni uzgan: jami {{total}} ta, {{terminals}} ta terminalda. Eventlar yo‘qolmaydi (terminal qayta yuboradi), lekin ko‘p uzilish tarmoq (VPN/Wi-Fi) muammosini bildiradi.",
+      "count": "{{count}} ta uzilish"
     }
   }
 }

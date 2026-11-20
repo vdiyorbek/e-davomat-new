@@ -10,7 +10,11 @@ import cluster from 'node:cluster';
 import { Redis } from 'ioredis';
 import { createPool } from 'mysql2/promise';
 
-import { PUSH_TERMINALS_CHANGED_CHANNEL } from '../modules/hikvision-push/hikvision-push.types';
+import {
+  PUSH_ABORTED_KEY_PREFIX,
+  PUSH_TERMINALS_CHANGED_CHANNEL,
+  tashkentDate,
+} from '../modules/hikvision-push/hikvision-push.types';
 import { loadPushConfig } from './config';
 import { PhotoStore } from './photo-store';
 import { defaultRuntime, refreshRuntime } from './runtime-settings';
@@ -112,9 +116,30 @@ async function startWorker(): Promise<void> {
       .reload()
       .catch(() => log('warn', 'Terminallar ro‘yxatini yangilab bo‘lmadi'));
   }, config.terminalsReloadMs);
-  const flushTimer = setInterval(() => void registry.flushReceived(), 30_000);
+  const flushTimer = setInterval(() => {
+    void registry.flushReceived();
+    void flushAborted();
+  }, 30_000);
 
-  const { server, stats } = createPushServer({
+  /** Terminal bo‘yicha uzilishlar: kunlik Redis hash (Toshkent sanasi), 8 kun saqlanadi. */
+  async function flushAborted(): Promise<void> {
+    if (abortedByTerminal.size === 0) return;
+    const batch = [...abortedByTerminal];
+    abortedByTerminal.clear();
+    const key = `${PUSH_ABORTED_KEY_PREFIX}${tashkentDate(new Date())}`;
+    try {
+      const pipeline = redis.pipeline();
+      for (const [terminalId, count] of batch) {
+        pipeline.hincrby(key, String(terminalId), count);
+      }
+      pipeline.expire(key, 8 * 24 * 3600);
+      await pipeline.exec();
+    } catch {
+      log('warn', 'Uzilgan so‘rovlar sonini Redis’ga yozib bo‘lmadi');
+    }
+  }
+
+  const { server, stats, abortedByTerminal } = createPushServer({
     config,
     registry,
     redis,
@@ -126,9 +151,14 @@ async function startWorker(): Promise<void> {
   const statsTimer = setInterval(() => {
     log(
       'log',
-      `qabul=${stats.accepted} e’tiborsiz=${stats.ignored} rad=${stats.rejected} band=${stats.overloaded}`,
+      `qabul=${stats.accepted} e’tiborsiz=${stats.ignored} rad=${stats.rejected} band=${stats.overloaded} uzilgan=${stats.aborted}`,
     );
-    stats.accepted = stats.ignored = stats.rejected = stats.overloaded = 0;
+    stats.accepted =
+      stats.ignored =
+      stats.rejected =
+      stats.overloaded =
+      stats.aborted =
+        0;
   }, 60_000);
 
   server.listen(config.port, config.host);
@@ -139,8 +169,7 @@ async function startWorker(): Promise<void> {
     clearInterval(flushTimer);
     clearInterval(statsTimer);
     server.close(() => {
-      void registry
-        .flushReceived()
+      void Promise.allSettled([registry.flushReceived(), flushAborted()])
         .finally(() =>
           Promise.allSettled([pool.end(), redis.quit(), subscriber.quit()]),
         )

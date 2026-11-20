@@ -10,6 +10,8 @@ export const LIVE_CHANNEL_PREFIX = 'edav:live:school:';
 
 /** Terminal «kechikmoqda» (eski eventlar kelyapti) belgisi: edav:push:lag:<terminalId>. */
 export const PUSH_LAG_KEY_PREFIX = 'edav:push:lag:';
+/** Kunlik hash: terminalId → terminal ulanishni uzgan so‘rovlar soni (aborted). */
+export const PUSH_ABORTED_KEY_PREFIX = 'edav:push:aborted:';
 
 /** Kun uchun daily_attendance qatorlari to‘liq yaratilganini bildiradi. */
 export const dailySeededKey = (schoolId: number, date: string) =>

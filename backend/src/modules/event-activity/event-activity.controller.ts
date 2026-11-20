@@ -11,7 +11,10 @@ import { DataSource } from 'typeorm';
 import { RedisService } from '../../redis/redis.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { tashkentDate } from '../hikvision-push/hikvision-push.types';
-import { PUSH_LAG_KEY_PREFIX } from '../hikvision-push/hikvision-push.types';
+import {
+  PUSH_ABORTED_KEY_PREFIX,
+  PUSH_LAG_KEY_PREFIX,
+} from '../hikvision-push/hikvision-push.types';
 import { UserRole } from '../users/enums/user-role.enum';
 
 const SOURCES = ['PUSH', 'AUTO_PULL', 'MANUAL_PULL'] as const;
@@ -199,10 +202,45 @@ export class EventActivityController {
       };
     });
 
+    // Bugun terminal ulanishni uzgan (aborted) so‘rovlar: tarmog‘i beqaror terminallar.
+    const abortedHash = await redis.hgetall(
+      `${PUSH_ABORTED_KEY_PREFIX}${tashkentDate(new Date())}`,
+    );
+    const abortedCounts = Object.entries(abortedHash)
+      .map(([id, value]) => ({ id: Number(id), count: Number(value) }))
+      .filter((row) => Number.isInteger(row.id) && row.count > 0)
+      .sort((a, b) => b.count - a.count);
+    const abortedTop = abortedCounts.slice(0, 20);
+    const abortedInfo =
+      abortedTop.length > 0
+        ? await this.dataSource.query<
+            { id: number; name: string; schoolName: string | null }[]
+          >(
+            `SELECT t.id, t.name, s.name AS schoolName
+               FROM terminals t LEFT JOIN schools s ON s.id = t.schoolId
+              WHERE t.id IN (${abortedTop.map(() => '?').join(',')})`,
+            abortedTop.map((row) => row.id),
+          )
+        : [];
+    const aborted = {
+      total: abortedCounts.reduce((sum, row) => sum + row.count, 0),
+      terminals: abortedCounts.length,
+      top: abortedTop.map((row) => {
+        const info = abortedInfo.find((item) => item.id === row.id);
+        return {
+          id: row.id,
+          name: info?.name ?? `#${row.id}`,
+          schoolName: info?.schoolName ?? null,
+          count: row.count,
+        };
+      }),
+    };
+
     const count = (status: string) =>
       rows.filter((row) => row.status === status).length;
 
     return {
+      aborted,
       terminals: {
         total: rows.length,
         realtime: count('REALTIME'),
