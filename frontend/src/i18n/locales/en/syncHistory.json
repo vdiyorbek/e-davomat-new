@@ -4,7 +4,8 @@
   "tabs": {
     "events": "Attendance events",
     "persons": "People sync",
-    "clears": "Memory clearing"
+    "clears": "Memory clearing",
+    "push": "Push & pull"
   },
   "filters": {
     "status": "Status",
@@ -159,6 +160,54 @@
       "TIMEOUT": "Terminal didn't respond",
       "CONNECTION_ERROR": "Couldn't connect to the terminal",
       "PERSON_SYNC_LOCK_LOST": "Process was interrupted"
+    }
+  },
+  "push": {
+    "description": "Push (events sent by the terminal) and the server pulling from the terminal itself (automatic or manual) — hourly summary. Polling runs are on the “Attendance events” tab.",
+    "realtime": "Real time",
+    "lagM": "{{m}} min behind",
+    "lagHm": "{{h}} h {{m}} min behind",
+    "kpi": {
+      "total": "Push terminals",
+      "realtime": "Real time",
+      "lagging": "Lagging",
+      "idle": "Silent",
+      "today": "Events today",
+      "todayNew": "new: {{count}}"
+    },
+    "status": {
+      "REALTIME": "Real time",
+      "LAGGING": "Lagging",
+      "IDLE": "Silent",
+      "NEVER": "No requests yet"
+    },
+    "attention": {
+      "title": "Terminals needing attention",
+      "hint": "Lagging terminals are sending old events in order; “silent” ones have sent no request for 10 minutes.",
+      "behind": "{{value}}",
+      "lastRequest": "last request: {{value}}"
+    },
+    "filters": {
+      "source": "Source"
+    },
+    "source": {
+      "PUSH": "Push",
+      "AUTO_PULL": "Auto pull",
+      "MANUAL_PULL": "Manual pull"
+    },
+    "table": {
+      "title": "Hourly activity",
+      "hint": "Each row is one terminal, one source and one hour.",
+      "emptyTitle": "No activity found",
+      "empty": "No push or pull activity for the selected filters.",
+      "hour": "Hour",
+      "terminal": "Terminal",
+      "source": "Source",
+      "received": "Received",
+      "inserted": "New",
+      "duplicates": "Duplicates",
+      "photos": "Photo: yes / no",
+      "lag": "Max lag"
     }
   }
 }

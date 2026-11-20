@@ -106,5 +106,135 @@
       "download": "Download",
       "failed": "Could not open the PDF file."
     }
+  },
+  "home": {
+    "title": "Inspector cabinet",
+    "description": "A short overview of your neighbourhood as of {{date}}.",
+    "descriptionShort": "A short overview of your neighbourhood.",
+    "alert": "Students absent for more than {{days}} days: {{count}} — they need to be looked into.",
+    "alertAction": "Start the visits",
+    "followUps": "Cases whose follow-up date has arrived: {{count}}.",
+    "todayTitle": "Today's attendance",
+    "casesTitle": "Investigation cases",
+    "students": "Students",
+    "absentees": "Absent {{days}}+ days",
+    "newAbsentees": "Not yet investigated",
+    "openCases": "Cases in progress",
+    "closedThisMonth": "Closed this month",
+    "goAbsentees": "Absentee list",
+    "goCases": "Reports",
+    "goStudents": "Daily attendance"
+  },
+  "absentees": {
+    "title": "Absent students",
+    "description": "Students living in your neighbourhood who have missed {{days}} or more school days in a row without an excuse. An investigation case is opened for each and a PDF report is produced.",
+    "state": "Status",
+    "stateAll": "All",
+    "stateNew": "New",
+    "stateProgress": "In progress",
+    "absence": "Absence",
+    "caseState": "Case status",
+    "days": "{{count}} days",
+    "since": "since {{date}}",
+    "earlier": "Investigated before: {{count}} time(s)",
+    "start": "Start investigation",
+    "continue": "Continue",
+    "snapshot": "Data as of {{date}}. The list is refreshed daily.",
+    "emptyTitle": "No absent students",
+    "empty": "No students with consecutive absences were found."
+  },
+  "cases": {
+    "title": "Investigation reports",
+    "description": "Investigations of absent students. An official PDF report is available for every case.",
+    "statusFilter": "Status",
+    "statusAll": "All",
+    "status": {
+      "OPEN": "In progress",
+      "CLOSED": "Closed"
+    },
+    "result": "Result",
+    "followUpOn": "Follow-up: {{date}}",
+    "view": "View",
+    "emptyTitle": "No cases yet",
+    "empty": "Start an investigation from the “Absent students” page.",
+    "save": "Save",
+    "close": "Close case",
+    "savedNotice": "Case saved.",
+    "closedNotice": "Case closed, the report is ready.",
+    "dialog": {
+      "title": "Investigation case № {{id}}",
+      "description": "Enter what you found during the visit. A closed case cannot be changed.",
+      "absence": "Absent for {{days}} days in a row (since {{since}}).",
+      "history": "This student has been investigated {{count}} time(s) before."
+    },
+    "fields": {
+      "visitDate": "Visit date",
+      "spokeWith": "Spoke with",
+      "reason": "Reason for absence",
+      "findings": "Findings",
+      "findingsHint": "At least 10 characters. This text goes into the report.",
+      "actionsTaken": "Actions taken",
+      "outcome": "Outcome",
+      "followUp": "Next follow-up date",
+      "followUpHint": "Required when the outcome is “Still absent”.",
+      "choose": "Select"
+    },
+    "contact": {
+      "FATHER": "Father",
+      "MOTHER": "Mother",
+      "GUARDIAN": "Guardian",
+      "STUDENT": "The student",
+      "NEIGHBOR": "Neighbours",
+      "NOT_MET": "Could not meet anyone"
+    },
+    "reason": {
+      "ILLNESS": "Illness",
+      "FAMILY": "Family circumstances",
+      "MIGRATED": "Moved away / abroad",
+      "WORKING": "Working",
+      "NO_INTEREST": "Unwilling to study",
+      "NOT_FOUND": "Not found at the address",
+      "OTHER": "Other reason"
+    },
+    "outcome": {
+      "RETURNED": "Returned to school",
+      "EXCUSED": "Excused (with a document)",
+      "REFERRED": "Referred to another authority",
+      "TRANSFERRED": "Moved to another school",
+      "STILL_ABSENT": "Still absent"
+    },
+    "errors": {
+      "incomplete": "To close the case fill in the visit date, who you spoke with, the reason, the outcome and the findings (at least 10 characters).",
+      "followUpRequired": "Enter the next follow-up date when the outcome is “Still absent”.",
+      "saveFailed": "Could not save the case."
+    },
+    "pdf": {
+      "open": "PDF report",
+      "title": "Report № {{id}}",
+      "description": "Official report: the student, the absence period and the investigation results.",
+      "download": "Download",
+      "failed": "Could not open the PDF report."
+    }
+  },
+  "manage": {
+    "title": "Inspectors",
+    "description": "Add neighbourhood inspectors and assign neighbourhoods to them.",
+    "add": "Add inspector",
+    "addDescription": "The account is created and the selected neighbourhoods are assigned at once.",
+    "searchPlaceholder": "Search by name or login",
+    "emptyTitle": "No inspectors",
+    "empty": "Add the first one with the “Add inspector” button.",
+    "mahallaCount": "Neighbourhoods",
+    "openCases": "Open cases",
+    "active": "Active",
+    "inactive": "Inactive",
+    "editMahallas": "Neighbourhoods",
+    "created": "Inspector added.",
+    "mahallas": "Neighbourhoods to assign",
+    "create": "Add",
+    "errors": {
+      "district": "Select a district.",
+      "mahallas": "Select at least one neighbourhood."
+    }
   }
 }

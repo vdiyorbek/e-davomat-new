@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ApiError } from '@/lib/api';
 import { authorizedPatch, authorizedPost } from '@/lib/auth-session';
+import { parseLatLng } from '@/lib/geo';
 import type { CreatedSchool, CreateSchoolInput, School, UpdateSchoolInput } from '@/types/school';
 
 interface RegionOption {
@@ -88,6 +89,8 @@ export function SchoolForm({ school, onSaved, onCancel }: SchoolFormProps) {
     const [name, setName] = useState(school?.name ?? '');
     const [regionId, setRegionId] = useState(school ? String(school.district.regionId) : '');
     const [districtId, setDistrictId] = useState(school ? String(school.districtId) : '');
+    // Lokatsiya: «kenglik, uzunlik» (Google Maps'dan nusxalanadi).
+    const [location, setLocation] = useState(school?.latitude != null && school.longitude != null ? `${school.latitude}, ${school.longitude}` : '');
     const [busy, setBusy] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const submitting = useRef(false);
@@ -116,10 +119,17 @@ export function SchoolForm({ school, onSaved, onCancel }: SchoolFormProps) {
             return setSubmitError(t('schools.form.errors.location'));
         }
 
+        const coordinates = parseLatLng(location);
+        if (coordinates === 'invalid') return setSubmitError(t('schools.form.errors.coords'));
+
         const changes: UpdateSchoolInput = {};
         if (school) {
             if (trimmedName !== school.name) changes.name = trimmedName;
             if (selectedDistrictId !== school.districtId) changes.districtId = selectedDistrictId;
+            if ((coordinates?.lat ?? null) !== (school.latitude ?? null) || (coordinates?.lng ?? null) !== (school.longitude ?? null)) {
+                changes.latitude = coordinates?.lat ?? null;
+                changes.longitude = coordinates?.lng ?? null;
+            }
             if (Object.keys(changes).length === 0) return setSubmitError(t('schools.form.errors.noChanges'));
         }
 
@@ -132,6 +142,10 @@ export function SchoolForm({ school, onSaved, onCancel }: SchoolFormProps) {
                 saved = await authorizedPatch<School>(`/schools/${school.id}`, changes);
             } else {
                 const body: CreateSchoolInput = { name: trimmedName, districtId: selectedDistrictId };
+                if (coordinates) {
+                    body.latitude = coordinates.lat;
+                    body.longitude = coordinates.lng;
+                }
                 saved = await authorizedPost<CreatedSchool>('/schools', body);
             }
         } catch (error: unknown) {
@@ -217,6 +231,21 @@ export function SchoolForm({ school, onSaved, onCancel }: SchoolFormProps) {
                     required
                     minLength={2}
                     maxLength={200}
+                    disabled={busy}
+                />
+            </Field>
+
+            <Field htmlFor={`${formId}-location`} label={t('schools.form.location')} hint={t('schools.form.locationHint')}>
+                <Input
+                    id={`${formId}-location`}
+                    value={location}
+                    onChange={(event) => {
+                        setLocation(event.target.value);
+                        setSubmitError('');
+                    }}
+                    placeholder="41.311081, 69.240562"
+                    inputMode="decimal"
+                    autoComplete="off"
                     disabled={busy}
                 />
             </Field>

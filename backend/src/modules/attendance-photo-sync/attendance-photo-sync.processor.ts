@@ -3,6 +3,7 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 
 import { AttendanceEventPhotosService } from '../attendance-events/attendance-event-photos.service';
+import { SettingsService } from '../system-settings/settings.service';
 
 import {
   ATTENDANCE_PHOTO_JOB,
@@ -17,7 +18,10 @@ import type { AttendancePhotoJob } from './attendance-photo-sync.constants';
 export class AttendancePhotoSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(AttendancePhotoSyncProcessor.name);
 
-  constructor(private readonly photosService: AttendanceEventPhotosService) {
+  constructor(
+    private readonly photosService: AttendanceEventPhotosService,
+    private readonly settings: SettingsService,
+  ) {
     super();
   }
 
@@ -39,17 +43,21 @@ export class AttendancePhotoSyncProcessor extends WorkerHost {
     let failed = 0;
     let missing = 0;
 
-    // Har safar 5 ta, ko‘pi bilan 20 ta paket.
-    for (let batch = 0; batch < 20; batch += 1) {
-      // 45 soniyadan keyin yangi paket boshlamaymiz.
+    // Paket hajmi, paketlar soni va vaqt chegarasi — tizim sozlamalaridan.
+    const batchSize = this.settings.getInt('photosBatchSize');
+    const maxBatches = this.settings.getInt('photosMaxBatches');
+    const runMs = this.settings.getInt('photosRunSeconds') * 1000;
+
+    for (let batch = 0; batch < maxBatches; batch += 1) {
+      // Vaqt tugagach yangi paket boshlamaymiz.
       // Boshlangan paket oxirigacha bajariladi.
-      if (Date.now() - startedAt >= 45_000) {
+      if (Date.now() - startedAt >= runMs) {
         break;
       }
 
       const result = await this.photosService.downloadPending({
         terminalId,
-        limit: 5,
+        limit: batchSize,
       });
 
       for (const item of result.results) {
@@ -68,7 +76,7 @@ export class AttendancePhotoSyncProcessor extends WorkerHost {
       failed += result.failed;
       missing += result.missing;
 
-      if (result.processed < 5) {
+      if (result.processed < batchSize) {
         break;
       }
 

@@ -590,5 +590,20 @@
       "inserted": "New",
       "duplicates": "Already stored"
     }
+  },
+  "timeSync": {
+    "button": "Sync time",
+    "confirmTitle": "Sync the terminals' time?",
+    "confirmDescription": "The clocks of all active terminals will be set to the server time (Tashkent, UTC+5). This may take a few minutes.",
+    "confirm": "Sync",
+    "failed": "Could not sync the time.",
+    "resultTitle": "Time sync result",
+    "running": "Updating the terminals…",
+    "summary": "Succeeded: {{ok}}, failed: {{failed}}, total: {{total}}.",
+    "ok": "Synced",
+    "fail": "Failed",
+    "wasOff": "Was off by {{value}}",
+    "seconds": "{{count}} s",
+    "minutes": "{{count}} min"
   }
 }

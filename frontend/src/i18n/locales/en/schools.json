@@ -24,7 +24,9 @@
     "location": "Location",
     "students": "Students",
     "teachers": "Teachers",
-    "terminals": "Terminals"
+    "terminals": "Terminals",
+    "lateThreshold": "Late threshold",
+    "coordinates": "Coordinates"
   },
   "inactiveTerminals": "+{{count}} inactive",
   "pagesLabel": "School pages",
@@ -43,7 +45,27 @@
       "location": "Choose a region and a district.",
       "noChanges": "Nothing has changed yet.",
       "uncertain": "Could not confirm the save. Close the window and refresh the list before trying again.",
-      "saveFailed": "Failed to save the school."
-    }
+      "saveFailed": "Failed to save the school.",
+      "coords": "Invalid location. Use “latitude, longitude” inside Uzbekistan (for example 41.311081, 69.240562)."
+    },
+    "location": "Location (latitude, longitude)",
+    "locationHint": "So the school appears on the map. In Google Maps right-click the school’s spot, copy the coordinates and paste them here. May be left empty."
+  },
+  "late": {
+    "hint": "Anyone arriving this many minutes after the shift start (first lesson for teachers) counts as late. Changes apply from today.",
+    "value_one": "{{count}} minute",
+    "value_other": "{{count}} minutes",
+    "minutes": "min",
+    "minutesLabel": "Late threshold (minutes)",
+    "change": "Change",
+    "default": "Default value (not changed yet)",
+    "changedBy": "{{name}} ({{role}}) · {{date}}",
+    "invalid": "Enter a whole number from 0 to 120.",
+    "saveFailed": "Could not save."
+  },
+  "noLocation": "Location not set",
+  "location": {
+    "enter": "Set",
+    "hint": "In Google Maps right-click the school’s spot and copy the coordinates. Leave empty to remove the location."
   }
 }

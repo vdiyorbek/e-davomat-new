@@ -21,6 +21,7 @@ import {
 import { AttendanceEvent } from './attendance-event.entity';
 import { EventPhotoStatus } from './enums/event-photo-status.enum';
 import { DownloadEventPhotosDto } from './dto/download-event-photos.dto';
+import { SettingsService } from '../system-settings/settings.service';
 
 export interface PhotoResult {
   eventId: string;
@@ -82,7 +83,36 @@ export class AttendanceEventPhotosService {
     private readonly hikvisionPhoto: HikvisionPhotoService,
 
     private readonly eventSyncLock: EventSyncTerminalLockService,
+
+    private readonly settings: SettingsService,
   ) {}
+
+  /** Cheklangan parallellik bilan: terminal kichik qurilma, ko‘p so‘rovni ko‘tarmaydi. */
+  private async runPool<T>(
+    items: T[],
+    concurrency: number,
+    handler: (item: T) => Promise<void>,
+  ): Promise<void> {
+    let next = 0;
+    let failure: { error: unknown } | null = null;
+
+    const worker = async (): Promise<void> => {
+      while (failure === null && next < items.length) {
+        const item = items[next++];
+        try {
+          await handler(item);
+        } catch (error: unknown) {
+          failure = { error };
+          return;
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(concurrency, items.length) }, worker),
+    );
+    if (failure !== null) throw (failure as { error: unknown }).error;
+  }
 
   async getPhotoIssues(terminalId: number, limit = 50) {
     if (!Number.isSafeInteger(terminalId) || terminalId <= 0) {
@@ -455,7 +485,7 @@ export class AttendanceEventPhotosService {
 
       const results: PhotoResult[] = [];
 
-      for (const event of events) {
+      const processEvent = async (event: AttendanceEvent): Promise<void> => {
         await lease.assertOwned();
         if (!event.sourcePictureUrl) {
           await this.eventsRepository.update(event.id, {
@@ -469,7 +499,7 @@ export class AttendanceEventPhotosService {
             message: 'Eventda rasm manzili mavjud emas',
           });
 
-          continue;
+          return;
         }
 
         await this.eventsRepository.update(event.id, {
@@ -575,7 +605,13 @@ export class AttendanceEventPhotosService {
             message: errorMessage,
           });
         }
-      }
+      };
+
+      await this.runPool(
+        events,
+        this.settings.getInt('photosConcurrency'),
+        processEvent,
+      );
 
       return {
         terminalId: terminal.id,

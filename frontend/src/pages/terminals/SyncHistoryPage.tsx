@@ -1,4 +1,4 @@
-import { CalendarClock, Eraser, ScanFace, Users } from 'lucide-react';
+import { CalendarClock, Eraser, RadioTower, ScanFace, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -9,14 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClearHistorySection } from './ClearHistorySection';
 import { EventSyncHistorySection } from './EventSyncHistorySection';
 import { PersonSyncHistoryPage } from './PersonSyncHistoryPage';
+import { PushActivitySection } from './PushActivitySection';
 
-type Tab = 'events' | 'persons' | 'clears';
+type Tab = 'events' | 'push' | 'persons' | 'clears';
 
 export function SyncHistoryPage() {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const rawTab = searchParams.get('tab');
-    const tab: Tab = rawTab === 'persons' || rawTab === 'clears' ? rawTab : 'events';
+    const tab: Tab = rawTab === 'persons' || rawTab === 'clears' || rawTab === 'push' ? rawTab : 'events';
 
     return (
         <div className="w-full min-w-0 space-y-5">
@@ -44,6 +45,10 @@ export function SyncHistoryPage() {
                         <CalendarClock aria-hidden="true" />
                         {t('syncHistory.tabs.events')}
                     </TabsTrigger>
+                    <TabsTrigger value="push" className="px-4">
+                        <RadioTower aria-hidden="true" />
+                        {t('syncHistory.tabs.push')}
+                    </TabsTrigger>
                     <TabsTrigger value="persons" className="px-4">
                         <Users aria-hidden="true" />
                         {t('syncHistory.tabs.persons')}
@@ -56,6 +61,9 @@ export function SyncHistoryPage() {
 
                 <TabsContent value="events">
                     <EventSyncHistorySection />
+                </TabsContent>
+                <TabsContent value="push">
+                    <PushActivitySection />
                 </TabsContent>
                 <TabsContent value="persons">
                     <PersonSyncHistoryPage embedded />

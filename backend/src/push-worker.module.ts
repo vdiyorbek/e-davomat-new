@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { typeOrmOptions } from './database/typeorm-options';
 import { HikvisionPushModule } from './modules/hikvision-push/hikvision-push.module';
+import { SystemSettingsModule } from './modules/system-settings/settings.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HikvisionPushModule } from './modules/hikvision-push/hikvision-push.mod
         entities: [join(__dirname, '**', '*.entity.{js,ts}')],
       }),
     }),
+    SystemSettingsModule,
     HikvisionPushModule,
   ],
 })

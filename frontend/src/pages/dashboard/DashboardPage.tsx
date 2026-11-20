@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { AbsenceStreaks } from '@/components/dashboard/AbsenceStreaks';
 import { ArrivalsChart } from '@/components/dashboard/ArrivalsChart';
 import { KpiGroup } from '@/components/dashboard/DashboardKpis';
-import { LateThresholdCard, LateThresholdEditor } from '@/components/dashboard/LateThreshold';
 import { RankingList } from '@/components/dashboard/RankingList';
 import { ShiftSplit } from '@/components/dashboard/ShiftSplit';
 import { SystemHealth } from '@/components/dashboard/SystemHealth';
@@ -215,20 +214,8 @@ export function DashboardPage() {
                     </div>
 
                     {level === 'SCHOOL' ? (
-                        <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                            <Panel title={t('dashboard.classes.title')} description={t('dashboard.classes.description')}>
-                                <ClassGrid items={data.children} />
-                            </Panel>
-                            {data.lateThreshold && data.scope.school && (
-                                <Panel title={t('dashboard.late.title')}>
-                                    <LateThresholdCard schoolId={data.scope.school.id} settings={data.lateThreshold} onSaved={overview.retry} />
-                                </Panel>
-                            )}
-                        </div>
-                    ) : level === 'DISTRICT' ? (
-                        // Maktablar xaritada yo‘q — tuman darajasida reyting yetarli.
-                        <Panel title={t('dashboard.ranking.title', { unit: unitLabel })}>
-                            <RankingList items={data.children} onSelect={selectChild} unitLabel={unitLabel} />
+                        <Panel title={t('dashboard.classes.title')} description={t('dashboard.classes.description')}>
+                            <ClassGrid items={data.children} />
                         </Panel>
                     ) : (
                         <div className="grid gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -239,21 +226,6 @@ export function DashboardPage() {
                                 <RankingList items={data.children} onSelect={selectChild} unitLabel={unitLabel} />
                             </Panel>
                         </div>
-                    )}
-
-                    {level === 'DISTRICT' && (
-                        <Panel title={t('dashboard.late.schoolsTitle')} description={t('dashboard.late.schoolsDescription')}>
-                            <ul className="list-none divide-y">
-                                {data.children.map((school) =>
-                                    school.lateThreshold ? (
-                                        <li key={school.id} className="flex flex-wrap items-start justify-between gap-2 py-2">
-                                            <span className="min-w-40 font-medium">{school.name}</span>
-                                            <LateThresholdEditor schoolId={school.id} settings={school.lateThreshold} onSaved={overview.retry} compact />
-                                        </li>
-                                    ) : null,
-                                )}
-                            </ul>
-                        </Panel>
                     )}
 
                     <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

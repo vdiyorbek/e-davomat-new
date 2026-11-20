@@ -344,9 +344,14 @@ export class DashboardService {
               params: [scope.district!.id],
               extra: 'NULL',
             };
+    // Maktab darajasida — xaritada nuqta sifatida ko‘rsatish uchun lokatsiya.
+    const coordinates =
+      scope.level === 'DISTRICT'
+        ? 'u.latitude AS latitude, u.longitude AS longitude'
+        : 'NULL AS latitude, NULL AS longitude';
 
     const rows: Record<string, unknown>[] = await this.dataSource.query(
-      `SELECT u.id, u.name, ${unit.extra} AS geoKey,
+      `SELECT u.id, u.name, ${unit.extra} AS geoKey, ${coordinates},
               st.expected, st.present, st.excused, st.absent, st.late, st.members,
               st.schools, st.withoutData,
               te.expected AS tExpected, te.present AS tPresent, te.excused AS tExcused, te.late AS tLate
@@ -383,6 +388,8 @@ export class DashboardService {
         id: Number(row.id),
         name: String(row.name),
         geoKey: (row.geoKey as string | null) ?? null,
+        latitude: row.latitude === null ? null : Number(row.latitude),
+        longitude: row.longitude === null ? null : Number(row.longitude),
         schools: n('schools'),
         schoolsWithoutData: n('withoutData'),
         students: {

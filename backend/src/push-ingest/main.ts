@@ -13,6 +13,7 @@ import { createPool } from 'mysql2/promise';
 import { PUSH_TERMINALS_CHANGED_CHANNEL } from '../modules/hikvision-push/hikvision-push.types';
 import { loadPushConfig } from './config';
 import { PhotoStore } from './photo-store';
+import { defaultRuntime, refreshRuntime } from './runtime-settings';
 import { createPushServer } from './server';
 import { TerminalRegistry } from './terminal-registry';
 
@@ -84,6 +85,18 @@ async function startWorker(): Promise<void> {
 
   const registry = new TerminalRegistry(pool);
   await registry.reload();
+
+  // Tizim sozlamalari (super administrator sahifasidan): har 15 soniyada yangilanadi.
+  const runtime = defaultRuntime();
+  const loadRuntime = () =>
+    refreshRuntime(pool, runtime).catch(() =>
+      log(
+        'warn',
+        'Tizim sozlamalarini yangilab bo‘lmadi (oxirgilari saqlanadi)',
+      ),
+    );
+  await loadRuntime();
+  const runtimeTimer = setInterval(() => void loadRuntime(), 15_000);
   log('log', `Push yoqilgan terminallar: ${registry.size}`);
 
   // Token yaratilganda/o‘chirilganda darhol yangilaymiz.
@@ -106,6 +119,7 @@ async function startWorker(): Promise<void> {
     registry,
     redis,
     photos: new PhotoStore(config.storageRoot),
+    runtime,
     log,
   });
 
@@ -121,6 +135,7 @@ async function startWorker(): Promise<void> {
 
   const shutdown = () => {
     clearInterval(reloadTimer);
+    clearInterval(runtimeTimer);
     clearInterval(flushTimer);
     clearInterval(statsTimer);
     server.close(() => {

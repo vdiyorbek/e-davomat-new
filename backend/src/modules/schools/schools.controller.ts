@@ -9,6 +9,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Put,
 } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
@@ -18,6 +19,7 @@ import { SchoolsService } from './schools.service';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { GetSchoolsQueryDto } from './dto/get-schools-query.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
+import { SchoolLocationDto } from './dto/school-location.dto';
 import { GetSchoolsPageQueryDto } from './dto/get-schools-page-query.dto';
 
 @Controller('schools')
@@ -64,6 +66,31 @@ export class SchoolsController {
     }
 
     return this.schoolsService.findPage(query, user);
+  }
+
+  /**
+   * Maktab lokatsiyasi (xaritada ko‘rsatish uchun). Har administrator faqat o‘z
+   * doirasidagi maktablarniki: maktab — o‘zinikini, tuman/viloyat — hududinikini.
+   */
+  @Put(':id/location')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  setLocation(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SchoolLocationDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.schoolsService.setLocation(id, dto, user);
   }
 
   @Post()

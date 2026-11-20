@@ -28,6 +28,9 @@ const AttendanceOverviewPage = lazy(() =>
     import('@/pages/attendance/AttendanceOverviewPage').then((m) => ({ default: m.AttendanceOverviewPage })),
 );
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const SystemSettingsPage = lazy(() =>
+    import('@/pages/system-settings/SystemSettingsPage').then((m) => ({ default: m.SystemSettingsPage })),
+);
 const LivePage = lazy(() => import('@/pages/live/LivePage').then((m) => ({ default: m.LivePage })));
 const ClassesPage = lazy(() => import('@/pages/classes/ClassesPage').then((m) => ({ default: m.ClassesPage })));
 const UsersPage = lazy(() => import('@/pages/users/UsersPage').then((m) => ({ default: m.UsersPage })));
@@ -44,6 +47,19 @@ const SubjectsPage = lazy(() => import('@/pages/subjects/SubjectsPage').then((m)
 const TeacherDashboardPage = lazy(() =>
     import('@/pages/teacher-dashboard/TeacherDashboardPage')
         .then((m) => ({ default: m.TeacherDashboardPage }))
+);
+const InspectorsManagePage = lazy(() => import('@/pages/inspector/InspectorsManagePage').then((m) => ({ default: m.InspectorsManagePage })));
+const InspectorHomePage = lazy(() =>
+    import('@/pages/inspector/InspectorHomePage')
+        .then((m) => ({ default: m.InspectorHomePage }))
+);
+const InspectorAbsenteesPage = lazy(() =>
+    import('@/pages/inspector/InspectorAbsenteesPage')
+        .then((m) => ({ default: m.InspectorAbsenteesPage }))
+);
+const InspectorCasesPage = lazy(() =>
+    import('@/pages/inspector/InspectorCasesPage')
+        .then((m) => ({ default: m.InspectorCasesPage }))
 );
 const InspectorTalksPage = lazy(() =>
     import('@/pages/inspector/InspectorTalksPage')
@@ -110,6 +126,9 @@ export const router = createBrowserRouter([
                     {
                         element: <RequireRole roles={['MAHALLA_INSPECTOR']} />,
                         children: [
+                            { path: '/inspector', element: <InspectorHomePage /> },
+                            { path: '/inspector/absentees', element: <InspectorAbsenteesPage /> },
+                            { path: '/inspector/cases', element: <InspectorCasesPage /> },
                             {
                                 path: '/inspector/students',
                                 element: <InspectorStudentsPage />,
@@ -168,6 +187,10 @@ export const router = createBrowserRouter([
                             },
                             { path: '/users', element: <UsersPage /> },
                             {
+                                element: <RequireRole roles={['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN']} />,
+                                children: [{ path: '/inspectors', element: <InspectorsManagePage /> }],
+                            },
+                            {
                                 element: (
                                     <RequireRole roles={['SUPER_ADMIN', 'SCHOOL_ADMIN']} />
                                 ),
@@ -190,6 +213,7 @@ export const router = createBrowserRouter([
                             {
                                 element: <RequireRole roles={['SUPER_ADMIN']} />,
                                 children: [
+                                    { path: '/system-settings', element: <SystemSettingsPage /> },
                                     {
                                         path: '/textbooks',
                                         element: <TextbooksPage />,

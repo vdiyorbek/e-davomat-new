@@ -24,7 +24,7 @@
   "loading": "Davomat yuklanmoqda…",
   "loadFailed": "Davomatni olib bo‘lmadi.",
   "emptyTitle": "Yozuvlar topilmadi",
-  "empty": "Tanlangan filtrlar bo‘yicha hisoblangan davomat yozuvlari topilmadi.",
+  "empty": "Bu sana uchun davomat yozuvlari yo‘q: maktab platformaga ulanishidan oldingi sana yoki ma’lumot hali kelmagan. Ro‘yxat maktab ulanganidan boshlab shakllanadi.",
   "total": "Jami: {{formatted}} ta yozuv",
   "perPage": "Sahifada",
   "firstPage": "Birinchi sahifa",
@@ -49,7 +49,8 @@
     "anomaly": "Tekshirish kerak",
     "day_off": "Dam olish kuni",
     "unconfigured": "Jadval sozlanmagan",
-    "conflict": "Kalendar ziddiyati"
+    "conflict": "Kalendar ziddiyati",
+    "no_data": "Ma’lumot yo‘q"
   },
   "person": {
     "loadFailed": "Davomat tarixini yuklab bo‘lmadi.",
@@ -78,5 +79,6 @@
       "students": "O‘quvchi",
       "teachers": "O‘qituvchi"
     }
-  }
+  },
+  "photoOpen": "Turniket olgan rasmni ko‘rish"
 }

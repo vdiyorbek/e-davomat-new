@@ -1,11 +1,23 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  In,
+  QueryFailedError,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
+import { hashPassword } from 'src/common/security/password';
+import {
+  CreateInspectorDto,
+  GetInspectorsQueryDto,
+} from './dto/create-inspector.dto';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -110,6 +122,164 @@ export class InspectorsService {
       .map((row) => ({ id: row.mahalla.id, name: row.mahalla.name }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }
+  /** Tuman: tuman admini — o'zinikini; viloyat admini — o'z viloyatidagini; super admin — istalganini. */
+  private async resolveCreateDistrict(
+    districtId: number | undefined,
+    actor: AuthenticatedUser,
+  ): Promise<District> {
+    let id = districtId;
+    if (actor.role === UserRole.DISTRICT_ADMIN) {
+      if (actor.districtId === null || actor.districtId === undefined) {
+        throw new ForbiddenException('Administratorga tuman biriktirilmagan');
+      }
+      id = actor.districtId;
+    } else if (
+      actor.role !== UserRole.SUPER_ADMIN &&
+      actor.role !== UserRole.REGION_ADMIN
+    ) {
+      throw new ForbiddenException('Uchastkavoy qo‘shishga ruxsat yo‘q');
+    }
+    if (id === undefined) throw new BadRequestException('Tumanni tanlang');
+
+    const district = await this.districtsRepository.findOne({ where: { id } });
+    if (!district) throw new NotFoundException('Tuman topilmadi');
+    if (
+      actor.role === UserRole.REGION_ADMIN &&
+      (actor.regionId === null || district.regionId !== actor.regionId)
+    ) {
+      throw new ForbiddenException('Faqat o‘z viloyatingiz tumanini tanlang');
+    }
+    return district;
+  }
+
+  /** Uchastkavoy hisobini va mahallalarini bitta tranzaksiyada yaratadi. */
+  async createInspector(dto: CreateInspectorDto, actor: AuthenticatedUser) {
+    const firstName = dto.firstName.trim();
+    const lastName = dto.lastName.trim();
+    if (firstName.length < 2 || lastName.length < 2) {
+      throw new BadRequestException('Ism va familiyani to‘g‘ri kiriting');
+    }
+    const district = await this.resolveCreateDistrict(dto.districtId, actor);
+    const ids = normalizeIds(dto.mahallaIds);
+    if (ids.length === 0) {
+      throw new BadRequestException('Kamida bitta mahalla biriktiring');
+    }
+    if (ids.length > MAX_MAHALLAS_PER_INSPECTOR) {
+      throw new BadRequestException(
+        `Bitta uchastkavoyga ko‘pi bilan ${MAX_MAHALLAS_PER_INSPECTOR} ta mahalla biriktiriladi`,
+      );
+    }
+    const found = await this.mahallasRepository.count({
+      where: { id: In(ids), districtId: district.id, isActive: true },
+    });
+    if (found !== ids.length) {
+      throw new BadRequestException(
+        'Mahallalar tanlangan tumanda bo‘lishi va faol bo‘lishi kerak',
+      );
+    }
+
+    const passwordHash = await hashPassword(dto.password);
+    try {
+      return await this.dataSource.transaction(async (manager) => {
+        if (await manager.findOneBy(User, { login: dto.login })) {
+          throw new ConflictException('Ushbu login band');
+        }
+        const saved = await manager.save(
+          User,
+          manager.create(User, {
+            firstName,
+            lastName,
+            middleName: dto.middleName?.trim() || null,
+            login: dto.login,
+            passwordHash,
+            role: UserRole.MAHALLA_INSPECTOR,
+            isActive: true,
+            regionId: null,
+            districtId: district.id,
+            schoolId: null,
+          }),
+        );
+        await manager.insert(
+          InspectorMahalla,
+          ids.map((mahallaId) => ({ userId: saved.id, mahallaId })),
+        );
+        return {
+          id: saved.id,
+          login: saved.login,
+          firstName: saved.firstName,
+          lastName: saved.lastName,
+          districtId: district.id,
+          mahallaCount: ids.length,
+        };
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof QueryFailedError &&
+        (error.driverError as { code?: string }).code === 'ER_DUP_ENTRY'
+      ) {
+        throw new ConflictException('Ushbu login band');
+      }
+      throw error;
+    }
+  }
+
+  /** Aktyor boshqara oladigan uchastkavoylar ro'yxati. */
+  async listInspectors(query: GetInspectorsQueryDto, actor: AuthenticatedUser) {
+    const where = ['u.role = ?'];
+    const params: unknown[] = [UserRole.MAHALLA_INSPECTOR];
+    if (actor.role === UserRole.DISTRICT_ADMIN) {
+      where.push('u.districtId = ?');
+      params.push(actor.districtId ?? 0);
+    } else if (actor.role === UserRole.REGION_ADMIN) {
+      where.push('d.regionId = ?');
+      params.push(actor.regionId ?? 0);
+    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Ruxsat yo‘q');
+    }
+    if (query.districtId !== undefined) {
+      where.push('u.districtId = ?');
+      params.push(query.districtId);
+    }
+    if (query.search) {
+      where.push(
+        `CONCAT_WS(' ', u.lastName, u.firstName, u.middleName, u.login) LIKE ? ESCAPE '!'`,
+      );
+      params.push(`%${query.search.replace(/[!%_]/g, (c) => `!${c}`)}%`);
+    }
+    const from = `FROM users u LEFT JOIN districts d ON d.id = u.districtId WHERE ${where.join(' AND ')}`;
+    const [count] = await this.dataSource.query<{ total: string }[]>(
+      `SELECT COUNT(*) AS total ${from}`,
+      params,
+    );
+    const rows = await this.dataSource.query<Record<string, unknown>[]>(
+      `SELECT u.id, u.login, u.firstName, u.lastName, u.middleName, u.isActive,
+              d.id AS districtId, d.name AS districtName,
+              (SELECT COUNT(*) FROM inspector_mahallas im WHERE im.userId = u.id) AS mahallaCount,
+              (SELECT COUNT(*) FROM inspector_cases k WHERE k.inspectorUserId = u.id AND k.status = 'OPEN') AS openCases
+         ${from} ORDER BY u.lastName, u.firstName, u.id LIMIT ? OFFSET ?`,
+      [...params, query.limit, (query.page - 1) * query.limit],
+    );
+    return {
+      total: Number(count?.total ?? 0),
+      page: query.page,
+      limit: query.limit,
+      items: rows.map((r) => ({
+        id: Number(r.id),
+        login: r.login,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        middleName: r.middleName,
+        isActive: Boolean(r.isActive),
+        district:
+          r.districtId === null
+            ? null
+            : { id: Number(r.districtId), name: r.districtName },
+        mahallaCount: Number(r.mahallaCount),
+        openCases: Number(r.openCases),
+      })),
+    };
+  }
+
   /** Uchastkavoyga biriktirilgan mahallalar (admin ko'rinishi). */
   async getMahallas(userId: number, actor: AuthenticatedUser) {
     const inspector = await this.loadInspector(userId);

@@ -97,6 +97,18 @@ export class SchoolMembership {
   })
   endDate!: string | null;
 
+  /** O‘qituvchi faqat boshlang‘ich (1–4) sinflarda dars beradi: standart hafta 5 kun. */
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: 0,
+    transformer: {
+      to: (value: boolean) => (value ? 1 : 0),
+      from: (value: number) => value === 1,
+    },
+  })
+  primaryOnly!: boolean;
+
   @CreateDateColumn({
     type: 'datetime',
     precision: 3,

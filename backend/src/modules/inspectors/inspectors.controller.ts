@@ -27,12 +27,41 @@ import { memoryStorage } from 'multer';
 import { UpdateInspectorTalkDto } from './dto/update-inspector-talk.dto';
 import { CreateInspectorTalkDto } from './dto/create-inspector-talk.dto';
 import { SetInspectorMahallasDto } from './dto/set-inspector-mahallas.dto';
+import {
+  CreateInspectorDto,
+  GetInspectorsQueryDto,
+} from './dto/create-inspector.dto';
 import { InspectorsService } from './inspectors.service';
 import { GetInspectorStudentsQueryDto } from './dto/get-inspector-students-query.dto';
 
 @Controller('inspectors')
 export class InspectorsController {
   constructor(private readonly inspectorsService: InspectorsService) {}
+
+  @Get()
+  @Roles(UserRole.SUPER_ADMIN, UserRole.REGION_ADMIN, UserRole.DISTRICT_ADMIN)
+  @Header('Cache-Control', 'private, no-store')
+  list(
+    @Query() query: GetInspectorsQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    return this.inspectorsService.listInspectors(query, actor);
+  }
+
+  @Post()
+  @Roles(UserRole.SUPER_ADMIN, UserRole.REGION_ADMIN, UserRole.DISTRICT_ADMIN)
+  create(
+    @Body() dto: CreateInspectorDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+    if (!actor) throw new UnauthorizedException();
+
+    return this.inspectorsService.createInspector(dto, actor);
+  }
 
   @Get('me/mahallas')
   @Roles(UserRole.MAHALLA_INSPECTOR)

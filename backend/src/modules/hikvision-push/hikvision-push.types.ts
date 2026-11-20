@@ -8,6 +8,9 @@ export const PUSH_TERMINALS_CHANGED_CHANNEL = 'edav:push:terminals-changed';
 /** Real vaqt sahifasi uchun: `edav:live:school:<schoolId>`. */
 export const LIVE_CHANNEL_PREFIX = 'edav:live:school:';
 
+/** Terminal «kechikmoqda» (eski eventlar kelyapti) belgisi: edav:push:lag:<terminalId>. */
+export const PUSH_LAG_KEY_PREFIX = 'edav:push:lag:';
+
 /** Kun uchun daily_attendance qatorlari to‘liq yaratilganini bildiradi. */
 export const dailySeededKey = (schoolId: number, date: string) =>
   `edav:daily:seeded:${schoolId}:${date}`;

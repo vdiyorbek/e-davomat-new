@@ -1,6 +1,8 @@
 import { Transform } from 'class-transformer';
 import { IsInt, IsString, Length, Max, Min } from 'class-validator';
 
+import { Latitude, Longitude } from './school-location';
+
 export class CreateSchoolDto {
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
@@ -23,4 +25,10 @@ export class CreateSchoolDto {
     message: 'districtId ruxsat etilgan chegaradan katta',
   })
   districtId!: number;
+
+  @Latitude()
+  latitude?: number | null;
+
+  @Longitude()
+  longitude?: number | null;
 }

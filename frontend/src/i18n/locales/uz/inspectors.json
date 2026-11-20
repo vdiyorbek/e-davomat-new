@@ -106,5 +106,135 @@
       "download": "Yuklab olish",
       "failed": "PDF faylni ochib bo‘lmadi."
     }
+  },
+  "home": {
+    "title": "Uchastkavoy kabineti",
+    "description": "{{date}} holatiga ko‘ra mahallangiz bo‘yicha qisqacha ma’lumot.",
+    "descriptionShort": "Mahallangiz bo‘yicha qisqacha ma’lumot.",
+    "alert": "{{count}} ta o‘quvchi {{days}} kundan ortiq darsga kelmayapti — ularni o‘rganish kerak.",
+    "alertAction": "O‘rganishni boshlash",
+    "followUps": "Keyingi nazorat muddati kelgan ishlar: {{count}} ta.",
+    "todayTitle": "Bugungi davomat",
+    "casesTitle": "O‘rganish ishlari",
+    "students": "O‘quvchilar",
+    "absentees": "{{days}}+ kun kelmayotgan",
+    "newAbsentees": "Hali o‘rganilmagan",
+    "openCases": "Jarayondagi ishlar",
+    "closedThisMonth": "Shu oy yopilgan",
+    "goAbsentees": "Kelmayotganlar ro‘yxati",
+    "goCases": "Hisobotlar",
+    "goStudents": "Kunlik davomat"
+  },
+  "absentees": {
+    "title": "Kelmayotgan o‘quvchilar",
+    "description": "Mahallangizda yashab, ketma-ket {{days}} va undan ortiq o‘quv kuni sababsiz darsga kelmayotgan o‘quvchilar. Har biri bo‘yicha o‘rganish ishi ochiladi va PDF hisobot shakllanadi.",
+    "state": "Holati",
+    "stateAll": "Barchasi",
+    "stateNew": "Yangi",
+    "stateProgress": "O‘rganilmoqda",
+    "absence": "Kelmaslik",
+    "caseState": "Ish holati",
+    "days": "{{count}} kun",
+    "since": "{{date}} dan",
+    "earlier": "Avval o‘rganilgan: {{count}} marta",
+    "start": "O‘rganishni boshlash",
+    "continue": "Davom ettirish",
+    "snapshot": "Ma’lumot {{date}} holatiga. Ro‘yxat har kuni yangilanadi.",
+    "emptyTitle": "Kelmayotgan o‘quvchi yo‘q",
+    "empty": "Hozircha ketma-ket kelmayotgan o‘quvchilar topilmadi."
+  },
+  "cases": {
+    "title": "O‘rganish hisobotlari",
+    "description": "Kelmayotgan o‘quvchilar bo‘yicha o‘tkazilgan o‘rganishlar. Har bir ish bo‘yicha rasmiy PDF hisobot olish mumkin.",
+    "statusFilter": "Holati",
+    "statusAll": "Barchasi",
+    "status": {
+      "OPEN": "Jarayonda",
+      "CLOSED": "Yopilgan"
+    },
+    "result": "Natija",
+    "followUpOn": "Nazorat: {{date}}",
+    "view": "Ko‘rish",
+    "emptyTitle": "Hali ish yo‘q",
+    "empty": "“Kelmayotgan o‘quvchilar” sahifasidan o‘rganishni boshlang.",
+    "save": "Saqlash",
+    "close": "Ishni yopish",
+    "savedNotice": "Ish saqlandi.",
+    "closedNotice": "Ish yopildi, hisobot tayyor.",
+    "dialog": {
+      "title": "O‘rganish ishi № {{id}}",
+      "description": "Mahallaga borib aniqlagan ma’lumotlaringizni kiriting. Ishni yopgach o‘zgartirib bo‘lmaydi.",
+      "absence": "Ketma-ket {{days}} kun kelmagan ({{since}} dan).",
+      "history": "Bu o‘quvchi avval {{count}} marta o‘rganilgan."
+    },
+    "fields": {
+      "visitDate": "Tashrif sanasi",
+      "spokeWith": "Kim bilan suhbatlashildi",
+      "reason": "Kelmaslik sababi",
+      "findings": "Aniqlangan holatlar",
+      "findingsHint": "Kamida 10 belgi. Hisobotga shu matn kiradi.",
+      "actionsTaken": "Ko‘rilgan choralar",
+      "outcome": "Natija",
+      "followUp": "Keyingi nazorat sanasi",
+      "followUpHint": "“Hali ham kelmayapti” natijasida majburiy.",
+      "choose": "Tanlang"
+    },
+    "contact": {
+      "FATHER": "Otasi",
+      "MOTHER": "Onasi",
+      "GUARDIAN": "Vasiy",
+      "STUDENT": "O‘quvchining o‘zi",
+      "NEIGHBOR": "Qo‘shnilar",
+      "NOT_MET": "Hech kim bilan uchrashilmadi"
+    },
+    "reason": {
+      "ILLNESS": "Kasallik",
+      "FAMILY": "Oilaviy sharoit",
+      "MIGRATED": "Ko‘chib ketgan / chet elda",
+      "WORKING": "Ishlayapti",
+      "NO_INTEREST": "O‘qishni xohlamayapti",
+      "NOT_FOUND": "Manzilda topilmadi",
+      "OTHER": "Boshqa sabab"
+    },
+    "outcome": {
+      "RETURNED": "Darsga qaytdi",
+      "EXCUSED": "Sababli (hujjat bilan)",
+      "REFERRED": "Boshqa organga yo‘naltirildi",
+      "TRANSFERRED": "Boshqa maktabga o‘tgan",
+      "STILL_ABSENT": "Hali ham kelmayapti"
+    },
+    "errors": {
+      "incomplete": "Ishni yopish uchun tashrif sanasi, suhbat, sabab, natija va aniqlangan holatlar (kamida 10 belgi) to‘ldirilishi kerak.",
+      "followUpRequired": "“Hali ham kelmayapti” natijasida keyingi nazorat sanasini kiriting.",
+      "saveFailed": "Ishni saqlab bo‘lmadi."
+    },
+    "pdf": {
+      "open": "PDF hisobot",
+      "title": "Hisobot № {{id}}",
+      "description": "Rasmiy hisobot: o‘quvchi, kelmaslik muddati va o‘rganish natijalari.",
+      "download": "Yuklab olish",
+      "failed": "PDF hisobotni ochib bo‘lmadi."
+    }
+  },
+  "manage": {
+    "title": "Uchastkavoylar",
+    "description": "Mahalla uchastkavoylarini qo‘shing va ularga mahallalarni biriktiring.",
+    "add": "Uchastkavoy qo‘shish",
+    "addDescription": "Hisob yaratiladi va tanlangan mahallalar bir yo‘la biriktiriladi.",
+    "searchPlaceholder": "Ism yoki login bo‘yicha qidirish",
+    "emptyTitle": "Uchastkavoy yo‘q",
+    "empty": "“Uchastkavoy qo‘shish” tugmasi bilan birinchisini qo‘shing.",
+    "mahallaCount": "Mahallalar",
+    "openCases": "Ochiq ishlar",
+    "active": "Faol",
+    "inactive": "Nofaol",
+    "editMahallas": "Mahallalar",
+    "created": "Uchastkavoy qo‘shildi.",
+    "mahallas": "Biriktiriladigan mahallalar",
+    "create": "Qo‘shish",
+    "errors": {
+      "district": "Tumanni tanlang.",
+      "mahallas": "Kamida bitta mahallani tanlang."
+    }
   }
 }

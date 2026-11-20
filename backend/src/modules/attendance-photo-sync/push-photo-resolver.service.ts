@@ -9,6 +9,7 @@ import {
   EventSyncTerminalLockService,
   type EventSyncLease,
 } from '../attendance-events/event-sync-terminal-lock.service';
+import { SettingsService } from '../system-settings/settings.service';
 import { HikvisionEventsService } from '../terminals/hikvision-events.service';
 import { TerminalCryptoService } from '../terminals/terminal-crypto.service';
 import { Terminal } from '../terminals/terminal.entity';
@@ -47,10 +48,11 @@ export class PushPhotoResolverService {
     private readonly hikvisionEvents: HikvisionEventsService,
     private readonly terminalCrypto: TerminalCryptoService,
     private readonly lock: EventSyncTerminalLockService,
+    private readonly settings: SettingsService,
   ) {}
 
   private enabled(): boolean {
-    return process.env.PUSH_PHOTO_LOOKUP !== 'false';
+    return this.settings.getBool('pushPhotoLookup');
   }
 
   // Har daqiqaning 40-soniyasida (rasm yuklovchi 15-soniyada ishlaydi).
@@ -75,7 +77,7 @@ export class PushPhotoResolverService {
   }
 
   private baseQuery() {
-    const days = Number(process.env.PUSH_PHOTO_LOOKUP_DAYS) || 30;
+    const days = this.settings.getInt('pushPhotoLookupDays');
     const retryBefore = new Date(Date.now() - 10 * 60_000);
     return this.eventsRepository
       .createQueryBuilder('event')

@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { SchoolForm } from '@/components/schools/SchoolForm';
+import { LateThresholdEditor } from '@/components/schools/LateThresholdEditor';
+import { SchoolLocationEditor } from '@/components/schools/SchoolLocationEditor';
 import { SchoolMembersLinks } from '@/components/schools/SchoolMembersLinks';
 import { SchoolsFilters } from '@/components/schools/SchoolsFilters';
 import { Button } from '@/components/ui/button';
@@ -141,6 +143,18 @@ function SchoolsResults({ path, hasFilters, onPageChange, onLimitChange, onClear
                                 ))}
                             </dl>
 
+                            <div className="rounded-lg border border-dashed px-3 py-2">
+                                <p className="mb-1 text-[11px] text-muted-foreground">{t('schools.columns.location')}</p>
+                                <SchoolLocationEditor schoolId={school.id} latitude={school.latitude} longitude={school.longitude} onSaved={retry} />
+                            </div>
+
+                            {school.lateThreshold && (
+                                <div className="rounded-lg border border-dashed px-3 py-2">
+                                    <p className="mb-1 text-[11px] text-muted-foreground">{t('schools.columns.lateThreshold')}</p>
+                                    <LateThresholdEditor schoolId={school.id} settings={school.lateThreshold} onSaved={retry} />
+                                </div>
+                            )}
+
                             <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3">
                                 <SchoolMembersLinks schoolId={school.id} schoolName={school.name} />
                                 {editButton(school, true)}
@@ -161,6 +175,8 @@ function SchoolsResults({ path, hasFilters, onPageChange, onLimitChange, onClear
                             <TableHead className="w-28 text-right">{t('schools.columns.students')}</TableHead>
                             <TableHead className="w-28 text-right">{t('schools.columns.teachers')}</TableHead>
                             <TableHead className="w-28 text-right">{t('schools.columns.terminals')}</TableHead>
+                            <TableHead className="w-60">{t('schools.columns.coordinates')}</TableHead>
+                            <TableHead className="w-64">{t('schools.columns.lateThreshold')}</TableHead>
                             <TableHead className="pr-5 text-right">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -171,6 +187,7 @@ function SchoolsResults({ path, hasFilters, onPageChange, onLimitChange, onClear
                                 <TableCell className="max-w-80 whitespace-normal">
                                     <span className="font-semibold">{school.name}</span>
                                     <p className="text-xs text-muted-foreground tabular-nums">ID: {school.id}</p>
+
                                 </TableCell>
                                 <TableCell className="whitespace-normal">
                                     {school.district.name}
@@ -184,6 +201,16 @@ function SchoolsResults({ path, hasFilters, onPageChange, onLimitChange, onClear
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <TerminalsCount school={school} />
+                                </TableCell>
+                                <TableCell className="whitespace-normal">
+                                    <SchoolLocationEditor schoolId={school.id} latitude={school.latitude} longitude={school.longitude} onSaved={retry} />
+                                </TableCell>
+                                <TableCell className="whitespace-normal">
+                                    {school.lateThreshold ? (
+                                        <LateThresholdEditor schoolId={school.id} settings={school.lateThreshold} onSaved={retry} />
+                                    ) : (
+                                        '—'
+                                    )}
                                 </TableCell>
                                 <TableCell className="pr-5">
                                     <div className="flex items-center justify-end gap-2">

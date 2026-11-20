@@ -23,6 +23,7 @@ import {
   CalendarResolverService,
   attendanceCalendarKey,
 } from '../attendance-calendar/calendar-resolver.service';
+import { assumeWorkDay } from './assumed-work-day';
 import { DailyAttendance } from './daily-attendance.entity';
 import { GetPersonAttendanceQueryDto } from './dto/get-person-attendance-query.dto';
 
@@ -41,6 +42,7 @@ export type PersonDayStatus =
   | 'day_off'
   | 'unconfigured'
   | 'conflict'
+  | 'no_data'
   | 'no_record';
 
 function todayInTashkent(): string {
@@ -207,6 +209,24 @@ export class DailyAttendancePersonService {
 
     const states = new Map<string, AttendanceCalendarState>();
 
+    // Maktabda shu kuni kamida bitta kishi kelganmi — kalendar sozlanmagan
+    // kunni o‘quv kuni deb faraz qilish uchun (bir so‘rov, kun/maktab bo‘yicha).
+    const arrivalSchoolIds = [...new Set(rows.map((row) => row.schoolId))];
+    const arrivalKeys = new Set<string>(
+      arrivalSchoolIds.length > 0 && dates.length > 0
+        ? (
+            await this.dataSource.query<{ schoolId: number; date: string }[]>(
+              `SELECT DISTINCT schoolId, DATE_FORMAT(date, '%Y-%m-%d') AS date
+                 FROM daily_attendance
+                WHERE firstInTime IS NOT NULL
+                  AND schoolId IN (${arrivalSchoolIds.map(() => '?').join(',')})
+                  AND date IN (${dates.map(() => '?').join(',')})`,
+              [...arrivalSchoolIds, ...dates],
+            )
+          ).map((item) => `${Number(item.schoolId)}:${item.date}`)
+        : [],
+    );
+
     for (const date of dates) {
       const row = rowsByDate.get(date);
       if (!row) continue;
@@ -214,16 +234,22 @@ export class DailyAttendancePersonService {
       const membership = membershipOn(date, row.schoolId);
       const classId = isStudent ? (membership?.classId ?? null) : null;
 
+      const primaryOnly = !isStudent && membership?.primaryOnly === true;
       const resolved = await this.calendarResolver.resolveForAttendanceDay(
         date,
         membershipType,
-        [{ schoolId: row.schoolId, classId }],
+        [{ schoolId: row.schoolId, classId, primaryOnly }],
       );
 
       states.set(
         date,
-        resolved.get(attendanceCalendarKey(row.schoolId, classId)) ??
-          'UNCONFIGURED',
+        assumeWorkDay(
+          resolved.get(
+            attendanceCalendarKey(row.schoolId, classId, primaryOnly),
+          ) ?? 'UNCONFIGURED',
+          date,
+          arrivalKeys.has(`${row.schoolId}:${date}`),
+        ).state,
       );
     }
 
@@ -236,6 +262,7 @@ export class DailyAttendancePersonService {
       day_off: 0,
       unconfigured: 0,
       conflict: 0,
+      no_data: 0,
       no_record: 0,
     };
 
@@ -270,6 +297,9 @@ export class DailyAttendancePersonService {
         status = 'unconfigured';
       } else if (excuse) {
         status = 'excused';
+      } else if (!arrivalKeys.has(`${row.schoolId}:${date}`)) {
+        // Maktabdan shu kuni umuman ma’lumot kelmagan: «kelmagan» deb bo‘lmaydi.
+        status = 'no_data';
       } else {
         status = 'absent';
       }

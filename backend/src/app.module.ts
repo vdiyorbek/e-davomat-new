@@ -35,6 +35,8 @@ import { InspectorsModule } from './modules/inspectors/inspectors.module';
 import { LiveModule } from './modules/live/live.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventBackfillModule } from './modules/event-backfill/event-backfill.module';
+import { SystemSettingsModule } from './modules/system-settings/settings.module';
+import { EventActivityModule } from './modules/event-activity/event-activity.module';
 import { StudentModule } from './modules/student/student.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
 
@@ -76,6 +78,8 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
     LiveModule,
     DashboardModule,
     EventBackfillModule,
+    SystemSettingsModule,
+    EventActivityModule,
     StudentModule,
     AssessmentsModule,
 

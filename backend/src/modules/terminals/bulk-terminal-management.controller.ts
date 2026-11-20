@@ -4,6 +4,8 @@ import {
   Controller,
   HttpCode,
   Post,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +15,8 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from './terminal.entity';
 import { TerminalCryptoService } from './terminal-crypto.service';
 import { HikvisionService } from './hikvision.service';
+import { TerminalsService } from './terminals.service';
+import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 
 @Controller('terminals/bulk')
 @Roles(UserRole.SUPER_ADMIN)
@@ -23,7 +27,15 @@ export class BulkTerminalManagementController {
 
     private readonly crypto: TerminalCryptoService,
     private readonly hikvision: HikvisionService,
+    private readonly terminalsService: TerminalsService,
   ) {}
+
+  @Post('time-sync')
+  @HttpCode(200)
+  syncAllTimes(@Req() request: AuthenticatedRequest) {
+    if (!request.authUser) throw new UnauthorizedException();
+    return this.terminalsService.syncAllTerminalTimes(request.authUser);
+  }
 
   @Post('clear-preview')
   @HttpCode(200)

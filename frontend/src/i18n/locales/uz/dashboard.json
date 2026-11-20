@@ -55,7 +55,8 @@
     "unmatched": "Xaritaga bog‘lanmagan hududlar: {{count}}",
     "assign": "Bog‘lash",
     "assignFor": "«{{name}}» uchun xarita shakli",
-    "chooseShape": "Shaklni tanlang"
+    "chooseShape": "Shaklni tanlang",
+    "noLocation": "Xaritada ko‘rinmaydi — lokatsiya kiritilmagan ({{count}}). Lokatsiya «Maktablar» sahifasida kiritiladi"
   },
   "ranking": {
     "title": "{{unit}} reytingi",
@@ -72,20 +73,6 @@
     "empty": "Sinflar topilmadi.",
     "dayOff": "Dam olish",
     "detail": "kelmagan {{absent}} · kechikkan {{late}}"
-  },
-  "late": {
-    "title": "Kechikish chegarasi",
-    "schoolsTitle": "Maktablarning kechikish chegarasi",
-    "schoolsDescription": "Har maktab o‘zi belgilaydi; zarur bo‘lsa shu yerdan o‘zgartirish mumkin.",
-    "hint": "Smena (o‘qituvchilar uchun birinchi dars) boshlanishidan shuncha daqiqadan keyin kelgan kishi kechikkan hisoblanadi. O‘zgarish bugundan boshlab qo‘llanadi.",
-    "value": "{{count}} daqiqa",
-    "minutes": "daqiqa",
-    "minutesLabel": "Kechikish chegarasi (daqiqa)",
-    "change": "O‘zgartirish",
-    "default": "Standart qiymat (hali o‘zgartirilmagan)",
-    "changedBy": "{{name}} ({{role}}) · {{date}}",
-    "invalid": "0 dan 120 gacha butun son kiriting.",
-    "saveFailed": "Saqlab bo‘lmadi."
   },
   "trend": {
     "title": "So‘nggi 30 kun",

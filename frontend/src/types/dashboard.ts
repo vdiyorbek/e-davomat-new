@@ -24,16 +24,13 @@ export interface DashboardKpi {
     lateRate: number | null;
 }
 
-export interface LateSettings {
-    minutes: number;
-    updatedAt: string | null;
-    updatedBy: { login: string; name: string | null; role: string } | null;
-}
-
 export interface DashboardChild {
     id: number;
     name: string;
     geoKey: string | null;
+    /** Maktab darajasida — lokatsiya (xaritada nuqta uchun). */
+    latitude?: number | null;
+    longitude?: number | null;
     gradeLevel?: number | null;
     shiftCode?: number | null;
     dayState?: string;
@@ -41,7 +38,6 @@ export interface DashboardChild {
     schoolsWithoutData: number;
     students: { members: number; expected: number; present: number; excused: number; absent: number; late: number; rate: number | null };
     teachers: { expected: number; present: number; late: number; rate: number | null } | null;
-    lateThreshold: LateSettings | null;
 }
 
 export interface DashboardOverview {
@@ -56,7 +52,6 @@ export interface DashboardOverview {
     schools: { total: number; withoutData: number; calendarAssumed: number };
     terminals: { total: number; online: number; offline: number; unknown: number; disabled: number; push: number; polling: number };
     children: DashboardChild[];
-    lateThreshold: LateSettings | null;
 }
 
 export interface TrendPoint {

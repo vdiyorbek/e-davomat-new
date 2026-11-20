@@ -5,6 +5,11 @@ import { join } from 'node:path';
 import { DataSource } from 'typeorm';
 
 import { RedisService } from '../../redis/redis.service';
+import { SettingsService } from '../system-settings/settings.service';
+import {
+  EventActivityRecorder,
+  type EventActivityEntry,
+} from '../event-activity/event-activity.recorder';
 import { EventPhotoStatus } from '../attendance-events/enums/event-photo-status.enum';
 import { LivePeopleService } from '../live/live-people.service';
 import type { LiveSourceEvent } from '../live/live-people.service';
@@ -13,6 +18,7 @@ import { HikvisionPushRebuildService } from './hikvision-push-rebuild.service';
 import { DashboardStatsQueue } from '../dashboard/dashboard-stats.queue';
 import {
   LIVE_CHANNEL_PREFIX,
+  PUSH_LAG_KEY_PREFIX,
   tashkentDate,
   type PushStreamEvent,
 } from './hikvision-push.types';
@@ -25,14 +31,9 @@ interface StoredRow {
   photoPath: string | null;
   /** 1 — hozirgina yaratilgan (DB soati bo‘yicha). */
   fresh: number | string;
+  /** Shu paketning o‘zi yozgan (oxirgi 5 soniya) — statistika uchun aniqroq belgi. */
+  inserted: number | string;
 }
-
-/** Event shundan eski bo‘lsa — terminal navbatdan yuboryapti (kechikmoqda). */
-const LAG_THRESHOLD_MS = 10 * 60 * 1000;
-export const PUSH_LAG_KEY_PREFIX = 'edav:push:lag:';
-
-/** Jonli efirga faqat shu muddatdagi eventlar chiqadi. */
-const LIVE_MAX_AGE_MS = 10 * 60 * 1000;
 
 const keyOf = (terminalId: number, serialNo: string, at: Date) =>
   `${terminalId}:${serialNo}:${at.getTime()}`;
@@ -54,6 +55,8 @@ export class PushEventWriterService {
     private readonly people: LivePeopleService,
     private readonly redisService: RedisService,
     private readonly statsQueue: DashboardStatsQueue,
+    private readonly settings: SettingsService,
+    private readonly activity: EventActivityRecorder,
   ) {}
 
   async write(events: PushStreamEvent[]): Promise<void> {
@@ -84,6 +87,7 @@ export class PushEventWriterService {
     await this.updateDailyAttendance(sources);
     await this.updateTerminals(events);
     await this.markLag(events);
+    await this.recordActivity(events, rows);
 
     // Faqat yangi yozuvlar (takroriy push/polling emas) jonli efirga chiqadi.
     await this.publishLive(sources.filter((source) => source.fresh));
@@ -140,7 +144,8 @@ export class PushEventWriterService {
 
     const stored: StoredRow[] = await this.dataSource.query(
       `SELECT id, terminalId, serialNo, eventAt, photoPath,
-              createdAt >= NOW(3) - INTERVAL 60 SECOND AS fresh
+              createdAt >= NOW(3) - INTERVAL 60 SECOND AS fresh,
+              createdAt >= NOW(3) - INTERVAL 5 SECOND AS inserted
          FROM attendance_events
         WHERE (terminalId, serialNo, eventAt) IN (${events.map(() => '(?, ?, ?)').join(', ')})`,
       keys,
@@ -240,7 +245,8 @@ export class PushEventWriterService {
    */
   private async markLag(events: PushStreamEvent[]): Promise<void> {
     const lagging = new Set<number>();
-    const threshold = Date.now() - LAG_THRESHOLD_MS;
+    const threshold =
+      Date.now() - this.settings.getInt('pushLagMinutes') * 60_000;
     for (const event of events) {
       if (new Date(event.at).getTime() < threshold) lagging.add(event.t);
     }
@@ -257,11 +263,49 @@ export class PushEventWriterService {
     }
   }
 
+  /** Soatlik yig‘ma: terminal bo‘yicha nechta event keldi, nechtasi yangi, rasm va kechikish. */
+  private async recordActivity(
+    events: PushStreamEvent[],
+    rows: Map<string, StoredRow>,
+  ): Promise<void> {
+    const now = Date.now();
+    const byTerminal = new Map<number, EventActivityEntry>();
+
+    for (const event of events) {
+      const entry = byTerminal.get(event.t) ?? {
+        terminalId: event.t,
+        schoolId: event.s,
+        source: 'PUSH' as const,
+        received: 0,
+        inserted: 0,
+        duplicates: 0,
+        withPicture: 0,
+        withoutPicture: 0,
+        maxLagSeconds: 0,
+      };
+      byTerminal.set(event.t, entry);
+
+      const row = rows.get(keyOf(event.t, event.n, new Date(event.at)));
+      entry.received++;
+      if (row && Number(row.inserted) === 1) entry.inserted++;
+      else entry.duplicates++;
+      if (event.ph) entry.withPicture++;
+      else entry.withoutPicture++;
+      entry.maxLagSeconds = Math.max(
+        entry.maxLagSeconds ?? 0,
+        (now - new Date(event.at).getTime()) / 1000,
+      );
+    }
+
+    await this.activity.record([...byTerminal.values()]);
+  }
+
   private async publishLive(all: LiveSourceEvent[]): Promise<void> {
     // Jonli efir — hozirgi o‘tishlar. Terminal xotiradagi eski eventlarni
     // yuborayotganda (navbat) ular efirga chiqmaydi; hisoblagichlar esa
     // bazadan olinadi va baribir to‘g‘ri o‘sadi.
-    const since = Date.now() - LIVE_MAX_AGE_MS;
+    const since =
+      Date.now() - this.settings.getInt('liveMaxAgeMinutes') * 60_000;
     const sources = all.filter((source) => source.eventAt.getTime() >= since);
     if (sources.length === 0) return;
 

@@ -7,3 +7,6 @@ Viloyat va tuman chegaralari:
 Fayl paketdan kod ishga tushirilmasdan, faqat ma’lumot sifatida ajratib olingan.
 Ma’lumotlar eski ma’muriy bo‘linishga asoslangan (199 tuman) — yangi tashkil etilgan
 tumanlar xaritada ko‘rinmaydi, lekin statistikada hisobga olinadi.
+
+Koordinata → xarita (projectLatLng) formulasi: react-uzbekistan-map 0.1.0 (MIT) dagi `projectPoint`
+va `PROJECTION` konstantalaridan olingan; geometriya aynan shu Mercator proyeksiyasi bilan chizilgan.

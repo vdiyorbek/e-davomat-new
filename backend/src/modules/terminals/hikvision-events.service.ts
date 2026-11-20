@@ -56,6 +56,16 @@ function isEvent(value: unknown): value is HikvisionEvent {
   );
 }
 
+/**
+ * Hikvision ISAPI vaqtni «2026-11-19T00:00:00+05:00» ko‘rinishida kutadi:
+ * millisekundsiz va UTC ('Z') emas, Toshkent siljishi bilan. Boshqacha bo‘lsa HTTP 400.
+ */
+export function toTerminalTime(value: string | number | Date): string {
+  const at = new Date(value);
+  const local = new Date(at.getTime() + 5 * 60 * 60 * 1000);
+  return `${local.toISOString().slice(0, 19)}+05:00`;
+}
+
 @Injectable()
 export class HikvisionEventsService {
   async *readEvents(
@@ -79,7 +89,10 @@ export class HikvisionEventsService {
       throw new Error('Bitta event qidiruvi 24 soatdan oshmasligi kerak');
     }
 
-    yield* this.search(terminal, password, { startTime, endTime });
+    yield* this.search(terminal, password, {
+      startTime: toTerminalTime(startMs),
+      endTime: toTerminalTime(endMs),
+    });
   }
 
   /**
@@ -249,7 +262,14 @@ export class HikvisionEventsService {
       }
 
       if (response.status !== 200) {
-        throw new Error(`Event so‘rovi HTTP ${response.status} bilan tugadi`);
+        // Terminal rad etish sababini yozadi (statusString/subStatusCode) — diagnostika uchun.
+        const reason =
+          typeof response.data === 'string'
+            ? response.data.replace(/\s+/g, ' ').trim().slice(0, 200)
+            : '';
+        throw new Error(
+          `Event so‘rovi HTTP ${response.status} bilan tugadi${reason ? `: ${reason}` : ''}`,
+        );
       }
 
       let parsed: unknown;

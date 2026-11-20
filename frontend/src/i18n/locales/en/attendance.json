@@ -24,7 +24,7 @@
   "loading": "Loading attendance…",
   "loadFailed": "Could not load attendance.",
   "emptyTitle": "No records found",
-  "empty": "No attendance records match the selected filters.",
+  "empty": "No attendance records for this date: it is before the school joined the platform, or data has not arrived yet. The list is built from the day the school was connected.",
   "total": "Total records: {{formatted}}",
   "perPage": "Per page",
   "firstPage": "First page",
@@ -49,7 +49,8 @@
     "anomaly": "Needs review",
     "day_off": "Day off",
     "unconfigured": "Schedule not set",
-    "conflict": "Calendar conflict"
+    "conflict": "Calendar conflict",
+    "no_data": "No data"
   },
   "person": {
     "loadFailed": "Could not load attendance history.",
@@ -78,5 +79,6 @@
       "students": "Student",
       "teachers": "Teacher"
     }
-  }
+  },
+  "photoOpen": "View the turnstile photo"
 }

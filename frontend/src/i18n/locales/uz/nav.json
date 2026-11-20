@@ -47,7 +47,12 @@
     "studentSchedule": "Dars jadvalim",
     "studentTests": "Testlarim",
     "myAttendance": "Davomatim",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "systemSettings": "Tizim sozlamalari",
+    "inspectorHome": "Uchastkavoy kabineti",
+    "inspectorAbsentees": "Kelmayotganlar",
+    "inspectorCases": "O‘rganish hisobotlari",
+    "inspectorsManage": "Uchastkavoylar"
   },
   "short": {
     "profile": "Profil",
@@ -63,6 +68,10 @@
     "studentSchedule": "Jadval",
     "studentTests": "Testlar",
     "myAttendance": "Davomat",
-    "dashboard": "Bosh sahifa"
+    "dashboard": "Bosh sahifa",
+    "inspectorHome": "Bosh sahifa",
+    "inspectorAbsentees": "Kelmayotgan",
+    "inspectorCases": "Hisobot",
+    "inspectorsManage": "Uchastkavoy"
   }
 }

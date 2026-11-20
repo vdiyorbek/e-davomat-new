@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DailyAttendance } from './daily-attendance.entity';
 import { DailyAttendanceController } from './daily-attendance.controller';
 import { DailyAttendanceService } from './daily-attendance.service';
+import { DailyAttendanceMaterializer } from './daily-attendance-materializer.service';
 import { DailyAttendanceReadService } from './daily-attendance-read.service';
 import { DailyAttendanceExportService } from './daily-attendance-export.service';
 import { DailyAttendanceSummaryService } from './daily-attendance-summary.service';
@@ -20,6 +21,7 @@ import { DashboardStatsQueueModule } from '../dashboard/dashboard-stats.queue';
   controllers: [DailyAttendanceController],
   providers: [
     DailyAttendanceService,
+    DailyAttendanceMaterializer,
     DailyAttendanceReadService,
     DailyAttendanceExportService,
     DailyAttendanceSummaryService,

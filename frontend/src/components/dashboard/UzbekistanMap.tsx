@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { authorizedPut } from '@/lib/auth-session';
-import { matchUnits, useUzbekistanGeo } from '@/lib/geo';
+import { inUzbekistan, matchUnits, projectLatLng, useUzbekistanGeo } from '@/lib/geo';
 import type { GeoShape } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { DashboardChild, DashboardOverview } from '@/types/dashboard';
@@ -25,6 +25,12 @@ interface Hover {
     width: number;
     name: string;
     child: DashboardChild | null;
+}
+
+interface SchoolDot {
+    child: DashboardChild;
+    x: number;
+    y: number;
 }
 
 function zoomBox(bbox: [number, number, number, number], aspect: number): string {
@@ -64,24 +70,57 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
         if (level === 'COUNTRY') {
             const shapes = geo.regions.map((r) => ({ id: r.id, names: [r.name.uz, r.name.en, r.name.ru, r.name['uz-Cyrl']] }));
             const match = matchUnits(overview.children, shapes);
-            return { viewBox: countryBox, active: geo.regions as GeoShape[], background: [] as GeoShape[], match, focus: null as string | null };
+            return { viewBox: countryBox, active: geo.regions as GeoShape[], background: [] as GeoShape[], match, focus: null as string | null, dots: [] as SchoolDot[], zoomWidth: geo.viewBox[2] };
         }
 
         // Viloyat (yoki undan quyi) — tumanlar ko‘rinishi.
         const regionShapes = geo.regions.map((r) => ({ id: r.id, names: [r.name.uz, r.name.en, r.name.ru, r.name['uz-Cyrl']] }));
         const regionKey = region ? matchUnits([region], regionShapes).get(region.id) : undefined;
         const regionShape = geo.regions.find((r) => r.id === regionKey);
-        if (!regionShape) return { viewBox: countryBox, active: [], background: geo.regions as GeoShape[], match: new Map<number, string>(), focus: null, missingRegion: true };
+        if (!regionShape) return { viewBox: countryBox, active: [], background: geo.regions as GeoShape[], match: new Map<number, string>(), focus: null, missingRegion: true, dots: [] as SchoolDot[], zoomWidth: geo.viewBox[2] };
 
         const districtShapes = geo.districts.filter((d) => d.regionId === regionShape.id);
         const units = level === 'REGION' ? overview.children : district ? [{ id: district.id, name: district.name, geoKey: district.geoKey }] : [];
         const match = matchUnits(units, districtShapes.map((d) => ({ id: d.id, names: [d.name] })));
+        const focus = level === 'REGION' ? null : district ? (match.get(district.id) ?? null) : null;
+
+        // Tuman darajasida maktablar nuqta bo‘lib chiqadi (lokatsiyasi to‘g‘ri kiritilganlari).
+        const dots: SchoolDot[] =
+            level === 'DISTRICT'
+                ? overview.children.flatMap((child) => {
+                      if (child.latitude == null || child.longitude == null || !inUzbekistan(child.latitude, child.longitude)) return [];
+                      const [x, y] = projectLatLng(child.latitude, child.longitude);
+                      return [{ child, x, y }];
+                  })
+                : [];
+
+        // Tuman tanlanganda xarita shu tumanga (va maktab nuqtalariga) yaqinlashadi.
+        const focusShape = focus ? districtShapes.find((d) => d.id === focus) : undefined;
+        // Maktab nuqtalari bo‘lsa — ularning o‘ziga (tuman konturi eski xaritada aniq bo‘lmasligi mumkin);
+        // bitta nuqta haddan tashqari yaqinlashtirilmasligi uchun eng kichik kenglik beriladi.
+        let box = regionShape.bbox;
+        if (level === 'DISTRICT') {
+            if (dots.length > 0) {
+                const minSpan = 14;
+                const [x0, y0, x1, y1] = [Math.min(...dots.map((d) => d.x)), Math.min(...dots.map((d) => d.y)), Math.max(...dots.map((d) => d.x)), Math.max(...dots.map((d) => d.y))];
+                const cx = (x0 + x1) / 2;
+                const cy = (y0 + y1) / 2;
+                const half = Math.max((x1 - x0) / 2, (y1 - y0) / 2, minSpan / 2);
+                box = [cx - half, cy - half, cx + half, cy + half];
+            } else if (focusShape) {
+                box = focusShape.bbox;
+            }
+        }
+        const viewBox = zoomBox(box, aspect);
+
         return {
-            viewBox: zoomBox(regionShape.bbox, aspect),
+            viewBox,
             active: districtShapes as GeoShape[],
             background: geo.regions.filter((r) => r.id !== regionShape.id) as GeoShape[],
             match,
-            focus: level === 'REGION' ? null : district ? (match.get(district.id) ?? null) : null,
+            focus,
+            dots,
+            zoomWidth: Number(viewBox.split(' ')[2]),
         };
     }, [geo, level, region, district, overview.children]);
 
@@ -95,6 +134,11 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
     }
     // Tuman/maktab darajasida tanlangan tuman umumiy foiz bilan bo‘yaladi.
     const focusRate = overview.students.rate;
+    const schoolMode = level === 'DISTRICT';
+    // Nuqta xarita masshtabiga moslanadi: kichik tumanda ham katta bo‘lib ketmaydi.
+    const dotRadius = Math.min(6, Math.max(0.6, view.zoomWidth / 75));
+    const dotted = new Set(view.dots.map((dot) => dot.child.id));
+    const withoutLocation = schoolMode ? overview.children.filter((child) => !dotted.has(child.id)) : [];
     const unmatched = level === 'REGION' || level === 'COUNTRY' ? overview.children.filter((c) => !view.match.has(c.id)) : [];
     const freeShapes = view.active.filter((shape) => ![...view.match.values()].includes(shape.id));
     const shapeName = (shape: GeoShape) => {
@@ -103,13 +147,13 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
         return geo.districts.find((d) => d.id === shape.id)?.name ?? shape.id;
     };
 
-    function showTooltip(event: React.PointerEvent | React.FocusEvent, shape: GeoShape, child: DashboardChild | null) {
+    function showTooltip(event: React.PointerEvent | React.FocusEvent, shape: GeoShape | null, child: DashboardChild | null) {
         const box = containerRef.current?.getBoundingClientRect();
         if (!box) return;
-        const target = (event.currentTarget as SVGPathElement).getBoundingClientRect();
+        const target = (event.currentTarget as SVGElement).getBoundingClientRect();
         const x = 'clientX' in event ? event.clientX - box.left : target.left + target.width / 2 - box.left;
         const y = 'clientY' in event ? event.clientY - box.top : target.top - box.top;
-        setHover({ x, y, width: box.width, name: child?.name ?? shapeName(shape), child });
+        setHover({ x, y, width: box.width, name: child?.name ?? (shape ? shapeName(shape) : ''), child });
     }
 
     return (
@@ -128,7 +172,8 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
                     {view.active.map((shape) => {
                         const child = childByShape.get(shape.id) ?? null;
                         const isFocus = view.focus === shape.id;
-                        const rate = child ? child.students.rate : isFocus ? focusRate : null;
+                        // Maktab nuqtalari bor bo‘lsa, tuman o‘zi neytral (rangni nuqtalar beradi).
+                        const rate = schoolMode ? null : child ? child.students.rate : isFocus ? focusRate : null;
                         const bin = rateBin(rate);
                         const dimmed = view.focus !== null && !isFocus;
                         const clickable = Boolean(child);
@@ -136,7 +181,7 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
                             <path
                                 key={shape.id}
                                 d={shape.d}
-                                fill={bin === null ? (child || isFocus ? 'url(#map-nodata)' : 'var(--viz-nodata)') : binFill(bin)}
+                                fill={bin === null ? (schoolMode ? (isFocus ? 'var(--viz-grid)' : 'var(--viz-nodata)') : child || isFocus ? 'url(#map-nodata)' : 'var(--viz-nodata)') : binFill(bin)}
                                 opacity={dimmed ? 0.35 : 1}
                                 stroke="var(--card)"
                                 strokeWidth={isFocus ? 2.5 : 1.2}
@@ -154,6 +199,35 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
                                 onClick={() => child && onSelect(child)}
                                 onKeyDown={(event) => {
                                     if (child && (event.key === 'Enter' || event.key === ' ')) {
+                                        event.preventDefault();
+                                        onSelect(child);
+                                    }
+                                }}
+                            />
+                        );
+                    })}
+                    {/* Maktablar: davomat foiziga qarab bo‘yalgan nuqtalar */}
+                    {view.dots.map(({ child, x, y }) => {
+                        const bin = rateBin(child.students.rate);
+                        return (
+                            <circle
+                                key={child.id}
+                                cx={x}
+                                cy={y}
+                                r={dotRadius}
+                                fill={bin === null ? 'var(--viz-nodata-ink)' : binFill(bin)}
+                                stroke="var(--card)"
+                                strokeWidth={dotRadius / 3}
+                                className="cursor-pointer outline-none hover:brightness-110 focus-visible:stroke-[var(--foreground)]"
+                                tabIndex={0}
+                                role="button"
+                                aria-label={t('dashboard.map.unitLabel', { name: child.name, rate: formatRate(child.students.rate) })}
+                                onPointerMove={(event) => showTooltip(event, null, child)}
+                                onFocus={(event) => showTooltip(event, null, child)}
+                                onBlur={() => setHover(null)}
+                                onClick={() => onSelect(child)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
                                         event.preventDefault();
                                         onSelect(child);
                                     }
@@ -201,6 +275,13 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
                     {t('dashboard.map.noData')}
                 </li>
             </ul>
+
+            {withoutLocation.length > 0 && (
+                <p className="flex flex-wrap items-center gap-1.5 rounded-xl border border-dashed p-3 text-xs text-muted-foreground">
+                    <MapPinOff aria-hidden="true" className="size-3.5" />
+                    {t('dashboard.map.noLocation', { count: withoutLocation.length })}: {withoutLocation.map((child) => child.name).join(', ')}
+                </p>
+            )}
 
             {'missingRegion' in view && view.missingRegion && (
                 <p className="text-xs text-muted-foreground">{t('dashboard.map.regionNotOnMap')}</p>

@@ -16,6 +16,7 @@ const STATUS_LABELS: Record<string, string> = {
   anomaly: 'Tekshirish kerak',
   day_off: 'Dam olish kuni',
   unconfigured: 'Jadval sozlanmagan',
+  no_data: 'Ma’lumot yo‘q',
   conflict: 'Kalendar ziddiyati',
 };
 

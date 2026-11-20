@@ -7,10 +7,25 @@
   "legend": "Legend",
   "tableView": "Show as table",
   "date": "Date",
-  "dates": { "today": "Today", "yesterday": "Yesterday", "pick": "Pick a date" },
-  "scope": { "country": "Uzbekistan", "label": "Area selection" },
-  "series": { "students": "Students", "teachers": "Teachers" },
-  "units": { "regions": "Regions", "districts": "Districts", "schools": "Schools", "classes": "Classes" },
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "pick": "Pick a date"
+  },
+  "scope": {
+    "country": "Uzbekistan",
+    "label": "Area selection"
+  },
+  "series": {
+    "students": "Students",
+    "teachers": "Teachers"
+  },
+  "units": {
+    "regions": "Regions",
+    "districts": "Districts",
+    "schools": "Schools",
+    "classes": "Classes"
+  },
   "kpi": {
     "rate": "Attendance",
     "present": "Present",
@@ -41,7 +56,8 @@
     "unmatched_other": "{{count}} areas are not linked to the map",
     "assign": "Link",
     "assignFor": "Map shape for “{{name}}”",
-    "chooseShape": "Choose a shape"
+    "chooseShape": "Choose a shape",
+    "noLocation": "Not shown on the map — no location set ({{count}}). Locations are entered on the Schools page"
   },
   "ranking": {
     "title": "{{unit}} ranking",
@@ -58,21 +74,6 @@
     "empty": "No classes found.",
     "dayOff": "Day off",
     "detail": "absent {{absent}} · late {{late}}"
-  },
-  "late": {
-    "title": "Late threshold",
-    "schoolsTitle": "Schools’ late thresholds",
-    "schoolsDescription": "Each school sets its own; you can change it here if needed.",
-    "hint": "Anyone arriving this many minutes after the shift start (first lesson for teachers) counts as late. Changes apply from today.",
-    "value_one": "{{count}} minute",
-    "value_other": "{{count}} minutes",
-    "minutes": "min",
-    "minutesLabel": "Late threshold (minutes)",
-    "change": "Change",
-    "default": "Default value (not changed yet)",
-    "changedBy": "{{name}} ({{role}}) · {{date}}",
-    "invalid": "Enter a whole number from 0 to 120.",
-    "saveFailed": "Could not save."
   },
   "trend": {
     "title": "Last 30 days",

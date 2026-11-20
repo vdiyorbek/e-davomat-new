@@ -23,6 +23,7 @@ import {
   CalendarResolverService,
   attendanceCalendarKey,
 } from '../attendance-calendar/calendar-resolver.service';
+import { assumeWorkDay } from './assumed-work-day';
 import { DailyAttendance } from './daily-attendance.entity';
 import { GetAttendanceSummaryQueryDto } from './dto/get-attendance-summary-query.dto';
 
@@ -65,6 +66,8 @@ interface DayRow {
   districtId: number | string;
   regionId: number | string;
   classId: number | string | null;
+  /** O‘qituvchi: 1 — faqat boshlang‘ich sinflarda dars beradi. */
+  primaryOnly?: number | string | null;
   total: number | string;
   present: number | string | null;
   excused: number | string | null;
@@ -198,12 +201,15 @@ export class DailyAttendanceSummaryService {
       from,
       to,
       isStudent,
+      !isStudent,
     )
       .select("DATE_FORMAT(daily.date, '%Y-%m-%d')", 'date')
       .addSelect('daily.schoolId', 'schoolId')
       .addSelect('MAX(daily.districtId)', 'districtId')
       .addSelect('MAX(daily.regionId)', 'regionId')
       .addSelect(isStudent ? 'cls.classId' : 'NULL', 'classId')
+      // O‘qituvchilar: «faqat 1–4 sinf» haftasidagilar alohida guruh.
+      .addSelect(isStudent ? 'NULL' : 'cls.primaryOnly', 'primaryOnly')
       .addSelect('COUNT(*)', 'total')
       .addSelect(
         'SUM(daily.firstInTime IS NOT NULL OR daily.lastOutTime IS NOT NULL)',
@@ -219,6 +225,8 @@ export class DailyAttendanceSummaryService {
 
     if (isStudent) {
       dayQuery.addGroupBy('cls.classId');
+    } else {
+      dayQuery.addGroupBy('cls.primaryOnly');
     }
 
     const dayRows = await dayQuery.getRawMany<DayRow>();
@@ -247,10 +255,41 @@ export class DailyAttendanceSummaryService {
             schoolId: Number(row.schoolId),
             classId:
               isStudent && row.classId !== null ? Number(row.classId) : null,
+            primaryOnly: !isStudent && Number(row.primaryOnly) === 1,
           })),
         ),
       );
     }
+
+    // Maktab/kun bo‘yicha kelganlar: kalendar sozlanmagan kunni (maktabda kamida
+    // bitta kishi kelgan bo‘lsa) o‘quv kuni deb faraz qilish uchun.
+    const arrivalsBySchoolDay = new Map<string, number>();
+    for (const row of dayRows) {
+      const key = `${row.date}:${Number(row.schoolId)}`;
+      arrivalsBySchoolDay.set(
+        key,
+        (arrivalsBySchoolDay.get(key) ?? 0) + Number(row.present ?? 0),
+      );
+    }
+
+    // Maktabda shu kuni kimdir kelganmi (har ikki tur bo‘yicha): kelmagan bo‘lsa terminal
+    // ishlamagan bo‘lishi mumkin — bunday kun «sababsiz kelmagan» deb hisoblanmaydi.
+    const summarySchoolIds = [
+      ...new Set(dayRows.map((row) => Number(row.schoolId))),
+    ];
+    const schoolDaysWithArrivals = new Set<string>(
+      summarySchoolIds.length > 0
+        ? (
+            await this.dataSource.query<{ schoolId: number; date: string }[]>(
+              `SELECT DISTINCT schoolId, DATE_FORMAT(date, '%Y-%m-%d') AS date
+                 FROM daily_attendance
+                WHERE firstInTime IS NOT NULL AND date BETWEEN ? AND ?
+                  AND schoolId IN (${summarySchoolIds.map(() => '?').join(',')})`,
+              [from, to, ...summarySchoolIds],
+            )
+          ).map((item) => `${Number(item.schoolId)}:${item.date}`)
+        : [],
+    );
 
     // 3. Kesim bo‘yicha yig‘amiz.
     const totals = emptyCounters();
@@ -263,11 +302,20 @@ export class DailyAttendanceSummaryService {
       const classId =
         isStudent && row.classId !== null ? Number(row.classId) : null;
 
-      const state =
+      const { state } = assumeWorkDay(
         statesByDate
           .get(row.date)
-          ?.get(attendanceCalendarKey(Number(row.schoolId), classId)) ??
-        'UNCONFIGURED';
+          ?.get(
+            attendanceCalendarKey(
+              Number(row.schoolId),
+              classId,
+              !isStudent && Number(row.primaryOnly) === 1,
+            ),
+          ) ?? 'UNCONFIGURED',
+        row.date,
+        (arrivalsBySchoolDay.get(`${row.date}:${Number(row.schoolId)}`) ?? 0) >
+          0,
+      );
 
       const groupId = this.groupIdOf(level, row, classId);
       const group = groups.get(groupId) ?? emptyCounters();
@@ -276,7 +324,10 @@ export class DailyAttendanceSummaryService {
       for (const counters of [group, totals]) {
         counters.personDays += total;
 
-        if (state === 'WORK_DAY') {
+        if (
+          state === 'WORK_DAY' &&
+          schoolDaysWithArrivals.has(`${Number(row.schoolId)}:${row.date}`)
+        ) {
           counters.present += present;
           counters.excused += excused;
           counters.absent += total - present - excused;
@@ -421,6 +472,7 @@ export class DailyAttendanceSummaryService {
     from: string,
     to: string,
     withClass: boolean,
+    withBand = false,
   ): SelectQueryBuilder<DailyAttendance> {
     const builder = this.dataSource
       .createQueryBuilder()
@@ -438,7 +490,7 @@ export class DailyAttendanceSummaryService {
     this.applyScope(builder, user, dailyColumns);
     this.applyFilters(builder, query, dailyColumns);
 
-    if (withClass) {
+    if (withClass || withBand) {
       builder.leftJoin(
         (sub) => {
           sub
@@ -453,6 +505,7 @@ export class DailyAttendanceSummaryService {
             .select('smPerson.pnfl', 'pnfl')
             .addSelect('sm.schoolId', 'schoolId')
             .addSelect('MAX(sm.classId)', 'classId')
+            .addSelect('MAX(sm.primaryOnly)', 'primaryOnly')
             .where('sm.type = :membershipType')
             .andWhere('sm.startDate <= :to')
             .andWhere('(sm.endDate IS NULL OR sm.endDate > :from)')
@@ -474,7 +527,7 @@ export class DailyAttendanceSummaryService {
         'cls.pnfl = daily.pnfl AND cls.schoolId = daily.schoolId',
       );
 
-      if (query.classId !== undefined) {
+      if (withClass && query.classId !== undefined) {
         builder.andWhere('cls.classId = :filterClassId', {
           filterClassId: query.classId,
         });
@@ -484,7 +537,7 @@ export class DailyAttendanceSummaryService {
     // Ichki so‘rov parametrlari ham asosiy so‘rovda bo‘lishi shart.
     builder.setParameters({ from, to, membershipType });
 
-    return builder as unknown as SelectQueryBuilder<DailyAttendance>;
+    return builder;
   }
 
   private applyScope<T extends ObjectLiteral>(

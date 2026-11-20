@@ -6,7 +6,6 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
-import { formatTime } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import { cn } from '@/lib/utils';
 import type { DailyAttendance } from '@/types/daily-attendance';
@@ -14,6 +13,7 @@ import type { DailyAttendance } from '@/types/daily-attendance';
 import { AttendanceDetailsDialog } from './AttendanceDetailsDialog';
 import { AttendanceExcuseDialog } from './AttendanceExcuseDialog';
 import { PersonAttendanceDialog } from './PersonAttendanceDialog';
+import { TimePhoto } from './TimePhoto';
 import { ATTENDANCE_STRIPE, ATTENDANCE_TONE } from './status';
 
 interface Props {
@@ -44,6 +44,8 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
     function reasonOf(item: DailyAttendance) {
         return item.attendanceStatus === 'excused' && item.excuseReason ? t(`excuses.reason.${item.excuseReason}`) : null;
     }
+
+    const nameOf = (item: DailyAttendance) => personFullName(item.person, t('attendance.noPerson'));
 
     function openPerson(item: DailyAttendance) {
         setSelected(item);
@@ -92,12 +94,16 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                                     <span className="flex items-center gap-1.5">
                                         <LogIn aria-hidden="true" className="size-4 text-success" />
                                         <span className="sr-only">{t('attendance.in')}:</span>
-                                        <span className="font-semibold tabular-nums">{formatTime(item.firstInTime)}</span>
+                                        <span className="font-semibold tabular-nums">
+                                            <TimePhoto time={item.firstInTime} url={item.firstInUrl} status={item.firstInPhotoStatus} label={t('attendance.in')} name={nameOf(item)} date={item.date} />
+                                        </span>
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <LogOut aria-hidden="true" className="size-4 text-warning" />
                                         <span className="sr-only">{t('attendance.out')}:</span>
-                                        <span className="font-semibold tabular-nums">{formatTime(item.lastOutTime)}</span>
+                                        <span className="font-semibold tabular-nums">
+                                            <TimePhoto time={item.lastOutTime} url={item.lastOutUrl} status={item.lastOutPhotoStatus} label={t('attendance.out')} name={nameOf(item)} date={item.date} />
+                                        </span>
                                     </span>
                                     {reason && <span className="truncate text-xs text-muted-foreground">{reason}</span>}
                                 </div>
@@ -151,8 +157,12 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
                                             )}
                                         </TableCell>
                                     )}
-                                    <TableCell className="font-semibold tabular-nums">{formatTime(item.firstInTime)}</TableCell>
-                                    <TableCell className="font-semibold tabular-nums">{formatTime(item.lastOutTime)}</TableCell>
+                                    <TableCell className="font-semibold tabular-nums">
+                                        <TimePhoto time={item.firstInTime} url={item.firstInUrl} status={item.firstInPhotoStatus} label={t('attendance.in')} name={nameOf(item)} date={item.date} />
+                                    </TableCell>
+                                    <TableCell className="font-semibold tabular-nums">
+                                        <TimePhoto time={item.lastOutTime} url={item.lastOutUrl} status={item.lastOutPhotoStatus} label={t('attendance.out')} name={nameOf(item)} date={item.date} />
+                                    </TableCell>
                                     <TableCell>
                                         <StatusBadge tone={ATTENDANCE_TONE[item.attendanceStatus]}>
                                             {t(`attendance.status.${item.attendanceStatus}`)}

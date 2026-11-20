@@ -13,6 +13,7 @@ import { AttendanceCalendarController } from './attendance-calendar.controller';
 import { AttendanceCalendarService } from './attendance-calendar.service';
 import { AttendanceCalendarWriteService } from './attendance-calendar-write.service';
 import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.service';
+import { TeacherWeekService } from './teacher-week.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AttendanceWeeklySchedulesService } from './attendance-weekly-schedules.
   ],
   controllers: [AttendanceCalendarController],
   providers: [
+    TeacherWeekService,
     AttendanceCalendarService,
     AttendanceCalendarWriteService,
     AttendanceWeeklySchedulesService,

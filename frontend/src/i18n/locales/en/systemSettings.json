@@ -1,0 +1,118 @@
+{
+  "eyebrow": "System",
+  "title": "System settings",
+  "description": "Settings that control how the server works. Changes take effect in every process within 15–30 seconds; no restart needed.",
+  "changed": "Changed",
+  "standard": "Default",
+  "defaultIs": "Default: {{value}}",
+  "range": "range {{min}}–{{max}}",
+  "changedBy": "Changed by {{who}} · {{date}}",
+  "on": "On",
+  "off": "Off",
+  "reset": "Reset",
+  "confirmReset": "Reset this setting to its default value?",
+  "saveFailed": "Could not save.",
+  "secretsNote": "Passwords, encryption keys, ports and connection addresses are not shown here for security reasons: they stay in the server’s .env file.",
+  "units": {
+    "seconds": "sec",
+    "minutes": "min",
+    "days": "days",
+    "count": "",
+    "grade": "grade"
+  },
+  "groups": {
+    "photos": {
+      "title": "Photo downloads",
+      "description": "Speed and order of downloading photos from terminals by link."
+    },
+    "push": {
+      "title": "Push intake",
+      "description": "Limits for receiving events from terminals (push server)."
+    },
+    "lag": {
+      "title": "Lagging terminal",
+      "description": "If push falls behind, the server pulls events and photos from the terminal itself."
+    },
+    "live": {
+      "title": "Live feed",
+      "description": "Which passes appear on the live feed page."
+    },
+    "calendar": {
+      "title": "Default school week",
+      "description": "Used when a school or class has no weekly schedule. Holiday and vacation rules and any entered weekly schedule take priority. If you enter a quarter break as “students only”, teachers stay on working days."
+    }
+  },
+  "items": {
+    "photosConcurrency": {
+      "label": "Parallel downloads",
+      "hint": "How many photos are downloaded from one terminal at the same time. Terminals are small devices; more than 3 is not recommended."
+    },
+    "photosBatchSize": {
+      "label": "Batch size",
+      "hint": "How many photos are taken from the queue per request."
+    },
+    "photosMaxBatches": {
+      "label": "Batches per run",
+      "hint": "Maximum batches per terminal each minute."
+    },
+    "photosRunSeconds": {
+      "label": "Run duration",
+      "hint": "No new batch starts after this time; the next run begins a minute later."
+    },
+    "pushSavePictures": {
+      "label": "Save photos sent with push",
+      "hint": "If off, photos are downloaded later by link only."
+    },
+    "pushMaxRpsPerTerminal": {
+      "label": "Request limit per terminal",
+      "hint": "One terminal may send this many requests per second; extra ones are rejected."
+    },
+    "pushMaxBacklog": {
+      "label": "Queue limit",
+      "hint": "If unprocessed events exceed this, the server temporarily stops accepting new ones."
+    },
+    "pushLagReconcile": {
+      "label": "Auto-pull from lagging terminal",
+      "hint": "If push falls behind, the server pulls today’s events from the terminal itself."
+    },
+    "pushLagMinutes": {
+      "label": "Lag threshold",
+      "hint": "If an event arrives older than this, the terminal is considered lagging."
+    },
+    "pushPhotoLookup": {
+      "label": "Look up photos for events without one",
+      "hint": "If push arrives without a photo, the server asks the terminal for the photo link."
+    },
+    "pushPhotoLookupDays": {
+      "label": "Photo lookup window",
+      "hint": "Photos are looked up for events within this many days."
+    },
+    "liveMaxAgeMinutes": {
+      "label": "Max age of events in the live feed",
+      "hint": "Older passes (from the backlog) do not enter the live feed; counters still update."
+    },
+    "calendarPrimaryMaxGrade": {
+      "label": "Primary grades (up to this grade)",
+      "hint": "Grades up to this one (inclusive) count as primary and have a shorter week. A teacher who teaches only these grades also follows the primary week."
+    },
+    "calendarPrimaryWeekDays": {
+      "label": "Primary grades: school days per week",
+      "hint": "This many days starting Monday: 5 = Mon–Fri, 6 = Mon–Sat."
+    },
+    "calendarGeneralWeekDays": {
+      "label": "Other grades and teachers: school days per week",
+      "hint": "This many days starting Monday: 5 = Mon–Fri, 6 = Mon–Sat."
+    }
+  },
+  "history": {
+    "title": "Change history",
+    "show": "Show",
+    "hide": "Hide",
+    "empty": "No changes yet.",
+    "date": "Date",
+    "setting": "Setting",
+    "change": "Change",
+    "who": "By",
+    "standard": "default"
+  }
+}

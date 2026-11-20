@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { RedisService } from '../../redis/redis.service';
+import { EventActivityRecorder } from '../event-activity/event-activity.recorder';
 import { AttendanceEventsService } from '../attendance-events/attendance-events.service';
 import { DailyAttendanceService } from '../daily-attendance/daily-attendance.service';
 import { tashkentDate } from '../hikvision-push/hikvision-push.types';
@@ -65,6 +66,7 @@ export class EventBackfillService {
     private readonly events: AttendanceEventsService,
     private readonly daily: DailyAttendanceService,
     private readonly redisService: RedisService,
+    private readonly activity: EventActivityRecorder,
   ) {}
 
   async status(terminalId: number): Promise<BackfillStatus | null> {
@@ -174,6 +176,20 @@ export class EventBackfillService {
           result.inserted = stats.inserted;
           result.duplicates = stats.duplicates;
           result.photosQueued = stats.photosQueued;
+
+          await this.activity.record([
+            {
+              terminalId: terminal.id,
+              schoolId: terminal.schoolId,
+              source: 'MANUAL_PULL',
+              received: stats.fetched,
+              inserted: stats.inserted,
+              duplicates: stats.duplicates,
+              withPicture: stats.photosQueued,
+              withoutPicture: Math.max(0, stats.inserted - stats.photosQueued),
+              runs: 1,
+            },
+          ]);
 
           // Kunlik davomat va dashboard qayta hisoblanadi.
           await this.daily.rebuild({ schoolId: terminal.schoolId, date });

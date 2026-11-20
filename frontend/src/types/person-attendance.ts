@@ -9,6 +9,7 @@ export type PersonDayStatus =
     | 'day_off'
     | 'unconfigured'
     | 'conflict'
+    | 'no_data'
     | 'no_record';
 
 export interface PersonAttendanceDay {

@@ -1,0 +1,118 @@
+{
+  "eyebrow": "Tizim",
+  "title": "Tizim sozlamalari",
+  "description": "Server ishini boshqaruvchi sozlamalar. O‘zgarish 15–30 soniyada barcha jarayonlarda kuchga kiradi, qayta ishga tushirish shart emas.",
+  "changed": "O‘zgartirilgan",
+  "standard": "Standart",
+  "defaultIs": "Standart: {{value}}",
+  "range": "oraliq {{min}}–{{max}}",
+  "changedBy": "O‘zgartirgan: {{who}} · {{date}}",
+  "on": "Yoqilgan",
+  "off": "O‘chirilgan",
+  "reset": "Standartga",
+  "confirmReset": "Sozlama standart qiymatga qaytarilsinmi?",
+  "saveFailed": "Saqlab bo‘lmadi.",
+  "secretsNote": "Parollar, shifrlash kalitlari, portlar va ulanish manzillari xavfsizlik uchun bu yerda ko‘rsatilmaydi: ular serverdagi .env faylida turadi.",
+  "units": {
+    "seconds": "soniya",
+    "minutes": "daqiqa",
+    "days": "kun",
+    "count": "ta",
+    "grade": "sinf"
+  },
+  "groups": {
+    "photos": {
+      "title": "Rasmlarni yuklash",
+      "description": "Terminaldan rasmlarni havola orqali yuklash tezligi va tartibi."
+    },
+    "push": {
+      "title": "Push qabul qilish",
+      "description": "Terminallardan kelayotgan eventlarni qabul qilish chegaralari (push serveri)."
+    },
+    "lag": {
+      "title": "Kechikkan terminal",
+      "description": "Push navbatda kechiksa, server eventlar va rasmlarni terminalning o‘zidan oladi."
+    },
+    "live": {
+      "title": "Jonli efir",
+      "description": "Jonli efir sahifasida qaysi o‘tishlar ko‘rinishi."
+    },
+    "calendar": {
+      "title": "Standart o‘quv haftasi",
+      "description": "Maktab yoki sinf haftalik jadval kiritmagan bo‘lsa qo‘llanadi. Bayram va ta’til qoidalari hamda kiritilgan haftalik jadval bundan ustun. Choraklik ta’tilni «faqat o‘quvchilar» deb kiritsangiz, o‘qituvchilar ish kunida qoladi."
+    }
+  },
+  "items": {
+    "photosConcurrency": {
+      "label": "Parallel yuklash soni",
+      "hint": "Bir terminaldan bir vaqtda nechta rasm yuklanadi. Terminal kichik qurilma, 3 dan oshirmaslik tavsiya etiladi."
+    },
+    "photosBatchSize": {
+      "label": "Paket hajmi",
+      "hint": "Bir so‘rovda navbatdan nechta rasm olinadi."
+    },
+    "photosMaxBatches": {
+      "label": "Bir aylanishdagi paketlar",
+      "hint": "Har daqiqada bitta terminal uchun ko‘pi bilan nechta paket ishlanadi."
+    },
+    "photosRunSeconds": {
+      "label": "Aylanish vaqti",
+      "hint": "Shu vaqtdan keyin yangi paket boshlanmaydi; keyingi aylanish bir daqiqadan keyin."
+    },
+    "pushSavePictures": {
+      "label": "Push bilan kelgan rasmni saqlash",
+      "hint": "O‘chirilsa, rasm faqat havola orqali keyin yuklanadi."
+    },
+    "pushMaxRpsPerTerminal": {
+      "label": "Bitta terminal uchun so‘rov chegarasi",
+      "hint": "Bitta terminal soniyasiga shuncha so‘rov yubora oladi, ortig‘i rad etiladi."
+    },
+    "pushMaxBacklog": {
+      "label": "Navbat chegarasi",
+      "hint": "Qayta ishlanmay turgan eventlar shundan oshsa, server yangilarini vaqtincha qabul qilmaydi."
+    },
+    "pushLagReconcile": {
+      "label": "Kechikkan terminaldan avtomatik olish",
+      "hint": "Push navbatda kechiksa, server bugungi eventlarni terminaldan o‘zi oladi."
+    },
+    "pushLagMinutes": {
+      "label": "Kechikish chegarasi",
+      "hint": "Event shundan eski bo‘lib kelsa, terminal kechikmoqda deb hisoblanadi."
+    },
+    "pushPhotoLookup": {
+      "label": "Rasmsiz eventlar uchun rasm qidirish",
+      "hint": "Push rasmsiz kelsa, server rasm havolasini terminaldan so‘raydi."
+    },
+    "pushPhotoLookupDays": {
+      "label": "Rasm qidirish muddati",
+      "hint": "Shuncha kun ichidagi eventlar uchun rasm qidiriladi."
+    },
+    "liveMaxAgeMinutes": {
+      "label": "Efirdagi eventlarning eng katta yoshi",
+      "hint": "Bundan eski (navbatdan kelgan) o‘tishlar jonli efirga chiqmaydi, hisoblagichlar esa baribir yangilanadi."
+    },
+    "calendarPrimaryMaxGrade": {
+      "label": "Boshlang‘ich sinflar (shu sinfgacha)",
+      "hint": "Shu sinfgacha (shu sinf ham) boshlang‘ich hisoblanadi: ularning o‘quv haftasi qisqaroq. O‘qituvchi faqat shu sinflarda dars bersa, u ham boshlang‘ich haftada ishlaydi."
+    },
+    "calendarPrimaryWeekDays": {
+      "label": "Boshlang‘ich sinflar: haftada o‘quv kunlari",
+      "hint": "Dushanbadan boshlab shuncha kun: 5 = Dushanba–Juma, 6 = Dushanba–Shanba."
+    },
+    "calendarGeneralWeekDays": {
+      "label": "Qolgan sinflar va o‘qituvchilar: haftada o‘quv kunlari",
+      "hint": "Dushanbadan boshlab shuncha kun: 5 = Dushanba–Juma, 6 = Dushanba–Shanba."
+    }
+  },
+  "history": {
+    "title": "O‘zgartirishlar tarixi",
+    "show": "Ko‘rsatish",
+    "hide": "Yashirish",
+    "empty": "Hali o‘zgartirish bo‘lmagan.",
+    "date": "Sana",
+    "setting": "Sozlama",
+    "change": "O‘zgarish",
+    "who": "Kim",
+    "standard": "standart"
+  }
+}

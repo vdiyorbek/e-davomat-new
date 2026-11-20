@@ -17,13 +17,18 @@ import {
 import { Subject } from '../subjects/subject.entity';
 import { UserRole } from '../users/enums/user-role.enum';
 
+import { SettingsService } from '../system-settings/settings.service';
+import { refreshPrimaryOnly } from '../attendance-calendar/teacher-week';
 import { TeacherClassSubject } from './teacher-class-subject.entity';
 import { CreateTeacherAssignmentDto } from './dto/create-teacher-assignment.dto';
 import { ListTeacherAssignmentsDto } from './dto/list-teacher-assignments.dto';
 
 @Injectable()
 export class TeacherAssignmentsService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly settings: SettingsService,
+  ) {}
 
   private async checkSchoolAccess(
     schoolId: number,
@@ -193,7 +198,16 @@ export class TeacherAssignmentsService {
             endDate,
           });
 
-          return repository.save(assignment);
+          const saved = await repository.save(assignment);
+
+          // O‘qituvchining standart haftasi (faqat 1–4 sinfmi) shu zahoti yangilanadi.
+          await refreshPrimaryOnly(
+            manager,
+            this.settings.getInt('calendarPrimaryMaxGrade'),
+            [membership.id],
+          );
+
+          return saved;
         },
       );
     } catch (error: unknown) {

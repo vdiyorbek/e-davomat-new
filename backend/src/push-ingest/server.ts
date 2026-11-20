@@ -13,6 +13,7 @@ import {
 } from '../modules/hikvision-push/hikvision-push.types';
 import type { PushConfig } from './config';
 import type { PhotoStore } from './photo-store';
+import type { PushRuntime } from './runtime-settings';
 import type { PushTerminal } from './terminal-registry';
 
 const PATH = /^\/(?:api\/)?hikvision-push\/([a-f0-9]{64})\/?$/i;
@@ -34,6 +35,8 @@ export interface IngestDeps {
   };
   redis: Pick<Redis, 'xadd' | 'xlen'>;
   photos: Pick<PhotoStore, 'save' | 'remove'>;
+  /** Jonli o‘zgaradigan sozlamalar; berilmasa .env qiymatlari ishlatiladi. */
+  runtime?: PushRuntime;
   log: (level: 'warn' | 'error', message: string) => void;
 }
 
@@ -96,6 +99,11 @@ export function createPushServer(deps: IngestDeps): {
   stats: IngestStats;
 } {
   const { config, registry, redis, photos, log } = deps;
+  const runtime: PushRuntime = deps.runtime ?? {
+    savePictures: config.savePictures,
+    perTerminalRps: config.perTerminalRps,
+    maxBacklog: config.maxBacklog,
+  };
   const stats: IngestStats = {
     accepted: 0,
     ignored: 0,
@@ -119,7 +127,7 @@ export function createPushServer(deps: IngestDeps): {
       backlogCheckedAt = now;
       backlog = await redis.xlen(PUSH_STREAM_KEY);
     }
-    return backlog >= config.maxBacklog;
+    return backlog >= runtime.maxBacklog;
   }
 
   function rateLimited(terminalId: number): boolean {
@@ -131,7 +139,7 @@ export function createPushServer(deps: IngestDeps): {
       return false;
     }
     bucket.count += 1;
-    return bucket.count > config.perTerminalRps;
+    return bucket.count > runtime.perTerminalRps;
   }
 
   async function handle(
@@ -225,7 +233,7 @@ export function createPushServer(deps: IngestDeps): {
       }
     }
 
-    if (config.savePictures && event.picture) {
+    if (runtime.savePictures && event.picture) {
       try {
         photoPath = await photos.save(
           terminal.id,

@@ -25,6 +25,9 @@ import {
   CalendarRange,
   Home,
   Radio,
+  SlidersHorizontal,
+  UserX,
+  UserPlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -116,11 +119,32 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "inspector",
     items: [
       {
+        to: "/inspector",
+        key: "inspectorHome",
+        icon: Home,
+        roles: ["MAHALLA_INSPECTOR"],
+        mobilePriority: 1,
+      },
+      {
+        to: "/inspector/absentees",
+        key: "inspectorAbsentees",
+        icon: UserX,
+        roles: ["MAHALLA_INSPECTOR"],
+        mobilePriority: 2,
+      },
+      {
+        to: "/inspector/cases",
+        key: "inspectorCases",
+        icon: FileCheck2,
+        roles: ["MAHALLA_INSPECTOR"],
+        mobilePriority: 3,
+      },
+      {
         to: "/inspector/students",
         key: "inspectorStudents",
         icon: UsersRound,
         roles: ["MAHALLA_INSPECTOR"],
-        mobilePriority: 1,
+        mobilePriority: 4,
       },
       {
         to: "/inspector/talks",
@@ -246,10 +270,22 @@ export const NAV_GROUPS: NavGroup[] = [
         roles: ["SUPER_ADMIN"],
       },
       {
+        to: "/system-settings",
+        key: "systemSettings",
+        icon: SlidersHorizontal,
+        roles: ["SUPER_ADMIN"],
+      },
+      {
         to: "/users",
         key: "users",
         icon: UserCog,
         roles: ADMIN_ROLES,
+      },
+      {
+        to: "/inspectors",
+        key: "inspectorsManage",
+        icon: UserPlus,
+        roles: ["SUPER_ADMIN", "REGION_ADMIN", "DISTRICT_ADMIN"],
       },
     ],
   },

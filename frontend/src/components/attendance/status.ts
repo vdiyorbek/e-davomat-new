@@ -10,6 +10,7 @@ export const ATTENDANCE_TONE: Record<AttendanceStatus, StatusTone> = {
     day_off: 'neutral',
     unconfigured: 'warning',
     conflict: 'danger',
+    no_data: 'neutral',
 };
 
 export const ATTENDANCE_STRIPE: Record<AttendanceStatus, string> = {
@@ -21,4 +22,5 @@ export const ATTENDANCE_STRIPE: Record<AttendanceStatus, string> = {
     day_off: 'bg-muted-foreground',
     unconfigured: 'bg-warning',
     conflict: 'bg-destructive',
+    no_data: 'bg-border',
 };

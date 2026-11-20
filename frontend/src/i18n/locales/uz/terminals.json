@@ -582,5 +582,20 @@
       "inserted": "Yangi",
       "duplicates": "Allaqachon bor"
     }
+  },
+  "timeSync": {
+    "button": "Vaqtni yangilash",
+    "confirmTitle": "Terminallar vaqtini yangilaymizmi?",
+    "confirmDescription": "Barcha faol terminallarning soati server vaqti (Toshkent, UTC+5) bilan moslashtiriladi. Bu bir necha daqiqa olishi mumkin.",
+    "confirm": "Yangilash",
+    "failed": "Vaqtni yangilab bo‘lmadi.",
+    "resultTitle": "Vaqtni yangilash natijasi",
+    "running": "Terminallar yangilanmoqda…",
+    "summary": "Muvaffaqiyatli: {{ok}}, xato: {{failed}}, jami: {{total}}.",
+    "ok": "Yangilandi",
+    "fail": "Xato",
+    "wasOff": "Oldin {{value}} farq bor edi",
+    "seconds": "{{count}} soniya",
+    "minutes": "{{count}} daqiqa"
   }
 }

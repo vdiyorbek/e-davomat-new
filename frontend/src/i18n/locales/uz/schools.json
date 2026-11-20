@@ -24,7 +24,9 @@
     "location": "Hudud",
     "students": "O‘quvchilar",
     "teachers": "O‘qituvchilar",
-    "terminals": "Terminallar"
+    "terminals": "Terminallar",
+    "lateThreshold": "Kechikish chegarasi",
+    "coordinates": "Lokatsiya"
   },
   "inactiveTerminals": "+{{count}} ta nofaol",
   "pagesLabel": "Maktablar sahifalari",
@@ -43,7 +45,26 @@
       "location": "Viloyat va tumanni tanlang.",
       "noChanges": "Hali hech qanday o‘zgarish kiritilmadi.",
       "uncertain": "Saqlash natijasini tasdiqlab bo‘lmadi. Qayta yuborishdan oldin oynani yoping va ro‘yxatni yangilab tekshiring.",
-      "saveFailed": "Maktabni saqlashda xatolik yuz berdi."
-    }
+      "saveFailed": "Maktabni saqlashda xatolik yuz berdi.",
+      "coords": "Lokatsiya noto‘g‘ri. «kenglik, uzunlik» ko‘rinishida va O‘zbekiston ichida bo‘lishi kerak (masalan, 41.311081, 69.240562)."
+    },
+    "location": "Lokatsiya (kenglik, uzunlik)",
+    "locationHint": "Maktab xaritada ko‘rinishi uchun. Google Maps’da maktab joyini o‘ng tugma bilan bosib, koordinatani nusxalang va shu yerga qo‘ying. Bo‘sh qoldirish mumkin."
+  },
+  "late": {
+    "hint": "Smena (o‘qituvchilar uchun birinchi dars) boshlanishidan shuncha daqiqadan keyin kelgan kishi kechikkan hisoblanadi. O‘zgarish bugundan boshlab qo‘llanadi.",
+    "value": "{{count}} daqiqa",
+    "minutes": "daqiqa",
+    "minutesLabel": "Kechikish chegarasi (daqiqa)",
+    "change": "O‘zgartirish",
+    "default": "Standart qiymat (hali o‘zgartirilmagan)",
+    "changedBy": "{{name}} ({{role}}) · {{date}}",
+    "invalid": "0 dan 120 gacha butun son kiriting.",
+    "saveFailed": "Saqlab bo‘lmadi."
+  },
+  "noLocation": "Lokatsiya kiritilmagan",
+  "location": {
+    "enter": "Kiritish",
+    "hint": "Google Maps’da maktab joyini o‘ng tugma bilan bosib, koordinatani nusxalang. Bo‘sh qoldirsangiz, lokatsiya o‘chadi."
   }
 }

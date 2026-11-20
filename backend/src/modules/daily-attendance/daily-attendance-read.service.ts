@@ -33,12 +33,15 @@ import {
   CalendarResolverService,
   attendanceCalendarKey,
 } from '../attendance-calendar/calendar-resolver.service';
+import { assumeWorkDay } from './assumed-work-day';
+import { DailyAttendanceMaterializer } from './daily-attendance-materializer.service';
 
 @Injectable()
 export class DailyAttendanceReadService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly calendarResolver: CalendarResolverService,
+    private readonly materializer: DailyAttendanceMaterializer,
   ) {}
 
   private scopedQuery(user: AuthenticatedUser) {
@@ -144,28 +147,53 @@ export class DailyAttendanceReadService {
 
     // O'qituvchilar uchun maktab bo'yicha jadval.
     if (membershipType === MembershipType.TEACHER) {
+      // Har maktab uchun ikkita hafta: umumiy va «faqat 1–4 sinfda dars beradi».
       const states = await this.calendarResolver.resolveForAttendanceDay(
         query.date,
         membershipType,
-        schoolIds.map((schoolId) => ({
-          schoolId,
-          classId: null,
-        })),
+        schoolIds.flatMap((schoolId) => [
+          { schoolId, classId: null },
+          { schoolId, classId: null, primaryOnly: true },
+        ]),
       );
 
-      const workingSchoolIds = schoolIds.filter(
+      const generalSchoolIds = schoolIds.filter(
         (schoolId) =>
-          states.get(attendanceCalendarKey(schoolId, null)) === 'WORK_DAY',
+          states.get(attendanceCalendarKey(schoolId, null, false)) ===
+          'WORK_DAY',
+      );
+      const primarySchoolIds = schoolIds.filter(
+        (schoolId) =>
+          states.get(attendanceCalendarKey(schoolId, null, true)) ===
+          'WORK_DAY',
       );
 
-      if (!workingSchoolIds.length) {
+      if (!generalSchoolIds.length && !primarySchoolIds.length) {
         return { sql: '1 = 0', params: {} };
       }
 
+      const isPrimaryTeacher = `EXISTS (
+        SELECT 1 FROM school_memberships AS tm
+        INNER JOIN persons AS tp ON tp.id = tm.personId
+        WHERE tm.schoolId = daily.schoolId AND tp.pnfl = daily.pnfl
+          AND tm.type = 'TEACHER' AND tm.primaryOnly = 1
+          AND tm.startDate <= daily.date
+          AND (tm.endDate IS NULL OR tm.endDate > daily.date)
+      )`;
+
       return {
-        sql: 'daily.schoolId IN (:...calendarWorkingSchools)',
+        sql: `(
+          (daily.schoolId IN (:...calendarGeneralSchools) AND NOT ${isPrimaryTeacher})
+          OR (daily.schoolId IN (:...calendarPrimarySchools) AND ${isPrimaryTeacher})
+        )`,
         params: {
-          calendarWorkingSchools: workingSchoolIds,
+          // Bo‘sh ro‘yxat SQL xatosiga olib kelmasligi uchun 0.
+          calendarGeneralSchools: generalSchoolIds.length
+            ? generalSchoolIds
+            : [0],
+          calendarPrimarySchools: primarySchoolIds.length
+            ? primarySchoolIds
+            : [0],
         },
       };
     }
@@ -432,6 +460,15 @@ export class DailyAttendanceReadService {
     user: AuthenticatedUser,
     membershipType: MembershipType = MembershipType.STUDENT,
   ) {
+    // Event kelmagan kunda ham a’zolar ro‘yxati bo‘sh qolmasin: qatorlarni tayyorlaymiz.
+    await this.materializer
+      .ensureForRequest(query.date, user, {
+        regionId: query.regionId,
+        districtId: query.districtId,
+        schoolId: query.schoolId,
+      })
+      .catch(() => undefined);
+
     const builder = await this.filteredQuery(query, user, membershipType);
     const [rows, total] = await builder
       .orderBy('daily.id', 'DESC')
@@ -475,6 +512,7 @@ export class DailyAttendanceReadService {
             .addSelect('membership.classId', 'classId')
             .addSelect('schoolClass.name', 'className')
             .addSelect('schoolClass.academicYear', 'academicYear')
+            .addSelect('membership.primaryOnly', 'primaryOnly')
             .where('person.pnfl IN (:...pnfls)', { pnfls })
             .andWhere('membership.schoolId IN (:...schoolIds)', {
               schoolIds,
@@ -497,6 +535,7 @@ export class DailyAttendanceReadService {
               classId: number | string | null;
               className: string | null;
               academicYear: string | null;
+              primaryOnly: number | boolean | null;
             }>()
         : [];
 
@@ -530,8 +569,27 @@ export class DailyAttendanceReadService {
             membership?.classId != null
               ? Number(membership.classId)
               : null,
+          primaryOnly:
+            membershipType === MembershipType.TEACHER &&
+            Number(membership?.primaryOnly) === 1,
         };
       }),
+    );
+
+    // Maktabda shu kuni kamida bitta kishi kelganmi (terminal ishlayaptimi) —
+    // kalendar sozlanmagan kunni o‘quv kuni deb faraz qilish uchun.
+    const pageSchoolIds = [...new Set(rows.map((row) => Number(row.schoolId)))];
+    const schoolsWithArrivals = new Set<number>(
+      pageSchoolIds.length > 0
+        ? (
+            await this.dataSource.query<{ schoolId: number }[]>(
+              `SELECT DISTINCT schoolId FROM daily_attendance
+                WHERE date = ? AND firstInTime IS NOT NULL
+                  AND schoolId IN (${pageSchoolIds.map(() => '?').join(',')})`,
+              [query.date, ...pageSchoolIds],
+            )
+          ).map((item) => Number(item.schoolId))
+        : [],
     );
 
     const personIds = [...new Set(persons.map((p) => p.id))];
@@ -581,7 +639,7 @@ export class DailyAttendanceReadService {
 
         const hasActiveExcuse = Boolean(excuse);
 
-        const calendarStatus =
+        const resolvedCalendar =
           calendarStates.get(
             attendanceCalendarKey(
               row.schoolId,
@@ -589,8 +647,17 @@ export class DailyAttendanceReadService {
                 membership?.classId != null
                 ? Number(membership.classId)
                 : null,
+              membershipType === MembershipType.TEACHER &&
+                Number(membership?.primaryOnly) === 1,
             ),
           ) ?? 'UNCONFIGURED';
+
+        const { state: calendarStatus, assumed: calendarAssumed } =
+          assumeWorkDay(
+            resolvedCalendar,
+            query.date,
+            schoolsWithArrivals.has(Number(row.schoolId)),
+          );
 
         const attendanceStatus =
           row.firstInTime && row.lastOutTime
@@ -607,7 +674,10 @@ export class DailyAttendanceReadService {
                       ? 'unconfigured'
                       : hasActiveExcuse
                         ? 'excused'
-                        : 'absent';
+                        : // Maktabdan shu kuni umuman ma’lumot kelmagan bo‘lsa — «kelmagan» emas.
+                          schoolsWithArrivals.has(Number(row.schoolId))
+                          ? 'absent'
+                          : 'no_data';
 
         const firstPhotoReady =
           row.firstInEvent?.photoStatus === EventPhotoStatus.DOWNLOADED &&
@@ -678,6 +748,7 @@ export class DailyAttendanceReadService {
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
           calendarStatus,
+          calendarAssumed,
         };
       }),
       total,

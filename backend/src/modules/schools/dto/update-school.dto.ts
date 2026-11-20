@@ -1,6 +1,8 @@
 import { Transform } from 'class-transformer';
 import { IsInt, IsString, Length, Max, Min, ValidateIf } from 'class-validator';
 
+import { Latitude, Longitude } from './school-location';
+
 export class UpdateSchoolDto {
   @ValidateIf((_object, value: unknown) => value !== undefined)
   @Transform(({ value }: { value: unknown }) =>
@@ -25,4 +27,10 @@ export class UpdateSchoolDto {
     message: 'districtId ruxsat etilgan chegaradan katta',
   })
   districtId?: number;
+
+  @Latitude()
+  latitude?: number | null;
+
+  @Longitude()
+  longitude?: number | null;
 }

@@ -6,6 +6,9 @@ import {
 } from '@nestjs/common';
 import { DataSource, In } from 'typeorm';
 
+import { SettingsService } from '../system-settings/settings.service';
+import { isDefaultWorkDay, type DefaultWeekConfig } from './default-week';
+
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
 import { MembershipType } from '../school-memberships/school-membership.entity';
@@ -27,18 +30,33 @@ export type AttendanceCalendarState =
 export interface AttendanceCalendarTarget {
   schoolId: number;
   classId: number | null;
+  /** O‘qituvchi faqat boshlang‘ich sinflarda dars beradi (standart hafta 5 kun). */
+  primaryOnly?: boolean;
 }
 
 export function attendanceCalendarKey(
   schoolId: number,
   classId: number | null,
+  primaryOnly = false,
 ): string {
-  return `${schoolId}:${classId ?? 'none'}`;
+  return `${schoolId}:${classId ?? 'none'}${primaryOnly ? ':primary' : ''}`;
 }
 
 @Injectable()
 export class CalendarResolverService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly settings: SettingsService,
+  ) {}
+
+  /** Standart o‘quv haftasi sozlamalari (Tizim sozlamalari sahifasidan). */
+  private defaultWeekConfig(): DefaultWeekConfig {
+    return {
+      primaryMaxGrade: this.settings.getInt('calendarPrimaryMaxGrade'),
+      primaryDays: this.settings.getInt('calendarPrimaryWeekDays'),
+      generalDays: this.settings.getInt('calendarGeneralWeekDays'),
+    };
+  }
 
   private academicYear(date: string): string {
     const year = Number(date.slice(0, 4));
@@ -263,11 +281,23 @@ export class CalendarResolverService {
       );
 
     if (applicableSchedules.length === 0) {
+      // Haftalik jadval kiritilmagan: standart hafta (1–4 sinf — 5 kun, qolganlari — 6 kun).
+      const weekday = this.dayIndex(dto.date);
+      const workDay = isDefaultWorkDay(
+        this.defaultWeekConfig(),
+        {
+          isStudent,
+          grade: schoolClass?.gradeLevel ?? null,
+        },
+        weekday,
+      );
       return {
         ...resultBase,
-        status: 'UNCONFIGURED',
-        source: 'NONE',
-        message: 'Ushbu kun uchun haftalik reja topilmadi',
+        status: workDay ? 'WORK_DAY' : 'DAY_OFF',
+        source: 'DEFAULT_WEEK',
+        weekdayIndex: weekday,
+        message:
+          'Haftalik jadval kiritilmagan: standart o‘quv haftasi qo‘llandi',
       };
     }
 
@@ -321,7 +351,11 @@ export class CalendarResolverService {
 
     for (const target of targets) {
       uniqueTargets.set(
-        attendanceCalendarKey(target.schoolId, target.classId),
+        attendanceCalendarKey(
+          target.schoolId,
+          target.classId,
+          target.primaryOnly === true,
+        ),
         target,
       );
     }
@@ -339,6 +373,7 @@ export class CalendarResolverService {
 
     const academicYear = this.academicYear(date);
     const weekday = this.dayIndex(date);
+    const defaultWeek = this.defaultWeekConfig();
 
     // Maktablar, sinflar va kalendar sozlamalarini
     // ommaviy yuklaymiz. Har bir o'quvchi uchun
@@ -402,7 +437,11 @@ export class CalendarResolverService {
     );
 
     for (const item of items) {
-      const key = attendanceCalendarKey(item.schoolId, item.classId);
+      const key = attendanceCalendarKey(
+        item.schoolId,
+        item.classId,
+        item.primaryOnly === true,
+      );
 
       const school = schoolMap.get(item.schoolId);
 
@@ -501,7 +540,21 @@ export class CalendarResolverService {
         );
 
       if (applicableSchedules.length === 0) {
-        result.set(key, 'UNCONFIGURED');
+        // Haftalik jadval kiritilmagan: standart o‘quv haftasi qo‘llanadi.
+        result.set(
+          key,
+          isDefaultWorkDay(
+            defaultWeek,
+            {
+              isStudent,
+              grade: schoolClass?.gradeLevel ?? null,
+              primaryOnly: item.primaryOnly === true,
+            },
+            weekday,
+          )
+            ? 'WORK_DAY'
+            : 'DAY_OFF',
+        );
         continue;
       }
 

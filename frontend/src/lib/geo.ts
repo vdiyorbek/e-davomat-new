@@ -140,3 +140,36 @@ export function matchUnits<T extends { id: number; name: string; geoKey: string 
 
     return result;
 }
+
+/** O‘zbekiston chegarasi (ozgina zaxira bilan) — backend bilan bir xil. */
+export const UZ_BOUNDS = { latMin: 36.9, latMax: 45.8, lngMin: 55.8, lngMax: 73.4 };
+
+export function inUzbekistan(lat: number, lng: number): boolean {
+    return lat >= UZ_BOUNDS.latMin && lat <= UZ_BOUNDS.latMax && lng >= UZ_BOUNDS.lngMin && lng <= UZ_BOUNDS.lngMax;
+}
+
+/**
+ * Kenglik/uzunlikni xarita fayli (uzbekistan.json, viewBox 1000×657) koordinatasiga o‘tkazadi.
+ * Xarita geometriyasi aynan shu Mercator proyeksiyasi bilan chizilgan (react-uzbekistan-map, MIT);
+ * 14 ta viloyat markazi o‘z viloyatiga to‘g‘ri tushishi tekshirilgan.
+ */
+const PROJECTION = { scale: 3343.6624833383376, translate: [-3267.8471157240906, 2997.229057903864] as const };
+
+export function projectLatLng(lat: number, lng: number): [number, number] {
+    const rad = Math.PI / 180;
+    return [lng * rad * PROJECTION.scale + PROJECTION.translate[0], -Math.log(Math.tan(Math.PI / 4 + (lat * rad) / 2)) * PROJECTION.scale + PROJECTION.translate[1]];
+}
+
+/**
+ * «41.311081, 69.240562» (Google Maps nusxasi) ni o‘qiydi.
+ * Bo‘sh matn — lokatsiya yo‘q (null); noto‘g‘ri yoki chegaradan tashqari — 'invalid'.
+ */
+export function parseLatLng(text: string): { lat: number; lng: number } | null | 'invalid' {
+    const value = text.trim();
+    if (value === '') return null;
+    const parts = value.split(/[;,\s]+/).filter(Boolean);
+    if (parts.length !== 2) return 'invalid';
+    const [lat, lng] = parts.map((part) => Number(part.replace(',', '.')));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inUzbekistan(lat, lng)) return 'invalid';
+    return { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6 };
+}

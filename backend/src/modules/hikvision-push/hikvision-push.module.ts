@@ -7,6 +7,7 @@ import { HikvisionPushConsumer } from './hikvision-push.consumer';
 import { HikvisionPushRebuildService } from './hikvision-push-rebuild.service';
 import { PushEventWriterService } from './push-event-writer.service';
 import { DashboardStatsQueueModule } from '../dashboard/dashboard-stats.queue';
+import { EventActivityModule } from '../event-activity/event-activity.module';
 
 /**
  * Push worker: Redis Stream → MySQL → daily_attendance → jonli efir.
@@ -14,7 +15,12 @@ import { DashboardStatsQueueModule } from '../dashboard/dashboard-stats.queue';
  * Faqat `push-worker.ts` jarayonida yuklanadi.
  */
 @Module({
-  imports: [RedisModule, DailyAttendanceModule, DashboardStatsQueueModule],
+  imports: [
+    RedisModule,
+    DailyAttendanceModule,
+    DashboardStatsQueueModule,
+    EventActivityModule,
+  ],
   providers: [
     HikvisionPushConsumer,
     HikvisionPushRebuildService,

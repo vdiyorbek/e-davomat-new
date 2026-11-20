@@ -14,6 +14,8 @@ import { GetSchoolsQueryDto } from './dto/get-schools-query.dto';
 import { UserRole } from '../users/enums/user-role.enum';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UpdateSchoolDto } from './dto/update-school.dto';
+import { SchoolLocationDto } from './dto/school-location.dto';
+import { assertSchoolAccess } from '../classes/school-access';
 import {
   MembershipType,
   SchoolMembership,
@@ -178,18 +180,71 @@ export class SchoolsService {
       .take(limit)
       .getManyAndCount();
 
-    const stats = await this.loadStats(schools.map((school) => school.id));
+    const schoolIds = schools.map((school) => school.id);
+    const [stats, lateThresholds] = await Promise.all([
+      this.loadStats(schoolIds),
+      this.loadLateThresholds(schoolIds),
+    ]);
 
     return {
       data: schools.map((school) => ({
         ...school,
         stats: stats.get(school.id) ?? EMPTY_STATS,
+        lateThreshold: lateThresholds.get(school.id) ?? null,
       })),
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * Kechikish chegarasi: maktab o‘zi belgilaydi, yuqori adminlar ko‘radi va kerak
+   * bo‘lsa o‘zgartiradi — kim va qachon o‘zgartirgani bilan.
+   */
+  private async loadLateThresholds(schoolIds: number[]) {
+    const result = new Map<
+      number,
+      {
+        minutes: number;
+        updatedAt: Date | null;
+        updatedBy: { login: string; name: string | null; role: string } | null;
+      }
+    >();
+    if (schoolIds.length === 0) return result;
+
+    const rows: {
+      id: number;
+      lateThresholdMinutes: number;
+      lateThresholdUpdatedAt: Date | null;
+      login: string | null;
+      firstName: string | null;
+      lastName: string | null;
+      role: string | null;
+    }[] = await this.schoolsRepository.manager.query(
+      `SELECT s.id, s.lateThresholdMinutes, s.lateThresholdUpdatedAt,
+              u.login, u.firstName, u.lastName, u.role
+         FROM schools s LEFT JOIN users u ON u.id = s.lateThresholdUpdatedByUserId
+        WHERE s.id IN (${schoolIds.map(() => '?').join(',')})`,
+      schoolIds,
+    );
+
+    for (const row of rows) {
+      result.set(Number(row.id), {
+        minutes: Number(row.lateThresholdMinutes),
+        updatedAt: row.lateThresholdUpdatedAt,
+        updatedBy: row.login
+          ? {
+              login: row.login,
+              name:
+                [row.lastName, row.firstName].filter(Boolean).join(' ') || null,
+              role: String(row.role),
+            }
+          : null,
+      });
+    }
+    return result;
   }
 
   /** Faqat joriy sahifadagi maktablar uchun: 2 ta guruhlangan so‘rov. */
@@ -268,6 +323,54 @@ export class SchoolsService {
     return result;
   }
 
+  private assertLocationPair(
+    latitude: number | null | undefined,
+    longitude: number | null | undefined,
+  ): void {
+    if ((latitude == null) !== (longitude == null)) {
+      throw new BadRequestException(
+        'Kenglik va uzunlik birga kiritilishi kerak (yoki ikkalasi ham bo‘sh)',
+      );
+    }
+  }
+
+  /** Lokatsiyani administrator o‘z doirasidagi maktab uchun kiritadi/o‘zgartiradi/o‘chiradi. */
+  async setLocation(
+    id: number,
+    dto: SchoolLocationDto,
+    user: AuthenticatedUser,
+  ) {
+    const school = await this.schoolsRepository.findOne({
+      where: { id },
+      relations: { district: true },
+    });
+
+    if (!school) {
+      throw new NotFoundException('Maktab topilmadi');
+    }
+
+    assertSchoolAccess(user, school);
+
+    if (dto.latitude === undefined && dto.longitude === undefined) {
+      throw new BadRequestException(
+        'Kenglik va uzunlikni yuboring (o‘chirish uchun ikkalasini ham bo‘sh qoldiring)',
+      );
+    }
+
+    this.assertLocationPair(dto.latitude, dto.longitude);
+
+    await this.schoolsRepository.update(id, {
+      latitude: dto.latitude ?? null,
+      longitude: dto.longitude ?? null,
+    });
+
+    return {
+      id,
+      latitude: dto.latitude ?? null,
+      longitude: dto.longitude ?? null,
+    };
+  }
+
   async create(dto: CreateSchoolDto): Promise<School> {
     const district = await this.districtsRepository.findOneBy({
       id: dto.districtId,
@@ -277,9 +380,13 @@ export class SchoolsService {
       throw new NotFoundException('Tanlangan tuman yoki shahar topilmadi');
     }
 
+    this.assertLocationPair(dto.latitude, dto.longitude);
+
     const school = this.schoolsRepository.create({
       name: dto.name,
       districtId: dto.districtId,
+      latitude: dto.latitude ?? null,
+      longitude: dto.longitude ?? null,
     });
 
     try {
@@ -306,7 +413,12 @@ export class SchoolsService {
   }
 
   async update(id: number, dto: UpdateSchoolDto): Promise<School> {
-    if (dto.name === undefined && dto.districtId === undefined) {
+    if (
+      dto.name === undefined &&
+      dto.districtId === undefined &&
+      dto.latitude === undefined &&
+      dto.longitude === undefined
+    ) {
       throw new BadRequestException(
         "O'zgartirish uchun kamida bitta maydon yuboring.",
       );
@@ -328,7 +440,16 @@ export class SchoolsService {
     const changes: {
       name?: string;
       districtId?: number;
+      latitude?: number | null;
+      longitude?: number | null;
     } = {};
+
+    // Kenglik va uzunlik doim juft: ikkalasi qiymatli yoki ikkalasi bo‘sh.
+    if (dto.latitude !== undefined || dto.longitude !== undefined) {
+      this.assertLocationPair(dto.latitude, dto.longitude);
+      changes.latitude = dto.latitude ?? null;
+      changes.longitude = dto.longitude ?? null;
+    }
 
     if (dto.name !== undefined) {
       changes.name = dto.name;

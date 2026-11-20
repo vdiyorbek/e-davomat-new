@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { PdfPreview } from '@/components/attendance/AttendanceExcuseActions';
+import { TimePhoto } from '@/components/attendance/TimePhoto';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
-import { addDays, formatDate, formatDateLong, formatTime, weekdayIndex, weekdayName } from '@/lib/date';
+import { addDays, formatDate, formatDateLong, weekdayIndex, weekdayName } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import { cn } from '@/lib/utils';
 import type { PersonAttendanceDay, PersonAttendanceHistory, PersonDayStatus } from '@/types/person-attendance';
@@ -33,6 +34,7 @@ const DAY_TONE: Record<PersonDayStatus, StatusTone> = {
     day_off: 'neutral',
     unconfigured: 'warning',
     conflict: 'danger',
+    no_data: 'neutral',
     no_record: 'neutral',
 };
 
@@ -238,11 +240,11 @@ function HistoryBody({
                                 <p className="flex gap-4 text-xs tabular-nums">
                                     <span className="flex items-center gap-1">
                                         <LogIn aria-hidden="true" className="size-3.5 text-success" />
-                                        {formatTime(day.firstInTime)}
+                                        <TimePhoto time={day.firstInTime} url={day.firstInUrl} label={t('attendance.in')} name={fullName} date={day.date} />
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <LogOut aria-hidden="true" className="size-3.5 text-warning" />
-                                        {formatTime(day.lastOutTime)}
+                                        <TimePhoto time={day.lastOutTime} url={day.lastOutUrl} label={t('attendance.out')} name={fullName} date={day.date} />
                                     </span>
                                 </p>
                             )}
@@ -280,8 +282,12 @@ function HistoryBody({
                                             {weekdayName(weekdayIndex(day.date), 'short')}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2 font-semibold tabular-nums">{formatTime(day.firstInTime)}</td>
-                                    <td className="px-3 py-2 font-semibold tabular-nums">{formatTime(day.lastOutTime)}</td>
+                                    <td className="px-3 py-2 font-semibold tabular-nums">
+                                        <TimePhoto time={day.firstInTime} url={day.firstInUrl} label={t('attendance.in')} name={fullName} date={day.date} />
+                                    </td>
+                                    <td className="px-3 py-2 font-semibold tabular-nums">
+                                        <TimePhoto time={day.lastOutTime} url={day.lastOutUrl} label={t('attendance.out')} name={fullName} date={day.date} />
+                                    </td>
                                     <td className="px-3 py-2">
                                         <StatusBadge tone={DAY_TONE[day.status]}>
                                             {t(`attendance.status.${statusKey(day.status)}`)}
@@ -319,7 +325,7 @@ interface Props {
 /** O‘quvchi yoki o‘qituvchining batafsil davomat oynasi. */
 export function PersonAttendanceDialog({ open, onOpenChange, pnfl, name, schoolName, mode, endDate }: Props) {
     const { t } = useTranslation();
-    const [range, setRange] = useState<Range>('last14');
+    const [range, setRange] = useState<Range>('last7');
 
     const dates = rangeDates(range, endDate);
     const params = new URLSearchParams({

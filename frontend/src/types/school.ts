@@ -11,6 +11,8 @@ export interface School {
       name: string;
     };
   };
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface MySchool {
@@ -35,6 +37,8 @@ export interface MySchool {
 export interface CreateSchoolInput {
   name: string;
   districtId: number;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export type CreatedSchool = Pick<School, "id" | "name" | "districtId">;
@@ -42,6 +46,8 @@ export type CreatedSchool = Pick<School, "id" | "name" | "districtId">;
 export interface UpdateSchoolInput {
   name?: string;
   districtId?: number;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface SchoolStats {
@@ -51,8 +57,15 @@ export interface SchoolStats {
   activeTerminals: number;
 }
 
+export interface LateSettings {
+  minutes: number;
+  updatedAt: string | null;
+  updatedBy: { login: string; name: string | null; role: string } | null;
+}
+
 export interface SchoolRow extends School {
   stats: SchoolStats;
+  lateThreshold: LateSettings | null;
 }
 
 export interface SchoolsPage {

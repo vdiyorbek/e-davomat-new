@@ -12,7 +12,8 @@ export type AttendanceStatus =
   | "anomaly"
   | "day_off"
   | "unconfigured"
-  | "conflict";
+  | "conflict"
+  | "no_data";
 
 export type CalendarStatus =
   | "WORK_DAY"
@@ -42,6 +43,8 @@ export interface DailyAttendance {
 
   firstInTime: string | null;
   firstInEventId: string | null;
+  /** Kalendar sozlanmagan, lekin maktabda kelganlar bor: o‘quv kuni deb faraz qilingan. */
+  calendarAssumed?: boolean;
   firstInUrl: string | null;
   firstInPhotoStatus: AttendancePhotoStatus | null;
 

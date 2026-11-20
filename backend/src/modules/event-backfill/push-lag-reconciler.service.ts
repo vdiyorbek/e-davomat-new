@@ -4,9 +4,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
 import { RedisService } from '../../redis/redis.service';
+import { SettingsService } from '../system-settings/settings.service';
 import { AttendanceEventsService } from '../attendance-events/attendance-events.service';
 import { DailyAttendanceService } from '../daily-attendance/daily-attendance.service';
-import { PUSH_LAG_KEY_PREFIX } from '../hikvision-push/push-event-writer.service';
+import { PUSH_LAG_KEY_PREFIX } from '../hikvision-push/hikvision-push.types';
+import { EventActivityRecorder } from '../event-activity/event-activity.recorder';
 import { tashkentDate } from '../hikvision-push/hikvision-push.types';
 import { TerminalEventSource } from '../terminals/enums/terminal-event-source.enum';
 import { Terminal } from '../terminals/terminal.entity';
@@ -43,12 +45,14 @@ export class PushLagReconcilerService {
     private readonly events: AttendanceEventsService,
     private readonly daily: DailyAttendanceService,
     private readonly redisService: RedisService,
+    private readonly settings: SettingsService,
+    private readonly activity: EventActivityRecorder,
   ) {}
 
   // Har 2 daqiqada.
   @Cron('20 */2 * * * *', { timeZone: 'Asia/Tashkent' })
   async tick(): Promise<void> {
-    if (process.env.PUSH_LAG_RECONCILE === 'false' || this.running) return;
+    if (!this.settings.getBool('pushLagReconcile') || this.running) return;
     this.running = true;
     try {
       const ids = await this.laggingTerminalIds();
@@ -130,6 +134,23 @@ export class PushLagReconcilerService {
       // Qo‘lda olish yoki boshqa sinxronlash ketmoqda — keyingi safar.
       if (error instanceof ConflictException) return;
       throw error;
+    }
+
+    // Faoliyat tarixiga (sinxronlash tarixi → Push) yozamiz; bo‘sh urinishlar shovqin qilmasin.
+    if (stats.fetched > 0) {
+      await this.activity.record([
+        {
+          terminalId: terminal.id,
+          schoolId: terminal.schoolId,
+          source: 'AUTO_PULL',
+          received: stats.fetched,
+          inserted: stats.inserted,
+          duplicates: stats.duplicates,
+          withPicture: stats.photosQueued,
+          withoutPicture: Math.max(0, stats.inserted - stats.photosQueued),
+          runs: 1,
+        },
+      ]);
     }
 
     // Kunlik davomat va dashboard: oraliqdagi kunlar qayta hisoblanadi.

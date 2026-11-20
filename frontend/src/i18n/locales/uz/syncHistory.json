@@ -4,7 +4,8 @@
   "tabs": {
     "events": "Davomat eventlari",
     "persons": "Shaxslarni yuborish",
-    "clears": "Xotirani tozalash"
+    "clears": "Xotirani tozalash",
+    "push": "Push va olish"
   },
   "filters": {
     "status": "Holat",
@@ -158,6 +159,54 @@
       "TIMEOUT": "Terminal javob bermadi",
       "CONNECTION_ERROR": "Terminalga ulanib bo‘lmadi",
       "PERSON_SYNC_LOCK_LOST": "Jarayon to‘xtab qoldi"
+    }
+  },
+  "push": {
+    "description": "Push (terminaldan kelayotgan eventlar) va serverning terminaldan o‘zi olishi (avtomatik yoki qo‘lda) — soatlik yig‘ma. Polling yurishlari «Davomat eventlari» yorlig‘ida.",
+    "realtime": "Real vaqtda",
+    "lagM": "{{m}} daqiqa ortda",
+    "lagHm": "{{h}} soat {{m}} daqiqa ortda",
+    "kpi": {
+      "total": "Push terminallar",
+      "realtime": "Real vaqtda",
+      "lagging": "Kechikmoqda",
+      "idle": "Jim",
+      "today": "Bugun kelgan eventlar",
+      "todayNew": "yangi: {{count}}"
+    },
+    "status": {
+      "REALTIME": "Real vaqtda",
+      "LAGGING": "Kechikmoqda",
+      "IDLE": "Jim",
+      "NEVER": "Hali so‘rov yo‘q"
+    },
+    "attention": {
+      "title": "E’tibor talab qiladigan terminallar",
+      "hint": "Kechikayotganlar eski eventlarni navbat bilan yubormoqda; «jim»lar 10 daqiqadan beri so‘rov yubormagan.",
+      "behind": "{{value}}",
+      "lastRequest": "oxirgi so‘rov: {{value}}"
+    },
+    "filters": {
+      "source": "Manba"
+    },
+    "source": {
+      "PUSH": "Push",
+      "AUTO_PULL": "Avtomatik olish",
+      "MANUAL_PULL": "Qo‘lda olish"
+    },
+    "table": {
+      "title": "Soatlik faoliyat",
+      "hint": "Har qator — bitta terminal, bitta manba va bitta soat.",
+      "emptyTitle": "Faoliyat topilmadi",
+      "empty": "Tanlangan filtrlar bo‘yicha push yoki olish faoliyati yo‘q.",
+      "hour": "Soat",
+      "terminal": "Terminal",
+      "source": "Manba",
+      "received": "Keldi",
+      "inserted": "Yangi",
+      "duplicates": "Takror",
+      "photos": "Rasm: bor / yo‘q",
+      "lag": "Eng katta kechikish"
     }
   }
 }

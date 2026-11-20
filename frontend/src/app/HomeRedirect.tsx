@@ -9,6 +9,6 @@ export function HomeRedirect() {
     const role = session?.profile.role;
     // Administratorlar uchun bosh sahifa — dashboard.
     const to =
-        role === 'TEACHER' ? '/teacher/dashboard' : role === 'STUDENT' ? '/student' : role && ADMIN_ROLES.includes(role) ? '/dashboard' : '/me';
+        role === 'TEACHER' ? '/teacher/dashboard' : role === 'STUDENT' ? '/student' : role === 'MAHALLA_INSPECTOR' ? '/inspector' : role && ADMIN_ROLES.includes(role) ? '/dashboard' : '/me';
     return <Navigate to={to} replace />;
 }

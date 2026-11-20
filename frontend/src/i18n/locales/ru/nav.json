@@ -47,7 +47,12 @@
     "studentSchedule": "Расписание уроков",
     "studentTests": "Мои тесты",
     "myAttendance": "Моя посещаемость",
-    "dashboard": "Дашборд"
+    "dashboard": "Дашборд",
+    "systemSettings": "Системные настройки",
+    "inspectorHome": "Кабинет участкового",
+    "inspectorAbsentees": "Отсутствующие",
+    "inspectorCases": "Отчёты обследований",
+    "inspectorsManage": "Участковые"
   },
   "short": {
     "profile": "Профиль",
@@ -63,6 +68,10 @@
     "studentSchedule": "Расписание",
     "studentTests": "Тесты",
     "myAttendance": "Посещаемость",
-    "dashboard": "Главная"
+    "dashboard": "Главная",
+    "inspectorHome": "Главная",
+    "inspectorAbsentees": "Отсутств.",
+    "inspectorCases": "Отчёты",
+    "inspectorsManage": "Участк."
   }
 }

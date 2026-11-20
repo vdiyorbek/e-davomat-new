@@ -43,6 +43,31 @@ export class School {
   })
   district!: District;
 
+  /** Maktab lokatsiyasi (xaritada ko‘rsatish uchun). */
+  @Column({
+    type: 'decimal',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+    transformer: {
+      to: (value: number | null | undefined) => value ?? null,
+      from: (value: string | null) => (value === null ? null : Number(value)),
+    },
+  })
+  latitude!: number | null;
+
+  @Column({
+    type: 'decimal',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+    transformer: {
+      to: (value: number | null | undefined) => value ?? null,
+      from: (value: string | null) => (value === null ? null : Number(value)),
+    },
+  })
+  longitude!: number | null;
+
   @CreateDateColumn({
     type: 'datetime',
     precision: 3,

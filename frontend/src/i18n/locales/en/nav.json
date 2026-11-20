@@ -47,7 +47,12 @@
     "studentSchedule": "My timetable",
     "studentTests": "My tests",
     "myAttendance": "My attendance",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "systemSettings": "System settings",
+    "inspectorHome": "Inspector cabinet",
+    "inspectorAbsentees": "Absentees",
+    "inspectorCases": "Investigation reports",
+    "inspectorsManage": "Inspectors"
   },
   "short": {
     "profile": "Profile",
@@ -63,6 +68,10 @@
     "studentSchedule": "Timetable",
     "studentTests": "Tests",
     "myAttendance": "Attendance",
-    "dashboard": "Home"
+    "dashboard": "Home",
+    "inspectorHome": "Home",
+    "inspectorAbsentees": "Absent",
+    "inspectorCases": "Reports",
+    "inspectorsManage": "Inspectors"
   }
 }

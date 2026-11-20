@@ -5,6 +5,7 @@ import { RedisModule } from '../../redis/redis.module';
 import { AttendanceEventsModule } from '../attendance-events/attendance-events.module';
 import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.module';
 import { Terminal } from '../terminals/terminal.entity';
+import { EventActivityModule } from '../event-activity/event-activity.module';
 import { EventBackfillController } from './event-backfill.controller';
 import { EventBackfillService } from './event-backfill.service';
 import { PushLagReconcilerService } from './push-lag-reconciler.service';
@@ -13,6 +14,7 @@ import { PushLagReconcilerService } from './push-lag-reconciler.service';
   imports: [
     TypeOrmModule.forFeature([Terminal]),
     RedisModule,
+    EventActivityModule,
     AttendanceEventsModule,
     DailyAttendanceModule,
   ],

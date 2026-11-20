@@ -6,6 +6,9 @@ import { Mahalla } from '../mahallas/mahalla.entity';
 import { User } from '../users/user.entity';
 
 import { InspectorMahalla } from './inspector-mahalla.entity';
+import { InspectorCase } from './inspector-case.entity';
+import { InspectorCasesController } from './inspector-cases.controller';
+import { InspectorCasesService } from './inspector-cases.service';
 import { InspectorTalk } from './inspector-talk.entity';
 import { InspectorsController } from './inspectors.controller';
 import { InspectorsService } from './inspectors.service';
@@ -19,12 +22,13 @@ import { AttendanceExcuse } from '../attendance-excuses/attendance-excuse.entity
       Mahalla,
       InspectorMahalla,
       InspectorTalk,
+      InspectorCase,
       AttendanceExcuse,
     ]),
     AttendanceCalendarModule,
   ],
-  controllers: [InspectorsController],
-  providers: [InspectorsService],
+  controllers: [InspectorsController, InspectorCasesController],
+  providers: [InspectorsService, InspectorCasesService],
   exports: [InspectorsService],
 })
 export class InspectorsModule {}

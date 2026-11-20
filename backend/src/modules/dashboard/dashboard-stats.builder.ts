@@ -24,6 +24,8 @@ interface Member {
   pnfl: string;
   classId: number | null;
   membershipId: number;
+  /** O‘qituvchi faqat boshlang‘ich sinflarda dars beradi (standart hafta 5 kun). */
+  primaryOnly: boolean;
 }
 
 interface Counters {
@@ -163,8 +165,10 @@ export class DashboardStatsBuilder {
         MembershipType.STUDENT,
         classIds.map((classId) => ({ schoolId, classId })),
       ),
+      // O‘qituvchi: umumiy hafta va «faqat 1–4 sinf» haftasi alohida hisoblanadi.
       this.calendar.resolveForAttendanceDay(date, MembershipType.TEACHER, [
         { schoolId, classId: null },
+        { schoolId, classId: null, primaryOnly: true },
       ]),
     ]);
 
@@ -250,15 +254,22 @@ export class DashboardStatsBuilder {
 
     // ── O‘qituvchilar ──
     const teacherCounters = emptyCounters();
-    const teacherState = effectiveState(
-      teacherCalendar.get(attendanceCalendarKey(schoolId, null)) ??
-        'UNCONFIGURED',
-      date,
-      hasData,
-    );
+    const teacherStateOf = (primaryOnly: boolean) =>
+      effectiveState(
+        teacherCalendar.get(
+          attendanceCalendarKey(schoolId, null, primaryOnly),
+        ) ?? 'UNCONFIGURED',
+        date,
+        hasData,
+      );
+    const generalTeacherState = teacherStateOf(false);
+    const primaryTeacherState = teacherStateOf(true);
 
     for (const member of teachers) {
       teacherCounters.members++;
+      const teacherState = member.primaryOnly
+        ? primaryTeacherState
+        : generalTeacherState;
       if (teacherState.state === 'DAY_OFF') {
         teacherCounters.dayOff++;
         continue;
@@ -480,8 +491,10 @@ export class DashboardStatsBuilder {
       pnfl: string;
       classId: number | null;
       membershipId: number;
+      primaryOnly: number;
     }[] = await this.dataSource.query(
-      `SELECT m.personId, p.pnfl, MAX(m.classId) AS classId, MIN(m.id) AS membershipId
+      `SELECT m.personId, p.pnfl, MAX(m.classId) AS classId, MIN(m.id) AS membershipId,
+              MAX(m.primaryOnly) AS primaryOnly
            FROM school_memberships m
            JOIN persons p ON p.id = m.personId AND p.deletedAt IS NULL
           WHERE m.schoolId = ? AND m.type = ? AND m.startDate <= ?
@@ -494,6 +507,7 @@ export class DashboardStatsBuilder {
       pnfl: row.pnfl,
       classId: row.classId === null ? null : Number(row.classId),
       membershipId: Number(row.membershipId),
+      primaryOnly: Number(row.primaryOnly) === 1,
     }));
   }
 

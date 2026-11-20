@@ -12,7 +12,7 @@ import {
   syncDelayedSql,
 } from './terminal-health.rules';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { IsNull, QueryFailedError, Repository } from 'typeorm';
 import { UpdateTerminalDto } from './dto/update-terminal.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
@@ -992,6 +992,62 @@ export class TerminalsService {
         ? 'Terminal vaqti server bilan moslashtirildi'
         : 'Buyruq qabul qilindi, lekin vaqt mosligi tasdiqlanmadi',
     };
+  }
+
+  /** Barcha faol (arxivlanmagan) terminallar vaqtini server (Toshkent, UTC+5) bilan moslaydi. */
+  async syncAllTerminalTimes(user: AuthenticatedUser) {
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Terminal vaqtini faqat SUPER_ADMIN sinxronlay oladi',
+      );
+    }
+
+    const terminals = await this.terminalsRepository.find({
+      where: { isActive: true, archivedAt: IsNull() },
+      select: { id: true, name: true },
+      order: { id: 'ASC' },
+    });
+
+    const items: {
+      id: number;
+      name: string;
+      ok: boolean;
+      message: string;
+      beforeSeconds: number | null;
+    }[] = [];
+
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < terminals.length) {
+        const terminal = terminals[cursor++];
+        try {
+          const result = await this.syncTerminalTime(terminal.id, user);
+          items.push({
+            id: terminal.id,
+            name: terminal.name,
+            ok: result.success,
+            message: result.message,
+            beforeSeconds: result.before.timeDifferenceSeconds ?? null,
+          });
+        } catch (error: unknown) {
+          items.push({
+            id: terminal.id,
+            name: terminal.name,
+            ok: false,
+            message:
+              error instanceof Error
+                ? error.message.slice(0, 300)
+                : 'Noma’lum xato',
+            beforeSeconds: null,
+          });
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: 5 }, () => worker()));
+
+    items.sort((a, b) => a.id - b.id);
+    const ok = items.filter((item) => item.ok).length;
+    return { total: items.length, ok, failed: items.length - ok, items };
   }
 
   async getPersonSyncPreview(terminalId: number, user: AuthenticatedUser) {
