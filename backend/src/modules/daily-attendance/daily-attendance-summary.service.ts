@@ -272,25 +272,6 @@ export class DailyAttendanceSummaryService {
       );
     }
 
-    // Maktabda shu kuni kimdir kelganmi (har ikki tur bo‘yicha): kelmagan bo‘lsa terminal
-    // ishlamagan bo‘lishi mumkin — bunday kun «sababsiz kelmagan» deb hisoblanmaydi.
-    const summarySchoolIds = [
-      ...new Set(dayRows.map((row) => Number(row.schoolId))),
-    ];
-    const schoolDaysWithArrivals = new Set<string>(
-      summarySchoolIds.length > 0
-        ? (
-            await this.dataSource.query<{ schoolId: number; date: string }[]>(
-              `SELECT DISTINCT schoolId, DATE_FORMAT(date, '%Y-%m-%d') AS date
-                 FROM daily_attendance
-                WHERE firstInTime IS NOT NULL AND date BETWEEN ? AND ?
-                  AND schoolId IN (${summarySchoolIds.map(() => '?').join(',')})`,
-              [from, to, ...summarySchoolIds],
-            )
-          ).map((item) => `${Number(item.schoolId)}:${item.date}`)
-        : [],
-    );
-
     // 3. Kesim bo‘yicha yig‘amiz.
     const totals = emptyCounters();
     const groups = new Map<number, Counters>();
@@ -324,10 +305,7 @@ export class DailyAttendanceSummaryService {
       for (const counters of [group, totals]) {
         counters.personDays += total;
 
-        if (
-          state === 'WORK_DAY' &&
-          schoolDaysWithArrivals.has(`${Number(row.schoolId)}:${row.date}`)
-        ) {
+        if (state === 'WORK_DAY') {
           counters.present += present;
           counters.excused += excused;
           counters.absent += total - present - excused;

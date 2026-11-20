@@ -297,9 +297,6 @@ export class DailyAttendancePersonService {
         status = 'unconfigured';
       } else if (excuse) {
         status = 'excused';
-      } else if (!arrivalKeys.has(`${row.schoolId}:${date}`)) {
-        // Maktabdan shu kuni umuman ma’lumot kelmagan: «kelmagan» deb bo‘lmaydi.
-        status = 'no_data';
       } else {
         status = 'absent';
       }

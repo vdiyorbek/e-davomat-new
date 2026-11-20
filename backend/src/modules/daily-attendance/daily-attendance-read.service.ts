@@ -674,10 +674,9 @@ export class DailyAttendanceReadService {
                       ? 'unconfigured'
                       : hasActiveExcuse
                         ? 'excused'
-                        : // Maktabdan shu kuni umuman ma’lumot kelmagan bo‘lsa — «kelmagan» emas.
-                          schoolsWithArrivals.has(Number(row.schoolId))
-                          ? 'absent'
-                          : 'no_data';
+                        : // O‘quv kunida turniketdan event kelmagan — «kelmagan».
+                          // Event kelishi bilan holat o‘zi «kirdi/chiqdi»ga o‘tadi.
+                          'absent';
 
         const firstPhotoReady =
           row.firstInEvent?.photoStatus === EventPhotoStatus.DOWNLOADED &&
