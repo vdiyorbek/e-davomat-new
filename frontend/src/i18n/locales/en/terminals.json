@@ -605,5 +605,22 @@
     "wasOff": "Was off by {{value}}",
     "seconds": "{{count}} s",
     "minutes": "{{count}} min"
+  },
+  "audit": {
+    "button": "Compare settings",
+    "title": "Compare terminal settings",
+    "description": "Model, firmware and picture settings of every active terminal. Read-only: nothing is written to the terminals. With a wrong password it does not retry, so the terminal is not locked.",
+    "running": "Reading terminals… (may take a few minutes)",
+    "failed": "Could not read the settings.",
+    "groups": "By model and firmware",
+    "groupsHint": "“Picture in push” is the share of today's events whose picture arrived with the event. A difference between groups points to the cause.",
+    "modelFirmware": "Model · firmware",
+    "terminals": "Terminals",
+    "events": "Events (today)",
+    "pushPicture": "Picture in push",
+    "details": "Each terminal",
+    "terminal": "Terminal",
+    "pictureType": "Picture type",
+    "pushTarget": "Push target"
   }
 }

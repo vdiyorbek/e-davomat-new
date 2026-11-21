@@ -6,6 +6,7 @@ import { School } from '../schools/school.entity';
 import { Terminal } from './terminal.entity';
 import { TerminalPersonSync } from './terminal-person-sync.entity';
 import { TerminalCryptoService } from './terminal-crypto.service';
+import { TerminalConfigAuditService } from './terminal-config-audit.service';
 import { TerminalsService } from './terminals.service';
 import { TerminalsController } from './terminals.controller';
 import { HikvisionService } from './hikvision.service';
@@ -42,6 +43,7 @@ import { RedisModule } from '../../redis/redis.module';
   providers: [
     TerminalCryptoService,
     TerminalsService,
+    TerminalConfigAuditService,
     HikvisionEventsService,
     HikvisionService,
     HikvisionPhotoService,

@@ -173,7 +173,9 @@
       "lagging": "Lagging",
       "idle": "Silent",
       "today": "Events today",
-      "todayNew": "new: {{count}}"
+      "todayNew": "new: {{count}}",
+      "laggingHint": "sending old events",
+      "idleHint": "no request for 10+ min"
     },
     "status": {
       "REALTIME": "Real time",
@@ -185,7 +187,22 @@
       "title": "Terminals needing attention",
       "hint": "Lagging terminals are sending old events in order; “silent” ones have sent no request for 10 minutes.",
       "behind": "{{value}}",
-      "lastRequest": "last request: {{value}}"
+      "lastRequest": "last request: {{value}}",
+      "tabs": {
+        "LAGGING": "Behind",
+        "NEVER": "Not connected",
+        "IDLE": "Silent",
+        "ABORTED": "Aborts"
+      },
+      "hints": {
+        "LAGGING": "The terminal was just switched to push or lost connectivity: it is sending old events in order. It will catch up over time.",
+        "NEVER": "Push is enabled but no request has ever arrived: check the address, port, token or network.",
+        "IDLE": "No request for over 10 minutes. If nobody is passing by, this is not an error.",
+        "ABORTED": "Terminals that dropped the connection today. Events are not lost, but frequent aborts point to a network (VPN/Wi-Fi) problem."
+      },
+      "sending": "now sending events from {{date}}",
+      "neverHint": "Check the push address, port and token",
+      "empty": "No terminals need attention in this section."
     },
     "filters": {
       "source": "Source"
@@ -213,6 +230,75 @@
       "title": "Aborted requests (today)",
       "hint": "The terminal closed the connection before sending the whole request body: {{total}} in total across {{terminals}} terminals. Events are not lost (the terminal resends), but many aborts point to a network (VPN/Wi-Fi) problem.",
       "count": "{{count}} aborts"
+    },
+    "lagD": "{{d}} d {{h}} h behind",
+    "help": {
+      "button": "What the terms mean",
+      "items": {
+        "received": {
+          "term": "Received",
+          "text": "Every request the terminal sent (repeats included)."
+        },
+        "inserted": {
+          "term": "Newly saved",
+          "text": "Events that were not in the database before and were saved for the first time."
+        },
+        "duplicates": {
+          "term": "Repeats",
+          "text": "Events already in the database: the terminal sent them again. Harmless."
+        },
+        "lag": {
+          "term": "Behind",
+          "text": "How old the event the terminal is sending right now is. A large value means it is sending old data in order."
+        },
+        "pull": {
+          "term": "By pull",
+          "text": "Events the server asked the terminal for because push did not deliver them."
+        }
+      }
+    },
+    "day": {
+      "title": "Activity by day",
+      "hint": "Newly saved events per hour (Tashkent time).",
+      "prev": "Previous day",
+      "next": "Next day",
+      "today": "Today",
+      "date": "Date",
+      "received": "Received",
+      "inserted": "Newly saved",
+      "insertedHint": "first time",
+      "duplicates": "Repeats",
+      "duplicatesHint": "already existed",
+      "withPicture": "With picture",
+      "withPictureHint": "came with push",
+      "pull": "By pull",
+      "pullHint": "server requested",
+      "legendPush": "Push",
+      "legendPull": "Pull",
+      "peak": "Peak: {{hour}} — {{count}}",
+      "chartLabel": "New events per hour on {{date}}",
+      "tipPush": "Push: new {{new}}, received {{received}}",
+      "tipPull": "Pull: {{count}}",
+      "tipTerminals": "Terminals: {{count}}"
+    },
+    "byTerminal": {
+      "title": "By terminal — {{date}}",
+      "hint": "What each terminal delivered on the selected day.",
+      "search": "Terminal or school",
+      "sort": "Sort",
+      "sorts": {
+        "received": "By received",
+        "noPicture": "By share without picture",
+        "lag": "By lag",
+        "name": "By name"
+      },
+      "lag": "Oldest event",
+      "emptyTitle": "No data",
+      "empty": "No push or pull activity found for the selected day."
+    },
+    "journal": {
+      "show": "Show detailed hourly journal",
+      "hide": "Hide detailed journal"
     }
   }
 }

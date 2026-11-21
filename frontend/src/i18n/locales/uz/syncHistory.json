@@ -172,7 +172,9 @@
       "lagging": "Kechikmoqda",
       "idle": "Jim",
       "today": "Bugun kelgan eventlar",
-      "todayNew": "yangi: {{count}}"
+      "todayNew": "yangi: {{count}}",
+      "laggingHint": "eski eventlarni yubormoqda",
+      "idleHint": "10 daqiqadan beri so‘rov yo‘q"
     },
     "status": {
       "REALTIME": "Real vaqtda",
@@ -184,7 +186,22 @@
       "title": "E’tibor talab qiladigan terminallar",
       "hint": "Kechikayotganlar eski eventlarni navbat bilan yubormoqda; «jim»lar 10 daqiqadan beri so‘rov yubormagan.",
       "behind": "{{value}}",
-      "lastRequest": "oxirgi so‘rov: {{value}}"
+      "lastRequest": "oxirgi so‘rov: {{value}}",
+      "tabs": {
+        "LAGGING": "Kechikmoqda",
+        "NEVER": "Ulanmagan",
+        "IDLE": "Jim",
+        "ABORTED": "Uzilishlar"
+      },
+      "hints": {
+        "LAGGING": "Terminal push’ga yangi o‘tgan yoki aloqa uzilgan: eski eventlarni navbat bilan yubormoqda. Vaqt o‘tishi bilan yetib oladi.",
+        "NEVER": "Push yoqilgan, lekin terminaldan bitta ham so‘rov kelmagan: manzil, port, token yoki tarmoqni tekshiring.",
+        "IDLE": "10 daqiqadan beri so‘rov yubormagan. Hech kim o‘tmayotgan bo‘lsa, bu xato emas.",
+        "ABORTED": "Bugun ulanishni to‘liq yubormay uzgan terminallar. Eventlar yo‘qolmaydi, lekin ko‘pi tarmoq (VPN/Wi-Fi) muammosini bildiradi."
+      },
+      "sending": "hozir {{date}} dagi eventlarni yubormoqda",
+      "neverHint": "Tekshiring: push manzili, port va token",
+      "empty": "Bu bo‘limda e’tibor talab qiladigan terminal yo‘q."
     },
     "filters": {
       "source": "Manba"
@@ -212,6 +229,75 @@
       "title": "Uzilgan so‘rovlar (bugun)",
       "hint": "Terminal so‘rov tanasini to‘liq yubormay ulanishni uzgan: jami {{total}} ta, {{terminals}} ta terminalda. Eventlar yo‘qolmaydi (terminal qayta yuboradi), lekin ko‘p uzilish tarmoq (VPN/Wi-Fi) muammosini bildiradi.",
       "count": "{{count}} ta uzilish"
+    },
+    "lagD": "{{d}} kun {{h}} soat ortda",
+    "help": {
+      "button": "Atamalar izohi",
+      "items": {
+        "received": {
+          "term": "Qabul qilingan",
+          "text": "Terminal yuborgan barcha so‘rovlar (takrorlari bilan)."
+        },
+        "inserted": {
+          "term": "Yangi saqlangan",
+          "text": "Bazada avval yo‘q bo‘lgan, birinchi marta saqlangan eventlar."
+        },
+        "duplicates": {
+          "term": "Takrorlangan",
+          "text": "Bazada allaqachon bor eventlar: terminal ularni qayta yuborgan. Zararsiz."
+        },
+        "lag": {
+          "term": "Ortda (kechikish)",
+          "text": "Terminal hozir yuborayotgan eng eski eventning vaqti bugundan qancha oldin. Katta bo‘lsa, terminal eski ma’lumotni navbat bilan yubormoqda."
+        },
+        "pull": {
+          "term": "Olish orqali",
+          "text": "Server terminaldan o‘zi so‘rab olgan, push bermagan eventlar."
+        }
+      }
+    },
+    "day": {
+      "title": "Kun bo‘yicha faoliyat",
+      "hint": "Soatlar bo‘yicha yangi saqlangan eventlar (Toshkent vaqti).",
+      "prev": "Oldingi kun",
+      "next": "Keyingi kun",
+      "today": "Bugun",
+      "date": "Sana",
+      "received": "Qabul qilingan",
+      "inserted": "Yangi saqlangan",
+      "insertedHint": "birinchi marta",
+      "duplicates": "Takrorlangan",
+      "duplicatesHint": "avval bor edi",
+      "withPicture": "Rasm bilan",
+      "withPictureHint": "push bilan keldi",
+      "pull": "Olish orqali",
+      "pullHint": "server so‘rab oldi",
+      "legendPush": "Push",
+      "legendPull": "Olish",
+      "peak": "Eng ko‘p: {{hour}} — {{count}} ta",
+      "chartLabel": "{{date}} kuni soatlar bo‘yicha yangi eventlar",
+      "tipPush": "Push: yangi {{new}}, qabul {{received}}",
+      "tipPull": "Olish: {{count}}",
+      "tipTerminals": "Terminallar: {{count}}"
+    },
+    "byTerminal": {
+      "title": "Terminallar bo‘yicha — {{date}}",
+      "hint": "Tanlangan kunda har bir terminaldan nima kelgani.",
+      "search": "Terminal yoki maktab",
+      "sort": "Saralash",
+      "sorts": {
+        "received": "Qabul bo‘yicha",
+        "noPicture": "Rasmsiz ulushi bo‘yicha",
+        "lag": "Kechikish bo‘yicha",
+        "name": "Nomi bo‘yicha"
+      },
+      "lag": "Eng eski event",
+      "emptyTitle": "Ma’lumot yo‘q",
+      "empty": "Tanlangan kunda push yoki olish faoliyati topilmadi."
+    },
+    "journal": {
+      "show": "Batafsil soatlik jurnalni ko‘rsatish",
+      "hide": "Batafsil jurnalni yashirish"
     }
   }
 }

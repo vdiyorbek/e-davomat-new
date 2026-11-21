@@ -15,6 +15,7 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { Terminal } from './terminal.entity';
 import { TerminalCryptoService } from './terminal-crypto.service';
 import { HikvisionService } from './hikvision.service';
+import { TerminalConfigAuditService } from './terminal-config-audit.service';
 import { TerminalsService } from './terminals.service';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 
@@ -28,7 +29,15 @@ export class BulkTerminalManagementController {
     private readonly crypto: TerminalCryptoService,
     private readonly hikvision: HikvisionService,
     private readonly terminalsService: TerminalsService,
+    private readonly configAudit: TerminalConfigAuditService,
   ) {}
+
+  /** Terminal sozlamalarini solishtirish (faqat o‘qiydi). */
+  @Post('config-audit')
+  @HttpCode(200)
+  auditConfigs() {
+    return this.configAudit.run();
+  }
 
   @Post('time-sync')
   @HttpCode(200)

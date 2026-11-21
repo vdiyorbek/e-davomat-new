@@ -25,6 +25,7 @@ import { EditTerminalForm } from '@/components/terminals/EditTerminalForm';
 import { TerminalBulkActions } from '@/components/terminals/TerminalBulkActions';
 import { TerminalDetailsDialog } from '@/components/terminals/TerminalDetailsDialog';
 import { TerminalList } from '@/components/terminals/TerminalList';
+import { TerminalConfigAudit } from '@/components/terminals/TerminalConfigAudit';
 import { TerminalTimeSyncButton } from '@/components/terminals/TerminalTimeSyncButton';
 import { isArchived } from '@/components/terminals/terminal-status';
 import {
@@ -252,6 +253,7 @@ export function TerminalsPage() {
                                 {t('terminals.page.history')}
                             </Link>
                         </Button>
+                        {session?.profile.role === 'SUPER_ADMIN' && <TerminalConfigAudit />}
                         {session?.profile.role === 'SUPER_ADMIN' && <TerminalTimeSyncButton />}
                         <Button type="button" onClick={() => setCreateOpen(true)}>
                             <Plus aria-hidden="true" />

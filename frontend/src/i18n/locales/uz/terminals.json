@@ -597,5 +597,22 @@
     "wasOff": "Oldin {{value}} farq bor edi",
     "seconds": "{{count}} soniya",
     "minutes": "{{count}} daqiqa"
+  },
+  "audit": {
+    "button": "Sozlamalarni solishtirish",
+    "title": "Terminal sozlamalarini solishtirish",
+    "description": "Barcha faol terminallarning model, firmware va rasm sozlamalari. Faqat o‘qiydi, terminalga hech narsa yozmaydi. Parol noto‘g‘ri bo‘lsa, bloklanmasligi uchun qayta urinilmaydi.",
+    "running": "Terminallar o‘qilmoqda… (bir necha daqiqa olishi mumkin)",
+    "failed": "Sozlamalarni o‘qib bo‘lmadi.",
+    "groups": "Model va firmware bo‘yicha",
+    "groupsHint": "«Push bilan rasm» — bugun rasmi event bilan birga kelgan eventlar ulushi. Guruhlar orasidagi farq sababni ko‘rsatadi.",
+    "modelFirmware": "Model · firmware",
+    "terminals": "Terminallar",
+    "events": "Eventlar (bugun)",
+    "pushPicture": "Push bilan rasm",
+    "details": "Har bir terminal",
+    "terminal": "Terminal",
+    "pictureType": "Rasm turi",
+    "pushTarget": "Push manzili"
   }
 }

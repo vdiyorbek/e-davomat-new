@@ -20,6 +20,11 @@ import { UserRole } from '../users/enums/user-role.enum';
 const SOURCES = ['PUSH', 'AUTO_PULL', 'MANUAL_PULL'] as const;
 const IDLE_AFTER_MS = 10 * 60_000;
 const RECENT_MS = 3 * 60_000;
+const ATTENTION_ORDER: Record<string, number> = {
+  LAGGING: 0,
+  NEVER: 1,
+  IDLE: 2,
+};
 
 function positive(raw: string | undefined, fallback: number, max: number) {
   if (raw === undefined || raw === '') return fallback;
@@ -37,6 +42,21 @@ function day(raw: string | undefined): Date | null {
     throw new BadRequestException('Sana noto‘g‘ri');
   }
   return date;
+}
+
+export interface TerminalDay {
+  terminalId: number;
+  terminalName: string | null;
+  schoolName: string | null;
+  push: {
+    received: number;
+    inserted: number;
+    duplicates: number;
+    withPicture: number;
+    withoutPicture: number;
+    maxLagSeconds: number;
+  };
+  pull: { received: number; inserted: number };
 }
 
 /** Push va «olish» faoliyati: sinxronlash tarixi sahifasining «Push» yorlig‘i. */
@@ -130,6 +150,112 @@ export class EventActivityController {
         maxLagSeconds: Number(row.maxLagSeconds),
         runs: Number(row.runs),
       })),
+    };
+  }
+
+  /**
+   * Bir kunlik ko‘rinish (Toshkent kuni): soatlar bo‘yicha va terminallar bo‘yicha.
+   * Push (terminal yuboradi) va «olish» (server so‘raydi) alohida hisoblanadi.
+   */
+  @Get('day')
+  @Header('Cache-Control', 'private, no-store')
+  async dayView(@Query('date') dateRaw?: string) {
+    const from =
+      day(dateRaw) ?? new Date(`${tashkentDate(new Date())}T00:00:00+05:00`);
+    const to = new Date(from.getTime() + 24 * 3_600_000);
+
+    const [hourRows, terminalRows] = await Promise.all([
+      this.dataSource.query<Record<string, unknown>[]>(
+        `SELECT HOUR(DATE_ADD(hourStart, INTERVAL 5 HOUR)) AS h, source,
+                SUM(received) AS received, SUM(inserted) AS inserted, SUM(duplicates) AS duplicates,
+                SUM(withPicture) AS withPicture, SUM(withoutPicture) AS withoutPicture,
+                COUNT(DISTINCT terminalId) AS terminals
+           FROM terminal_event_activity
+          WHERE hourStart >= ? AND hourStart < ?
+          GROUP BY h, source`,
+        [from, to],
+      ),
+      this.dataSource.query<Record<string, unknown>[]>(
+        `SELECT a.terminalId, t.name AS terminalName, s.name AS schoolName, a.source,
+                SUM(a.received) AS received, SUM(a.inserted) AS inserted, SUM(a.duplicates) AS duplicates,
+                SUM(a.withPicture) AS withPicture, SUM(a.withoutPicture) AS withoutPicture,
+                MAX(a.maxLagSeconds) AS maxLagSeconds
+           FROM terminal_event_activity a
+           LEFT JOIN terminals t ON t.id = a.terminalId
+           LEFT JOIN schools s ON s.id = a.schoolId
+          WHERE a.hourStart >= ? AND a.hourStart < ?
+          GROUP BY a.terminalId, t.name, s.name, a.source`,
+        [from, to],
+      ),
+    ]);
+
+    const hours = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      push: { received: 0, inserted: 0, duplicates: 0, terminals: 0 },
+      pull: { received: 0, inserted: 0, duplicates: 0, terminals: 0 },
+    }));
+    for (const row of hourRows) {
+      const bucket = hours[Number(row.h)];
+      if (!bucket) continue;
+      const side = row.source === 'PUSH' ? bucket.push : bucket.pull;
+      side.received += Number(row.received);
+      side.inserted += Number(row.inserted);
+      side.duplicates += Number(row.duplicates);
+      side.terminals += Number(row.terminals);
+    }
+
+    const byTerminal = new Map<number, TerminalDay>();
+    for (const row of terminalRows) {
+      const id = Number(row.terminalId);
+      const entry = byTerminal.get(id) ?? {
+        terminalId: id,
+        terminalName: (row.terminalName as string | null) ?? null,
+        schoolName: (row.schoolName as string | null) ?? null,
+        push: {
+          received: 0,
+          inserted: 0,
+          duplicates: 0,
+          withPicture: 0,
+          withoutPicture: 0,
+          maxLagSeconds: 0,
+        },
+        pull: { received: 0, inserted: 0 },
+      };
+      if (row.source === 'PUSH') {
+        entry.push = {
+          received: Number(row.received),
+          inserted: Number(row.inserted),
+          duplicates: Number(row.duplicates),
+          withPicture: Number(row.withPicture),
+          withoutPicture: Number(row.withoutPicture),
+          maxLagSeconds: Number(row.maxLagSeconds),
+        };
+      } else {
+        entry.pull.received += Number(row.received);
+        entry.pull.inserted += Number(row.inserted);
+      }
+      byTerminal.set(id, entry);
+    }
+
+    const terminals = [...byTerminal.values()].sort(
+      (a, b) => b.push.received - a.push.received,
+    );
+    const sum = (pick: (t: TerminalDay) => number) =>
+      terminals.reduce((total, item) => total + pick(item), 0);
+
+    return {
+      date: tashkentDate(from),
+      hours,
+      terminals,
+      totals: {
+        pushReceived: sum((t) => t.push.received),
+        pushInserted: sum((t) => t.push.inserted),
+        pushDuplicates: sum((t) => t.push.duplicates),
+        pushWithPicture: sum((t) => t.push.withPicture),
+        pushWithoutPicture: sum((t) => t.push.withoutPicture),
+        pullInserted: sum((t) => t.pull.inserted),
+        terminals: terminals.length,
+      },
     };
   }
 
@@ -248,15 +374,16 @@ export class EventActivityController {
         idle: count('IDLE'),
         never: count('NEVER'),
       },
-      // E’tibor talab qiladiganlar: kechikayotganlari (eng orqadagisi birinchi) va jim turganlar.
+      // E’tibor talab qiladiganlar: avval kechikayotganlar (eng orqadagisi birinchi),
+      // keyin hali bitta so‘rov yubormaganlar, keyin jim turganlar.
       attention: rows
-        .filter((row) => row.status === 'LAGGING' || row.status === 'IDLE')
+        .filter((row) => row.status !== 'REALTIME')
         .sort(
           (a, b) =>
-            Number(b.status === 'LAGGING') - Number(a.status === 'LAGGING') ||
+            ATTENTION_ORDER[a.status] - ATTENTION_ORDER[b.status] ||
             (b.lagMinutes ?? 0) - (a.lagMinutes ?? 0),
         )
-        .slice(0, 50),
+        .slice(0, 300),
       today: today.map((row) => ({
         source: String(row.source),
         received: Number(row.received),

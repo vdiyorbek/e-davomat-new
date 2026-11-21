@@ -132,14 +132,15 @@ export const router = createBrowserRouter([
                                 path: '/inspector/students',
                                 element: <InspectorStudentsPage />,
                             },
+                        ],
+                    },
+                    {
+                        // Suhbatlarni administratorlar ham ko‘radi: uchastkavoy qo‘riqchisidan tashqarida.
+                        element: <RequireRole roles={TALK_VIEW_ROLES} />,
+                        children: [
                             {
-                                element: <RequireRole roles={TALK_VIEW_ROLES} />,
-                                children: [
-                                    {
-                                        path: '/inspector/talks',
-                                        element: <InspectorTalksPage />,
-                                    },
-                                ],
+                                path: '/inspector/talks',
+                                element: <InspectorTalksPage />,
                             },
                         ],
                     },
