@@ -415,12 +415,14 @@ export class DailyAttendanceReadService {
     const status = query.attendanceStatus;
 
     if (status === AttendanceStatusFilter.INSIDE) {
-      // "Kelgan" filtri ketganlarni ham qamrab oladi.
-      builder.andWhere('daily.firstInTime IS NOT NULL');
+      // «Kelgan» filtri statistika kartasi bilan bir xil: kirishi yoki chiqishi yozilgan
+      // (ketganlar va faqat chiqishi bor, kirishi kelmaganlar ham).
+      builder.andWhere(
+        '(daily.firstInTime IS NOT NULL OR daily.lastOutTime IS NOT NULL)',
+      );
     } else if (status === AttendanceStatusFilter.LEFT) {
-      builder
-        .andWhere('daily.firstInTime IS NOT NULL')
-        .andWhere('daily.lastOutTime IS NOT NULL');
+      // «Ketgan» — chiqishi yozilgan (kirishi kelmagan bo‘lsa ham: ular ham maktabdan ketgan).
+      builder.andWhere('daily.lastOutTime IS NOT NULL');
     } else if (status === AttendanceStatusFilter.ANOMALY) {
       builder
         .andWhere('daily.firstInTime IS NULL')
