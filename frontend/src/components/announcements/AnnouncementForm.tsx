@@ -215,6 +215,9 @@ export function AnnouncementForm({ onCancel, onSent }: { onCancel: () => void; o
                                 </Label>
                             ))}
                         </div>
+                        {roles.has('MAHALLA_INSPECTOR') && scope === 'SCHOOLS' && (
+                            <p className="text-xs text-muted-foreground">{t('announcements.form.inspectorHint')}</p>
+                        )}
                     </div>
                 </div>
 

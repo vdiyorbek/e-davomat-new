@@ -42,7 +42,8 @@
     "due": "Muddat",
     "send": "Yuborish",
     "sending": "Yuborilmoqda…",
-    "sent": "{{count}} ta qabul qiluvchiga yuborildi."
+    "sent": "{{count}} ta qabul qiluvchiga yuborildi.",
+    "inspectorHint": "Mahalla inspektorlari tumanga biriktirilgan: maktab tanlansa, shu maktablar tumanidagi inspektorlarga boradi."
   },
   "errors": {
     "region": "Viloyatni tanlang.",

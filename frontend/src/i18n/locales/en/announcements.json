@@ -42,7 +42,8 @@
     "due": "Due date",
     "send": "Send",
     "sending": "Sending…",
-    "sent": "Sent to {{count}} recipients."
+    "sent": "Sent to {{count}} recipients.",
+    "inspectorHint": "Neighbourhood inspectors are assigned to a district: if schools are selected, inspectors of those schools’ districts receive it."
   },
   "errors": {
     "region": "Select a region.",

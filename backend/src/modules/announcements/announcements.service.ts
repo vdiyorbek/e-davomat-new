@@ -217,8 +217,13 @@ export class AnnouncementsService {
             );
           }
         }
-        where.push(`u.schoolId IN (${ids.map(() => '?').join(',')})`);
-        params.push(...ids);
+        // Mahalla inspektorlari maktabga emas, tumanga biriktirilgan: tanlangan
+        // maktablar joylashgan tumanlardagi inspektorlar ham qabul qiladi.
+        const marks = ids.map(() => '?').join(',');
+        where.push(
+          `(u.schoolId IN (${marks}) OR (u.role = 'MAHALLA_INSPECTOR' AND u.districtId IN (SELECT districtId FROM schools WHERE id IN (${marks}))))`,
+        );
+        params.push(...ids, ...ids);
         break;
       }
     }
