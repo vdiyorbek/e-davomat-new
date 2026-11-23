@@ -54,7 +54,8 @@
     "inspectorCases": "Текширув ҳисоботлари",
     "inspectorsManage": "Маҳалла инспекторлари",
     "homeroom": "Синф раҳбари",
-    "systemHealth": "Тизим ҳолати"
+    "systemHealth": "Тизим ҳолати",
+    "announcements": "Хабарлар"
   },
   "short": {
     "profile": "Профил",
@@ -76,6 +77,7 @@
     "inspectorCases": "Ҳисобот",
     "inspectorsManage": "Инспектор",
     "homeroom": "Синфим",
-    "systemHealth": "Ҳолат"
+    "systemHealth": "Ҳолат",
+    "announcements": "Хабарлар"
   }
 }

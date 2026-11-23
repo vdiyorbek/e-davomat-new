@@ -11,6 +11,7 @@
     "ABSENT_STREAK": "{{student}} ({{className}}) {{days}} рӯзи пайдарпай наомад (аз {{since}}).",
     "ABSENT_STREAK_INSPECTOR": "{{student}} {{days}} рӯзи пайдарпай ба мактаб наомад (аз {{since}}).",
     "SYSTEM_ALERT": "Огоҳии система: {{checkName}} — {{statusName}}",
-    "SYSTEM_RECOVERED": "{{checkName}} ислоҳ шуд."
+    "SYSTEM_RECOVERED": "{{checkName}} ислоҳ шуд.",
+    "ANNOUNCEMENT_REMINDER": "Ёдоварӣ: супориши «{{title}}» ҳанӯз иҷро нашудааст."
   }
 }

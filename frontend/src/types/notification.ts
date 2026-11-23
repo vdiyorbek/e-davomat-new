@@ -4,7 +4,9 @@ export type NotificationType =
     | 'EXCUSE_REJECTED'
     | 'ABSENT_STREAK'
     | 'SYSTEM_ALERT'
-    | 'SYSTEM_RECOVERED';
+    | 'SYSTEM_RECOVERED'
+    | 'ANNOUNCEMENT'
+    | 'ANNOUNCEMENT_REMINDER';
 
 export interface AppNotification {
     id: number;
@@ -12,6 +14,8 @@ export interface AppNotification {
     payload: Record<string, string | number | boolean | null | undefined>;
     readAt: string | null;
     createdAt: string;
+    /** Topshiriq bajarilgan vaqti (faqat ANNOUNCEMENT turi uchun). */
+    doneAt?: string | null;
 }
 
 export interface NotificationsResponse {

@@ -11,6 +11,7 @@
     "ABSENT_STREAK": "{{student}} ({{className}}) кетма-кет {{days}} кун келмади ({{since}} дан бери).",
     "ABSENT_STREAK_INSPECTOR": "{{student}} кетма-кет {{days}} кун мактабга келмади ({{since}} дан бери).",
     "SYSTEM_ALERT": "Тизим огоҳлантириши: {{checkName}} — {{statusName}}",
-    "SYSTEM_RECOVERED": "{{checkName}} тузалди."
+    "SYSTEM_RECOVERED": "{{checkName}} тузалди.",
+    "ANNOUNCEMENT_REMINDER": "Эслатма: «{{title}}» топшириғи ҳали бажарилмаган."
   }
 }

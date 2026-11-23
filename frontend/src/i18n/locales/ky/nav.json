@@ -54,7 +54,8 @@
     "inspectorCases": "Текшерүү отчёттору",
     "inspectorsManage": "Махалла инспекторлору",
     "homeroom": "Класс жетекчиси",
-    "systemHealth": "Тутум абалы"
+    "systemHealth": "Тутум абалы",
+    "announcements": "Билдирүүлөр"
   },
   "short": {
     "profile": "Профиль",
@@ -76,6 +77,7 @@
     "inspectorCases": "Отчёттор",
     "inspectorsManage": "Инспектор",
     "homeroom": "Менин классым",
-    "systemHealth": "Абал"
+    "systemHealth": "Абал",
+    "announcements": "Билдирүү"
   }
 }

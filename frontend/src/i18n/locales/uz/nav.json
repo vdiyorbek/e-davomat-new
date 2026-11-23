@@ -54,7 +54,8 @@
     "inspectorCases": "Tekshiruv hisobotlari",
     "inspectorsManage": "Mahalla inspektorlari",
     "homeroom": "Sinf rahbari",
-    "systemHealth": "Tizim holati"
+    "systemHealth": "Tizim holati",
+    "announcements": "Xabarlar"
   },
   "short": {
     "profile": "Profil",
@@ -76,6 +77,7 @@
     "inspectorCases": "Hisobot",
     "inspectorsManage": "Inspektor",
     "homeroom": "Sinfim",
-    "systemHealth": "Holat"
+    "systemHealth": "Holat",
+    "announcements": "Xabarlar"
   }
 }

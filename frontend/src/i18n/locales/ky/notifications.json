@@ -11,6 +11,7 @@
     "ABSENT_STREAK": "{{student}} ({{className}}) удаалаш {{days}} күн келген жок ({{since}} баштап).",
     "ABSENT_STREAK_INSPECTOR": "{{student}} удаалаш {{days}} күн мектепке келген жок ({{since}} баштап).",
     "SYSTEM_ALERT": "Тутум эскертүүсү: {{checkName}} — {{statusName}}",
-    "SYSTEM_RECOVERED": "{{checkName}} оңолду."
+    "SYSTEM_RECOVERED": "{{checkName}} оңолду.",
+    "ANNOUNCEMENT_REMINDER": "Эскертүү: «{{title}}» тапшырмасы али аткарылган жок."
   }
 }

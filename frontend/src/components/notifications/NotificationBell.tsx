@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, CircleCheck } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,9 @@ function targetOf(item: AppNotification): string {
         case 'SYSTEM_ALERT':
         case 'SYSTEM_RECOVERED':
             return '/system/health';
+        case 'ANNOUNCEMENT':
+        case 'ANNOUNCEMENT_REMINDER':
+            return typeof p.linkPath === 'string' && p.linkPath.startsWith('/') && !p.linkPath.startsWith('//') ? p.linkPath : '/';
         default:
             return '/';
     }
@@ -76,6 +79,14 @@ export function NotificationBell() {
             retry();
         }
         void navigate(targetOf(item));
+    }
+
+    async function markDone(item: AppNotification) {
+        try {
+            await authorizedPost(`/announcements/${String(item.payload.announcementId)}/done`, {});
+        } finally {
+            retry();
+        }
     }
 
     async function readAll() {
@@ -139,10 +150,53 @@ export function NotificationBell() {
                                             className={cn('mt-1.5 size-2 shrink-0 rounded-full', item.readAt ? 'bg-transparent' : 'bg-primary')}
                                         />
                                         <span className="min-w-0 space-y-0.5">
-                                            <span className="block text-sm leading-5 [overflow-wrap:anywhere]">{t(textKey(item), vars(item))}</span>
-                                            <span className="block text-xs text-muted-foreground tabular-nums">{formatDateTime(item.createdAt)}</span>
+                                            {item.type === 'ANNOUNCEMENT' ? (
+                                                <>
+                                                    <span className="flex flex-wrap items-center gap-1.5">
+                                                        {item.payload.kind === 'URGENT' && (
+                                                            <span className="rounded bg-destructive px-1.5 text-[10px] leading-4 font-bold text-white uppercase">
+                                                                {t('announcements.kinds.URGENT')}
+                                                            </span>
+                                                        )}
+                                                        {item.payload.kind === 'TASK' && (
+                                                            <span className="rounded bg-primary px-1.5 text-[10px] leading-4 font-bold text-primary-foreground uppercase">
+                                                                {t('announcements.kinds.TASK')}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-sm leading-5 font-semibold [overflow-wrap:anywhere]">{String(item.payload.title ?? '')}</span>
+                                                    </span>
+                                                    <span className="line-clamp-3 block text-xs leading-5 text-muted-foreground [overflow-wrap:anywhere]">
+                                                        {String(item.payload.body ?? '')}
+                                                    </span>
+                                                    {typeof item.payload.dueDate === 'string' && (
+                                                        <span className="block text-xs text-muted-foreground">
+                                                            {t('announcements.list.due', { date: formatDate(item.payload.dueDate) })}
+                                                        </span>
+                                                    )}
+                                                    <span className="block text-xs text-muted-foreground tabular-nums">
+                                                        {String(item.payload.sender ?? '')} · {formatDateTime(item.createdAt)}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="block text-sm leading-5 [overflow-wrap:anywhere]">{t(textKey(item), vars(item))}</span>
+                                                    <span className="block text-xs text-muted-foreground tabular-nums">{formatDateTime(item.createdAt)}</span>
+                                                </>
+                                            )}
                                         </span>
                                     </Button>
+                                    {item.type === 'ANNOUNCEMENT' && item.payload.kind === 'TASK' && (
+                                        <div className="flex justify-end px-4 pb-3">
+                                            {item.doneAt ? (
+                                                <span className="text-xs font-semibold text-success">{t('announcements.doneStamp')}</span>
+                                            ) : (
+                                                <Button type="button" size="sm" variant="outline" onClick={() => void markDone(item)}>
+                                                    <CircleCheck aria-hidden="true" />
+                                                    {t('announcements.markDone')}
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
                                 </li>
                             ))}
                         </ul>

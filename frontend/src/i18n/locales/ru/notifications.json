@@ -11,6 +11,7 @@
     "ABSENT_STREAK": "{{student}} ({{className}}) не приходит {{days}} дн. подряд (с {{since}}).",
     "ABSENT_STREAK_INSPECTOR": "{{student}} не ходит в школу {{days}} дн. подряд (с {{since}}).",
     "SYSTEM_ALERT": "Предупреждение системы: {{checkName}} — {{statusName}}",
-    "SYSTEM_RECOVERED": "{{checkName}}: восстановлено."
+    "SYSTEM_RECOVERED": "{{checkName}}: восстановлено.",
+    "ANNOUNCEMENT_REMINDER": "Напоминание: поручение «{{title}}» ещё не выполнено."
   }
 }

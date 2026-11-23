@@ -30,6 +30,9 @@ const AttendanceOverviewPage = lazy(() =>
 const AbsenceStreaksPage = lazy(() => import('@/pages/dashboard/AbsenceStreaksPage').then((m) => ({ default: m.AbsenceStreaksPage })));
 const HomeroomPage = lazy(() => import('@/pages/homeroom/HomeroomPage').then((m) => ({ default: m.HomeroomPage })));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const AnnouncementsPage = lazy(() =>
+    import('@/pages/announcements/AnnouncementsPage').then((m) => ({ default: m.AnnouncementsPage })),
+);
 const SystemHealthPage = lazy(() =>
     import('@/pages/system-health/SystemHealthPage').then((m) => ({ default: m.SystemHealthPage })),
 );
@@ -222,6 +225,7 @@ export const router = createBrowserRouter([
                                 children: [
                                     { path: '/system-settings', element: <SystemSettingsPage /> },
                                     { path: '/system/health', element: <SystemHealthPage /> },
+                                    { path: '/announcements', element: <AnnouncementsPage /> },
                                     {
                                         path: '/textbooks',
                                         element: <TextbooksPage />,

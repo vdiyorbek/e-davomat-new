@@ -1,0 +1,87 @@
+{
+  "title": "Announcements",
+  "description": "Send messages or tasks to school and regional administrators and track who read and who completed them.",
+  "new": "New announcement",
+  "empty": "No announcements yet",
+  "emptyHint": "Send the first one with the “New announcement” button.",
+  "formDescription": "The message appears in the recipients’ bell.",
+  "kinds": {
+    "INFO": "Message",
+    "TASK": "Task",
+    "URGENT": "Urgent"
+  },
+  "kindHints": {
+    "INFO": "For information.",
+    "TASK": "With a due date; the recipient presses “Done”.",
+    "URGENT": "Highlighted with a red label."
+  },
+  "scopes": {
+    "ALL": "Whole system",
+    "REGION": "Region",
+    "DISTRICT": "District",
+    "SCHOOLS": "Selected schools"
+  },
+  "form": {
+    "kind": "Type",
+    "title": "Title",
+    "titlePlaceholder": "E.g. School 12, please update a student’s data",
+    "body": "Text",
+    "bodyPlaceholder": "Describe what needs to be done",
+    "audience": "To",
+    "scope": "Scope",
+    "region": "Region",
+    "district": "District",
+    "any": "All",
+    "searchSchool": "Search schools",
+    "selectAll": "Select visible",
+    "clear": "Clear",
+    "selectedCount": "Schools selected: {{count}}",
+    "roles": "Roles",
+    "link": "Page link (optional)",
+    "linkHint": "A path inside the system, e.g. /persons/123?edit=1 — it opens when clicked.",
+    "due": "Due date",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Sent to {{count}} recipients."
+  },
+  "errors": {
+    "region": "Select a region.",
+    "district": "Select a district.",
+    "schools": "Select at least one school.",
+    "roles": "Select at least one role.",
+    "failed": "Could not send."
+  },
+  "list": {
+    "by": "Sender: {{name}}",
+    "recipients": "{{count}} recipients",
+    "read": "Read: {{n}} / {{total}}",
+    "done": "Done: {{n}} / {{total}}",
+    "due": "Due: {{date}}"
+  },
+  "detail": {
+    "description": "Read and completion status for each recipient.",
+    "recipient": "Recipient",
+    "school": "School",
+    "read": "Read",
+    "done": "Completed",
+    "unread": "Unread",
+    "notDone": "Not done",
+    "reminded": "Reminder sent: {{time}}"
+  },
+  "markDone": "Done",
+  "doneStamp": "Completed",
+  "gaps": {
+    "title": "Schools with incomplete data",
+    "description": "Students without a photo or without a parent phone. “Remind” sends a task to the school administrator; once the gap is fixed, the task closes itself.",
+    "school": "School",
+    "students": "Students",
+    "noPhoto": "No photo",
+    "noGuardian": "No parent phone",
+    "remind": "Remind",
+    "sent": "Sent",
+    "allPhoto": "Remind all (no photo)",
+    "allGuardian": "Remind all (no phone)",
+    "empty": "All schools have complete data.",
+    "result": "Sent: {{sent}}. Skipped: open reminder exists — {{skippedOpen}}, no administrator — {{skippedNoAdmin}}."
+  }
+}

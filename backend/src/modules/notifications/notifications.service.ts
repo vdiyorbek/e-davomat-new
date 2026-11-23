@@ -9,7 +9,9 @@ export type NotificationType =
   | 'EXCUSE_REJECTED'
   | 'ABSENT_STREAK'
   | 'SYSTEM_ALERT'
-  | 'SYSTEM_RECOVERED';
+  | 'SYSTEM_RECOVERED'
+  | 'ANNOUNCEMENT'
+  | 'ANNOUNCEMENT_REMINDER';
 
 export interface NewNotification {
   userId: number;
@@ -64,10 +66,13 @@ export class NotificationsService {
       payload: unknown;
       readAt: Date | null;
       createdAt: Date;
+      doneAt: Date | null;
     }[] = await this.dataSource.query(
-      `SELECT id, type, payload, readAt, createdAt FROM notifications
-        WHERE userId = ? ${onlyUnread ? 'AND readAt IS NULL' : ''}
-        ORDER BY id DESC LIMIT ?`,
+      `SELECT n.id, n.type, n.payload, n.readAt, n.createdAt, ar.doneAt
+         FROM notifications n
+         LEFT JOIN announcement_recipients ar ON ar.notificationId = n.id
+        WHERE n.userId = ? ${onlyUnread ? 'AND n.readAt IS NULL' : ''}
+        ORDER BY n.id DESC LIMIT ?`,
       [userId, limit],
     );
     return rows.map((r) => ({
@@ -79,6 +84,7 @@ export class NotificationsService {
           : (r.payload ?? {}),
       readAt: r.readAt,
       createdAt: r.createdAt,
+      doneAt: r.doneAt,
     }));
   }
 

@@ -54,7 +54,8 @@
     "inspectorCases": "Ҳисоботи санҷиш",
     "inspectorsManage": "Нозирони маҳалла",
     "homeroom": "Роҳбари синф",
-    "systemHealth": "Ҳолати система"
+    "systemHealth": "Ҳолати система",
+    "announcements": "Паёмҳо"
   },
   "short": {
     "profile": "Профил",
@@ -76,6 +77,7 @@
     "inspectorCases": "Ҳисобот",
     "inspectorsManage": "Нозир",
     "homeroom": "Синфи ман",
-    "systemHealth": "Ҳолат"
+    "systemHealth": "Ҳолат",
+    "announcements": "Паём"
   }
 }

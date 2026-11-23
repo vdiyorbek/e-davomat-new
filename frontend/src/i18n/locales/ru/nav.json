@@ -54,7 +54,8 @@
     "inspectorCases": "Отчёты проверок",
     "inspectorsManage": "Инспекторы махалли",
     "homeroom": "Классный руководитель",
-    "systemHealth": "Состояние системы"
+    "systemHealth": "Состояние системы",
+    "announcements": "Сообщения"
   },
   "short": {
     "profile": "Профиль",
@@ -76,6 +77,7 @@
     "inspectorCases": "Отчёты",
     "inspectorsManage": "Инспект.",
     "homeroom": "Мой класс",
-    "systemHealth": "Состояние"
+    "systemHealth": "Состояние",
+    "announcements": "Сообщ."
   }
 }

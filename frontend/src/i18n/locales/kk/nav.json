@@ -54,7 +54,8 @@
     "inspectorCases": "Тексеру есептері",
     "inspectorsManage": "Махалла инспекторлары",
     "homeroom": "Сынып жетекшісі",
-    "systemHealth": "Жүйе күйі"
+    "systemHealth": "Жүйе күйі",
+    "announcements": "Хабарлар"
   },
   "short": {
     "profile": "Профиль",
@@ -76,6 +77,7 @@
     "inspectorCases": "Есептер",
     "inspectorsManage": "Инспектор",
     "homeroom": "Менің сыныбым",
-    "systemHealth": "Күйі"
+    "systemHealth": "Күйі",
+    "announcements": "Хабарлар"
   }
 }

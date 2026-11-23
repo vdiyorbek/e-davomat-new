@@ -34,6 +34,7 @@ import { MemberAccountsModule } from './modules/member-accounts/member-accounts.
 import { InspectorsModule } from './modules/inspectors/inspectors.module';
 import { HomeroomModule } from './modules/homeroom/homeroom.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { SystemMonitorModule } from './modules/system-monitor/system-monitor.module';
 import { LiveModule } from './modules/live/live.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -69,6 +70,7 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
     AttendanceExcusesModule,
     InspectorsModule,
     NotificationsModule,
+    AnnouncementsModule,
     SystemMonitorModule,
     HomeroomModule,
     AttendanceCalendarModule,

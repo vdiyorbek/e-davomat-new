@@ -11,6 +11,7 @@
     "ABSENT_STREAK": "{{student}} ({{className}}) ketma-ket {{days}} kun kelmadi ({{since}} dan beri).",
     "ABSENT_STREAK_INSPECTOR": "{{student}} ketma-ket {{days}} kun maktabga kelmadi ({{since}} dan beri).",
     "SYSTEM_ALERT": "Tizim ogohlantirishi: {{checkName}} — {{statusName}}",
-    "SYSTEM_RECOVERED": "{{checkName}} tuzaldi."
+    "SYSTEM_RECOVERED": "{{checkName}} tuzaldi.",
+    "ANNOUNCEMENT_REMINDER": "Eslatma: «{{title}}» topshirig‘i hali bajarilmagan."
   }
 }

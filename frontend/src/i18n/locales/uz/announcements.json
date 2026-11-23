@@ -1,0 +1,87 @@
+{
+  "title": "Xabarlar",
+  "description": "Maktab va hudud administratorlariga xabar yoki topshiriq yuboring va kim o‘qiganini, kim bajarganini kuzating.",
+  "new": "Yangi xabar",
+  "empty": "Hali xabar yuborilmagan",
+  "emptyHint": "«Yangi xabar» tugmasi bilan birinchi xabarni yuboring.",
+  "formDescription": "Xabar qabul qiluvchilarning qo‘ng‘iroqchasiga tushadi.",
+  "kinds": {
+    "INFO": "Oddiy xabar",
+    "TASK": "Topshiriq",
+    "URGENT": "Shoshilinch"
+  },
+  "kindHints": {
+    "INFO": "Ma’lumot uchun.",
+    "TASK": "Muddat bilan; qabul qiluvchi «Bajardim» tugmasini bosadi.",
+    "URGENT": "Qizil belgi bilan ajralib turadi."
+  },
+  "scopes": {
+    "ALL": "Butun tizim",
+    "REGION": "Viloyat",
+    "DISTRICT": "Tuman",
+    "SCHOOLS": "Tanlangan maktablar"
+  },
+  "form": {
+    "kind": "Turi",
+    "title": "Sarlavha",
+    "titlePlaceholder": "Masalan: 12-maktab, o‘quvchi ma’lumotini yangilang",
+    "body": "Matn",
+    "bodyPlaceholder": "Nima qilish kerakligini yozing",
+    "audience": "Kimga",
+    "scope": "Qamrov",
+    "region": "Viloyat",
+    "district": "Tuman",
+    "any": "Hammasi",
+    "searchSchool": "Maktab qidirish",
+    "selectAll": "Ko‘ringanlarni tanlash",
+    "clear": "Tozalash",
+    "selectedCount": "Tanlangan maktablar: {{count}}",
+    "roles": "Rollar",
+    "link": "Sahifaga havola (ixtiyoriy)",
+    "linkHint": "Tizim ichidagi yo‘l, masalan /persons/123?edit=1 — bosilganda shu sahifa ochiladi.",
+    "due": "Muddat",
+    "send": "Yuborish",
+    "sending": "Yuborilmoqda…",
+    "sent": "{{count}} ta qabul qiluvchiga yuborildi."
+  },
+  "errors": {
+    "region": "Viloyatni tanlang.",
+    "district": "Tumanni tanlang.",
+    "schools": "Kamida bitta maktabni tanlang.",
+    "roles": "Kamida bitta rolni tanlang.",
+    "failed": "Yuborib bo‘lmadi."
+  },
+  "list": {
+    "by": "Yuboruvchi: {{name}}",
+    "recipients": "{{count}} ta qabul qiluvchi",
+    "read": "O‘qigan: {{n}} / {{total}}",
+    "done": "Bajargan: {{n}} / {{total}}",
+    "due": "Muddat: {{date}}"
+  },
+  "detail": {
+    "description": "Har bir qabul qiluvchi uchun o‘qilgan va bajarilgan holat.",
+    "recipient": "Qabul qiluvchi",
+    "school": "Maktab",
+    "read": "O‘qilgan",
+    "done": "Bajarilgan",
+    "unread": "O‘qimagan",
+    "notDone": "Bajarilmagan",
+    "reminded": "Eslatma yuborilgan: {{time}}"
+  },
+  "markDone": "Bajardim",
+  "doneStamp": "Bajarilgan",
+  "gaps": {
+    "title": "Ma’lumoti to‘liq emas maktablar",
+    "description": "Rasmi yo‘q yoki ota-ona telefoni kiritilmagan o‘quvchilar. «Eslatma» maktab administratoriga topshiriq yuboradi; kamchilik tugagach topshiriq o‘zi bajarilgan deb belgilanadi.",
+    "school": "Maktab",
+    "students": "O‘quvchilar",
+    "noPhoto": "Rasmi yo‘q",
+    "noGuardian": "Ota-ona telefoni yo‘q",
+    "remind": "Eslatma",
+    "sent": "Yuborilgan",
+    "allPhoto": "Rasmi yo‘qlar bo‘yicha hammasiga",
+    "allGuardian": "Telefoni yo‘qlar bo‘yicha hammasiga",
+    "empty": "Hamma maktabda ma’lumotlar to‘liq.",
+    "result": "Yuborildi: {{sent}} ta. O‘tkazib yuborildi: ochiq eslatma bor — {{skippedOpen}}, administrator yo‘q — {{skippedNoAdmin}}."
+  }
+}

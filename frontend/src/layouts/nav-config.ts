@@ -26,6 +26,7 @@ import {
   Radio,
   SlidersHorizontal,
   HeartPulse,
+  Megaphone,
   UserX,
   UserPlus,
   UserRoundCheck,
@@ -270,6 +271,12 @@ export const NAV_GROUPS: NavGroup[] = [
         key: "syncHistory",
         icon: History,
         roles: ["SUPER_ADMIN"],
+      },
+      {
+        to: "/announcements",
+        key: "announcements",
+        icon: Megaphone,
+        roles: ["SUPER_ADMIN", "REGION_ADMIN"],
       },
       {
         to: "/system/health",

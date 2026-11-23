@@ -11,6 +11,7 @@
     "ABSENT_STREAK": "{{student}} ({{className}}) қатарынан {{days}} күн келмеді ({{since}} бастап).",
     "ABSENT_STREAK_INSPECTOR": "{{student}} қатарынан {{days}} күн мектепке келмеді ({{since}} бастап).",
     "SYSTEM_ALERT": "Жүйе ескертуі: {{checkName}} — {{statusName}}",
-    "SYSTEM_RECOVERED": "{{checkName}} түзелді."
+    "SYSTEM_RECOVERED": "{{checkName}} түзелді.",
+    "ANNOUNCEMENT_REMINDER": "Еске салу: «{{title}}» тапсырмасы әлі орындалмаған."
   }
 }
