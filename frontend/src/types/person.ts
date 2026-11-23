@@ -52,3 +52,15 @@ export interface CreatePersonInput {
 }
 
 export type UpdatePersonInput = Partial<Omit<CreatePersonInput, "pnfl">>;
+
+export interface Guardian {
+  lastName: string | null;
+  firstName: string | null;
+  middleName: string | null;
+  phoneNumber: string | null;
+}
+
+export interface Guardians {
+  father: Guardian | null;
+  mother: Guardian | null;
+}

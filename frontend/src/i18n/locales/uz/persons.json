@@ -52,5 +52,17 @@
     "academicYear": "O‘quv yili: {{year}}",
     "period": "{{from}} — {{to}}",
     "ongoing": "{{from}} dan — davom etmoqda"
+  },
+  "guardians": {
+    "title": "Ota-ona ma’lumoti",
+    "hint": "Ota va onaning familiyasi, ismi, otasining ismi va telefon raqami. Bo‘sh qoldirsangiz, ma’lumot o‘chiriladi.",
+    "father": "Ota",
+    "mother": "Ona",
+    "notSet": "Kiritilmagan",
+    "nameNotSet": "F.I.Sh. kiritilmagan",
+    "errors": {
+      "nameLength": "Ota-ona familiyasi, ismi va otasining ismi 100 belgidan oshmasin.",
+      "phone": "Ota-ona telefon raqamini xalqaro formatda kiriting: +998901234567."
+    }
   }
 }

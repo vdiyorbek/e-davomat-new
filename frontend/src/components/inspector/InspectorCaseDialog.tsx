@@ -6,6 +6,7 @@ import { Field } from '@/components/common/Field';
 import { SelectField } from '@/components/common/SelectField';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState, LoadingState } from '@/components/common/states';
+import { GuardianContacts } from '@/components/inspector/GuardianContacts';
 import { InspectorCasePdf } from '@/components/inspector/InspectorCasePdf';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -130,6 +131,10 @@ function CaseForm({ data, onChanged, onClose }: { data: InspectorCaseDetail; onC
                 <p className="mt-2 text-sm">
                     {t('inspectors.cases.dialog.absence', { days: data.absentDays, since: formatDate(data.absentSince) })}
                 </p>
+                <div className="mt-3 border-t pt-3">
+                    <p className="mb-1 text-xs font-semibold">{t('inspectors.students.guardians')}</p>
+                    <GuardianContacts guardians={data.student.guardians} />
+                </div>
                 {data.history.length > 0 && (
                     <p className="mt-1 text-xs text-muted-foreground">
                         {t('inspectors.cases.dialog.history', { count: data.history.length })}

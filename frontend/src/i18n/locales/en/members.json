@@ -41,7 +41,8 @@
     "transfer": "Transfer",
     "transferLong": "Transfer to another school",
     "end": "End",
-    "endDate": "End date"
+    "endDate": "End date",
+    "move": "Move"
   },
   "end": {
     "title": "End school membership",
@@ -134,5 +135,15 @@
     "row": "Row",
     "message": "Error",
     "imported": "Students imported."
+  },
+  "move": {
+    "title": "Move student",
+    "description": "Move to another class or another school. If the school is not changed, the class is changed.",
+    "school": "School",
+    "schoolHint": "If you pick another school, the student is transferred to it.",
+    "schoolLocked": "You can only change the class within your own school.",
+    "modeClass": "Action: change class (the school stays the same).",
+    "modeSchool": "Action: transfer to another school (the old enrolment is closed and a new one is opened).",
+    "noTransferRight": "You are not allowed to transfer to another school."
   }
 }

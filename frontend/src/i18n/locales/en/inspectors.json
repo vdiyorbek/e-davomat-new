@@ -25,7 +25,8 @@
     "school": "School, class",
     "emptyTitle": "No students found",
     "empty": "Try changing the filters.",
-    "noMahallas": "No neighbourhoods are assigned to you yet. Contact your district administrator."
+    "noMahallas": "No neighbourhoods are assigned to you yet. Contact your district administrator.",
+    "guardians": "Parents"
   },
   "status": {
     "PRESENT": "Present",

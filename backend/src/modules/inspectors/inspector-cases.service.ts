@@ -22,6 +22,7 @@ import {
   InspectorCaseStatus,
 } from './inspector-case.entity';
 import { buildCaseReportPdf } from './inspector-case-pdf';
+import { loadGuardianContacts, NO_GUARDIANS } from './inspector-guardians';
 import { InspectorMahalla } from './inspector-mahalla.entity';
 import { InspectorsService } from './inspectors.service';
 import { tashkentToday } from './inspector.rules';
@@ -227,10 +228,16 @@ export class InspectorCasesService {
       [...params, query.limit, (query.page - 1) * query.limit],
     );
 
+    const guardians = await loadGuardianContacts(
+      this.dataSource,
+      rows.map((r) => Number(r.personId)),
+    );
+
     return {
       ...empty,
       total: Number(count?.total ?? 0),
       items: rows.map((r) => ({
+        guardians: guardians.get(Number(r.personId)) ?? NO_GUARDIANS,
         personId: Number(r.personId),
         firstName: r.firstName,
         lastName: r.lastName,
@@ -499,6 +506,10 @@ export class InspectorCasesService {
     return {
       ...this.toDto(c),
       student: {
+        guardians:
+          (await loadGuardianContacts(this.dataSource, [c.personId])).get(
+            c.personId,
+          ) ?? NO_GUARDIANS,
         firstName: person?.firstName,
         lastName: person?.lastName,
         middleName: person?.middleName,

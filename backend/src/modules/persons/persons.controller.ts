@@ -14,6 +14,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Patch,
+  Put,
 } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
@@ -27,6 +28,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { PersonPhotosService } from './person-photos.service';
 import { UpdatePersonDto } from './dto/update-person.dto';
+import { SaveGuardiansDto } from './dto/save-guardians.dto';
+import { PersonGuardiansService } from './person-guardians.service';
 
 @Controller('persons')
 @Roles(UserRole.SUPER_ADMIN)
@@ -34,6 +37,7 @@ export class PersonsController {
   constructor(
     private readonly personsService: PersonsService,
     private readonly personPhotosService: PersonPhotosService,
+    private readonly guardiansService: PersonGuardiansService,
   ) {}
 
   @Post()
@@ -142,6 +146,41 @@ export class PersonsController {
       disposition: 'inline',
       length: buffer.length,
     });
+  }
+
+  /** Ota-ona ma‘lumoti (familiya, ism, otasining ismi, telefon). */
+  @Get(':id/guardians')
+  @Header('Cache-Control', 'private, no-store')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  getGuardians(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+    if (!user) throw new UnauthorizedException();
+    return this.guardiansService.get(id, user);
+  }
+
+  @Put(':id/guardians')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  saveGuardians(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SaveGuardiansDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+    if (!user) throw new UnauthorizedException();
+    return this.guardiansService.save(id, dto, user);
   }
 
   @Patch(':id')

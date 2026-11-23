@@ -4,9 +4,12 @@ import {
   authorizedGet,
   authorizedPost,
   authorizedPatch,
+  authorizedPut,
 } from "@/lib/auth-session";
 
 import type {
+  Guardian,
+  Guardians,
   Person,
   PersonsPage,
   CreatePersonInput,
@@ -46,4 +49,15 @@ export function updatePerson(
   input: UpdatePersonInput,
 ): Promise<Person> {
   return authorizedPatch<Person>(`/persons/${id}`, input);
+}
+
+export type GuardianPayload = {
+  [K in keyof Guardian]?: Guardian[K];
+};
+
+export function saveGuardians(
+  id: number,
+  input: { father?: GuardianPayload | null; mother?: GuardianPayload | null },
+): Promise<Guardians> {
+  return authorizedPut<Guardians>(`/persons/${id}/guardians`, input);
 }

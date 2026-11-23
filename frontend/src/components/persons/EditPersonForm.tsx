@@ -4,20 +4,43 @@ import { useTranslation } from 'react-i18next';
 
 import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { updatePerson } from '@/lib/persons-api';
-import type { Person, UpdatePersonInput } from '@/types/person';
+import { LoadingState } from '@/components/common/states';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { saveGuardians, updatePerson } from '@/lib/persons-api';
+import type { Guardians, Person, UpdatePersonInput } from '@/types/person';
 
+import { GuardianFields } from './GuardianFields';
 import { PersonFields } from './PersonFields';
+import { guardianPayload, guardiansFromApi, sameGuardian, validateGuardian } from './guardians';
+import type { GuardiansValue } from './guardians';
 import { validatePersonFields } from './person-fields';
 import type { PersonFieldsValue } from './person-fields';
 
 interface EditPersonFormProps {
     person: Person;
+    /** O‘quvchi uchun ota-ona maydonlari ko‘rsatiladi. */
+    withGuardians?: boolean;
     onSaved: () => void;
     onCancel: () => void;
 }
 
-export function EditPersonForm({ person, onSaved, onCancel }: EditPersonFormProps) {
+function GuardiansLoader(props: EditPersonFormProps) {
+    const query = useApiQuery<Guardians>(`/persons/${props.person.id}/guardians`);
+    if (query.loading) return <LoadingState rows={4} />;
+    if (query.error) return <ErrorState message={query.error} onRetry={query.retry} />;
+    return <EditPersonFormInner {...props} initialGuardians={guardiansFromApi(query.data)} />;
+}
+
+export function EditPersonForm(props: EditPersonFormProps) {
+    return props.withGuardians ? <GuardiansLoader {...props} /> : <EditPersonFormInner {...props} initialGuardians={null} />;
+}
+
+function EditPersonFormInner({
+    person,
+    onSaved,
+    onCancel,
+    initialGuardians,
+}: EditPersonFormProps & { initialGuardians: GuardiansValue | null }) {
     const { t } = useTranslation();
     const savingRef = useRef(false);
 
@@ -36,6 +59,7 @@ export function EditPersonForm({ person, onSaved, onCancel }: EditPersonFormProp
             mahallaId: person.mahallaId ?? null,
         },
     });
+    const [guardians, setGuardians] = useState<GuardiansValue | null>(initialGuardians);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
@@ -48,6 +72,14 @@ export function EditPersonForm({ person, onSaved, onCancel }: EditPersonFormProp
         if (invalid) {
             setError(t(invalid));
             return;
+        }
+
+        if (guardians) {
+            const guardianError = validateGuardian(guardians.father) ?? validateGuardian(guardians.mother);
+            if (guardianError) {
+                setError(t(guardianError));
+                return;
+            }
         }
 
         const values = {
@@ -74,7 +106,14 @@ export function EditPersonForm({ person, onSaved, onCancel }: EditPersonFormProp
         if (values.address !== person.address) changes.address = values.address;
         if (values.mahallaId !== (person.mahallaId ?? null)) changes.mahallaId = values.mahallaId;
 
-        if (Object.keys(changes).length === 0) {
+        // Ota-ona: faqat o‘zgargani yuboriladi (bo‘sh qoldirilsa — o‘chiriladi).
+        const guardianChanges: { father?: ReturnType<typeof guardianPayload>; mother?: ReturnType<typeof guardianPayload> } = {};
+        if (guardians && initialGuardians) {
+            if (!sameGuardian(guardians.father, initialGuardians.father)) guardianChanges.father = guardianPayload(guardians.father);
+            if (!sameGuardian(guardians.mother, initialGuardians.mother)) guardianChanges.mother = guardianPayload(guardians.mother);
+        }
+
+        if (Object.keys(changes).length === 0 && Object.keys(guardianChanges).length === 0) {
             setError(t('persons.errors.noChanges'));
             return;
         }
@@ -82,7 +121,8 @@ export function EditPersonForm({ person, onSaved, onCancel }: EditPersonFormProp
         savingRef.current = true;
         setBusy(true);
         try {
-            await updatePerson(person.id, changes);
+            if (Object.keys(changes).length > 0) await updatePerson(person.id, changes);
+            if (Object.keys(guardianChanges).length > 0) await saveGuardians(person.id, guardianChanges);
         } catch (err) {
             setError(err instanceof Error ? err.message : t('persons.errors.saveFailed'));
             return;
@@ -97,6 +137,11 @@ export function EditPersonForm({ person, onSaved, onCancel }: EditPersonFormProp
         <form onSubmit={handleSubmit} className="space-y-5">
             <fieldset disabled={busy} className="min-w-0">
                 <PersonFields value={fields} onChange={setFields} disabled={busy} />
+                {guardians && (
+                    <div className="mt-6 border-t pt-5">
+                        <GuardianFields value={guardians} onChange={setGuardians} disabled={busy} />
+                    </div>
+                )}
             </fieldset>
 
             {error && <ErrorState message={error} />}

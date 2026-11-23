@@ -1,3 +1,5 @@
+import type { Guardians } from "@/types/person";
+
 export type InspectorDayStatus = "PRESENT" | "EXCUSED" | "ABSENT" | "DAY_OFF";
 
 export const INSPECTOR_STATUSES: InspectorDayStatus[] = [
@@ -17,6 +19,7 @@ export interface InspectorStudent {
   school: { id: number; name: string };
   schoolClass: { id: number; name: string | null } | null;
   status: InspectorDayStatus;
+  guardians?: Guardians;
 }
 
 export interface InspectorStudentsResponse {
@@ -117,6 +120,7 @@ export interface InspectorAbsentee {
   mahalla: { id: number; name: string };
   openCaseId: number | null;
   closedCases: number;
+  guardians?: Guardians;
 }
 
 export interface InspectorAbsenteesResponse {
@@ -178,6 +182,7 @@ export interface InspectorCaseDetail {
     mahalla: string | null;
     school: string;
     className: string | null;
+    guardians?: Guardians;
   };
   history: { id: number; outcome: CaseOutcome | null; absentSince: string; closedAt: string | null }[];
 }

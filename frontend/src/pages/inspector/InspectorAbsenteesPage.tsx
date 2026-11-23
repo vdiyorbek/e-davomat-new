@@ -7,6 +7,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { EmptyState, ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
+import { GuardianContacts } from '@/components/inspector/GuardianContacts';
 import { InspectorCaseDialog } from '@/components/inspector/InspectorCaseDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -145,6 +146,7 @@ export function InspectorAbsenteesPage() {
                                     <TableHead>{t('inspectors.students.mahalla')}</TableHead>
                                     <TableHead>{t('inspectors.absentees.absence')}</TableHead>
                                     <TableHead>{t('inspectors.absentees.caseState')}</TableHead>
+                                    <TableHead>{t('inspectors.students.guardians')}</TableHead>
                                     <TableHead className="pr-5 text-right">
                                         <span className="sr-only">{t('common.actions')}</span>
                                     </TableHead>
@@ -178,6 +180,9 @@ export function InspectorAbsenteesPage() {
                                                     {t('inspectors.absentees.earlier', { count: row.closedCases })}
                                                 </span>
                                             )}
+                                        </TableCell>
+                                        <TableCell className="min-w-56">
+                                            <GuardianContacts guardians={row.guardians} />
                                         </TableCell>
                                         <TableCell className="pr-5 text-right">
                                             {row.openCaseId ? (

@@ -31,6 +31,7 @@ import { Mahalla } from '../mahallas/mahalla.entity';
 import { UserRole } from '../users/enums/user-role.enum';
 import { User } from '../users/user.entity';
 
+import { loadGuardianContacts, NO_GUARDIANS } from './inspector-guardians';
 import { SetInspectorMahallasDto } from './dto/set-inspector-mahallas.dto';
 import { InspectorMahalla } from './inspector-mahalla.entity';
 import {
@@ -503,13 +504,22 @@ export class InspectorsService {
 
     const start = (query.page - 1) * query.limit;
 
+    const pageItems = filtered.slice(start, start + query.limit);
+    const guardians = await loadGuardianContacts(
+      this.dataSource,
+      pageItems.map((item) => item.personId),
+    );
+
     return {
       date,
       total: filtered.length,
       page: query.page,
       limit: query.limit,
       counts,
-      items: filtered.slice(start, start + query.limit),
+      items: pageItems.map((item) => ({
+        ...item,
+        guardians: guardians.get(item.personId) ?? NO_GUARDIANS,
+      })),
     };
   }
 

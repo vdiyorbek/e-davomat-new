@@ -52,5 +52,17 @@
     "academicYear": "Academic year: {{year}}",
     "period": "{{from}} — {{to}}",
     "ongoing": "Since {{from}} — ongoing"
+  },
+  "guardians": {
+    "title": "Parents",
+    "hint": "Last name, first name, patronymic and phone number of the father and mother. Leaving the fields empty removes the data.",
+    "father": "Father",
+    "mother": "Mother",
+    "notSet": "Not set",
+    "nameNotSet": "Name not set",
+    "errors": {
+      "nameLength": "A parent's last name, first name and patronymic must be at most 100 characters.",
+      "phone": "Enter the parent's phone in international format: +998901234567."
+    }
   }
 }

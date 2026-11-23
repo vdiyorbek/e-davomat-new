@@ -25,7 +25,8 @@
     "school": "Maktab, sinf",
     "emptyTitle": "O‘quvchilar topilmadi",
     "empty": "Filtrlarni o‘zgartirib ko‘ring.",
-    "noMahallas": "Sizga hali mahalla biriktirilmagan. Tuman administratoriga murojaat qiling."
+    "noMahallas": "Sizga hali mahalla biriktirilmagan. Tuman administratoriga murojaat qiling.",
+    "guardians": "Ota-ona"
   },
   "status": {
     "PRESENT": "Kelgan",

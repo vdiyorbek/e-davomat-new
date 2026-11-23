@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GuardianContacts } from '@/components/inspector/GuardianContacts';
 import { InspectorTalkForm } from '@/components/inspector/InspectorTalkForm';
 import type { TalkStudent } from '@/components/inspector/InspectorTalkForm';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -176,7 +177,9 @@ export function InspectorStudentsPage() {
                                     <TableHead className="pl-5">{t('inspectors.students.name')}</TableHead>
                                     <TableHead>{t('inspectors.students.school')}</TableHead>
                                     <TableHead>{t('inspectors.students.mahalla')}</TableHead>
-                                    <TableHead>{t('inspectors.students.status')}</TableHead>                                    <TableHead className="pr-5 text-right">
+                                    <TableHead>{t('inspectors.students.status')}</TableHead>
+                                    <TableHead>{t('inspectors.students.guardians')}</TableHead>
+                                    <TableHead className="pr-5 text-right">
                                         <span className="sr-only">{t('common.actions')}</span>
                                     </TableHead>
                                 </TableRow>
@@ -194,6 +197,9 @@ export function InspectorStudentsPage() {
                                             <StatusBadge tone={TONES[student.status]}>
                                                 {t(`inspectors.status.${student.status}`)}
                                             </StatusBadge>
+                                        </TableCell>
+                                        <TableCell className="min-w-56">
+                                            <GuardianContacts guardians={student.guardians} />
                                         </TableCell>
                                         <TableCell className="pr-5 text-right">
                                             <Button

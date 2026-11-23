@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { ArrowRightLeft, GraduationCap, MapPin } from 'lucide-react';
+import { ArrowRightLeft, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Pagination } from '@/components/common/Pagination';
 import { ErrorState, SuccessNotice } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { ChangeClassForm } from '@/components/memberships/ChangeClassForm';
-import { TransferSchoolForm } from '@/components/memberships/TransferSchoolForm';
+import { MoveMemberForm } from '@/components/memberships/MoveMemberForm';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,8 +29,7 @@ function MembershipList({
 }) {
     const { t } = useTranslation();
     const [page, setPage] = useState(1);
-    const [changing, setChanging] = useState<SchoolMembership | null>(null);
-    const [transferring, setTransferring] = useState<SchoolMembership | null>(null);
+    const [moving, setMoving] = useState<SchoolMembership | null>(null);
     const { session } = useAuth();
     const role = session?.profile.role;
 
@@ -115,18 +113,10 @@ function MembershipList({
 
                         {showActions && (
                             <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
-                                {canChangeClass && (
-                                    <Button type="button" size="sm" variant="outline" onClick={() => setChanging(membership)}>
-                                        <GraduationCap aria-hidden="true" />
-                                        {t('members.actions.changeClass')}
-                                    </Button>
-                                )}
-                                {canTransferSchool && (
-                                    <Button type="button" size="sm" variant="outline" onClick={() => setTransferring(membership)}>
-                                        <ArrowRightLeft aria-hidden="true" />
-                                        {t('members.actions.transferLong')}
-                                    </Button>
-                                )}
+                                <Button type="button" size="sm" variant="outline" onClick={() => setMoving(membership)}>
+                                    <ArrowRightLeft aria-hidden="true" />
+                                    {t('members.actions.move')}
+                                </Button>
                             </div>
                         )}
                     </article>
@@ -137,40 +127,21 @@ function MembershipList({
                 <Pagination page={page} totalPages={query.data.totalPages} onPageChange={setPage} />
             )}
 
-            <Dialog open={changing !== null} onOpenChange={(open) => !open && setChanging(null)}>
+            <Dialog open={moving !== null} onOpenChange={(open) => !open && setMoving(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('members.changeClass.title')}</DialogTitle>
-                        <DialogDescription>{t('members.changeClass.description')}</DialogDescription>
+                        <DialogTitle>{t('members.move.title')}</DialogTitle>
+                        <DialogDescription>{t('members.move.description')}</DialogDescription>
                     </DialogHeader>
-                    {changing && (
-                        <ChangeClassForm
-                            key={changing.id}
-                            membership={changing}
-                            onCancel={() => setChanging(null)}
-                            onSaved={() => {
-                                setChanging(null);
-                                onChanged(t('members.changeClass.success'));
-                            }}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={transferring !== null} onOpenChange={(open) => !open && setTransferring(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('members.transfer.title')}</DialogTitle>
-                        <DialogDescription>{t('members.transfer.description')}</DialogDescription>
-                    </DialogHeader>
-                    {transferring && (
-                        <TransferSchoolForm
-                            key={transferring.id}
-                            membership={transferring}
-                            onCancel={() => setTransferring(null)}
-                            onSaved={() => {
-                                setTransferring(null);
-                                onChanged(t('members.transfer.success'));
+                    {moving && (
+                        <MoveMemberForm
+                            key={moving.id}
+                            membership={moving}
+                            canTransferSchool={canTransferSchool}
+                            onCancel={() => setMoving(null)}
+                            onSaved={(mode) => {
+                                setMoving(null);
+                                onChanged(t(mode === 'school' ? 'members.transfer.success' : 'members.changeClass.success'));
                             }}
                         />
                     )}

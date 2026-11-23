@@ -29,6 +29,7 @@ import { StudentMembershipDetail } from 'src/modules/membership-details/student-
 import { TeacherMembershipDetail } from 'src/modules/membership-details/teacher-membership-detail.entity';
 import { TerminalPersonSync } from '../modules/terminals/terminal-person-sync.entity';
 import { InspectorTalk } from 'src/modules/inspectors/inspector-talk.entity';
+import { PersonGuardian } from 'src/modules/persons/person-guardian.entity';
 import { InspectorCase } from 'src/modules/inspectors/inspector-case.entity';
 import { InspectorMahalla } from 'src/modules/inspectors/inspector-mahalla.entity';
 import { TerminalSyncRun } from '../modules/terminal-sync/terminal-sync-run.entity';
@@ -64,6 +65,7 @@ export default new DataSource({
     District,
     School,
     Person,
+    PersonGuardian,
     SchoolMembership,
     User,
     AuthSession,

@@ -20,11 +20,10 @@ import { formatDate, todayInTashkent } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-membership';
 import { MemberAccountForm } from './MemberAccountForm';
-import { ChangeClassForm } from './ChangeClassForm';
 import { CreateMemberForm } from './CreateMemberForm';
 import { EndMembershipForm } from './EndMembershipForm';
 import { SchoolMemberActions } from './SchoolMemberActions';
-import { TransferSchoolForm } from './TransferSchoolForm';
+import { MoveMemberForm } from './MoveMemberForm';
 import { ImportStudentsForm } from './ImportStudentsForm';
 
 type MembershipType = 'STUDENT' | 'TEACHER';
@@ -68,8 +67,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
     const { session } = useAuth();
 
     const [ending, setEnding] = useState<SchoolMembership | null>(null);
-    const [changingClass, setChangingClass] = useState<SchoolMembership | null>(null);
-    const [transferring, setTransferring] = useState<SchoolMembership | null>(null);
+    const [moving, setMoving] = useState<SchoolMembership | null>(null);
     const [detailsMember, setDetailsMember] =
         useState<SchoolMembership | null>(null);
     const [success, setSuccess] = useState('');
@@ -90,8 +88,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         type === 'STUDENT' && ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN'].includes(role ?? '');
     const actionsDisabled =
         ending !== null ||
-        changingClass !== null ||
-        transferring !== null ||
+        moving !== null ||
         detailsMember !== null ||
         accountMember !== null;
 
@@ -104,8 +101,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
 
     function handleSaved(message: string) {
         setEnding(null);
-        setChangingClass(null);
-        setTransferring(null);
+        setMoving(null);
         setSuccess(message);
         retry();
     }
@@ -135,14 +131,12 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
     const actionProps = {
         canEdit,
         canEnd,
-        canChangeClass,
-        canTransferSchool,
+        canMove: canChangeClass,
         canManageAccounts,
         actionsDisabled,
 
         onEnd: open(setEnding),
-        onChangeClass: open(setChangingClass),
-        onTransferSchool: open(setTransferring),
+        onMove: open(setMoving),
         onDetails: open(setDetailsMember),
         onAccount: open(setAccountMember),
     };
@@ -307,35 +301,19 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={changingClass !== null && canChangeClass} onOpenChange={(value) => !value && setChangingClass(null)}>
+            <Dialog open={moving !== null && canChangeClass} onOpenChange={(value) => !value && setMoving(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('members.changeClass.title')}</DialogTitle>
-                        <DialogDescription>{t('members.changeClass.description')}</DialogDescription>
+                        <DialogTitle>{t('members.move.title')}</DialogTitle>
+                        <DialogDescription>{t('members.move.description')}</DialogDescription>
                     </DialogHeader>
-                    {changingClass && (
-                        <ChangeClassForm
-                            key={changingClass.id}
-                            membership={changingClass}
-                            onCancel={() => setChangingClass(null)}
-                            onSaved={() => handleSaved(t('members.changeClass.success'))}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={transferring !== null && canTransferSchool} onOpenChange={(value) => !value && setTransferring(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('members.transfer.title')}</DialogTitle>
-                        <DialogDescription>{t('members.transfer.description')}</DialogDescription>
-                    </DialogHeader>
-                    {transferring && (
-                        <TransferSchoolForm
-                            key={transferring.id}
-                            membership={transferring}
-                            onCancel={() => setTransferring(null)}
-                            onSaved={() => handleSaved(t('members.transfer.success'))}
+                    {moving && (
+                        <MoveMemberForm
+                            key={moving.id}
+                            membership={moving}
+                            canTransferSchool={canTransferSchool}
+                            onCancel={() => setMoving(null)}
+                            onSaved={(mode) => handleSaved(t(mode === 'school' ? 'members.transfer.success' : 'members.changeClass.success'))}
                         />
                     )}
                 </DialogContent>

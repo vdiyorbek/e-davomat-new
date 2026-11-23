@@ -3,7 +3,6 @@ import {
     CalendarX2,
     Eye,
     FilePenLine,
-    GraduationCap,
     Pencil,
     UserRoundPlus,
 } from 'lucide-react';
@@ -18,12 +17,10 @@ interface Props {
     membership: SchoolMembership;
     canEdit: boolean;
     canEnd: boolean;
-    canChangeClass: boolean;
-    canTransferSchool: boolean;
+    canMove: boolean;
     actionsDisabled: boolean;
     onEnd: (membership: SchoolMembership) => void;
-    onChangeClass: (membership: SchoolMembership) => void;
-    onTransferSchool: (membership: SchoolMembership) => void;
+    onMove: (membership: SchoolMembership) => void;
     /** `labels` — telefondagi kartalarda yozuvli tugmalar; `icons` — jadvalda faqat ikonka. */
     layout?: 'labels' | 'icons';
     onDetails: (membership: SchoolMembership) => void;
@@ -43,12 +40,10 @@ export function SchoolMemberActions({
     membership,
     canEdit,
     canEnd,
-    canChangeClass,
-    canTransferSchool,
+    canMove,
     actionsDisabled,
     onEnd,
-    onChangeClass,
-    onTransferSchool,
+    onMove,
     onDetails,
     layout = 'icons',
     canManageAccounts,
@@ -94,11 +89,8 @@ export function SchoolMemberActions({
             actions.push({ key: 'edit', label: t('common.edit'), icon: Pencil, to: `/persons/${personId}?edit=1` });
         }
     }
-    if (isActiveStudent && canChangeClass) {
-        actions.push({ key: 'class', label: t('members.actions.changeClass'), icon: GraduationCap, onClick: () => onChangeClass(membership) });
-    }
-    if (isActiveStudent && canTransferSchool) {
-        actions.push({ key: 'transfer', label: t('members.actions.transfer'), icon: ArrowRightLeft, onClick: () => onTransferSchool(membership) });
+    if (isActiveStudent && canMove) {
+        actions.push({ key: 'move', label: t('members.actions.move'), icon: ArrowRightLeft, onClick: () => onMove(membership) });
     }
     if (canEnd) {
         actions.push({

@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { ChangePersonPhoto } from '@/components/persons/ChangePersonPhoto';
 import { EditPersonForm } from '@/components/persons/EditPersonForm';
+import { PersonGuardiansCard } from '@/components/persons/PersonGuardiansCard';
 import { PersonPhoto } from '@/components/persons/PersonPhoto';
 import { PersonSchools } from '@/components/persons/PersonSchools';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import type { Person } from '@/types/person';
+import type { SchoolMembershipsPage } from '@/types/school-membership';
 
 function PersonDetails({ personId }: { personId: number }) {
     const { t } = useTranslation();
@@ -25,6 +27,12 @@ function PersonDetails({ personId }: { personId: number }) {
     const { session } = useAuth();
     const [searchParams] = useSearchParams();
     const { data: person, loading, error, retry } = useApiQuery<Person>(`/persons/${personId}`);
+
+    const memberships = useApiQuery<SchoolMembershipsPage>(
+        `/school-memberships?personId=${personId}&status=ACTIVE&page=1&limit=20`,
+    );
+    const isStudent = memberships.data?.data.some((membership) => membership.type === 'STUDENT') ?? false;
+    const [guardiansVersion, setGuardiansVersion] = useState(0);
 
     const [editing, setEditing] = useState(() => searchParams.get('edit') === '1');
     const [changingPhoto, setChangingPhoto] = useState(false);
@@ -123,6 +131,8 @@ function PersonDetails({ personId }: { personId: number }) {
                 </dl>
             </Card>
 
+            {isStudent && <PersonGuardiansCard key={`${person.id}-${guardiansVersion}`} personId={person.id} />}
+
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg font-semibold">{t('persons.schools.title')}</CardTitle>
@@ -142,9 +152,11 @@ function PersonDetails({ personId }: { personId: number }) {
                             </DialogHeader>
                             <EditPersonForm
                                 person={person}
+                                withGuardians={isStudent}
                                 onCancel={() => setEditing(false)}
                                 onSaved={() => {
                                     setEditing(false);
+                                    setGuardiansVersion((version) => version + 1);
                                     setSuccess(t('persons.saved'));
                                     retry();
                                 }}

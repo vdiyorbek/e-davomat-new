@@ -41,7 +41,8 @@
     "transfer": "Maktabga ko‘chirish",
     "transferLong": "Boshqa maktabga ko‘chirish",
     "end": "Yakunlash",
-    "endDate": "Tugash sanasi"
+    "endDate": "Tugash sanasi",
+    "move": "O‘tkazish"
   },
   "end": {
     "title": "Maktabga biriktirishni yakunlash",
@@ -134,5 +135,15 @@
     "row": "Qator",
     "message": "Xato",
     "imported": "O‘quvchilar import qilindi."
+  },
+  "move": {
+    "title": "O‘quvchini o‘tkazish",
+    "description": "Boshqa sinfga yoki boshqa maktabga o‘tkazing. Maktabni o‘zgartirmasangiz, sinf almashtiriladi.",
+    "school": "Maktab",
+    "schoolHint": "Boshqa maktabni tanlasangiz, o‘quvchi o‘sha maktabga ko‘chiriladi.",
+    "schoolLocked": "Siz faqat o‘z maktabingiz ichida sinf almashtira olasiz.",
+    "modeClass": "Amal: sinf almashtirish (maktab o‘zgarmaydi).",
+    "modeSchool": "Amal: boshqa maktabga ko‘chirish (eski biriktirish yopiladi, yangi maktabda yangisi ochiladi).",
+    "noTransferRight": "Boshqa maktabga ko‘chirish huquqingiz yo‘q."
   }
 }
