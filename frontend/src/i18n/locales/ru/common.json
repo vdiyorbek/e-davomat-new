@@ -106,5 +106,8 @@
   "pickTime": "Выберите время",
   "clear": "Очистить",
   "hours": "Часы",
-  "minutes": "Минуты"
+  "minutes": "Минуты",
+  "exportExcel": "Скачать Excel",
+  "exporting": "Готовим Excel…",
+  "exportFailed": "Не удалось выгрузить Excel."
 }

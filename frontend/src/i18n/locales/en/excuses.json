@@ -1,5 +1,5 @@
 {
-  "title": "Excused absences",
+  "title": "Absence excuses",
   "subtitle": "Student excused-absence requests and supporting documents.",
   "listTitle": "Requests",
   "emptyTitle": "No requests found",
@@ -17,7 +17,9 @@
   },
   "status": {
     "ACTIVE": "Active",
-    "CANCELLED": "Cancelled"
+    "CANCELLED": "Cancelled",
+    "PENDING": "Pending",
+    "REJECTED": "Rejected"
   },
   "filters": {
     "personId": "Student ID",
@@ -105,5 +107,25 @@
   "teacher": "Teacher",
   "uploadedBy": "Uploaded by",
   "daysCount_one": "{{count}} day",
-  "daysCount": "{{count}} days"
+  "daysCount": "{{count}} days",
+  "approve": {
+    "button": "Approve",
+    "title": "Approve excuse",
+    "description": "Excuse #{{id}} will be approved and will then affect attendance.",
+    "confirm": "Approve",
+    "failed": "Could not approve the excuse."
+  },
+  "reject": {
+    "button": "Reject",
+    "title": "Reject excuse",
+    "description": "Excuse #{{id}} will be rejected. The homeroom teacher will see the reason.",
+    "reason": "Rejection reason",
+    "reasonHint": "At least 5 characters.",
+    "placeholder": "For example: the document is unreadable",
+    "confirm": "Reject",
+    "failed": "Could not reject the excuse."
+  },
+  "rejectedReason": "Rejection reason: {{reason}}",
+  "pendingBanner": "Excuses waiting for approval: {{count}}.",
+  "viewPending": "View"
 }

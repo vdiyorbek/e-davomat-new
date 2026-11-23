@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   OnModuleInit,
   UnauthorizedException,
@@ -10,6 +11,7 @@ import { DataSource, Repository } from 'typeorm';
 import { hashPassword, verifyPassword } from '../../common/security/password';
 import { User } from '../users/user.entity';
 import { AuthSession } from './auth-session.entity';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -189,6 +191,73 @@ export class AuthService implements OnModuleInit {
 
       session.revokedAt = new Date();
       await manager.save(session);
+    });
+  }
+
+  /**
+   * Foydalanuvchi o‘z parolini almashtiradi. Boshqa qurilmalardagi sessiyalar tugatiladi,
+   * joriy sessiya saqlanadi.
+   */
+  async changePassword(
+    userId: number,
+    currentSessionId: string | undefined,
+    dto: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.id = :id', { id: userId })
+      .andWhere('user.isActive = :active', { active: true })
+      .getOne();
+
+    if (!user) {
+      throw new UnauthorizedException('Hisob faol emas');
+    }
+
+    // 401 emas (frontend uni sessiya tugashi deb tushunadi): 400.
+    if (!(await verifyPassword(user.passwordHash, dto.currentPassword))) {
+      throw new BadRequestException('Joriy parol noto‘g‘ri');
+    }
+
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException(
+        'Yangi parol joriy paroldan farq qilishi kerak',
+      );
+    }
+
+    if (
+      dto.newPassword.toLowerCase().includes(user.login.toLowerCase()) ||
+      /^(.)\1+$/.test(dto.newPassword)
+    ) {
+      throw new BadRequestException(
+        'Parol juda oddiy: logindan yoki bitta belgidan iborat bo‘lmasin',
+      );
+    }
+
+    const passwordHash = await hashPassword(dto.newPassword);
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(
+        User,
+        { id: userId },
+        {
+          passwordHash,
+          mustChangePassword: false,
+        },
+      );
+
+      const revoke = manager
+        .createQueryBuilder()
+        .update(AuthSession)
+        .set({ revokedAt: new Date() })
+        .where('userId = :userId', { userId })
+        .andWhere('revokedAt IS NULL');
+
+      if (currentSessionId) {
+        revoke.andWhere('id <> :sid', { sid: currentSessionId });
+      }
+
+      await revoke.execute();
     });
   }
 }

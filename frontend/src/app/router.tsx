@@ -28,7 +28,11 @@ const AttendanceOverviewPage = lazy(() =>
     import('@/pages/attendance/AttendanceOverviewPage').then((m) => ({ default: m.AttendanceOverviewPage })),
 );
 const AbsenceStreaksPage = lazy(() => import('@/pages/dashboard/AbsenceStreaksPage').then((m) => ({ default: m.AbsenceStreaksPage })));
+const HomeroomPage = lazy(() => import('@/pages/homeroom/HomeroomPage').then((m) => ({ default: m.HomeroomPage })));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const SystemHealthPage = lazy(() =>
+    import('@/pages/system-health/SystemHealthPage').then((m) => ({ default: m.SystemHealthPage })),
+);
 const SystemSettingsPage = lazy(() =>
     import('@/pages/system-settings/SystemSettingsPage').then((m) => ({ default: m.SystemSettingsPage })),
 );
@@ -109,6 +113,7 @@ export const router = createBrowserRouter([
                                 element: <TeacherJournalPage />,
                             },
                             { path: '/teacher/timetable', element: <TeacherTimetablePage /> },
+                            { path: '/homeroom', element: <HomeroomPage /> },
                             { path: '/teacher/assessments', element: <TeacherAssessmentsPage /> },
                             { path: '/teacher/assessments/:id', element: <TeacherAssessmentPage /> },
                         ],
@@ -216,6 +221,7 @@ export const router = createBrowserRouter([
                                 element: <RequireRole roles={['SUPER_ADMIN']} />,
                                 children: [
                                     { path: '/system-settings', element: <SystemSettingsPage /> },
+                                    { path: '/system/health', element: <SystemHealthPage /> },
                                     {
                                         path: '/textbooks',
                                         element: <TextbooksPage />,

@@ -57,5 +57,18 @@
     "clearSelection": "Tanlovni bekor qilish",
     "selectClass": "{{name}} sinfini tanlash",
     "selectPage": "Sahifadagi barcha sinflarni tanlash"
+  },
+  "homeroom": {
+    "column": "Sinf rahbari",
+    "none": "Biriktirilmagan",
+    "change": "{{name}} sinfi rahbarini o‘zgartirish",
+    "title": "{{name}} sinf rahbari",
+    "description": "Sinf rahbari shu sinf davomatini ko‘radi va kelmagan o‘quvchilar uchun ariza yuboradi.",
+    "teacher": "O‘qituvchi",
+    "hint": "Faqat maktabning faol o‘qituvchilari ko‘rsatiladi.",
+    "choose": "O‘qituvchini tanlang",
+    "noTeachers": "Maktabda faol o‘qituvchi yo‘q.",
+    "remove": "Rahbarni olib tashlash",
+    "saveFailed": "Sinf rahbarini saqlab bo‘lmadi."
   }
 }

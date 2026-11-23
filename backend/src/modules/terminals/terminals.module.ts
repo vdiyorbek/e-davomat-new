@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TerminalStatusHistoryService } from './terminal-status-history.service';
+import { TerminalDiagnosticsService } from './terminal-diagnostics.service';
+import { TerminalCompareJobService } from './terminal-compare-job.service';
 import { TerminalStatusPeriod } from './terminal-status-period.entity';
 import { School } from '../schools/school.entity';
 import { Terminal } from './terminal.entity';
@@ -50,6 +52,8 @@ import { RedisModule } from '../../redis/redis.module';
     PersonSyncService,
     TerminalHealthScheduler,
     TerminalStatusHistoryService,
+    TerminalDiagnosticsService,
+    TerminalCompareJobService,
     TerminalPushCredentialsService,
   ],
   exports: [

@@ -32,6 +32,9 @@ import { TeacherModule } from './modules/teacher/teacher.module';
 import { MembershipDetailsModule } from './modules/membership-details/membership-details.module';
 import { MemberAccountsModule } from './modules/member-accounts/member-accounts.module';
 import { InspectorsModule } from './modules/inspectors/inspectors.module';
+import { HomeroomModule } from './modules/homeroom/homeroom.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SystemMonitorModule } from './modules/system-monitor/system-monitor.module';
 import { LiveModule } from './modules/live/live.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventBackfillModule } from './modules/event-backfill/event-backfill.module';
@@ -65,6 +68,9 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
     ClassesModule,
     AttendanceExcusesModule,
     InspectorsModule,
+    NotificationsModule,
+    SystemMonitorModule,
+    HomeroomModule,
     AttendanceCalendarModule,
     SubjectsModule,
     TeacherAssignmentsModule,

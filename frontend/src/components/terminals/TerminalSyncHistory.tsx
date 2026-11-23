@@ -85,8 +85,8 @@ export function TerminalSyncHistory({ terminalId }: { terminalId: number }) {
                             <StatusBadge tone={run.status === 'SUCCESS' ? 'success' : 'danger'} className="row-span-2">
                                 {run.status === 'SUCCESS' ? t('terminals.history.success') : t('terminals.history.failed')}
                             </StatusBadge>
-                            <span className="truncate font-medium">{formatDateTime(run.startedAt)}</span>
-                            <span className="text-right text-muted-foreground tabular-nums">
+                            <span className="font-medium tabular-nums">{formatDateTime(run.startedAt)}</span>
+                            <span className="text-right whitespace-nowrap text-muted-foreground tabular-nums">
                                 {(run.insertedEvents ?? 0) > 0 && (
                                     <span className="mr-2 font-semibold text-success">
                                         {t('terminals.history.newEvents', { count: run.insertedEvents })}
@@ -94,9 +94,9 @@ export function TerminalSyncHistory({ terminalId }: { terminalId: number }) {
                                 )}
                                 {t('terminals.history.seconds', { value: (run.durationMs / 1000).toFixed(2) })}
                             </span>
-                            <span className="col-span-2 truncate text-muted-foreground" title={run.errorCode ?? undefined}>
+                            <span className="col-span-2 text-muted-foreground [overflow-wrap:anywhere]" title={run.errorCode ?? undefined}>
                                 {run.errorCode
-                                    ? <span className="text-destructive">{run.errorCode}</span>
+                                    ? <span className="text-destructive">{t(`terminals.history.errors.${run.errorCode}`, { defaultValue: run.errorCode })}</span>
                                     : <>{t('terminals.history.cursor')}: {formatDateTime(run.cursorAfter)}</>}
                             </span>
                         </li>

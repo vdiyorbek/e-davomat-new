@@ -76,7 +76,7 @@ export function DashboardLayout() {
 
                 <SheetContent
                     side="left"
-                    className="w-[min(320px,88vw)] gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground [&>button]:hover:bg-white/10"
+                    className="w-[min(320px,88vw)] gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground [&>button]:hover:bg-sidebar-accent"
                 >
                     <SheetHeader className="sr-only">
                         <SheetTitle>{t('nav.main')}</SheetTitle>

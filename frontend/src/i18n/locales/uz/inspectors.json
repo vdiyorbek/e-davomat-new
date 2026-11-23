@@ -1,7 +1,7 @@
 {
   "mahallas": {
     "title": "Mahallalarni biriktirish",
-    "hint": "Uchastkavoy nazorat qiladigan mahallalarni tanlang (ko‘pi bilan {{max}} ta).",
+    "hint": "Inspektor nazorat qiladigan mahallalarni tanlang (ko‘pi bilan {{max}} ta).",
     "search": "Mahalla nomi bo‘yicha qidirish",
     "selected": "Tanlangan: {{count}} / {{max}}",
     "noDistrict": "Avval foydalanuvchiga tuman biriktiring.",
@@ -79,7 +79,7 @@
   },
   "talks": {
     "title": "Profilaktik suhbatlar",
-    "description": "Mahalla uchastkavoylari o‘tkazgan suhbatlar va ularning bayonnomalari.",
+    "description": "Mahalla inspektorlari o‘tkazgan suhbatlar va ularning bayonnomalari.",
     "dateFrom": "Sanadan",
     "dateTo": "Sanagacha",
     "result": "Natija",
@@ -88,7 +88,7 @@
     "date": "Sana",
     "spokeWith": "Kim bilan",
     "reason": "Sabab",
-    "inspector": "Uchastkavoy",
+    "inspector": "Mahalla inspektori",
     "followUp": "Keyingi nazorat",
     "emptyTitle": "Suhbatlar topilmadi",
     "empty": "Filtrlarni o‘zgartirib ko‘ring.",
@@ -109,7 +109,7 @@
     }
   },
   "home": {
-    "title": "Uchastkavoy kabineti",
+    "title": "Inspektor kabineti",
     "description": "{{date}} holatiga ko‘ra mahallangiz bo‘yicha qisqacha ma’lumot.",
     "descriptionShort": "Mahallangiz bo‘yicha qisqacha ma’lumot.",
     "alert": "{{count}} ta o‘quvchi {{days}} kundan ortiq darsga kelmayapti — ularni o‘rganish kerak.",
@@ -145,7 +145,7 @@
     "empty": "Hozircha ketma-ket kelmayotgan o‘quvchilar topilmadi."
   },
   "cases": {
-    "title": "O‘rganish hisobotlari",
+    "title": "Tekshiruv hisobotlari",
     "description": "Kelmayotgan o‘quvchilar bo‘yicha o‘tkazilgan o‘rganishlar. Har bir ish bo‘yicha rasmiy PDF hisobot olish mumkin.",
     "statusFilter": "Holati",
     "statusAll": "Barchasi",
@@ -218,19 +218,19 @@
     }
   },
   "manage": {
-    "title": "Uchastkavoylar",
-    "description": "Mahalla uchastkavoylarini qo‘shing va ularga mahallalarni biriktiring.",
-    "add": "Uchastkavoy qo‘shish",
+    "title": "Mahalla inspektorlari",
+    "description": "Mahalla inspektorlarini qo‘shing va ularga mahallalarni biriktiring.",
+    "add": "Inspektor qo‘shish",
     "addDescription": "Hisob yaratiladi va tanlangan mahallalar bir yo‘la biriktiriladi.",
     "searchPlaceholder": "Ism yoki login bo‘yicha qidirish",
-    "emptyTitle": "Uchastkavoy yo‘q",
-    "empty": "“Uchastkavoy qo‘shish” tugmasi bilan birinchisini qo‘shing.",
+    "emptyTitle": "Inspektor yo‘q",
+    "empty": "“Inspektor qo‘shish” tugmasi bilan birinchisini qo‘shing.",
     "mahallaCount": "Mahallalar",
     "openCases": "Ochiq ishlar",
     "active": "Faol",
     "inactive": "Nofaol",
     "editMahallas": "Mahallalar",
-    "created": "Uchastkavoy qo‘shildi.",
+    "created": "Inspektor qo‘shildi.",
     "mahallas": "Biriktiriladigan mahallalar",
     "create": "Qo‘shish",
     "errors": {

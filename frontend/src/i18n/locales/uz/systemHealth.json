@@ -1,0 +1,59 @@
+{
+  "title": "Tizim holati",
+  "description": "Server, baza, navbatlar va ma’lumot oqimi. Muammo bo‘lsa, qo‘ng‘iroqchada xabar keladi.",
+  "overall": {
+    "ok": "Hammasi joyida",
+    "warn": "Diqqat talab qilinadi",
+    "crit": "Jiddiy muammo bor"
+  },
+  "status": {
+    "ok": "Normal",
+    "warn": "Diqqat",
+    "crit": "Xavfli"
+  },
+  "updated": "Yangilangan: {{time}}",
+  "since": "{{time}} dan beri",
+  "error": "Tekshirishda xatolik: {{error}}",
+  "idle": "Ish vaqtidan tashqari — tekshirilmaydi",
+  "noData": "Hali ma’lumot kelmagan",
+  "duration": "{{h}} soat {{m}} daq",
+  "refresh": "Yangilash",
+  "checks": {
+    "database": {
+      "name": "Ma’lumotlar bazasi",
+      "text": "Javob vaqti: {{ms}} ms"
+    },
+    "redis": {
+      "name": "Redis (fon vazifalari)",
+      "text": "Javob vaqti: {{ms}} ms"
+    },
+    "queues": {
+      "name": "Fon vazifalari navbati",
+      "text": "Kutmoqda: {{waiting}} · Bajarilmoqda: {{active}} · Xatoli: {{failed}}"
+    },
+    "disk": {
+      "name": "Disk joyi",
+      "text": "Bo‘sh joy: {{freePercent}}% ({{freeGb}} GB)"
+    },
+    "push": {
+      "name": "Terminallardan ma’lumot kelishi",
+      "text": "Oxirgi push {{minutes}} daqiqa oldin ({{terminals}} ta terminal)"
+    },
+    "stats": {
+      "name": "Dashboard statistikasi",
+      "text": "Oxirgi hisoblash {{minutes}} daqiqa oldin"
+    },
+    "photos": {
+      "name": "Yuklanmagan rasmlar",
+      "text": "Kutilmoqda: {{pending}} · Xato: {{failed}} (oxirgi 24 soat)"
+    },
+    "terminals": {
+      "name": "Terminallar",
+      "text": "{{offline}} / {{total}} ta terminal 15 daqiqadan beri ko‘rinmayapti ({{percent}}%)"
+    },
+    "process": {
+      "name": "Server jarayoni",
+      "text": "Ishlayapti: {{uptime}} · Xotira: {{rssMb}} MB"
+    }
+  }
+}

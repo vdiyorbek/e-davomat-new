@@ -13,7 +13,7 @@ export function StatTile({
 }) {
     return (
         <div className="min-w-0 rounded-xl border bg-muted/25 p-3">
-            <div className="truncate text-xs text-muted-foreground">{label}</div>
+            <div className="text-xs leading-tight text-muted-foreground [overflow-wrap:anywhere]">{label}</div>
             <div
                 className={cn(
                     'mt-1 text-xl font-semibold tabular-nums',

@@ -4,7 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { DataSource } from 'typeorm';
+
+import {
+  fullName,
+  safeCell,
+  streamExcel,
+} from '../../common/export/excel-export';
 
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { assertSchoolAccess } from '../classes/school-access';
@@ -666,6 +673,41 @@ export class DashboardService {
         mahalla: row.mahallaName ?? null,
       })),
     };
+  }
+
+  /** Ketma-ket kelmaganlar ro‘yxatini Excel (.xlsx) sifatida yuboradi. */
+  async exportStreaksExcel(
+    user: AuthenticatedUser,
+    query: DashboardStreaksDto,
+    response: Response,
+  ): Promise<void> {
+    const date = this.checkDate(query.date);
+    await streamExcel(response, {
+      filename: `ketma-ket-kelmaganlar-${date}.xlsx`,
+      sheetName: 'Kelmaganlar',
+      columns: [
+        { header: '№', key: 'number', width: 8 },
+        { header: 'O‘quvchi F.I.Sh.', key: 'name', width: 42 },
+        { header: 'Ketma-ket kun', key: 'days', width: 14 },
+        { header: 'Qachondan', key: 'since', width: 14 },
+        { header: 'Tuman', key: 'district', width: 26 },
+        { header: 'Maktab', key: 'school', width: 28 },
+        { header: 'Sinf', key: 'className', width: 12 },
+        { header: 'Mahalla', key: 'mahalla', width: 28 },
+      ],
+      fetchPage: async (page) =>
+        (await this.streaks(user, { ...query, date, page, limit: 100 })).data,
+      toRow: (row, number) => ({
+        number,
+        name: safeCell(fullName(row)),
+        days: row.days,
+        since: row.sinceDate,
+        district: safeCell(row.school.district),
+        school: safeCell(row.school.name),
+        className: safeCell(row.className),
+        mahalla: safeCell(row.mahalla),
+      }),
+    });
   }
 
   // ─────────────── Kechikish chegarasi ───────────────

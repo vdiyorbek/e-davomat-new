@@ -1,0 +1,16 @@
+{
+  "open": "Notifications",
+  "openWithCount": "Notifications",
+  "title": "Notifications",
+  "readAll": "Mark all as read",
+  "empty": "No new notifications.",
+  "types": {
+    "EXCUSE_SUBMITTED": "{{by}} submitted an excuse for {{student}} ({{className}}): {{from}} — {{to}}",
+    "EXCUSE_APPROVED": "The excuse for {{student}} was approved ({{from}} — {{to}}).",
+    "EXCUSE_REJECTED": "The excuse for {{student}} was rejected. Reason: {{reason}}",
+    "ABSENT_STREAK": "{{student}} ({{className}}) has been absent for {{days}} days in a row (since {{since}}).",
+    "ABSENT_STREAK_INSPECTOR": "{{student}} has not come to school for {{days}} days in a row (since {{since}}).",
+    "SYSTEM_ALERT": "System alert: {{checkName}} — {{statusName}}",
+    "SYSTEM_RECOVERED": "{{checkName}} recovered."
+  }
+}

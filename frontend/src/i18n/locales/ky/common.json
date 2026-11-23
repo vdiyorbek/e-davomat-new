@@ -106,5 +106,8 @@
   "pickTime": "Убакытты тандаңыз",
   "clear": "Тазалоо",
   "hours": "Саат",
-  "minutes": "Мүнөт"
+  "minutes": "Мүнөт",
+  "exportExcel": "Excel жүктөп алуу",
+  "exporting": "Excel даярдалууда…",
+  "exportFailed": "Excel экспорттоодо ката кетти."
 }

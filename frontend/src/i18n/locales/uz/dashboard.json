@@ -107,7 +107,7 @@
     "shiftStart": "{{code}}-smena {{time}}"
   },
   "streaks": {
-    "title": "Ketma-ket 5 kun kelmaganlar",
+    "title": "Uzoq vaqt kelmayotganlar",
     "description": "Faqat sinfning o‘quv kunlari hisoblanadi; sababli kun ketma-ketlikni uzadi.",
     "emptyTitle": "Bunday o‘quvchi yo‘q",
     "empty": "Ketma-ket 5 o‘quv kuni kelmagan o‘quvchi topilmadi.",
@@ -118,7 +118,7 @@
     "since": "{{date}} dan beri",
     "viewAll": "Hammasini ko‘rish ({{count}})",
     "pageTitle": "Uzoq vaqt kelmayotgan o‘quvchilar",
-    "back": "Dashboardga qaytish",
+    "back": "Bosh sahifaga qaytish",
     "search": "F.I.Sh. bo‘yicha qidirish",
     "minDays": "Kamida kun",
     "minDaysAny": "Barchasi (5+)",

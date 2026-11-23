@@ -59,5 +59,18 @@
     "selected_other": "{{count}} classes selected",
     "assigned_one": "{{count}} class moved to shift {{code}} from today.",
     "assigned_other": "{{count}} classes moved to shift {{code}} from today."
+  },
+  "homeroom": {
+    "column": "Homeroom teacher",
+    "none": "Not assigned",
+    "change": "Change homeroom teacher of {{name}}",
+    "title": "Homeroom teacher of {{name}}",
+    "description": "The homeroom teacher sees this class's attendance and submits excuses for absent students.",
+    "teacher": "Teacher",
+    "hint": "Only active teachers of the school are shown.",
+    "choose": "Choose a teacher",
+    "noTeachers": "The school has no active teachers.",
+    "remove": "Remove teacher",
+    "saveFailed": "Could not save the homeroom teacher."
   }
 }

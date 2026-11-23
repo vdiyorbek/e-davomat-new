@@ -1,9 +1,28 @@
 {
-  "title": "Shaxsiy ma’lumotlar",
+  "title": "Mening profilim",
   "subtitle": "Tizim foydalanuvchisi profili va hisob ma’lumotlari.",
   "details": "Hisob ma’lumotlari",
   "detailsHint": "Ma’lumotlarni o‘zgartirish uchun administratorga murojaat qiling.",
   "login": "Login",
   "role": "Tizimdagi roli",
-  "notEntered": "Kiritilmagan"
+  "notEntered": "Kiritilmagan",
+  "security": {
+    "title": "Xavfsizlik",
+    "description": "Parolni o‘zingiz almashtirishingiz mumkin. Almashtirgach, boshqa qurilmalardagi kirishlar to‘xtatiladi.",
+    "current": "Joriy parol",
+    "new": "Yangi parol",
+    "confirm": "Yangi parolni tasdiqlash",
+    "hint": "Kamida 12 belgi. Loginni yoki PNFL va tug‘ilgan sanani ishlatmang.",
+    "submit": "Parolni almashtirish",
+    "saving": "Saqlanmoqda…",
+    "success": "Parol muvaffaqiyatli almashtirildi.",
+    "forcedTitle": "Parolni almashtiring",
+    "forcedText": "Administrator sizga vaqtinchalik parol bergan. Davom etish uchun o‘zingizga ma’lum yangi parol o‘rnating.",
+    "errors": {
+      "short": "Yangi parol 12 dan 128 belgigacha bo‘lishi kerak.",
+      "mismatch": "Yangi parol va tasdiqlash mos kelmadi.",
+      "same": "Yangi parol joriy paroldan farq qilishi kerak.",
+      "failed": "Parolni almashtirib bo‘lmadi."
+    }
+  }
 }

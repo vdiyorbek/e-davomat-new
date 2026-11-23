@@ -31,7 +31,9 @@ export function SummaryCard({ item, title, subtitle, membershipType, actionLabel
     const rateText = item.rate === null ? '—' : `${formatNumber(item.rate)}%`;
 
     return (
-        <article className="group relative flex h-full flex-col gap-4 rounded-2xl border bg-card p-4 text-card-foreground shadow-sm transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-md focus-within:border-primary/50">
+        <article
+            onClick={onOpen}
+            className="group relative flex cursor-pointer h-full flex-col gap-4 rounded-2xl border bg-card p-4 text-card-foreground shadow-sm transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-md focus-within:border-primary/50">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <h3 className="truncate font-heading text-base font-bold" title={title}>
@@ -83,8 +85,11 @@ export function SummaryCard({ item, title, subtitle, membershipType, actionLabel
             {/* Butun karta bosiladigan bo‘lishi uchun tugma kartani to‘liq qoplaydi. */}
             <Button variant="link" size="auto"
                 type="button"
-                onClick={onOpen}
-                className="mt-auto inline-flex w-fit items-center gap-1 text-xs font-semibold text-primary outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-3 focus-visible:after:ring-ring/50"
+                onClick={(event) => {
+                    event.stopPropagation();
+                    onOpen();
+                }}
+                className="static mt-auto inline-flex w-fit cursor-pointer items-center gap-1 text-xs font-semibold text-primary outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-3 focus-visible:after:ring-ring/50"
                 aria-label={`${title} — ${actionLabel}`}
             >
                 {actionLabel}

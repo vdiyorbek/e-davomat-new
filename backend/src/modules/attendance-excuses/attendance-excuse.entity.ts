@@ -22,8 +22,12 @@ export enum AttendanceExcuseReason {
 }
 
 export enum AttendanceExcuseStatus {
+  /** Tasdiqlangan: davomatga ta’sir qiladi. */
   ACTIVE = 'ACTIVE',
   CANCELLED = 'CANCELLED',
+  /** Sinf rahbari yuborgan, maktab admini tasdiqlashini kutmoqda. */
+  PENDING = 'PENDING',
+  REJECTED = 'REJECTED',
 }
 
 @Entity('attendance_excuses')
@@ -176,6 +180,16 @@ export class AttendanceExcuse {
     nullable: true,
   })
   cancellationReason!: string | null;
+
+  // Tasdiqlash / rad etish (sinf rahbari arizalari uchun).
+  @Column({ type: 'int', unsigned: true, nullable: true })
+  reviewedByUserId!: number | null;
+
+  @Column({ type: 'datetime', precision: 3, nullable: true })
+  reviewedAt!: Date | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  rejectionReason!: string | null;
 
   @CreateDateColumn({
     type: 'datetime',

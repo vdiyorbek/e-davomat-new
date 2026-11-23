@@ -145,7 +145,7 @@
     "empty": "No students with consecutive absences were found."
   },
   "cases": {
-    "title": "Investigation reports",
+    "title": "Inspection reports",
     "description": "Investigations of absent students. An official PDF report is available for every case.",
     "statusFilter": "Status",
     "statusAll": "All",
@@ -218,7 +218,7 @@
     }
   },
   "manage": {
-    "title": "Inspectors",
+    "title": "Neighbourhood inspectors",
     "description": "Add neighbourhood inspectors and assign neighbourhoods to them.",
     "add": "Add inspector",
     "addDescription": "The account is created and the selected neighbourhoods are assigned at once.",

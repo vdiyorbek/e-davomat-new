@@ -1,0 +1,16 @@
+{
+  "open": "Билдиришномалар",
+  "openWithCount": "Билдиришномалар",
+  "title": "Билдиришномалар",
+  "readAll": "Ҳаммасини ўқилган қилиш",
+  "empty": "Янги билдиришнома йўқ.",
+  "types": {
+    "EXCUSE_SUBMITTED": "{{by}} {{student}} ({{className}}) учун ариза юборди: {{from}} — {{to}}",
+    "EXCUSE_APPROVED": "{{student}} учун ариза тасдиқланди ({{from}} — {{to}}).",
+    "EXCUSE_REJECTED": "{{student}} учун ариза рад этилди. Сабаб: {{reason}}",
+    "ABSENT_STREAK": "{{student}} ({{className}}) кетма-кет {{days}} кун келмади ({{since}} дан бери).",
+    "ABSENT_STREAK_INSPECTOR": "{{student}} кетма-кет {{days}} кун мактабга келмади ({{since}} дан бери).",
+    "SYSTEM_ALERT": "Тизим огоҳлантириши: {{checkName}} — {{statusName}}",
+    "SYSTEM_RECOVERED": "{{checkName}} тузалди."
+  }
+}

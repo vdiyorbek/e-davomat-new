@@ -3,6 +3,7 @@ import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { TodayChip } from '@/components/common/TodayChip';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ export function Header() {
 
                 <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                     <TodayChip className="hidden 2xl:inline-flex" />
+                    <NotificationBell />
                     <LanguageSwitcher className="max-sm:hidden" />
                     <ThemeToggle className="max-sm:hidden" />
                     <UserMenu />

@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 
 import { GetAttendanceExcusesQueryDto } from './dto/get-attendance-excuses-query.dto';
+import { RejectAttendanceExcuseDto } from './dto/reject-attendance-excuse.dto';
 import { CancelAttendanceExcuseDto } from './dto/cancel-attendance-excuse.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -109,5 +110,36 @@ export class AttendanceExcusesController {
     }
 
     return this.excusesService.cancel(id, dto, actor);
+  }
+
+  @Patch(':id/approve')
+  @Header('Cache-Control', 'no-store')
+  approve(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.excusesService.approve(id, actor);
+  }
+
+  @Patch(':id/reject')
+  @Header('Cache-Control', 'no-store')
+  reject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectAttendanceExcuseDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const actor = request.authUser;
+
+    if (!actor) {
+      throw new UnauthorizedException();
+    }
+
+    return this.excusesService.reject(id, dto, actor);
   }
 }

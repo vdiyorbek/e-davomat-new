@@ -101,6 +101,7 @@ export class UsersService {
           middleName,
           login: dto.login,
           passwordHash,
+          mustChangePassword: true,
           role: UserRole.USER,
           isActive: true,
           ...scope,
@@ -668,6 +669,8 @@ export class UsersService {
 
       if (passwordHash !== undefined) {
         user.passwordHash = passwordHash;
+        // Boshqa foydalanuvchiga berilgan parol vaqtinchalik: kirgach almashtiradi.
+        if (user.id !== currentUser.id) user.mustChangePassword = true;
       }
 
       if (dto.isActive !== undefined) {

@@ -64,18 +64,18 @@
   "studentTitle": "Student additional details",
   "teacherTitle": "Teacher additional details",
   "saved": "Additional details saved.",
-  "studentAccount": "Student account",
-  "teacherAccount": "Teacher account",
-  "accountDescription": "Check the user's account status or create a new account.",
+  "studentAccount": "Sign-in details",
+  "teacherAccount": "Sign-in details",
+  "accountDescription": "Give the person a login and password so they can sign in to the system.",
   "detailsDescription": "Enter and edit additional details of this person's school membership.",
   "account": {
     "personMissing": "No person details",
-    "type": "Account type: {{role}}",
+    "type": "Role: {{role}}",
     "loginInvalid": "Login must be 3–50 lowercase Latin letters, digits, dots or underscores.",
     "passwordLength": "Password must be 12–128 characters long.",
     "passwordMismatch": "Passwords do not match.",
     "createFailed": "Could not create the account.",
-    "exists": "This person already has an account",
+    "exists": "This person already has sign-in details",
     "login": "Login",
     "role": "Role",
     "status": "Status",
@@ -85,8 +85,9 @@
     "password": "Initial password",
     "passwordHint": "At least 12 characters. Do not use the PINFL or date of birth.",
     "confirm": "Confirm password",
-    "roleNote": "The account role (student or teacher) is set automatically from the school membership.",
-    "create": "Create account",
-    "creating": "Creating…"
+    "roleNote": "The role (student or teacher) is set automatically from the school membership.",
+    "create": "Give login and password",
+    "creating": "Saving…",
+    "created": "Login and password were given."
   }
 }

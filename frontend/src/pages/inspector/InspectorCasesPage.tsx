@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { ExportExcelButton } from '@/components/common/ExportExcelButton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { formatDate } from '@/lib/date';
+import { formatDate, todayInTashkent } from '@/lib/date';
 import type { CaseOutcome, InspectorCasesResponse } from '@/types/inspector';
 
 const ALL = 'ALL';
@@ -48,7 +49,16 @@ export function InspectorCasesPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader title={t('inspectors.cases.title')} description={t('inspectors.cases.description')} />
+            <PageHeader
+                title={t('inspectors.cases.title')}
+                description={t('inspectors.cases.description')}
+                actions={
+                    <ExportExcelButton
+                        path={`/inspectors/me/cases/export${status !== ALL ? `?status=${status}` : ''}`}
+                        filename={`inspektor-ishlari-${todayInTashkent()}.xlsx`}
+                    />
+                }
+            />
             {notice && <SuccessNotice>{notice}</SuccessNotice>}
 
             <Card className="p-4 sm:p-5">

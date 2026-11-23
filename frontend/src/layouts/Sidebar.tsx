@@ -46,7 +46,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                         rail ? 'mx-auto size-12 justify-center' : 'px-2.5 py-1.5',
                         isActive
                             ? 'bg-brand-gradient font-semibold text-white shadow-lg shadow-gradient-to/25'
-                            : 'text-sidebar-foreground/75 hover:bg-white/6 hover:text-white',
+                            : 'text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                     )
                 }
             >
@@ -66,7 +66,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                                 'grid size-8 shrink-0 place-items-center rounded-lg transition-colors',
                                 isActive
                                     ? 'bg-white/18 text-white'
-                                    : 'bg-white/5 text-sidebar-foreground/80 group-hover:bg-white/10',
+                                    : 'bg-sidebar-accent text-sidebar-foreground group-hover:bg-sidebar-accent',
                             )}
                         >
                             <Icon aria-hidden="true" className="size-4" />
@@ -101,7 +101,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                 <BrandMark className="size-11" />
                 {!rail && (
                     <div className="min-w-0">
-                        <p className="font-heading text-lg leading-tight font-extrabold tracking-[0.08em] text-white uppercase">
+                        <p className="font-heading text-lg leading-tight font-extrabold tracking-[0.08em] text-sidebar-accent-foreground uppercase">
                             {t('brand.name')}
                         </p>
                         <p className="mt-0.5 truncate text-xs text-sidebar-foreground/60">{t('brand.tagline')}</p>
@@ -119,7 +119,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                                     variant="ghost"
                                     size="icon"
                                     aria-label={t('nav.openMenu')}
-                                    className="size-12 rounded-xl bg-white/5 text-sidebar-foreground hover:bg-white/10 hover:text-white"
+                                    className="size-12 rounded-xl bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                 >
                                     <Menu aria-hidden="true" className="size-5" />
                                 </Button>
@@ -161,14 +161,14 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
 
             {variant === 'full' && (
                 <div className="shrink-0 px-4 pt-2 pb-5 [@media(max-height:960px)]:hidden">
-                    <div className="rounded-2xl bg-white/5 p-4">
+                    <div className="rounded-2xl bg-sidebar-accent p-4">
                         <div className="mb-3 flex gap-1.5" aria-hidden="true">
                             <span className="size-2.5 rounded-sm bg-success" />
                             <span className="size-2.5 rounded-sm bg-success" />
                             <span className="size-2.5 rounded-sm bg-warning" />
                             <span className="size-2.5 rounded-sm bg-success" />
                         </div>
-                        <p className="text-xs font-semibold text-white">{t('nav.cabinet')}</p>
+                        <p className="text-xs font-semibold text-sidebar-accent-foreground">{t('nav.cabinet')}</p>
                         <p className="mt-1 text-xs leading-5 text-sidebar-foreground/60">{t('nav.sidebarNote')}</p>
                     </div>
                 </div>

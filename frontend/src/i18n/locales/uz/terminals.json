@@ -109,15 +109,13 @@
     "editTitle": "Terminalni tahrirlash",
     "editDescription": "Terminalning ulanish va tizim sozlamalari.",
     "updated": "Terminal ma’lumotlari yangilandi.",
-    "history": "Sinxronlash tarixi"
+    "history": "Terminal tarixi"
   },
   "kpi": {
     "total": "Jami terminallar",
     "online": "Online",
     "offline": "Offline",
     "delayed": "Sinxronlash kechikmoqda",
-    "clickToFilter": "Bosing — faqat shularni ko‘rsatish",
-    "activeFilter": "Filtr yoqilgan · qayta bosing",
     "notChecked": "Tekshirilmagan / nofaol: {{count}}"
   },
   "filters": {
@@ -251,8 +249,8 @@
     "title": "Maktabdagi shaxslar",
     "students": "O‘quvchilar",
     "teachers": "O‘qituvchilar",
-    "withPhoto": "Rasmi bor",
-    "withoutPhoto": "Rasmi yo‘q",
+    "withPhoto": "Bazada rasmi bor",
+    "withoutPhoto": "Bazada rasmi yo‘q",
     "compare": "Terminal bilan solishtirish",
     "comparing": "Solishtirilmoqda…",
     "compareFailed": "Solishtirib bo‘lmadi.",
@@ -261,7 +259,7 @@
     "matched": "Mos kelganlar",
     "missing": "Terminalda yo‘qlar",
     "extra": "Ortiqcha yozuvlar",
-    "note": "Bu yerda PNFL / employeeNo mosligi tekshiriladi. Yuz rasmining haqiqiy holati alohida tekshiriladi."
+    "note": "Maktabdagi shaxslar terminaldagi shaxslar bilan PNFL bo‘yicha solishtiriladi. Yuz rasmining haqiqiy holati alohida tekshiriladi."
   },
   "queue": {
     "title": "Sinxronlash navbati",
@@ -300,7 +298,16 @@
     "failed": "Xatolik",
     "seconds": "{{value}} s",
     "note": "Oxirgi 20 ta yozuv. Har 30 soniyada yangilanadi.",
-    "newEvents": "+{{count}} yangi"
+    "newEvents": "+{{count}} yangi",
+    "errors": {
+      "SYNC_FAILED": "Sinxronlash bajarilmadi",
+      "DEVICE_UNREACHABLE": "Terminalga ulanib bo‘lmadi",
+      "DEVICE_TIMEOUT": "Terminal javob bermadi (vaqt tugadi)",
+      "DEVICE_AUTH_FAILED": "Terminal login yoki paroli noto‘g‘ri",
+      "DATABASE_ERROR": "Bazaga yozishda xatolik",
+      "CURSOR_CONFLICT": "Parallel urinish bilan to‘qnashdi, keyingisida tuzaladi",
+      "TERMINAL_SYNC_CONCURRENCY": "Boshqa sinxronlash jarayoni band edi"
+    }
   },
   "photos": {
     "title": "Davomat rasmlari",
@@ -428,7 +435,7 @@
     "scheduled": "{{count}} ta shaxs navbatga qo‘yildi"
   },
   "monitoring": {
-    "title": "Terminallar sinxronlash monitoringi",
+    "title": "Terminallar holati",
     "description": "Barcha faol terminallarning oxirgi diagnostika natijalari.",
     "totalTerminals": "Jami terminallar",
     "notChecked": "Tekshirilmagan",
@@ -613,6 +620,116 @@
     "details": "Har bir terminal",
     "terminal": "Terminal",
     "pictureType": "Rasm turi",
-    "pushTarget": "Push manzili"
+    "pushTarget": "Push manzili",
+    "audio": "Ikki tomonlama audio"
+  },
+  "summary": {
+    "offline": {
+      "title": "Terminalga ulanib bo‘lmayapti",
+      "hint": "Quvvat, tarmoq kabeli va IP manzilni tekshiring. Muammo hal bo‘lgach holat o‘zi tiklanadi."
+    },
+    "unknown": {
+      "title": "Holat hali aniqlanmagan",
+      "hint": "Pastdagi «To‘liq tekshiruv» tugmasi bilan ulanishni tekshiring."
+    },
+    "pushNoToken": {
+      "title": "Push tokeni berilmagan",
+      "hint": "Eventlar kelmaydi. «Yangi token» yarating va terminalga kiriting."
+    },
+    "pushWaiting": {
+      "title": "Terminaldan push hali kelmagan",
+      "hint": "Token berilgan, lekin birorta so‘rov kelmagan. Terminaldagi HTTP bildirishnoma sozlamasini tekshiring."
+    },
+    "pushActive": {
+      "title": "Ishlayapti",
+      "hint": "Eventlar kelmoqda (oxirgi so‘rov {{ago}} oldin)."
+    },
+    "pushIdle": {
+      "title": "Ulangan, lekin ma’lumot kelmayapti",
+      "hint": "Oxirgi so‘rov {{ago}} oldin. Maktabda hech kim o‘tmagan bo‘lishi mumkin; dars vaqtida bo‘lsa, terminal soati va push sozlamasini tekshiring."
+    },
+    "delayed": {
+      "title": "Ma’lumot kechikmoqda",
+      "hint": "Ma’lumot {{ago}}ga kechikkan. Tizim o‘zi yetib oladi; uzoq davom etsa «Diagnostika» bo‘limini ko‘ring."
+    },
+    "healthy": {
+      "title": "Ishlayapti",
+      "hint": "Ma’lumot o‘z vaqtida kelmoqda."
+    },
+    "notStarted": {
+      "title": "Sinxronlash boshlanmagan",
+      "hint": "Pastdagi sinxronlashni boshlash bo‘limidan boshlang."
+    },
+    "lastError": "Oxirgi xato"
+  },
+  "diagnose": {
+    "button": "To‘liq tekshiruv",
+    "running": "Tekshirilmoqda…",
+    "hint": "Faqat o‘qiydi: ulanish, soat farqi va ikki tomonlama audio. Terminalga hech narsa yozilmaydi.",
+    "steps": {
+      "connection": "Ulanish",
+      "time": "Soat farqi",
+      "audio": "Ikki tomonlama audio"
+    },
+    "connectionOk": "Ulandi: {{model}} · {{firmware}}",
+    "timeSynced": "Soat to‘g‘ri ({{seconds}} s farq)",
+    "timeWarn": "Soat {{seconds}} s farq qilmoqda",
+    "timeCrit": "Soat {{seconds}} s farq qilmoqda — davomat vaqtlari noto‘g‘ri yozilishi mumkin",
+    "timeUnknown": "Soat farqini aniqlab bo‘lmadi",
+    "audioYes": "Bor ({{channels}})",
+    "audioYesNoInfo": "Bor",
+    "audioNo": "Yo‘q — terminal qo‘llamaydi",
+    "skipped": "Ulanish bo‘lmagani uchun o‘tkazib yuborildi",
+    "done": "{{ms}} ms da tugadi",
+    "failed": "Tekshirib bo‘lmadi"
+  },
+  "errorLog": {
+    "title": "Oxirgi muammolar",
+    "empty": "Muammo qayd etilmagan.",
+    "note": "Sinxronlash xatolari va offline bo‘lgan davrlar, oxirgi 20 ta.",
+    "kinds": {
+      "SYNC": "Sinxronlash xatosi",
+      "OFFLINE": "Offline bo‘ldi"
+    },
+    "lasted": "{{duration}} davom etdi",
+    "ongoing": "hozir ham davom etmoqda",
+    "failed": "Jurnalni yuklab bo‘lmadi"
+  },
+  "deviceData": {
+    "title": "Terminaldagi ma’lumotlar",
+    "refresh": "Terminaldan olish",
+    "loading": "Terminaldan so‘ralmoqda…",
+    "loaded": "Terminalga yuklangan shaxslar",
+    "withFace": "Terminalda yuz rasmi bor",
+    "withoutFace": "Terminalda rasmi yo‘q",
+    "free": "Bo‘sh joy",
+    "warning": "{{count}} ta shaxsning yuz rasmi terminalda yo‘q — ular terminal orqali tanilmaydi.",
+    "unsupported": "Terminal yuz yozuvlari sonini bermaydi.",
+    "note": "Bu sonlar terminalning o‘zidan olinadi. «Rasmi yo‘q» — shaxslar va yuz yozuvlari sonining farqi (taxminiy); aynan kimlar ekanini «Terminal bilan solishtirish» ko‘rsatadi.",
+    "checkedAt": "Tekshirilgan: {{time}}"
+  },
+  "compare": {
+    "start": "Terminal bilan solishtirish",
+    "rerun": "Qayta solishtirish",
+    "running": "Solishtirilmoqda…",
+    "starting": "Boshlanmoqda…",
+    "progress": "Terminaldan o‘qilmoqda: {{loaded}} / {{total}}",
+    "checkedAt": "Oxirgi solishtirish: {{time}}",
+    "hint": "Jarayon fonda ketadi: oynani yopsangiz ham to‘xtamaydi, qaytib kirsangiz natija shu yerda turadi.",
+    "failed": "Solishtirib bo‘lmadi: {{error}}",
+    "missingTab": "Terminalda yo‘q ({{count}})",
+    "extraTab": "Ortiqcha yozuvlar ({{count}})",
+    "missingEmpty": "Hamma shaxs terminalda bor.",
+    "extraEmpty": "Ortiqcha yozuv yo‘q.",
+    "limit": "Faqat dastlabki {{count}} tasi ko‘rsatilgan.",
+    "csv": "CSV yuklab olish",
+    "student": "O‘quvchi",
+    "teacher": "O‘qituvchi",
+    "invalid": "Noto‘g‘ri employeeNo ({{count}} ta) ortiqcha ro‘yxatga qo‘shilgan.",
+    "colName": "F.I.Sh.",
+    "colPnfl": "PNFL",
+    "colType": "Turi",
+    "colEmployeeNo": "employeeNo",
+    "colTerminalName": "Terminaldagi ism"
   }
 }

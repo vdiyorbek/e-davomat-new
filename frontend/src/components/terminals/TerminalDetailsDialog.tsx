@@ -1,11 +1,8 @@
-import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
     Activity,
-    AlertTriangle,
     Archive,
     ArchiveRestore,
-    GitCompareArrows,
     Info,
     Pencil,
     RefreshCw,
@@ -16,7 +13,7 @@ import { TerminalClearPersonsAction } from './TerminalClearPersonsAction';
 import { useTranslation } from 'react-i18next';
 import { TerminalStatusTimeline } from './TerminalStatusTimeline';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -29,12 +26,16 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { authorizedGet } from '@/lib/auth-session';
 import { formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { Terminal } from '@/types/terminal';
 
 import { CheckTerminalButton } from './CheckTerminalButton';
+import { TerminalCompare } from './TerminalCompare';
+import { TerminalDeviceData } from './TerminalDeviceData';
+import { TerminalDiagnoseButton } from './TerminalDiagnoseButton';
+import { TerminalErrorLog } from './TerminalErrorLog';
+import { TerminalStatusSummary } from './TerminalStatusSummary';
 import { StatTile } from './StatTile';
 import { StartTerminalSyncForm } from './StartTerminalSyncForm';
 import { TerminalEventBackfill } from './TerminalEventBackfill';
@@ -49,15 +50,6 @@ interface PersonsPreview {
     students: { total: number; withPhoto: number; withoutPhoto: number };
     teachers: { total: number; withPhoto: number; withoutPhoto: number };
     summary: { total: number; withPhoto: number; withoutPhoto: number };
-}
-
-interface PersonsCompare {
-    databasePersons: number;
-    terminalPersons: number;
-    matched: number;
-    missingOnTerminal: number;
-    extraOnTerminal: number;
-    invalidEmployeeNo: number;
 }
 
 /** Ta’riflar ro‘yxati bloki: chapda nom, o‘ngda qiymat. */
@@ -84,24 +76,6 @@ function InfoRow({ label, children, mono }: { label: string; children: ReactNode
 function PersonsSummary({ terminalId }: { terminalId: number }) {
     const { t } = useTranslation();
     const preview = useApiQuery<PersonsPreview>(`/terminals/${terminalId}/person-sync/preview`);
-    const [compare, setCompare] = useState<PersonsCompare | null>(null);
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
-
-    async function handleCompare() {
-        if (busy) return;
-        setBusy(true);
-        setError('');
-        setCompare(null);
-        try {
-            setCompare(await authorizedGet<PersonsCompare>(`/terminals/${terminalId}/person-sync/compare`));
-        } catch (caught: unknown) {
-            setError(caught instanceof Error ? caught.message : t('terminals.persons.compareFailed'));
-        } finally {
-            setBusy(false);
-        }
-    }
-
     return (
         <div className="space-y-4">
             <section className="space-y-3">
@@ -143,42 +117,7 @@ function PersonsSummary({ terminalId }: { terminalId: number }) {
                 )}
             </section>
 
-            <section className="space-y-3 rounded-xl border bg-muted/20 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <h3 className="text-sm font-semibold">{t('terminals.persons.compareTitle')}</h3>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('terminals.persons.note')}</p>
-                    </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full sm:w-auto"
-                        disabled={busy || preview.loading || !preview.data}
-                        onClick={() => void handleCompare()}
-                    >
-                        <GitCompareArrows aria-hidden="true" />
-                        {busy ? t('terminals.persons.comparing') : t('terminals.persons.compare')}
-                    </Button>
-                </div>
-
-                {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-                {compare && (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        <StatTile label={t('terminals.persons.onTerminal')} value={compare.terminalPersons} />
-                        <StatTile label={t('terminals.persons.matched')} value={compare.matched} tone="success" />
-                        <StatTile
-                            label={t('terminals.persons.missing')}
-                            value={compare.missingOnTerminal}
-                            tone={compare.missingOnTerminal > 0 ? 'danger' : undefined}
-                        />
-                        <StatTile
-                            label={t('terminals.persons.extra')}
-                            value={compare.extraOnTerminal}
-                            tone={compare.extraOnTerminal > 0 ? 'warning' : undefined}
-                        />
-                    </div>
-                )}
-            </section>
+            <TerminalCompare terminalId={terminalId} disabled={preview.loading || !preview.data} />
         </div>
     );
 }
@@ -262,6 +201,7 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
 
                     <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
                         <TabsContent value="overview" className="space-y-4">
+                            <TerminalStatusSummary terminal={terminal} sync={sync} />
                             {terminal.eventSource === 'PUSH' && !archived && (
                                 <TerminalPushPanel terminal={terminal} canManage={canManage} onChanged={onChanged} />
                             )}
@@ -298,15 +238,6 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                     <AlertDescription>{t('terminals.details.archivedNote')}</AlertDescription>
                                 </Alert>
                             )}
-                            {terminal.healthStatus === 'OFFLINE' && terminal.lastError && (
-                                <Alert variant="destructive">
-                                    <AlertTriangle aria-hidden="true" />
-                                    <AlertTitle>{t('terminals.details.lastError')}</AlertTitle>
-                                    <AlertDescription className="break-words [overflow-wrap:anywhere]">
-                                        {terminal.lastError}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
                             {!archived && terminal.isActive && terminal.healthStatus === 'UNKNOWN' && (
                                 <p className="text-xs text-muted-foreground">{t('terminals.details.staleCheck')}</p>
                             )}
@@ -319,6 +250,7 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                     </div>
                                     <div className={cn('grid items-start gap-3', !terminal.syncStartAt && terminal.eventSource === 'POLLING' && 'md:grid-cols-2')}>
                                         <CheckTerminalButton terminalId={terminal.id} />
+                                        {isSuperAdmin && <TerminalDiagnoseButton terminalId={terminal.id} />}
                                         {!terminal.syncStartAt && terminal.eventSource === 'POLLING' && (
                                             <StartTerminalSyncForm
                                                 terminalId={terminal.id}
@@ -353,7 +285,8 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                         </TabsContent>
 
                         {!archived && (
-                            <TabsContent value="persons">
+                            <TabsContent value="persons" className="space-y-4">
+                                <TerminalDeviceData terminalId={terminal.id} />
                                 <PersonsSummary terminalId={terminal.id} />
                             </TabsContent>
                         )}
@@ -364,6 +297,7 @@ export function TerminalDetailsDialog({ terminal, canManage, now, onClose, onCha
                                     <TerminalSyncMonitoring terminalId={terminal.id} />
                                     <TerminalSyncHistory terminalId={terminal.id} />
                                 </div>
+                                <TerminalErrorLog terminalId={terminal.id} />
                                 <TerminalPhotoStats terminalId={terminal.id} canManage={canManage} />
                             </TabsContent>
                         )}

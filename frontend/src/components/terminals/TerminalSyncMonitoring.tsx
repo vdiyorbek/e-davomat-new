@@ -101,7 +101,7 @@ export function TerminalSyncMonitoring({ terminalId }: { terminalId: number }) {
                     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
                         {counters.map((item) => (
                             <div key={item.label} className="min-w-0 rounded-lg border px-3 py-2">
-                                <dt className="truncate text-[11px] text-muted-foreground">{item.label}</dt>
+                                <dt className="text-[11px] leading-tight text-muted-foreground [overflow-wrap:anywhere]">{item.label}</dt>
                                 <dd className={cn('text-lg font-semibold tabular-nums', item.danger && 'text-destructive')}>
                                     {formatNumber(item.value)}
                                 </dd>

@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { CalendarRange, FileCheck2, GraduationCap, Presentation, RotateCw, X } from 'lucide-react';
+import { CalendarRange, FileCheck2, GraduationCap, Hourglass, Presentation, RotateCw, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,7 +29,7 @@ import type { School } from '@/types/school';
 import { DatePicker } from '@/components/common/DatePicker';
 
 type ExcuseType = 'STUDENT' | 'TEACHER';
-type StatusFilter = 'ACTIVE' | 'CANCELLED' | 'all';
+type StatusFilter = 'ACTIVE' | 'CANCELLED' | 'PENDING' | 'REJECTED' | 'all';
 
 const FILTER_KEYS = ['schoolId', 'status', 'q', 'from', 'to'] as const;
 
@@ -44,7 +45,7 @@ function readType(value: string | null): ExcuseType {
 }
 
 function readStatus(value: string | null): StatusFilter {
-    return value === 'CANCELLED' || value === 'all' ? value : 'ACTIVE';
+    return value === 'CANCELLED' || value === 'PENDING' || value === 'REJECTED' || value === 'all' ? value : 'ACTIVE';
 }
 
 function readPositive(value: string | null, fallback: number) {
@@ -110,6 +111,12 @@ export function AttendanceExcusesPage() {
 
     const { data, loading, error, retry } = useApiQuery<AttendanceExcusesPageResponse>(`/attendance-excuses?${query.toString()}`);
 
+    // Tasdiqlashni kutayotgan arizalar soni (sinf rahbarlari yuborgan).
+    const pendingQuery = new URLSearchParams({ page: '1', limit: '1', membershipType: 'STUDENT', status: 'PENDING' });
+    if (schoolId) pendingQuery.set('schoolId', schoolId);
+    const pending = useApiQuery<AttendanceExcusesPageResponse>(`/attendance-excuses?${pendingQuery.toString()}`);
+    const pendingCount = pending.data?.total ?? 0;
+
     function update(changes: Record<string, string>, resetPage = true) {
         const next = new URLSearchParams(searchParams);
         for (const [key, value] of Object.entries(changes)) {
@@ -132,7 +139,18 @@ export function AttendanceExcusesPage() {
 
     function statusBadge(item: AttendanceExcuse) {
         return (
-            <StatusBadge tone={item.status === 'ACTIVE' ? 'success' : 'neutral'}>{t(`excuses.status.${item.status}`)}</StatusBadge>
+            <div className="min-w-0 space-y-1">
+                <StatusBadge
+                    tone={item.status === 'ACTIVE' ? 'success' : item.status === 'PENDING' ? 'warning' : item.status === 'REJECTED' ? 'danger' : 'neutral'}
+                >
+                    {t(`excuses.status.${item.status}`)}
+                </StatusBadge>
+                {item.status === 'REJECTED' && item.rejectionReason && (
+                    <p className="line-clamp-2 text-xs leading-5 text-muted-foreground [overflow-wrap:anywhere]" title={item.rejectionReason}>
+                        {t('excuses.rejectedReason', { reason: item.rejectionReason })}
+                    </p>
+                )}
+            </div>
         );
     }
 
@@ -197,6 +215,18 @@ export function AttendanceExcusesPage() {
                 }
             />
 
+            {pendingCount > 0 && status !== 'PENDING' && (
+                <Alert className="border-warning/40 bg-warning/10">
+                    <Hourglass aria-hidden="true" />
+                    <AlertDescription className="flex flex-wrap items-center justify-between gap-3 text-foreground">
+                        <span>{t('excuses.pendingBanner', { count: pendingCount })}</span>
+                        <Button type="button" size="sm" variant="outline" onClick={() => update({ status: 'PENDING', type: '' })}>
+                            {t('excuses.viewPending')}
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Tabs value={type} onValueChange={(value) => update({ type: value === 'TEACHER' ? 'TEACHER' : '' })}>
                 <TabsList aria-label={t('excuses.typeLabel')} className="w-full sm:w-fit">
                     <TabsTrigger value="STUDENT" className="px-4">
@@ -256,6 +286,8 @@ export function AttendanceExcusesPage() {
                             onValueChange={(value) => update({ status: value === 'ACTIVE' ? '' : value })}
                             options={[
                                 { value: 'ACTIVE', label: t('excuses.status.ACTIVE') },
+                                { value: 'PENDING', label: t('excuses.status.PENDING') },
+                                { value: 'REJECTED', label: t('excuses.status.REJECTED') },
                                 { value: 'CANCELLED', label: t('excuses.status.CANCELLED') },
                                 { value: 'all', label: t('excuses.filters.all') },
                             ]}
@@ -318,7 +350,10 @@ export function AttendanceExcusesPage() {
                                         </div>
                                         <div className="mt-auto flex flex-wrap items-end justify-between gap-3 border-t pt-3">
                                             {uploadedBlock(item)}
-                                            <AttendanceExcuseActions excuseId={item.id} status={item.status} onChanged={retry} />
+                                            <AttendanceExcuseActions excuseId={item.id} status={item.status} onChanged={() => {
+                                                retry();
+                                                pending.retry();
+                                            }} />
                                         </div>
                                     </Card>
                                 </li>
@@ -358,7 +393,10 @@ export function AttendanceExcusesPage() {
                                             <TableCell className="whitespace-normal">{uploadedBlock(item)}</TableCell>
                                             <TableCell>{statusBadge(item)}</TableCell>
                                             <TableCell className="pr-5">
-                                                <AttendanceExcuseActions excuseId={item.id} status={item.status} onChanged={retry} />
+                                                <AttendanceExcuseActions excuseId={item.id} status={item.status} onChanged={() => {
+                                                retry();
+                                                pending.retry();
+                                            }} />
                                             </TableCell>
                                         </TableRow>
                                     ))}

@@ -64,18 +64,18 @@
   "studentTitle": "O‘quvchi qo‘shimcha ma’lumotlari",
   "teacherTitle": "O‘qituvchi qo‘shimcha ma’lumotlari",
   "saved": "Qo‘shimcha ma’lumotlar saqlandi.",
-  "studentAccount": "O‘quvchi akkaunti",
-  "teacherAccount": "O‘qituvchi akkaunti",
-  "accountDescription": "Foydalanuvchining akkaunt holatini tekshirish yoki yangi akkaunt yaratish.",
+  "studentAccount": "Tizimga kirish ma’lumotlari",
+  "teacherAccount": "Tizimga kirish ma’lumotlari",
+  "accountDescription": "Shaxsga login va parol bering, shunda u tizimga kira oladi.",
   "detailsDescription": "Shaxsning maktabga a’zoligiga tegishli qo‘shimcha ma’lumotlarni kiritish va tahrirlash.",
   "account": {
     "personMissing": "Shaxs ma’lumoti mavjud emas",
-    "type": "Akkaunt turi: {{role}}",
+    "type": "Rol: {{role}}",
     "loginInvalid": "Login 3–50 ta kichik lotin harfi, raqam, nuqta yoki pastki chiziqdan iborat bo‘lishi kerak.",
     "passwordLength": "Parol 12–128 ta belgidan iborat bo‘lishi kerak.",
     "passwordMismatch": "Parollar bir-biriga mos emas.",
     "createFailed": "Akkaunt yaratishda xatolik yuz berdi.",
-    "exists": "Ushbu shaxs uchun akkaunt mavjud",
+    "exists": "Bu shaxsga login allaqachon berilgan",
     "login": "Login",
     "role": "Rol",
     "status": "Holat",
@@ -85,8 +85,9 @@
     "password": "Boshlang‘ich parol",
     "passwordHint": "Kamida 12 ta belgi. PNFL yoki tug‘ilgan sanadan foydalanmang.",
     "confirm": "Parolni tasdiqlash",
-    "roleNote": "Akkaunt roli (o‘quvchi yoki o‘qituvchi) maktab a’zoligi asosida avtomatik belgilanadi.",
-    "create": "Akkaunt yaratish",
-    "creating": "Yaratilmoqda…"
+    "roleNote": "Rol (o‘quvchi yoki o‘qituvchi) maktabdagi a’zolik asosida avtomatik belgilanadi.",
+    "create": "Login va parol berish",
+    "creating": "Berilmoqda…",
+    "created": "Login va parol berildi."
   }
 }

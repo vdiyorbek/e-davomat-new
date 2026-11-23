@@ -106,5 +106,8 @@
   "pickTime": "Pick a time",
   "clear": "Clear",
   "hours": "Hours",
-  "minutes": "Minutes"
+  "minutes": "Minutes",
+  "exportExcel": "Download Excel",
+  "exporting": "Preparing Excel…",
+  "exportFailed": "Excel export failed."
 }

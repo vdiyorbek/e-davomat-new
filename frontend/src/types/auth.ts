@@ -33,6 +33,8 @@ export interface Profile {
   districtId: number | null;
   schoolId: number | null;
   photoUrl: string | null;
+  /** Administrator bergan vaqtinchalik parol: avval almashtirish shart. */
+  mustChangePassword?: boolean;
 }
 
 export interface Session {

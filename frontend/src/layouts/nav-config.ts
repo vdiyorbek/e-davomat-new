@@ -25,8 +25,10 @@ import {
   Home,
   Radio,
   SlidersHorizontal,
+  HeartPulse,
   UserX,
   UserPlus,
+  UserRoundCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -69,6 +71,13 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
         roles: ["TEACHER"],
         mobilePriority: 1,
+      },
+      {
+        to: "/homeroom",
+        key: "homeroom",
+        icon: UserRoundCheck,
+        roles: ["TEACHER"],
+        mobilePriority: 4,
       },
       {
         to: "/teacher/timetable",
@@ -260,6 +269,12 @@ export const NAV_GROUPS: NavGroup[] = [
         to: "/terminals/sync-history",
         key: "syncHistory",
         icon: History,
+        roles: ["SUPER_ADMIN"],
+      },
+      {
+        to: "/system/health",
+        key: "systemHealth",
+        icon: HeartPulse,
         roles: ["SUPER_ADMIN"],
       },
       {

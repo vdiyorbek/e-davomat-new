@@ -34,8 +34,8 @@
       "description": "If push falls behind, the server pulls events and photos from the terminal itself."
     },
     "live": {
-      "title": "Live feed",
-      "description": "Which passes appear on the live feed page."
+      "title": "Real-time view",
+      "description": "Which passes are shown on the real-time page."
     },
     "calendar": {
       "title": "Default school week",

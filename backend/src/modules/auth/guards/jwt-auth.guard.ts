@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -109,7 +110,20 @@ export class JwtAuthGuard implements CanActivate {
       districtId: user.districtId,
       schoolId: user.schoolId,
       photoUrl: user.photoUrl,
+      mustChangePassword: user.mustChangePassword,
+      sessionId,
     };
+
+    // Vaqtinchalik parol bilan kirgan foydalanuvchi avval parolni almashtirishi shart.
+    if (user.mustChangePassword) {
+      const path = request.originalUrl.split('?')[0];
+      if (!/^\/api\/(me|me\/password|auth\/[a-z-]+)\/?$/.test(path)) {
+        throw new ForbiddenException({
+          message: 'Davom etish uchun avval parolni almashtiring',
+          code: 'PASSWORD_CHANGE_REQUIRED',
+        });
+      }
+    }
 
     return true;
   }

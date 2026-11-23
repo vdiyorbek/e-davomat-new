@@ -6,7 +6,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import type { Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
+
+import {
+  fullName,
+  safeCell,
+  streamExcel,
+} from '../../common/export/excel-export';
 
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { ABSENCE_STREAK_DAYS } from '../dashboard/stats-rules';
@@ -22,7 +29,11 @@ import {
   InspectorCaseStatus,
 } from './inspector-case.entity';
 import { buildCaseReportPdf } from './inspector-case-pdf';
-import { loadGuardianContacts, NO_GUARDIANS } from './inspector-guardians';
+import {
+  loadGuardianContacts,
+  NO_GUARDIANS,
+  type GuardianContacts,
+} from './inspector-guardians';
 import { InspectorMahalla } from './inspector-mahalla.entity';
 import { InspectorsService } from './inspectors.service';
 import { tashkentToday } from './inspector.rules';
@@ -577,5 +588,116 @@ export class InspectorCasesService {
         outcome: c.outcome ? OUTCOME_LABELS[c.outcome] : '—',
       },
     );
+  }
+
+  // ───────────── Excel eksport ─────────────
+
+  /** Kelmayotgan o‘quvchilar ro‘yxati (ota-ona telefonlari bilan) — .xlsx. */
+  async exportAbsenteesExcel(
+    query: GetInspectorAbsenteesQueryDto,
+    actor: AuthenticatedUser,
+    response: Response,
+  ): Promise<void> {
+    await streamExcel(response, {
+      filename: `kelmayotgan-oquvchilar-${new Date().toISOString().slice(0, 10)}.xlsx`,
+      sheetName: 'Kelmaganlar',
+      columns: [
+        { header: '№', key: 'number', width: 8 },
+        { header: 'O‘quvchi F.I.Sh.', key: 'name', width: 42 },
+        { header: 'Ketma-ket kun', key: 'days', width: 14 },
+        { header: 'Qachondan', key: 'since', width: 14 },
+        { header: 'Maktab', key: 'school', width: 28 },
+        { header: 'Sinf', key: 'className', width: 12 },
+        { header: 'Mahalla', key: 'mahalla', width: 28 },
+        { header: 'Holat', key: 'state', width: 16 },
+        { header: 'Otasi', key: 'father', width: 36 },
+        { header: 'Otasi telefoni', key: 'fatherPhone', width: 18 },
+        { header: 'Onasi', key: 'mother', width: 36 },
+        { header: 'Onasi telefoni', key: 'motherPhone', width: 18 },
+      ],
+      fetchPage: async (page) =>
+        (await this.absentees({ ...query, page, limit: 100 }, actor)).items as {
+          firstName: string;
+          lastName: string;
+          middleName: string | null;
+          days: number;
+          sinceDate: string;
+          school: { name: string };
+          className: string;
+          mahalla: { name: string };
+          openCaseId: number | null;
+          guardians: GuardianContacts;
+        }[],
+      toRow: (r, number) => ({
+        number,
+        name: safeCell(fullName(r)),
+        days: r.days,
+        since: r.sinceDate,
+        school: safeCell(r.school.name),
+        className: safeCell(r.className),
+        mahalla: safeCell(r.mahalla.name),
+        state: r.openCaseId === null ? 'Yangi' : 'Ish ochilgan',
+        father: safeCell(fullName(r.guardians.father)),
+        fatherPhone: safeCell(r.guardians.father?.phoneNumber),
+        mother: safeCell(fullName(r.guardians.mother)),
+        motherPhone: safeCell(r.guardians.mother?.phoneNumber),
+      }),
+    });
+  }
+
+  /** Inspektor ishlari ro‘yxati — .xlsx. */
+  async exportCasesExcel(
+    query: GetInspectorCasesQueryDto,
+    actor: AuthenticatedUser,
+    response: Response,
+  ): Promise<void> {
+    await streamExcel(response, {
+      filename: `inspektor-ishlari-${new Date().toISOString().slice(0, 10)}.xlsx`,
+      sheetName: 'Ishlar',
+      columns: [
+        { header: '№', key: 'number', width: 8 },
+        { header: 'O‘quvchi F.I.Sh.', key: 'name', width: 42 },
+        { header: 'Maktab', key: 'school', width: 28 },
+        { header: 'Sinf', key: 'className', width: 12 },
+        { header: 'Mahalla', key: 'mahalla', width: 28 },
+        { header: 'Holat', key: 'status', width: 14 },
+        { header: 'Natija', key: 'outcome', width: 22 },
+        { header: 'Kelmagan kun', key: 'absentDays', width: 14 },
+        { header: 'Qachondan', key: 'absentSince', width: 14 },
+        { header: 'Tashrif sanasi', key: 'visitDate', width: 14 },
+        { header: 'Keyingi nazorat', key: 'followUpDate', width: 16 },
+        { header: 'Sabab', key: 'reason', width: 45 },
+      ],
+      fetchPage: async (page) =>
+        (await this.list({ ...query, page, limit: 100 }, actor)).items as {
+          firstName: string;
+          lastName: string;
+          middleName: string | null;
+          school: string;
+          className: string | null;
+          mahalla: string | null;
+          status: string;
+          outcome: string | null;
+          absentDays: number;
+          absentSince: string;
+          visitDate: string | null;
+          followUpDate: string | null;
+          reason: string | null;
+        }[],
+      toRow: (r, number) => ({
+        number,
+        name: safeCell(fullName(r)),
+        school: safeCell(r.school),
+        className: safeCell(r.className),
+        mahalla: safeCell(r.mahalla),
+        status: r.status === 'OPEN' ? 'Ochiq' : 'Yopilgan',
+        outcome: safeCell(r.outcome),
+        absentDays: r.absentDays,
+        absentSince: r.absentSince,
+        visitDate: r.visitDate ?? '',
+        followUpDate: r.followUpDate ?? '',
+        reason: safeCell(r.reason),
+      }),
+    });
   }
 }

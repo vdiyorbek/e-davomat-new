@@ -1,21 +1,29 @@
-import { AtSign, IdCard, ShieldCheck, UserRound } from 'lucide-react';
+import { AtSign, IdCard, KeyRound, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components/common/PageHeader';
+import { ChangePasswordForm } from '@/components/users/ChangePasswordForm';
 import { UserPhotoEditor } from '@/components/users/UserPhotoEditor';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SuccessNotice } from '@/components/common/states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
 import { reloadCurrentProfile } from '@/lib/auth-session';
 import { personFullName } from '@/lib/person';
 
 export function ProfilePage() {
     const { session } = useAuth();
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [changed, setChanged] = useState(false);
 
     if (!session) return null;
 
     const user = session.profile;
+    const forced = user.mustChangePassword === true;
     const fullName = personFullName(user, user.login);
     const roleName = t(`roles.${user.role}`);
 
@@ -34,6 +42,15 @@ export function ProfilePage() {
                 title={t('profile.title')}
                 description={t('profile.subtitle')}
             />
+
+            {forced && (
+                <Alert className="border-warning/40 bg-warning/10">
+                    <TriangleAlert aria-hidden="true" />
+                    <AlertTitle>{t('profile.security.forcedTitle')}</AlertTitle>
+                    <AlertDescription className="text-foreground">{t('profile.security.forcedText')}</AlertDescription>
+                </Alert>
+            )}
+            {changed && !forced && <SuccessNotice>{t('profile.security.success')}</SuccessNotice>}
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
                 <Card className="items-center p-6 text-center">
@@ -87,6 +104,26 @@ export function ProfilePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                        <KeyRound aria-hidden="true" className="size-5 text-primary" />
+                        {t('profile.security.title')}
+                    </CardTitle>
+                    <CardDescription>{t('profile.security.description')}</CardDescription>
+                </CardHeader>
+                <Separator />
+                <CardContent>
+                    <ChangePasswordForm
+                        onChanged={async () => {
+                            await reloadCurrentProfile();
+                            setChanged(true);
+                            if (forced) void navigate('/', { replace: true });
+                        }}
+                    />
+                </CardContent>
+            </Card>
         </div>
     );
 }

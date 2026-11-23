@@ -34,8 +34,8 @@
       "description": "Push navbatda kechiksa, server eventlar va rasmlarni terminalning o‘zidan oladi."
     },
     "live": {
-      "title": "Jonli efir",
-      "description": "Jonli efir sahifasida qaysi o‘tishlar ko‘rinishi."
+      "title": "Real vaqt rejimi",
+      "description": "Real vaqt rejimi sahifasida qaysi o‘tishlar ko‘rinishi."
     },
     "calendar": {
       "title": "Standart o‘quv haftasi",

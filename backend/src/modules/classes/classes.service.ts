@@ -18,8 +18,10 @@ import { CreateSchoolClassDto } from './dto/create-school-class.dto';
 import { ListSchoolClassesDto } from './dto/list-school-classes.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { UserRole } from '../users/enums/user-role.enum';
+import { UpdateSchoolClassHomeroomDto } from './dto/update-school-class-homeroom.dto';
 import { UpdateSchoolClassGradeDto } from './dto/update-school-class-grade.dto';
 import { ClassShiftsService } from './class-shifts.service';
+import { assertSchoolAccess } from './school-access';
 
 /** Sinf va maktab nomi birga, apostroflarsiz: «Qo‘rg‘on» = «Qorgon». */
 const SEARCH_TEXT_SQL = ["'", '‘', '’', 'ʻ', 'ʼ', '`'].reduce(
@@ -347,9 +349,10 @@ export class ClassesService {
       .getManyAndCount();
 
     const classIds = classes.map((item) => item.id);
-    const [students, shifts] = await Promise.all([
+    const [students, shifts, homerooms] = await Promise.all([
       this.countStudents(classIds),
       this.classShifts.currentShifts(classIds, shiftToday),
+      this.homeroomNames(classes.map((item) => item.homeroomPersonId)),
     ]);
 
     return {
@@ -361,6 +364,12 @@ export class ClassesService {
         gradeLevel: item.gradeLevel,
         school: item.school,
         shift: shifts.get(item.id) ?? null,
+        homeroom: item.homeroomPersonId
+          ? {
+              personId: item.homeroomPersonId,
+              name: homerooms.get(item.homeroomPersonId) ?? '',
+            }
+          : null,
         stats: { students: students.get(item.id) ?? 0 },
       })),
       total,
@@ -370,6 +379,22 @@ export class ClassesService {
       missingGrade,
       missingShift,
     };
+  }
+
+  private async homeroomNames(
+    personIds: (number | null)[],
+  ): Promise<Map<number, string>> {
+    const ids = [...new Set(personIds.filter((id): id is number => id !== null))];
+    const result = new Map<number, string>();
+    if (ids.length === 0) return result;
+    const rows: { id: number; name: string }[] =
+      await this.classesRepository.manager.query(
+        `SELECT id, CONCAT_WS(' ', lastName, firstName) AS name FROM persons
+          WHERE id IN (${ids.map(() => '?').join(',')})`,
+        ids,
+      );
+    for (const row of rows) result.set(Number(row.id), row.name);
+    return result;
   }
 
   /** Joriy sahifadagi sinflarning faol o‘quvchilari — bitta so‘rovda. */
@@ -471,5 +496,69 @@ export class ClassesService {
       name: schoolClass.name,
       gradeLevel: dto.gradeLevel,
     };
+  }
+
+  private async schoolForAdmin(schoolId: number, user: AuthenticatedUser) {
+    const school = await this.schoolsRepository.findOne({
+      where: { id: schoolId },
+      relations: { district: true },
+    });
+    if (!school) {
+      throw new NotFoundException('Maktab topilmadi');
+    }
+    assertSchoolAccess(user, school);
+    return school;
+  }
+
+  /** Maktabning bugun faol o‘qituvchilari. */
+  async homeroomTeachers(schoolId: number, user: AuthenticatedUser) {
+    await this.schoolForAdmin(schoolId, user);
+    const today = todayInTashkent();
+    const rows: {
+      personId: number;
+      firstName: string;
+      lastName: string;
+      middleName: string | null;
+    }[] = await this.classesRepository.manager.query(
+      `SELECT DISTINCT p.id AS personId, p.firstName, p.lastName, p.middleName
+         FROM school_memberships m JOIN persons p ON p.id = m.personId
+        WHERE m.schoolId = ? AND m.type = 'TEACHER' AND p.deletedAt IS NULL
+          AND m.startDate <= ? AND (m.endDate IS NULL OR m.endDate > ?)
+        ORDER BY p.lastName, p.firstName`,
+      [schoolId, today, today],
+    );
+    return rows.map((r) => ({
+      personId: Number(r.personId),
+      firstName: r.firstName,
+      lastName: r.lastName,
+      middleName: r.middleName,
+    }));
+  }
+
+  async updateHomeroom(
+    id: number,
+    dto: UpdateSchoolClassHomeroomDto,
+    user: AuthenticatedUser,
+  ) {
+    const schoolClass = await this.classesRepository.findOneBy({ id });
+    if (!schoolClass) {
+      throw new NotFoundException('Sinf topilmadi');
+    }
+    await this.schoolForAdmin(schoolClass.schoolId, user);
+
+    if (dto.personId !== null) {
+      const teachers = await this.homeroomTeachers(schoolClass.schoolId, user);
+      if (!teachers.some((t) => t.personId === dto.personId)) {
+        throw new BadRequestException(
+          'Tanlangan shaxs bu maktabning faol o‘qituvchisi emas',
+        );
+      }
+    }
+
+    await this.classesRepository.update(id, {
+      homeroomPersonId: dto.personId,
+    });
+
+    return { id, homeroomPersonId: dto.personId };
   }
 }

@@ -106,5 +106,8 @@
   "pickTime": "Vaqtni tanlang",
   "clear": "Tozalash",
   "hours": "Soat",
-  "minutes": "Daqiqa"
+  "minutes": "Daqiqa",
+  "exportExcel": "Excel yuklab olish",
+  "exporting": "Excel tayyorlanmoqda…",
+  "exportFailed": "Excel eksportda xatolik yuz berdi."
 }

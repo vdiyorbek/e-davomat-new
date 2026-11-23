@@ -1,0 +1,16 @@
+{
+  "open": "Bildirishnomalar",
+  "openWithCount": "Bildirishnomalar",
+  "title": "Bildirishnomalar",
+  "readAll": "Hammasini o‘qilgan qilish",
+  "empty": "Yangi bildirishnoma yo‘q.",
+  "types": {
+    "EXCUSE_SUBMITTED": "{{by}} {{student}} ({{className}}) uchun ariza yubordi: {{from}} — {{to}}",
+    "EXCUSE_APPROVED": "{{student}} uchun ariza tasdiqlandi ({{from}} — {{to}}).",
+    "EXCUSE_REJECTED": "{{student}} uchun ariza rad etildi. Sabab: {{reason}}",
+    "ABSENT_STREAK": "{{student}} ({{className}}) ketma-ket {{days}} kun kelmadi ({{since}} dan beri).",
+    "ABSENT_STREAK_INSPECTOR": "{{student}} ketma-ket {{days}} kun maktabga kelmadi ({{since}} dan beri).",
+    "SYSTEM_ALERT": "Tizim ogohlantirishi: {{checkName}} — {{statusName}}",
+    "SYSTEM_RECOVERED": "{{checkName}} tuzaldi."
+  }
+}

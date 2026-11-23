@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { ErrorState, LoadingState, SuccessNotice } from '@/components/common/states';
 import { ChangePersonPhoto } from '@/components/persons/ChangePersonPhoto';
 import { EditPersonForm } from '@/components/persons/EditPersonForm';
+import { TeacherDetailsCard } from '@/components/memberships/TeacherDetailsCard';
+import { MemberAccountForm } from '@/components/memberships/MemberAccountForm';
 import { PersonGuardiansCard } from '@/components/persons/PersonGuardiansCard';
 import { PersonPhoto } from '@/components/persons/PersonPhoto';
 import { PersonSchools } from '@/components/persons/PersonSchools';
@@ -32,7 +34,9 @@ function PersonDetails({ personId }: { personId: number }) {
         `/school-memberships?personId=${personId}&status=ACTIVE&page=1&limit=20`,
     );
     const isStudent = memberships.data?.data.some((membership) => membership.type === 'STUDENT') ?? false;
+    const teacherMembership = memberships.data?.data.find((membership) => membership.type === 'TEACHER') ?? null;
     const [guardiansVersion, setGuardiansVersion] = useState(0);
+    const [accountVersion, setAccountVersion] = useState(0);
 
     const [editing, setEditing] = useState(() => searchParams.get('edit') === '1');
     const [changingPhoto, setChangingPhoto] = useState(false);
@@ -40,6 +44,8 @@ function PersonDetails({ personId }: { personId: number }) {
 
     const viewerRole = session?.profile.role;
     const canEdit = viewerRole !== undefined && ADMIN_ROLES.includes(viewerRole);
+    // Akkaunt shaxsning joriy (faol) maktab biriktirmasi bo‘yicha yaratiladi.
+    const accountMembership = memberships.data?.data[0] ?? null;
 
     const backButton = (
         <Button variant="outline" onClick={() => navigate(-1)}>
@@ -131,7 +137,31 @@ function PersonDetails({ personId }: { personId: number }) {
                 </dl>
             </Card>
 
+            {teacherMembership && <TeacherDetailsCard key={`${teacherMembership.id}-${guardiansVersion}`} membershipId={teacherMembership.id} />}
+
             {isStudent && <PersonGuardiansCard key={`${person.id}-${guardiansVersion}`} personId={person.id} />}
+
+            {canEdit && accountMembership && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg font-semibold">
+                            {accountMembership.type === 'STUDENT' ? t('memberDetails.studentAccount') : t('memberDetails.teacherAccount')}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">{t('memberDetails.accountDescription')}</p>
+                    </CardHeader>
+                    <CardContent>
+                        <MemberAccountForm
+                            key={`${accountMembership.id}-${accountVersion}`}
+                            membership={accountMembership}
+                            inline
+                            onSaved={() => {
+                                setAccountVersion((version) => version + 1);
+                                setSuccess(t('memberDetails.account.created'));
+                            }}
+                        />
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
                 <CardHeader>
@@ -153,6 +183,7 @@ function PersonDetails({ personId }: { personId: number }) {
                             <EditPersonForm
                                 person={person}
                                 withGuardians={isStudent}
+                                teacherMembershipId={teacherMembership?.id ?? null}
                                 onCancel={() => setEditing(false)}
                                 onSaved={() => {
                                     setEditing(false);

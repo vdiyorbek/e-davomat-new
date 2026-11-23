@@ -6,7 +6,11 @@ import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/common/states';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { authorizedPut } from '@/lib/auth-session';
 import { saveGuardians, updatePerson } from '@/lib/persons-api';
+import { TeacherDetailsFields } from '@/components/memberships/TeacherDetailsFields';
+import { sameTeacherDetails, teacherDetailsFromApi, teacherDetailsPayload } from '@/components/memberships/teacher-details';
+import type { TeacherDetailsResponse, TeacherDetailsValue } from '@/components/memberships/teacher-details';
 import type { Guardians, Person, UpdatePersonInput } from '@/types/person';
 
 import { GuardianFields } from './GuardianFields';
@@ -20,19 +24,38 @@ interface EditPersonFormProps {
     person: Person;
     /** O‘quvchi uchun ota-ona maydonlari ko‘rsatiladi. */
     withGuardians?: boolean;
+    /** O‘qituvchi bo‘lsa — xodim ma’lumotlari ham shu oynada tahrirlanadi. */
+    teacherMembershipId?: number | null;
     onSaved: () => void;
     onCancel: () => void;
 }
 
-function GuardiansLoader(props: EditPersonFormProps) {
+function GuardiansLoader(props: EditPersonFormProps & { initialTeacher: TeacherDetailsValue | null }) {
     const query = useApiQuery<Guardians>(`/persons/${props.person.id}/guardians`);
     if (query.loading) return <LoadingState rows={4} />;
     if (query.error) return <ErrorState message={query.error} onRetry={query.retry} />;
     return <EditPersonFormInner {...props} initialGuardians={guardiansFromApi(query.data)} />;
 }
 
+function TeacherLoader(props: EditPersonFormProps) {
+    const query = useApiQuery<TeacherDetailsResponse>(`/membership-details/teachers/${props.teacherMembershipId}`);
+    if (query.loading) return <LoadingState rows={4} />;
+    if (query.error) return <ErrorState message={query.error} onRetry={query.retry} />;
+    const initialTeacher = teacherDetailsFromApi(query.data);
+    return props.withGuardians ? (
+        <GuardiansLoader {...props} initialTeacher={initialTeacher} />
+    ) : (
+        <EditPersonFormInner {...props} initialGuardians={null} initialTeacher={initialTeacher} />
+    );
+}
+
 export function EditPersonForm(props: EditPersonFormProps) {
-    return props.withGuardians ? <GuardiansLoader {...props} /> : <EditPersonFormInner {...props} initialGuardians={null} />;
+    if (props.teacherMembershipId) return <TeacherLoader {...props} />;
+    return props.withGuardians ? (
+        <GuardiansLoader {...props} initialTeacher={null} />
+    ) : (
+        <EditPersonFormInner {...props} initialGuardians={null} initialTeacher={null} />
+    );
 }
 
 function EditPersonFormInner({
@@ -40,7 +63,9 @@ function EditPersonFormInner({
     onSaved,
     onCancel,
     initialGuardians,
-}: EditPersonFormProps & { initialGuardians: GuardiansValue | null }) {
+    initialTeacher,
+    teacherMembershipId,
+}: EditPersonFormProps & { initialGuardians: GuardiansValue | null; initialTeacher: TeacherDetailsValue | null }) {
     const { t } = useTranslation();
     const savingRef = useRef(false);
 
@@ -60,6 +85,7 @@ function EditPersonFormInner({
         },
     });
     const [guardians, setGuardians] = useState<GuardiansValue | null>(initialGuardians);
+    const [teacher, setTeacher] = useState<TeacherDetailsValue | null>(initialTeacher);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
@@ -113,7 +139,9 @@ function EditPersonFormInner({
             if (!sameGuardian(guardians.mother, initialGuardians.mother)) guardianChanges.mother = guardianPayload(guardians.mother);
         }
 
-        if (Object.keys(changes).length === 0 && Object.keys(guardianChanges).length === 0) {
+        const teacherChanged = !!(teacher && initialTeacher && !sameTeacherDetails(teacher, initialTeacher));
+
+        if (Object.keys(changes).length === 0 && Object.keys(guardianChanges).length === 0 && !teacherChanged) {
             setError(t('persons.errors.noChanges'));
             return;
         }
@@ -123,6 +151,9 @@ function EditPersonFormInner({
         try {
             if (Object.keys(changes).length > 0) await updatePerson(person.id, changes);
             if (Object.keys(guardianChanges).length > 0) await saveGuardians(person.id, guardianChanges);
+            if (teacherChanged && teacher) {
+                await authorizedPut(`/membership-details/teachers/${teacherMembershipId}`, teacherDetailsPayload(teacher));
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : t('persons.errors.saveFailed'));
             return;
@@ -137,6 +168,12 @@ function EditPersonFormInner({
         <form onSubmit={handleSubmit} className="space-y-5">
             <fieldset disabled={busy} className="min-w-0">
                 <PersonFields value={fields} onChange={setFields} disabled={busy} />
+                {teacher && (
+                    <div className="mt-6 border-t pt-5">
+                        <h3 className="mb-4 text-sm font-semibold">{t('memberDetails.teacherTitle')}</h3>
+                        <TeacherDetailsFields value={teacher} onChange={setTeacher} disabled={busy} />
+                    </div>
+                )}
                 {guardians && (
                     <div className="mt-6 border-t pt-5">
                         <GuardianFields value={guardians} onChange={setGuardians} disabled={busy} />

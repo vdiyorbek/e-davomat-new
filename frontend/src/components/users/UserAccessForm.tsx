@@ -109,7 +109,7 @@ export function UserAccessForm({ user, onUpdated, onCancel }: Props) {
 
     const editable =
         user.isActive &&
-        // Uchastkavoylar faqat «Uchastkavoylar» sahifasida boshqariladi.
+        // Mahalla inspektorlari faqat «Mahalla inspektorlari» sahifasida boshqariladi.
         user.role !== 'MAHALLA_INSPECTOR' &&
         user.id !== currentId &&
         allowedRoles.length > 0 &&

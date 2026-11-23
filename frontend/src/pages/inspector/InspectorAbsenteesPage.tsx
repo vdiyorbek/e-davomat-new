@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ExportExcelButton } from '@/components/common/ExportExcelButton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/common/SelectField';
@@ -15,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPost } from '@/lib/auth-session';
-import { formatDate } from '@/lib/date';
+import { formatDate, todayInTashkent } from '@/lib/date';
 import type { InspectorAbsenteesResponse, InspectorMahalla } from '@/types/inspector';
 import { Label } from '@/components/ui/label';
 
@@ -44,6 +45,9 @@ export function InspectorAbsenteesPage() {
     if (mahallaId !== ALL) params.set('mahallaId', mahallaId);
     if (state !== ALL) params.set('state', state);
     if (search) params.set('search', search);
+    const exportParams = new URLSearchParams(params);
+    exportParams.delete('page');
+    exportParams.delete('limit');
     const query = useApiQuery<InspectorAbsenteesResponse>(`/inspectors/me/absentees?${params.toString()}`);
     const data = query.data;
 
@@ -75,6 +79,12 @@ export function InspectorAbsenteesPage() {
             <PageHeader
                 title={t('inspectors.absentees.title')}
                 description={t('inspectors.absentees.description', { days: data?.minDays ?? 5 })}
+                actions={
+                    <ExportExcelButton
+                        path={`/inspectors/me/absentees/export?${exportParams.toString()}`}
+                        filename={`kelmayotgan-oquvchilar-${todayInTashkent()}.xlsx`}
+                    />
+                }
             />
             {notice && <SuccessNotice>{notice}</SuccessNotice>}
             {error && <ErrorState message={error} />}

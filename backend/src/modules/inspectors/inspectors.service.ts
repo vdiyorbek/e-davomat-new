@@ -193,6 +193,7 @@ export class InspectorsService {
             middleName: dto.middleName?.trim() || null,
             login: dto.login,
             passwordHash,
+            mustChangePassword: true,
             role: UserRole.MAHALLA_INSPECTOR,
             isActive: true,
             regionId: null,

@@ -57,7 +57,7 @@ export function KpiCard({
                     <Icon aria-hidden="true" className="size-5" />
                 </span>
             </div>
-            {hint && <p className="mt-2 truncate text-[11px] text-muted-foreground">{hint}</p>}
+            {hint && <p className="mt-2 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{hint}</p>}
         </>
     );
 
@@ -76,7 +76,7 @@ export function KpiCard({
                 type="button"
                 onClick={onClick}
                 aria-pressed={active}
-                className="w-full rounded-[inherit] p-4 text-left outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-full w-full flex-col items-stretch justify-start gap-0 rounded-[inherit] p-4 text-left whitespace-normal outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
             >
                 {content}
             </Button>

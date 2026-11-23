@@ -182,15 +182,15 @@ function TerminalTable({
 
     return (
         <div className="overflow-x-auto rounded-xl border">
-            <Table className="w-full min-w-[960px] table-fixed text-sm">
+            <Table className="w-full min-w-[1040px] table-fixed text-sm">
                 <colgroup>
                     {canManage && <col className="w-11" />}
-                    <col className="w-[22%]" />
-                    <col className="w-[18%]" />
-                    <col className="w-[13%]" />
-                    <col className="w-[13%]" />
-                    <col className="w-[13%]" />
+                    <col className="w-[19%]" />
+                    <col className="w-[14%]" />
                     <col className="w-[12%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[16%]" />
                     <col className="w-28" />
                 </colgroup>
                 <TableHeader className="border-b bg-muted/50">
@@ -232,7 +232,7 @@ function TerminalTable({
                                 )}
                             >
                                 {canManage && (
-                                    <TableCell className="px-3 py-3">
+                                    <TableCell className="px-3 py-3 whitespace-normal">
                                         <Checkbox
                                             aria-label={t('terminals.list.select', { name: terminal.name })}
                                             checked={selected}
@@ -241,7 +241,7 @@ function TerminalTable({
                                         />
                                     </TableCell>
                                 )}
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-3 whitespace-normal">
                                     <Button variant="link" size="auto"
                                         type="button"
                                         onClick={() => onOpen(terminal)}
@@ -256,7 +256,7 @@ function TerminalTable({
                                         <SourceChip source={terminal.eventSource} />
                                     </div>
                                 </TableCell>
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-3 whitespace-normal">
                                     <div className="truncate font-medium" title={terminal.school.name}>
                                         {terminal.school.name}
                                     </div>
@@ -264,19 +264,19 @@ function TerminalTable({
                                         {terminal.school.district.name}
                                     </div>
                                 </TableCell>
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-3 whitespace-normal">
                                     <span className="font-mono text-xs break-all">{terminal.host}</span>
                                     <div className="text-xs text-muted-foreground">
                                         {terminal.protocol} · {terminal.port}
                                     </div>
                                 </TableCell>
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-3 whitespace-normal">
                                     <div className="flex flex-col items-start gap-1">
                                         <StatusBadge tone={connection.tone}>{connection.text}</StatusBadge>
                                         <StatusBadge tone={system.tone} dot={false}>{system.text}</StatusBadge>
                                     </div>
                                 </TableCell>
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-3 whitespace-normal">
                                     <StatusBadge tone={sync.tone}>{sync.text}</StatusBadge>
                                     {sync.delay && (
                                         <div className="mt-1 text-xs text-muted-foreground tabular-nums">
@@ -284,10 +284,10 @@ function TerminalTable({
                                         </div>
                                     )}
                                 </TableCell>
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-3 whitespace-normal">
                                     <EventsCell stats={monitoringById.get(terminal.id)} />
                                 </TableCell>
-                                <TableCell className="px-2 py-2.5">
+                                <TableCell className="px-2 py-2.5 whitespace-normal">
                                     <RowActions
                                         terminal={terminal}
                                         canManage={canManage}

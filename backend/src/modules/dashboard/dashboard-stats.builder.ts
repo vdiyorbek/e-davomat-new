@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { DataSource } from 'typeorm';
 
 import {
@@ -85,6 +86,8 @@ interface ClassDay {
 
 /** Ketma-ketlikni topish uchun ortga qarab ko‘riladigan kunlar. */
 const STREAK_LOOKBACK_DAYS = 45;
+/** Sinf rahbariga xabar beriladigan birinchi chegara (o‘quv kuni). */
+const HOMEROOM_NOTIFY_DAYS = 3;
 
 /**
  * Bitta maktabning bitta kuni uchun dashboard ko‘rsatkichlarini hisoblaydi
@@ -98,6 +101,7 @@ export class DashboardStatsBuilder {
   constructor(
     private readonly dataSource: DataSource,
     private readonly calendar: CalendarResolverService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async build(schoolId: number, date: string): Promise<void> {
@@ -388,6 +392,13 @@ export class DashboardStatsBuilder {
     }
 
     const rows: (string | number)[][] = [];
+    /** 3+ kun kelmaganlar: sinf rahbari / uchastkavoyga xabar uchun. */
+    const alerts: {
+      personId: number;
+      classId: number;
+      days: number;
+      sinceDate: string;
+    }[] = [];
 
     if (workDays.size > 0) {
       const [presentRows, excuseRows, startRows]: [
@@ -441,7 +452,7 @@ export class DashboardStatsBuilder {
         const days = (workDays.get(student.classId) ?? []).filter(
           (day) => day >= since,
         );
-        if (days.length < ABSENCE_STREAK_DAYS) continue;
+        if (days.length < HOMEROOM_NOTIFY_DAYS) continue;
 
         const personExcuses = excusesByPerson.get(student.personId) ?? [];
         const streak = absenceStreak(
@@ -451,6 +462,15 @@ export class DashboardStatsBuilder {
             excused: personExcuses.some((e) => e.start <= day && e.end >= day),
           })),
         );
+
+        if (streak.days >= HOMEROOM_NOTIFY_DAYS && streak.sinceDate) {
+          alerts.push({
+            personId: student.personId,
+            classId: student.classId,
+            days: streak.days,
+            sinceDate: streak.sinceDate,
+          });
+        }
 
         if (streak.days >= ABSENCE_STREAK_DAYS && streak.sinceDate) {
           rows.push([
@@ -479,6 +499,106 @@ export class DashboardStatsBuilder {
         );
       }
     });
+
+    // Bugungi hisobotdagina xabar yuboramiz (eski kunlarni qayta hisoblashda emas).
+    if (date === today) {
+      await this.notifyStreaks(schoolId, alerts);
+    }
+  }
+
+  /**
+   * Chegaralar: 3 kun — sinf rahbariga, 5 kun — sinf rahbari va uchastkavoyga.
+   * `dedupeKey` tufayli bir xil ketma-ketlik uchun xabar bir marta yuboriladi.
+   */
+  private async notifyStreaks(
+    schoolId: number,
+    alerts: {
+      personId: number;
+      classId: number;
+      days: number;
+      sinceDate: string;
+    }[],
+  ): Promise<void> {
+    if (alerts.length === 0) return;
+
+    const classIds = [...new Set(alerts.map((a) => a.classId))];
+    const personIds = [...new Set(alerts.map((a) => a.personId))];
+
+    const [homerooms, students, inspectors]: [
+      { classId: number; className: string; userId: number }[],
+      { personId: number; name: string; mahallaId: number | null }[],
+      { mahallaId: number; userId: number }[],
+    ] = await Promise.all([
+      this.dataSource.query(
+        `SELECT c.id AS classId, c.name AS className, l.userId
+           FROM school_classes c JOIN user_person_links l ON l.personId = c.homeroomPersonId
+           JOIN users u ON u.id = l.userId AND u.isActive = 1
+          WHERE c.id IN (${classIds.map(() => '?').join(',')})`,
+        classIds,
+      ),
+      this.dataSource.query(
+        `SELECT id AS personId, CONCAT_WS(' ', lastName, firstName) AS name, mahallaId
+           FROM persons WHERE id IN (${personIds.map(() => '?').join(',')})`,
+        personIds,
+      ),
+      this.dataSource.query(
+        `SELECT im.mahallaId, im.userId FROM inspector_mahallas im
+           JOIN users u ON u.id = im.userId AND u.isActive = 1
+          WHERE im.mahallaId IN (SELECT mahallaId FROM persons
+                                  WHERE id IN (${personIds.map(() => '?').join(',')}) AND mahallaId IS NOT NULL)`,
+        personIds,
+      ),
+    ]);
+
+    const homeroomByClass = new Map(
+      homerooms.map((h) => [Number(h.classId), h]),
+    );
+    const studentById = new Map(students.map((s) => [Number(s.personId), s]));
+    const inspectorsByMahalla = new Map<number, number[]>();
+    for (const row of inspectors) {
+      const list = inspectorsByMahalla.get(Number(row.mahallaId)) ?? [];
+      list.push(Number(row.userId));
+      inspectorsByMahalla.set(Number(row.mahallaId), list);
+    }
+
+    const items: Parameters<NotificationsService['notify']>[0] = [];
+    for (const alert of alerts) {
+      const student = studentById.get(alert.personId);
+      const base = {
+        student: student?.name ?? '',
+        personId: alert.personId,
+        days: alert.days,
+        since: alert.sinceDate,
+        schoolId,
+      };
+      // 3 va 5 kun chegaralarida (har chegara uchun bir marta).
+      const milestone =
+        alert.days >= ABSENCE_STREAK_DAYS ? ABSENCE_STREAK_DAYS : HOMEROOM_NOTIFY_DAYS;
+      const key = `streak${milestone}:${alert.personId}:${alert.sinceDate}`;
+
+      const homeroom = homeroomByClass.get(alert.classId);
+      if (homeroom) {
+        items.push({
+          userId: Number(homeroom.userId),
+          type: 'ABSENT_STREAK',
+          payload: { ...base, classId: alert.classId, className: homeroom.className },
+          dedupeKey: key,
+        });
+      }
+
+      if (alert.days >= ABSENCE_STREAK_DAYS && student?.mahallaId) {
+        for (const userId of inspectorsByMahalla.get(Number(student.mahallaId)) ?? []) {
+          items.push({
+            userId,
+            type: 'ABSENT_STREAK',
+            payload: { ...base, forInspector: true },
+            dedupeKey: key,
+          });
+        }
+      }
+    }
+
+    await this.notifications.notify(items);
   }
 
   private async members(

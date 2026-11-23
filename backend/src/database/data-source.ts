@@ -31,6 +31,7 @@ import { TerminalPersonSync } from '../modules/terminals/terminal-person-sync.en
 import { InspectorTalk } from 'src/modules/inspectors/inspector-talk.entity';
 import { PersonGuardian } from 'src/modules/persons/person-guardian.entity';
 import { InspectorCase } from 'src/modules/inspectors/inspector-case.entity';
+import { Notification } from 'src/modules/notifications/notification.entity';
 import { InspectorMahalla } from 'src/modules/inspectors/inspector-mahalla.entity';
 import { TerminalSyncRun } from '../modules/terminal-sync/terminal-sync-run.entity';
 import { TerminalStatusPeriod } from '../modules/terminals/terminal-status-period.entity';
@@ -91,6 +92,7 @@ export default new DataSource({
     InspectorMahalla,
     InspectorTalk,
     InspectorCase,
+    Notification,
     TerminalSyncRun,
     TerminalStatusPeriod,
     TerminalClearRun,

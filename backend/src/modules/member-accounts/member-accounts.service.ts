@@ -246,6 +246,7 @@ export class MemberAccountsService {
           const user = manager.create(User, {
             login: dto.login,
             passwordHash,
+            mustChangePassword: true,
             firstName: person.firstName,
             lastName: person.lastName,
             middleName: person.middleName,

@@ -109,15 +109,13 @@
     "editTitle": "Edit terminal",
     "editDescription": "Connection and system settings of the terminal.",
     "updated": "Terminal details updated.",
-    "history": "Sync history"
+    "history": "Terminal history"
   },
   "kpi": {
     "total": "Total terminals",
     "online": "Online",
     "offline": "Offline",
     "delayed": "Sync delayed",
-    "clickToFilter": "Click to show only these",
-    "activeFilter": "Filter on · click again to clear",
     "notChecked": "Not checked / inactive: {{count}}"
   },
   "filters": {
@@ -252,8 +250,8 @@
     "title": "People at the school",
     "students": "Students",
     "teachers": "Teachers",
-    "withPhoto": "With photo",
-    "withoutPhoto": "Without photo",
+    "withPhoto": "Photo in database",
+    "withoutPhoto": "No photo in database",
     "compare": "Compare with terminal",
     "comparing": "Comparing…",
     "compareFailed": "Could not compare.",
@@ -262,7 +260,7 @@
     "matched": "Matched",
     "missing": "Missing on terminal",
     "extra": "Extra records",
-    "note": "This checks PNFL / employeeNo matching. The actual face photo state is checked separately."
+    "note": "People in the school are compared with people on the terminal by PNFL. The actual state of face photos is checked separately."
   },
   "queue": {
     "title": "Sync queue",
@@ -301,7 +299,16 @@
     "failed": "Failed",
     "seconds": "{{value}} s",
     "note": "Last 20 records. Refreshes every 30 seconds.",
-    "newEvents": "+{{count}} new"
+    "newEvents": "+{{count}} new",
+    "errors": {
+      "SYNC_FAILED": "Sync failed",
+      "DEVICE_UNREACHABLE": "Could not connect to the terminal",
+      "DEVICE_TIMEOUT": "Terminal did not respond (timeout)",
+      "DEVICE_AUTH_FAILED": "Terminal login or password is wrong",
+      "DATABASE_ERROR": "Database write error",
+      "CURSOR_CONFLICT": "Collided with a parallel attempt; the next one will fix it",
+      "TERMINAL_SYNC_CONCURRENCY": "Another sync process was busy"
+    }
   },
   "photos": {
     "title": "Attendance photos",
@@ -435,7 +442,7 @@
     "scheduled_one": "{{count}} person queued"
   },
   "monitoring": {
-    "title": "Terminal sync monitoring",
+    "title": "Terminal status",
     "description": "Latest diagnostic results for all active terminals.",
     "totalTerminals": "Total terminals",
     "notChecked": "Not checked",
@@ -621,6 +628,116 @@
     "details": "Each terminal",
     "terminal": "Terminal",
     "pictureType": "Picture type",
-    "pushTarget": "Push target"
+    "pushTarget": "Push target",
+    "audio": "Two-way audio"
+  },
+  "summary": {
+    "offline": {
+      "title": "Cannot reach the terminal",
+      "hint": "Check power, the network cable and the IP address. The status recovers on its own once fixed."
+    },
+    "unknown": {
+      "title": "Status not determined yet",
+      "hint": "Use the “Full check” button below to test the connection."
+    },
+    "pushNoToken": {
+      "title": "No push token issued",
+      "hint": "Events will not arrive. Create a “New token” and enter it on the terminal."
+    },
+    "pushWaiting": {
+      "title": "No push received from the terminal yet",
+      "hint": "A token is issued but no request has arrived. Check the HTTP notification setting on the terminal."
+    },
+    "pushActive": {
+      "title": "Working",
+      "hint": "Events are arriving (last request {{ago}} ago)."
+    },
+    "pushIdle": {
+      "title": "Connected, but no data arriving",
+      "hint": "Last request {{ago}} ago. Nobody may have passed through the school; during lessons, check the terminal clock and the push setting."
+    },
+    "delayed": {
+      "title": "Data is delayed",
+      "hint": "Data is {{ago}} behind. The system will catch up; if it lasts, see the “Diagnostics” tab."
+    },
+    "healthy": {
+      "title": "Working",
+      "hint": "Data is arriving on time."
+    },
+    "notStarted": {
+      "title": "Sync not started",
+      "hint": "Start it from the sync section below."
+    },
+    "lastError": "Last error"
+  },
+  "diagnose": {
+    "button": "Full check",
+    "running": "Checking…",
+    "hint": "Read-only: connection, clock offset and two-way audio. Nothing is written to the terminal.",
+    "steps": {
+      "connection": "Connection",
+      "time": "Clock offset",
+      "audio": "Two-way audio"
+    },
+    "connectionOk": "Connected: {{model}} · {{firmware}}",
+    "timeSynced": "Clock is correct ({{seconds}} s off)",
+    "timeWarn": "Clock is {{seconds}} s off",
+    "timeCrit": "Clock is {{seconds}} s off — attendance times may be recorded wrongly",
+    "timeUnknown": "Could not determine the clock offset",
+    "audioYes": "Yes ({{channels}})",
+    "audioYesNoInfo": "Yes",
+    "audioNo": "No — the terminal does not support it",
+    "skipped": "Skipped: no connection",
+    "done": "Finished in {{ms}} ms",
+    "failed": "Could not check"
+  },
+  "errorLog": {
+    "title": "Recent problems",
+    "empty": "No problems recorded.",
+    "note": "Sync errors and offline periods, last 20.",
+    "kinds": {
+      "SYNC": "Sync error",
+      "OFFLINE": "Went offline"
+    },
+    "lasted": "lasted {{duration}}",
+    "ongoing": "still ongoing",
+    "failed": "Could not load the log"
+  },
+  "deviceData": {
+    "title": "Data on the terminal",
+    "refresh": "Fetch from terminal",
+    "loading": "Querying the terminal…",
+    "loaded": "Persons loaded to the terminal",
+    "withFace": "With a face photo on the terminal",
+    "withoutFace": "Without a photo on the terminal",
+    "free": "Free slots",
+    "warning": "{{count}} persons have no face photo on the terminal — it cannot recognise them.",
+    "unsupported": "The terminal does not report the number of face records.",
+    "note": "These numbers come from the terminal itself. “Without a photo” is the difference between persons and face records (approximate); “Compare with terminal” shows exactly who.",
+    "checkedAt": "Checked: {{time}}"
+  },
+  "compare": {
+    "start": "Compare with terminal",
+    "rerun": "Compare again",
+    "running": "Comparing…",
+    "starting": "Starting…",
+    "progress": "Reading from the terminal: {{loaded}} / {{total}}",
+    "checkedAt": "Last comparison: {{time}}",
+    "hint": "It runs in the background: closing the window does not stop it, and the result will be here when you return.",
+    "failed": "Could not compare: {{error}}",
+    "missingTab": "Missing on terminal ({{count}})",
+    "extraTab": "Extra records ({{count}})",
+    "missingEmpty": "Everyone is on the terminal.",
+    "extraEmpty": "No extra records.",
+    "limit": "Only the first {{count}} are shown.",
+    "csv": "Download CSV",
+    "student": "Student",
+    "teacher": "Teacher",
+    "invalid": "Invalid employeeNo values ({{count}}) are included in the extra list.",
+    "colName": "Full name",
+    "colPnfl": "PNFL",
+    "colType": "Type",
+    "colEmployeeNo": "employeeNo",
+    "colTerminalName": "Name on terminal"
   }
 }

@@ -173,9 +173,6 @@ export function TerminalsPage() {
         setPage(1);
     }
 
-    const kpiHint = (value: Exclude<TerminalStatusFilter, ''>) =>
-        statusFilter === value ? t('terminals.kpi.activeFilter') : t('terminals.kpi.clickToFilter');
-
     const activeSelectFilters = [regionId, districtId, schoolId, direction, eventSource].filter(Boolean).length;
     const refreshing = terminals.refreshing || monitoring.refreshing;
 
@@ -288,7 +285,6 @@ export function TerminalsPage() {
                 <KpiCard
                     label={t('terminals.kpi.online')}
                     value={summary.data?.online ?? 0}
-                    hint={kpiHint('ONLINE')}
                     icon={Wifi}
                     tone="success"
                     loading={summary.loading}
@@ -298,7 +294,6 @@ export function TerminalsPage() {
                 <KpiCard
                     label={t('terminals.kpi.offline')}
                     value={summary.data?.offline ?? 0}
-                    hint={kpiHint('OFFLINE')}
                     icon={WifiOff}
                     tone="danger"
                     loading={summary.loading}
@@ -308,7 +303,6 @@ export function TerminalsPage() {
                 <KpiCard
                     label={t('terminals.kpi.delayed')}
                     value={summary.data?.syncDelayed ?? 0}
-                    hint={kpiHint('DELAYED')}
                     icon={Clock3}
                     tone="warning"
                     loading={summary.loading}

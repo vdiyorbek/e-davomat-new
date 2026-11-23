@@ -27,7 +27,7 @@
   },
   "tests": {
     "title": "My tests",
-    "description": "CHSB and BSB tests, results and grades.",
+    "description": "Quarterly and unit tests, results and grades.",
     "emptyTitle": "No tests",
     "empty": "Tests appear here when your teacher publishes them.",
     "all": "All tests",

@@ -26,6 +26,8 @@ interface AuditItem {
     uploadVerificationPic: boolean | null;
     saveVerificationPic: boolean | null;
     saveFacePic: boolean | null;
+    audioSupported: boolean | null;
+    audioInfo: string | null;
     todayTotal: number;
     todayInline: number;
     inlinePercent: number | null;
@@ -90,6 +92,8 @@ export function TerminalConfigAudit() {
             'uploadVerificationPic',
             'saveVerificationPic',
             'saveFacePic',
+            'twoWayAudio',
+            'audioInfo',
             'todayDownloaded',
             'todayWithPush',
             'pushPicturePercent',
@@ -112,6 +116,8 @@ export function TerminalConfigAudit() {
                 i.uploadVerificationPic,
                 i.saveVerificationPic,
                 i.saveFacePic,
+                i.audioSupported,
+                i.audioInfo,
                 i.todayTotal,
                 i.todayInline,
                 i.inlinePercent,
@@ -213,6 +219,7 @@ export function TerminalConfigAudit() {
                                                 <TableHead title="uploadVerificationPic">Ver↑</TableHead>
                                                 <TableHead title="saveVerificationPic">Ver💾</TableHead>
                                                 <TableHead title="saveFacePic">Face💾</TableHead>
+                                                <TableHead>{t('terminals.audit.audio')}</TableHead>
                                                 <TableHead>{t('terminals.audit.pushTarget')}</TableHead>
                                                 <TableHead className="pr-4">{t('terminals.audit.pushPicture')}</TableHead>
                                             </TableRow>
@@ -225,7 +232,7 @@ export function TerminalConfigAudit() {
                                                         <span className="block text-xs text-muted-foreground">#{item.id}</span>
                                                     </TableCell>
                                                     {item.error && !item.model ? (
-                                                        <TableCell colSpan={9} className="text-sm text-destructive">
+                                                        <TableCell colSpan={10} className="text-sm text-destructive">
                                                             {item.error}
                                                         </TableCell>
                                                     ) : (
@@ -242,6 +249,12 @@ export function TerminalConfigAudit() {
                                                             <TableCell><Flag value={item.uploadVerificationPic} /></TableCell>
                                                             <TableCell><Flag value={item.saveVerificationPic} /></TableCell>
                                                             <TableCell><Flag value={item.saveFacePic} /></TableCell>
+                                                            <TableCell>
+                                                                <Flag value={item.audioSupported} />
+                                                                {item.audioInfo && (
+                                                                    <span className="block text-xs text-muted-foreground">{item.audioInfo}</span>
+                                                                )}
+                                                            </TableCell>
                                                             <TableCell className="text-xs">{item.pushTarget ?? '—'}</TableCell>
                                                         </>
                                                     )}

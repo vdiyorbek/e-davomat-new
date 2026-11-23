@@ -11,6 +11,7 @@ export interface SchoolClass {
 export interface SchoolClassRow extends SchoolClass {
   school: School;
   shift: CurrentClassShift | null;
+  homeroom: { personId: number; name: string } | null;
   stats: { students: number };
 }
 

@@ -1,5 +1,5 @@
 {
-  "title": "Sync history",
+  "title": "Terminal history",
   "description": "Attendance event fetching and pushing people to terminals.",
   "tabs": {
     "events": "Attendance events",

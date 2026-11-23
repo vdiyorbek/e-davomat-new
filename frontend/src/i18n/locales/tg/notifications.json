@@ -1,0 +1,16 @@
+{
+  "open": "Огоҳиҳо",
+  "openWithCount": "Огоҳиҳо",
+  "title": "Огоҳиҳо",
+  "readAll": "Ҳамаро хондашуда қайд кардан",
+  "empty": "Огоҳии нав нест.",
+  "types": {
+    "EXCUSE_SUBMITTED": "{{by}} барои {{student}} ({{className}}) ариза фиристод: {{from}} — {{to}}",
+    "EXCUSE_APPROVED": "Ариза барои {{student}} тасдиқ шуд ({{from}} — {{to}}).",
+    "EXCUSE_REJECTED": "Ариза барои {{student}} рад шуд. Сабаб: {{reason}}",
+    "ABSENT_STREAK": "{{student}} ({{className}}) {{days}} рӯзи пайдарпай наомад (аз {{since}}).",
+    "ABSENT_STREAK_INSPECTOR": "{{student}} {{days}} рӯзи пайдарпай ба мактаб наомад (аз {{since}}).",
+    "SYSTEM_ALERT": "Огоҳии система: {{checkName}} — {{statusName}}",
+    "SYSTEM_RECOVERED": "{{checkName}} ислоҳ шуд."
+  }
+}

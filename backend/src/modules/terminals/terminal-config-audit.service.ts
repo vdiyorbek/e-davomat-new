@@ -54,6 +54,9 @@ export interface TerminalAuditItem {
   uploadVerificationPic: boolean | null;
   saveVerificationPic: boolean | null;
   saveFacePic: boolean | null;
+  /** Ikki tomonlama audio (TwoWayAudio) qo‘llanishi; null — aniqlanmadi. */
+  audioSupported: boolean | null;
+  audioInfo: string | null;
   todayTotal: number;
   todayInline: number;
   inlinePercent: number | null;
@@ -173,6 +176,8 @@ export class TerminalConfigAuditService {
       uploadVerificationPic: null,
       saveVerificationPic: null,
       saveFacePic: null,
+      audioSupported: null,
+      audioInfo: null,
       todayTotal: today.total,
       todayInline: today.inline,
       inlinePercent:
@@ -269,7 +274,52 @@ export class TerminalConfigAuditService {
       // AcsCfg barcha modellarda bo‘lmasligi mumkin — jadvalda bo‘sh ko‘rinadi.
     }
 
+    await this.inspectAudio(terminal, password, item);
+
     return item;
+  }
+
+  /**
+   * Ikki tomonlama audio: faqat kanallar ro‘yxatini o‘qiydi (GET). Audio seansi
+   * ochilmaydi, terminalga hech narsa yozilmaydi.
+   */
+  private async inspectAudio(
+    terminal: Terminal,
+    password: string,
+    item: TerminalAuditItem,
+  ): Promise<void> {
+    try {
+      const body = await this.get(
+        terminal,
+        password,
+        '/ISAPI/System/TwoWayAudio/channels',
+      );
+      const list = this.parseXml(body, 'TwoWayAudioChannelList');
+      const raw = list?.TwoWayAudioChannel;
+      const channels: unknown[] = Array.isArray(raw)
+        ? (raw as unknown[])
+        : raw
+          ? [raw]
+          : [];
+      item.audioSupported = channels.length > 0;
+      item.audioInfo =
+        channels
+          .filter(isDict)
+          .map((channel) =>
+            [
+              text(channel.id),
+              text(channel.audioCompressionType),
+              text(channel.audioInputType),
+            ]
+              .filter(Boolean)
+              .join(' '),
+          )
+          .join('; ')
+          .slice(0, 120) || null;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
+      if (/HTTP (403|404|405|501)/.test(message)) item.audioSupported = false;
+    }
   }
 
   private parseXml(xml: string, root: string): Dict | null {

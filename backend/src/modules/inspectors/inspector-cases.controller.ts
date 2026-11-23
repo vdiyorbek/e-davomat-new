@@ -9,9 +9,11 @@ import {
   Post,
   Query,
   Req,
+  Res,
   StreamableFile,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import type {
@@ -43,6 +45,15 @@ export class InspectorCasesController {
     return this.service.summary(actorOf(request));
   }
 
+  @Get('absentees/export')
+  async exportAbsentees(
+    @Query() query: GetInspectorAbsenteesQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ) {
+    await this.service.exportAbsenteesExcel(query, actorOf(request), response);
+  }
+
   @Get('absentees')
   @Header('Cache-Control', 'private, no-store')
   absentees(
@@ -50,6 +61,15 @@ export class InspectorCasesController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.service.absentees(query, actorOf(request));
+  }
+
+  @Get('cases/export')
+  async exportCases(
+    @Query() query: GetInspectorCasesQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ) {
+    await this.service.exportCasesExcel(query, actorOf(request), response);
   }
 
   @Get('cases')

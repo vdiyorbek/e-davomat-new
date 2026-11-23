@@ -1,0 +1,59 @@
+{
+  "title": "System health",
+  "description": "Server, database, queues and data flow. You get a bell notification when something goes wrong.",
+  "overall": {
+    "ok": "Everything is fine",
+    "warn": "Needs attention",
+    "crit": "Serious problem"
+  },
+  "status": {
+    "ok": "Normal",
+    "warn": "Warning",
+    "crit": "Critical"
+  },
+  "updated": "Updated: {{time}}",
+  "since": "since {{time}}",
+  "error": "Check failed: {{error}}",
+  "idle": "Outside working hours — not checked",
+  "noData": "No data received yet",
+  "duration": "{{h}} h {{m}} min",
+  "refresh": "Refresh",
+  "checks": {
+    "database": {
+      "name": "Database",
+      "text": "Response time: {{ms}} ms"
+    },
+    "redis": {
+      "name": "Redis (background jobs)",
+      "text": "Response time: {{ms}} ms"
+    },
+    "queues": {
+      "name": "Background job queues",
+      "text": "Waiting: {{waiting}} · Running: {{active}} · Failed: {{failed}}"
+    },
+    "disk": {
+      "name": "Disk space",
+      "text": "Free: {{freePercent}}% ({{freeGb}} GB)"
+    },
+    "push": {
+      "name": "Data arriving from terminals",
+      "text": "Last push {{minutes}} min ago ({{terminals}} terminals)"
+    },
+    "stats": {
+      "name": "Dashboard statistics",
+      "text": "Last calculated {{minutes}} min ago"
+    },
+    "photos": {
+      "name": "Photos not downloaded",
+      "text": "Pending: {{pending}} · Failed: {{failed}} (last 24 h)"
+    },
+    "terminals": {
+      "name": "Terminals",
+      "text": "{{offline}} of {{total}} terminals unseen for 15+ minutes ({{percent}}%)"
+    },
+    "process": {
+      "name": "Server process",
+      "text": "Uptime: {{uptime}} · Memory: {{rssMb}} MB"
+    }
+  }
+}

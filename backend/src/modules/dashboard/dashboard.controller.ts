@@ -10,8 +10,10 @@ import {
   Put,
   Query,
   Req,
+  Res,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
@@ -77,6 +79,15 @@ export class DashboardController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.service.streaks(userOf(request), query);
+  }
+
+  @Get('absence-streaks/export')
+  async exportStreaks(
+    @Query() query: DashboardStreaksDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: Response,
+  ) {
+    await this.service.exportStreaksExcel(userOf(request), query, response);
   }
 
   @Get('geo-units')

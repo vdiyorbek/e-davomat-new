@@ -27,6 +27,6 @@ import { DashboardStatsQueueModule } from '../dashboard/dashboard-stats.queue';
     DailyAttendanceSummaryService,
     DailyAttendancePersonService,
   ],
-  exports: [DailyAttendanceService],
+  exports: [DailyAttendanceService, DailyAttendanceReadService],
 })
 export class DailyAttendanceModule {}

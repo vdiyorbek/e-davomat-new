@@ -35,10 +35,13 @@ export function MemberAccountForm({
     membership,
     onCancel,
     onSaved,
+    inline = false,
 }: {
     membership: SchoolMembership;
-    onCancel: () => void;
+    onCancel?: () => void;
     onSaved: () => void;
+    /** Sahifa ichida (oynasiz): «Yopish» va «Bekor qilish» tugmalari ko‘rsatilmaydi. */
+    inline?: boolean;
 }) {
     const { t } = useTranslation();
     const path =
@@ -133,14 +136,20 @@ export function MemberAccountForm({
 
     return (
         <div className="space-y-5">
-            <div className="rounded-xl border bg-muted/30 p-4">
-                <p className="font-semibold">{fullName}</p>
+            <div
+                className={
+                    inline
+                        ? 'flex flex-col gap-1 rounded-xl border bg-muted/30 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6'
+                        : 'rounded-xl border bg-muted/30 p-4'
+                }
+            >
+                <p className="font-semibold [overflow-wrap:anywhere]">{fullName}</p>
 
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className={inline ? 'text-sm text-muted-foreground' : 'mt-1 text-sm text-muted-foreground'}>
                     {membership.school.name}
                 </p>
 
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className={inline ? 'text-sm text-muted-foreground' : 'mt-1 text-sm text-muted-foreground'}>
                     {t('memberDetails.account.type', { role: targetRole })}
                 </p>
             </div>
@@ -191,14 +200,16 @@ export function MemberAccountForm({
                             </div>
                         </div>
 
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onCancel}
-                            className="w-full"
-                        >
-                            {t('common.close')}
-                        </Button>
+                        {!inline && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onCancel}
+                                className="w-full"
+                            >
+                                {t('common.close')}
+                            </Button>
+                        )}
                     </div>
                 )}
 
@@ -213,6 +224,7 @@ export function MemberAccountForm({
                             void save();
                         }}
                     >
+                        <div className={inline ? 'grid gap-4 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}>
                         <Field
                             htmlFor="member-account-login"
                             label={t('memberDetails.account.login')}
@@ -273,6 +285,7 @@ export function MemberAccountForm({
                                 required
                             />
                         </Field>
+                        </div>
 
                         <p className="text-xs text-muted-foreground">
                             {t('memberDetails.account.roleNote')}
@@ -283,14 +296,16 @@ export function MemberAccountForm({
                         )}
 
                         <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={onCancel}
-                                disabled={saving}
-                            >
-                                {t('common.cancel')}
-                            </Button>
+                            {!inline && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={onCancel}
+                                    disabled={saving}
+                                >
+                                    {t('common.cancel')}
+                                </Button>
+                            )}
 
                             <Button
                                 type="submit"

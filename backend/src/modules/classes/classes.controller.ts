@@ -17,6 +17,7 @@ import { ListSchoolClassesDto } from './dto/list-school-classes.dto';
 import { Req, UnauthorizedException } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { UpdateSchoolClassGradeDto } from './dto/update-school-class-grade.dto';
+import { UpdateSchoolClassHomeroomDto } from './dto/update-school-class-homeroom.dto';
 
 @Controller('classes')
 @Roles(
@@ -81,6 +82,36 @@ export class ClassesController {
     }
 
     return this.classesService.findPage(query, user);
+  }
+
+  /** Maktabning faol o‘qituvchilari: sinf rahbarini tanlash uchun. */
+  @Get('homeroom-teachers')
+  homeroomTeachers(
+    @Query('schoolId', ParseIntPipe) schoolId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.classesService.homeroomTeachers(schoolId, user);
+  }
+
+  @Patch(':id/homeroom')
+  updateHomeroom(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSchoolClassHomeroomDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.authUser;
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.classesService.updateHomeroom(id, dto, user);
   }
 
   @Patch(':id/grade-level')

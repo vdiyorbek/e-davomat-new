@@ -1,0 +1,49 @@
+{
+  "title": "Sinf rahbari kabineti",
+  "description": "O‘zingizga biriktirilgan sinf o‘quvchilari davomati, kelmaganlar va arizalar.",
+  "noClassTitle": "Sizga sinf biriktirilmagan",
+  "noClass": "Sizga hali sinf rahbari sifatida sinf biriktirilmagan. Maktab administratoriga murojaat qiling.",
+  "noPhone": "Telefon kiritilmagan",
+  "tabs": {
+    "today": "Bugun",
+    "week": "Kunlar bo‘yicha",
+    "absentees": "Kelmaganlar",
+    "excuses": "Arizalar"
+  },
+  "cells": {
+    "present": "Keldi",
+    "absent": "Kelmadi",
+    "excused": "Ruxsatli",
+    "dayoff": "Dam olish",
+    "nodata": "Ma’lumot yo‘q",
+    "future": "Kelgusi kun"
+  },
+  "today": {
+    "empty": "Bu kun uchun sinf o‘quvchilari ro‘yxati bo‘sh."
+  },
+  "week": {
+    "prev": "Oldingi davr",
+    "next": "Keyingi davr",
+    "week": "Hafta",
+    "month": "4 hafta"
+  },
+  "absentees": {
+    "minDays": "Kamida necha kun",
+    "minDaysN": "{{count}}+ kun",
+    "hint": "Faqat tugagan o‘quv kunlari hisoblanadi; bugungi kun kirmaydi.",
+    "emptyTitle": "Kelmaganlar yo‘q",
+    "empty": "Tanlangan chegara bo‘yicha ketma-ket kelmagan o‘quvchi yo‘q."
+  },
+  "excuses": {
+    "new": "Yangi ariza",
+    "submit": "Ariza yuborish",
+    "flow": "Siz yuborgan ariza maktab administratori tasdiqlagandan keyingina davomatga ta’sir qiladi.",
+    "empty": "Sinf o‘quvchilari uchun arizalar yo‘q.",
+    "chooseStudent": "O‘quvchini tanlang"
+  },
+  "card": {
+    "description": "Ota-ona aloqasi va oxirgi 30 kunlik davomat.",
+    "last30": "Oxirgi 30 kun",
+    "rate": "Davomat foizi"
+  }
+}

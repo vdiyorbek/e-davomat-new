@@ -30,16 +30,18 @@ export interface ExcuseStudentSelection {
 type Props = {
     onSaved: () => void;
     onCancel: () => void;
+    /** Berilsa, ariza shu manzilga yuboriladi (sinf rahbari: maktab va tur serverda belgilanadi). */
+    submitPath?: string;
 } & ({ item: DailyAttendance; selection?: never } | { item?: never; selection: ExcuseStudentSelection });
 
 interface CreatedExcuse {
     id: number;
-    status: 'ACTIVE';
+    status: 'ACTIVE' | 'PENDING';
 }
 
 const MAX_PDF_SIZE = 5 * 1024 * 1024;
 
-export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Props) {
+export function AttendanceExcuseForm({ item, selection, onSaved, onCancel, submitPath }: Props) {
     const { t } = useTranslation();
     const id = useId();
     const [saving, setSaving] = useState(false);
@@ -83,8 +85,10 @@ export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Pro
 
         const payload = new FormData();
         payload.append('personId', String(student.personId));
-        payload.append('schoolId', String(student.schoolId));
-        payload.append('membershipType', student.membershipType ?? 'STUDENT');
+        if (!submitPath) {
+            payload.append('schoolId', String(student.schoolId));
+            payload.append('membershipType', student.membershipType ?? 'STUDENT');
+        }
         payload.append('reason', reason);
         payload.append('startDate', startDate);
         payload.append('endDate', endDate);
@@ -93,7 +97,7 @@ export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Pro
 
         setSaving(true);
         try {
-            await authorizedPost<CreatedExcuse>('/attendance-excuses', payload);
+            await authorizedPost<CreatedExcuse>(submitPath ?? '/attendance-excuses', payload);
             onSaved();
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('excuses.errors.saveFailed'));

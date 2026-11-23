@@ -6,6 +6,7 @@ import { parsePageSize } from '@/lib/pagination';
 import { ClassesFilters } from '@/components/classes/ClassesFilters';
 import { CreateClassForm } from '@/components/classes/CreateClassForm';
 import { ClassShiftBar } from '@/components/classes/ClassShiftBar';
+import { HomeroomCell } from '@/components/classes/HomeroomEditor';
 import { GradeLevelEditor } from '@/components/classes/GradeLevelEditor';
 import { ShiftBadge } from '@/components/classes/ShiftBadge';
 import { ShiftSettingsForm } from '@/components/classes/ShiftSettingsForm';
@@ -177,6 +178,7 @@ function ClassesResults({
                             </div>
                             <GradeCell item={item} canEdit={canEdit} onSaved={retry} />
                             <ShiftBadge shift={item.shift} />
+                            <HomeroomCell item={item} canEdit={canEdit} onSaved={retry} />
                             <p className="mt-auto flex items-center gap-1.5 border-t pt-3 text-sm text-muted-foreground">
                                 <Users aria-hidden="true" className="size-4" />
                                 {t('classes.studentsCount', { count: item.stats.students })}
@@ -188,7 +190,7 @@ function ClassesResults({
 
             {/* Kompyuter: jadval */}
             <Card className="hidden py-0 xl:flex">
-                <Table className="min-w-[900px]">
+                <Table className="min-w-[1000px]">
                     <TableHeader className="bg-muted/50">
                         <TableRow className="hover:bg-transparent">
                             {canEdit && (
@@ -203,8 +205,9 @@ function ClassesResults({
                             <TableHead className="w-14 pl-5">{t('common.number')}</TableHead>
                             <TableHead className="w-32">{t('classes.columns.class')}</TableHead>
                             <TableHead>{t('common.school')}</TableHead>
-                            <TableHead className="w-64">{t('classes.grade')}</TableHead>
+                            <TableHead className="w-52">{t('classes.grade')}</TableHead>
                             <TableHead className="w-36">{t('classes.shift.column')}</TableHead>
+                            <TableHead className="w-52">{t('classes.homeroom.column')}</TableHead>
                             <TableHead className="w-32 pr-5 text-right">{t('classes.columns.students')}</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -236,6 +239,9 @@ function ClassesResults({
                                 </TableCell>
                                 <TableCell>
                                     <ShiftBadge shift={item.shift} />
+                                </TableCell>
+                                <TableCell className="whitespace-normal">
+                                    <HomeroomCell item={item} canEdit={canEdit} onSaved={retry} />
                                 </TableCell>
                                 <TableCell className="pr-5 text-right font-semibold tabular-nums">
                                     {formatNumber(item.stats.students)}

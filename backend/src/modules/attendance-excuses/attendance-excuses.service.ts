@@ -29,6 +29,8 @@ import { CreateAttendanceExcuseDto } from './dto/create-attendance-excuse.dto';
 const MAX_PDF_SIZE = 5 * 1024 * 1024;
 
 import { DashboardStatsQueue } from '../dashboard/dashboard-stats.queue';
+import { NotificationsService } from '../notifications/notifications.service';
+import { RejectAttendanceExcuseDto } from './dto/reject-attendance-excuse.dto';
 
 @Injectable()
 export class AttendanceExcusesService {
@@ -46,6 +48,8 @@ export class AttendanceExcusesService {
     private readonly membershipsRepository: Repository<SchoolMembership>,
 
     private readonly statsQueue: DashboardStatsQueue,
+
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Ariza oralig‘idagi (bugungacha, ko‘pi bilan 62 kun) kunlar statistikasi qayta hisoblanadi. */
@@ -66,7 +70,10 @@ export class AttendanceExcusesService {
     dto: CreateAttendanceExcuseDto,
     file: Express.Multer.File | undefined,
     actor: AuthenticatedUser,
+    options: { pending?: boolean } = {},
   ) {
+    const pending = options.pending === true;
+
     // Maktab administratori faqat o‘z maktabida.
     if (
       actor.role === UserRole.SCHOOL_ADMIN &&
@@ -167,8 +174,11 @@ export class AttendanceExcusesService {
       .andWhere('excuse.membershipType = :membershipType', {
         membershipType: dto.membershipType,
       })
-      .andWhere('excuse.status = :status', {
-        status: AttendanceExcuseStatus.ACTIVE,
+      .andWhere('excuse.status IN (:...statuses)', {
+        statuses: [
+          AttendanceExcuseStatus.ACTIVE,
+          AttendanceExcuseStatus.PENDING,
+        ],
       })
       .andWhere('excuse.startDate <= :endDate', {
         endDate: dto.endDate,
@@ -180,7 +190,7 @@ export class AttendanceExcusesService {
 
     if (hasOverlap) {
       throw new ConflictException(
-        'Ushbu sana oralig‘ida faol sababli ariza mavjud',
+        'Ushbu sana oralig‘ida faol yoki ko‘rib chiqilayotgan ariza mavjud',
       );
     }
 
@@ -210,7 +220,9 @@ export class AttendanceExcusesService {
         startDate: dto.startDate,
         endDate: dto.endDate,
 
-        status: AttendanceExcuseStatus.ACTIVE,
+        status: pending
+          ? AttendanceExcuseStatus.PENDING
+          : AttendanceExcuseStatus.ACTIVE,
 
         pdfPath: `private_uploads/attendance-excuses/${filename}`,
         pdfOriginalName: originalName,
@@ -224,7 +236,13 @@ export class AttendanceExcusesService {
       });
 
       const saved = await this.excusesRepository.save(excuse);
-      this.markStats(saved.schoolId, saved.startDate, saved.endDate);
+
+      if (pending) {
+        // Tasdiqlanmaguncha davomatga ta’sir qilmaydi; maktab adminiga xabar.
+        await this.notifySubmitted(saved, actor);
+      } else {
+        this.markStats(saved.schoolId, saved.startDate, saved.endDate);
+      }
 
       // Ichki fayl manzilini mijozga qaytarmaymiz.
       return {
@@ -396,6 +414,9 @@ export class AttendanceExcusesService {
         cancelledByUserId: item.cancelledByUserId,
         cancelledAt: item.cancelledAt,
         cancellationReason: item.cancellationReason,
+        reviewedByUserId: item.reviewedByUserId,
+        reviewedAt: item.reviewedAt,
+        rejectionReason: item.rejectionReason,
         createdAt: item.createdAt,
       })),
       total,
@@ -463,11 +484,29 @@ export class AttendanceExcusesService {
 
     this.checkAccess(excuse.schoolId, actor);
 
+    return this.readPdfFile(excuse.pdfPath);
+  }
+
+  private async loadPdf(id: number): Promise<Buffer> {
+    const excuse = await this.excusesRepository
+      .createQueryBuilder('excuse')
+      .addSelect('excuse.pdfPath')
+      .where('excuse.id = :id', { id })
+      .getOne();
+
+    if (!excuse) {
+      throw new NotFoundException('Ariza topilmadi');
+    }
+
+    return this.readPdfFile(excuse.pdfPath);
+  }
+
+  private async readPdfFile(pdfPath: string): Promise<Buffer> {
     // Faqat dastur yaratgan UUID formatidagi
     // fayl manziliga ruxsat beramiz.
     const match =
       /^private_uploads\/attendance-excuses\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.pdf$/.exec(
-        excuse.pdfPath,
+        pdfPath,
       );
 
     if (!match) {
@@ -485,6 +524,237 @@ export class AttendanceExcusesService {
 
       throw error;
     }
+  }
+
+  private async notifySubmitted(
+    excuse: AttendanceExcuse,
+    actor: AuthenticatedUser,
+  ): Promise<void> {
+    const [info]: { student: string; className: string | null }[] =
+      await this.excusesRepository.manager.query(
+        `SELECT CONCAT_WS(' ', p.lastName, p.firstName) AS student,
+                (SELECT c.name FROM school_memberships m
+                   JOIN school_classes c ON c.id = m.classId
+                  WHERE m.personId = p.id AND m.schoolId = ? AND m.type = 'STUDENT'
+                    AND m.startDate <= ? AND (m.endDate IS NULL OR m.endDate > ?)
+                  ORDER BY m.startDate DESC LIMIT 1) AS className
+           FROM persons p WHERE p.id = ?`,
+        [excuse.schoolId, excuse.startDate, excuse.startDate, excuse.personId],
+      );
+    const adminIds = await this.notifications.schoolAdminIds(excuse.schoolId);
+    await this.notifications.notify(
+      adminIds.map((userId) => ({
+        userId,
+        type: 'EXCUSE_SUBMITTED' as const,
+        payload: {
+          excuseId: excuse.id,
+          student: info?.student ?? '',
+          className: info?.className ?? null,
+          from: excuse.startDate,
+          to: excuse.endDate,
+          by:
+            [actor.lastName, actor.firstName].filter(Boolean).join(' ') ||
+            actor.login,
+        },
+        dedupeKey: `excuse-submitted:${excuse.id}`,
+      })),
+    );
+  }
+
+  /** Kutilayotgan arizani tasdiqlash: shundan keyin davomatga ta’sir qiladi. */
+  async approve(id: number, actor: AuthenticatedUser) {
+    const excuse = await this.excusesRepository.findOneBy({ id });
+
+    if (!excuse) {
+      throw new NotFoundException('Ariza topilmadi');
+    }
+
+    this.checkAccess(excuse.schoolId, actor);
+
+    if (excuse.status !== AttendanceExcuseStatus.PENDING) {
+      throw new ConflictException('Faqat kutilayotgan arizani tasdiqlash mumkin');
+    }
+
+    const overlap = await this.excusesRepository
+      .createQueryBuilder('excuse')
+      .where('excuse.personId = :personId', { personId: excuse.personId })
+      .andWhere('excuse.schoolId = :schoolId', { schoolId: excuse.schoolId })
+      .andWhere('excuse.membershipType = :type', {
+        type: excuse.membershipType,
+      })
+      .andWhere('excuse.status = :status', {
+        status: AttendanceExcuseStatus.ACTIVE,
+      })
+      .andWhere('excuse.id <> :id', { id })
+      .andWhere('excuse.startDate <= :endDate', { endDate: excuse.endDate })
+      .andWhere('excuse.endDate >= :startDate', {
+        startDate: excuse.startDate,
+      })
+      .getExists();
+
+    if (overlap) {
+      throw new ConflictException(
+        'Ushbu sanalarda boshqa faol ariza bor. Avval uni bekor qiling yoki bu arizani rad eting.',
+      );
+    }
+
+    const reviewedAt = new Date();
+    const result = await this.excusesRepository
+      .createQueryBuilder()
+      .update(AttendanceExcuse)
+      .set({
+        status: AttendanceExcuseStatus.ACTIVE,
+        reviewedByUserId: actor.id,
+        reviewedAt,
+        rejectionReason: null,
+      })
+      .where('id = :id', { id })
+      .andWhere('status = :status', { status: AttendanceExcuseStatus.PENDING })
+      .execute();
+
+    if (result.affected !== 1) {
+      throw new ConflictException('Ariza holati o‘zgargan. Qayta tekshiring.');
+    }
+
+    this.markStats(excuse.schoolId, excuse.startDate, excuse.endDate);
+    await this.notifyReviewed(excuse, 'EXCUSE_APPROVED', null);
+
+    return { id, status: AttendanceExcuseStatus.ACTIVE, reviewedAt };
+  }
+
+  /** Kutilayotgan arizani sababi bilan rad etish. */
+  async reject(
+    id: number,
+    dto: RejectAttendanceExcuseDto,
+    actor: AuthenticatedUser,
+  ) {
+    const excuse = await this.excusesRepository.findOneBy({ id });
+
+    if (!excuse) {
+      throw new NotFoundException('Ariza topilmadi');
+    }
+
+    this.checkAccess(excuse.schoolId, actor);
+
+    if (excuse.status !== AttendanceExcuseStatus.PENDING) {
+      throw new ConflictException('Faqat kutilayotgan arizani rad etish mumkin');
+    }
+
+    const reviewedAt = new Date();
+    const result = await this.excusesRepository
+      .createQueryBuilder()
+      .update(AttendanceExcuse)
+      .set({
+        status: AttendanceExcuseStatus.REJECTED,
+        reviewedByUserId: actor.id,
+        reviewedAt,
+        rejectionReason: dto.rejectionReason,
+      })
+      .where('id = :id', { id })
+      .andWhere('status = :status', { status: AttendanceExcuseStatus.PENDING })
+      .execute();
+
+    if (result.affected !== 1) {
+      throw new ConflictException('Ariza holati o‘zgargan. Qayta tekshiring.');
+    }
+
+    await this.notifyReviewed(excuse, 'EXCUSE_REJECTED', dto.rejectionReason);
+
+    return {
+      id,
+      status: AttendanceExcuseStatus.REJECTED,
+      reviewedAt,
+      rejectionReason: dto.rejectionReason,
+    };
+  }
+
+  private async notifyReviewed(
+    excuse: AttendanceExcuse,
+    type: 'EXCUSE_APPROVED' | 'EXCUSE_REJECTED',
+    reason: string | null,
+  ): Promise<void> {
+    const [info]: { student: string }[] =
+      await this.excusesRepository.manager.query(
+        `SELECT CONCAT_WS(' ', lastName, firstName) AS student FROM persons WHERE id = ?`,
+        [excuse.personId],
+      );
+    await this.notifications.notify([
+      {
+        userId: excuse.uploadedByUserId,
+        type,
+        payload: {
+          excuseId: excuse.id,
+          student: info?.student ?? '',
+          from: excuse.startDate,
+          to: excuse.endDate,
+          ...(reason ? { reason } : {}),
+        },
+        dedupeKey: `${type.toLowerCase()}:${excuse.id}`,
+      },
+    ]);
+  }
+
+  /** Sinf rahbari uchun: berilgan shaxslarning arizalari (o‘quvchilar). */
+  async listForPersons(
+    personIds: number[],
+    schoolId: number,
+    status?: AttendanceExcuseStatus,
+  ) {
+    if (personIds.length === 0) return [];
+
+    const builder = this.excusesRepository
+      .createQueryBuilder('excuse')
+      .innerJoinAndSelect('excuse.person', 'person')
+      .where('excuse.personId IN (:...personIds)', { personIds })
+      .andWhere('excuse.schoolId = :schoolId', { schoolId })
+      .andWhere('excuse.membershipType = :type', {
+        type: MembershipType.STUDENT,
+      });
+    if (status) builder.andWhere('excuse.status = :status', { status });
+
+    const rows = await builder
+      .orderBy('excuse.createdAt', 'DESC')
+      .addOrderBy('excuse.id', 'DESC')
+      .take(200)
+      .getMany();
+
+    return rows.map((item) => ({
+      id: item.id,
+      personId: item.personId,
+      person: {
+        id: item.person.id,
+        firstName: item.person.firstName,
+        lastName: item.person.lastName,
+        middleName: item.person.middleName,
+      },
+      reason: item.reason,
+      reasonNote: item.reasonNote,
+      startDate: item.startDate,
+      endDate: item.endDate,
+      status: item.status,
+      rejectionReason: item.rejectionReason,
+      reviewedAt: item.reviewedAt,
+      cancellationReason: item.cancellationReason,
+      pdfOriginalName: item.pdfOriginalName,
+      uploadedByUserId: item.uploadedByUserId,
+      createdAt: item.createdAt,
+    }));
+  }
+
+  /** PDF ni o‘qish (kirish huquqi chaqiruvchi tomonidan tekshirilgan bo‘lishi shart). */
+  async readPdfTrusted(id: number): Promise<Buffer> {
+    const excuse = await this.excusesRepository.findOneBy({ id });
+    if (!excuse) throw new NotFoundException('Ariza topilmadi');
+    return this.loadPdf(id);
+  }
+
+  async findOwnerPerson(
+    id: number,
+  ): Promise<{ personId: number; schoolId: number } | null> {
+    const excuse = await this.excusesRepository.findOneBy({ id });
+    return excuse
+      ? { personId: excuse.personId, schoolId: excuse.schoolId }
+      : null;
   }
 
   // Arizani bekor qilish
@@ -505,6 +775,12 @@ export class AttendanceExcusesService {
 
     if (excuse.status === AttendanceExcuseStatus.CANCELLED) {
       throw new ConflictException('Ushbu ariza allaqachon bekor qilingan');
+    }
+
+    if (excuse.status !== AttendanceExcuseStatus.ACTIVE) {
+      throw new ConflictException(
+        'Kutilayotgan arizani bekor qilib bo‘lmaydi: uni tasdiqlang yoki rad eting',
+      );
     }
 
     const cancelledAt = new Date();

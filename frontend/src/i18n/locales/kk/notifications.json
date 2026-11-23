@@ -1,0 +1,16 @@
+{
+  "open": "Хабарландырулар",
+  "openWithCount": "Хабарландырулар",
+  "title": "Хабарландырулар",
+  "readAll": "Барлығын оқылған деп белгілеу",
+  "empty": "Жаңа хабарландыру жоқ.",
+  "types": {
+    "EXCUSE_SUBMITTED": "{{by}} {{student}} ({{className}}) үшін өтініш жіберді: {{from}} — {{to}}",
+    "EXCUSE_APPROVED": "{{student}} үшін өтініш расталды ({{from}} — {{to}}).",
+    "EXCUSE_REJECTED": "{{student}} үшін өтініш қабылданбады. Себебі: {{reason}}",
+    "ABSENT_STREAK": "{{student}} ({{className}}) қатарынан {{days}} күн келмеді ({{since}} бастап).",
+    "ABSENT_STREAK_INSPECTOR": "{{student}} қатарынан {{days}} күн мектепке келмеді ({{since}} бастап).",
+    "SYSTEM_ALERT": "Жүйе ескертуі: {{checkName}} — {{statusName}}",
+    "SYSTEM_RECOVERED": "{{checkName}} түзелді."
+  }
+}

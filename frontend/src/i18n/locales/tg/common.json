@@ -106,5 +106,8 @@
   "pickTime": "Вақтро интихоб кунед",
   "clear": "Тоза кардан",
   "hours": "Соат",
-  "minutes": "Дақиқа"
+  "minutes": "Дақиқа",
+  "exportExcel": "Боргирии Excel",
+  "exporting": "Excel омода мешавад…",
+  "exportFailed": "Хатогӣ ҳангоми содироти Excel."
 }

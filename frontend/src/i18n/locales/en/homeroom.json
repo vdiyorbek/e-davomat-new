@@ -1,0 +1,49 @@
+{
+  "title": "Homeroom teacher cabinet",
+  "description": "Attendance of your class, absentees and excuse requests.",
+  "noClassTitle": "No class assigned",
+  "noClass": "You are not yet assigned as a homeroom teacher of any class. Contact the school administrator.",
+  "noPhone": "No phone number",
+  "tabs": {
+    "today": "Today",
+    "week": "By days",
+    "absentees": "Absentees",
+    "excuses": "Excuses"
+  },
+  "cells": {
+    "present": "Present",
+    "absent": "Absent",
+    "excused": "Excused",
+    "dayoff": "Day off",
+    "nodata": "No data",
+    "future": "Upcoming day"
+  },
+  "today": {
+    "empty": "The class has no students for this day."
+  },
+  "week": {
+    "prev": "Previous period",
+    "next": "Next period",
+    "week": "Week",
+    "month": "4 weeks"
+  },
+  "absentees": {
+    "minDays": "At least days",
+    "minDaysN": "{{count}}+ days",
+    "hint": "Only completed school days are counted; today is not included.",
+    "emptyTitle": "No absentees",
+    "empty": "No student has been absent in a row for the selected threshold."
+  },
+  "excuses": {
+    "new": "New excuse",
+    "submit": "Submit excuse",
+    "flow": "An excuse you submit affects attendance only after the school administrator approves it.",
+    "empty": "No excuses for the class students.",
+    "chooseStudent": "Choose a student"
+  },
+  "card": {
+    "description": "Parent contacts and attendance for the last 30 days.",
+    "last30": "Last 30 days",
+    "rate": "Attendance rate"
+  }
+}

@@ -27,7 +27,7 @@
   },
   "tests": {
     "title": "Mening testlarim",
-    "description": "CHSB va BSB testlari, natijalar va baholar.",
+    "description": "Choraklik va bo‘lim testlari, natijalar va baholar.",
     "emptyTitle": "Test yo‘q",
     "empty": "O‘qituvchingiz test e’lon qilganda shu yerda paydo bo‘ladi.",
     "all": "Barcha testlar",

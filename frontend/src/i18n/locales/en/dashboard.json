@@ -108,7 +108,7 @@
     "shiftStart": "Shift {{code}} {{time}}"
   },
   "streaks": {
-    "title": "Absent 5 days in a row",
+    "title": "Long-term absentees",
     "description": "Only the class’s school days count; an excused day breaks the streak.",
     "emptyTitle": "No such students",
     "empty": "No student has missed 5 school days in a row.",
@@ -120,7 +120,7 @@
     "since": "since {{date}}",
     "viewAll": "View all ({{count}})",
     "pageTitle": "Students absent for a long time",
-    "back": "Back to dashboard",
+    "back": "Back to home",
     "search": "Search by name",
     "minDays": "At least days",
     "minDaysAny": "All (5+)",

@@ -24,6 +24,8 @@ import { TerminalsService } from './terminals.service';
 import { StartTerminalSyncDto } from './dto/start-terminal-sync.dto';
 import { PersonSyncService } from './person-sync.service';
 import { TerminalStatusHistoryService } from './terminal-status-history.service';
+import { TerminalDiagnosticsService } from './terminal-diagnostics.service';
+import { TerminalCompareJobService } from './terminal-compare-job.service';
 
 @Controller('terminals')
 @Roles(UserRole.SUPER_ADMIN)
@@ -32,6 +34,8 @@ export class TerminalsController {
     private readonly terminalsService: TerminalsService,
     private readonly personSyncService: PersonSyncService,
     private readonly statusHistory: TerminalStatusHistoryService,
+    private readonly diagnostics: TerminalDiagnosticsService,
+    private readonly compareJobs: TerminalCompareJobService,
   ) {}
 
   @Post()
@@ -139,6 +143,33 @@ export class TerminalsController {
   }
 
   /** Terminalning bir kunlik ish holati: vaqt chizig‘i, uptime, uzilishlar. */
+  /** Terminalni qo‘lda tekshirish: ulanish, soat farqi, audio (faqat o‘qiydi). */
+  @Post(':id/diagnose')
+  @HttpCode(200)
+  @Roles(UserRole.SUPER_ADMIN)
+  diagnose(@Param('id', ParseIntPipe) id: number) {
+    return this.diagnostics.diagnose(id);
+  }
+
+  /** Oxirgi 20 ta muammo: sinxronlash xatolari va offline davrlar. */
+  @Get(':id/error-log')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  errorLog(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.diagnostics.errorLog(id, request.authUser);
+  }
+
   @Get(':id/status-history')
   @Roles(
     UserRole.SUPER_ADMIN,
@@ -226,6 +257,45 @@ export class TerminalsController {
     }
 
     return this.terminalsService.compareTerminalPersons(id, request.authUser);
+  }
+
+  /** Solishtirishni fonda boshlaydi (ketayotgan bo‘lsa — unga ulanadi). */
+  @Post(':id/person-sync/compare/start')
+  @HttpCode(200)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  startCompare(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.compareJobs.start(id, request.authUser);
+  }
+
+  /** Solishtirish jarayoni va oxirgi natija. */
+  @Get(':id/person-sync/compare/status')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.REGION_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+  )
+  compareStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (!request.authUser) {
+      throw new UnauthorizedException();
+    }
+
+    return this.compareJobs.status(id, request.authUser);
   }
 
   @Get(':id/person-sync/capacity')

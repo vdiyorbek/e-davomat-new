@@ -69,6 +69,13 @@ export class User {
   })
   isActive!: boolean;
 
+  /** Administrator bergan vaqtinchalik parol: birinchi kirishda almashtirish shart. */
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  mustChangePassword!: boolean;
+
   @Column({
     type: 'enum',
     enum: UserRole,

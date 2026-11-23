@@ -312,6 +312,94 @@ export class HikvisionService {
     };
   }
 
+  /**
+   * Ikki tomonlama audio kanallari (faqat o‘qiydi, audio seansi ochilmaydi).
+   * `supported: false` — terminal bu yo‘lni qo‘llamaydi (403/404/405/501).
+   */
+  async getTwoWayAudio(
+    terminal: Terminal,
+    password: string,
+  ): Promise<{ supported: boolean; channels: string | null }> {
+    const host = terminal.host.includes(':')
+      ? `[${terminal.host}]`
+      : terminal.host;
+    const path = '/ISAPI/System/TwoWayAudio/channels';
+    const url =
+      `${terminal.protocol.toLowerCase()}://` +
+      `${host}:${terminal.port}${path}`;
+
+    const request = (authorization?: string) =>
+      axios.get<string>(url, {
+        responseType: 'text',
+        timeout: 10000,
+        maxRedirects: 0,
+        maxContentLength: 256 * 1024,
+        proxy: false,
+        headers: authorization ? { Authorization: authorization } : {},
+        validateStatus: () => true,
+      });
+
+    let response = await request();
+
+    if (response.status === 401) {
+      const challenge = response.headers['www-authenticate'];
+      if (typeof challenge !== 'string') {
+        throw new Error('Terminal Digest autentifikatsiyasini qaytarmadi');
+      }
+      response = await request(
+        createDigestAuthorization(
+          challenge,
+          terminal.username,
+          password,
+          'GET',
+          path,
+        ),
+      );
+    }
+
+    if ([403, 404, 405, 501].includes(response.status)) {
+      return { supported: false, channels: null };
+    }
+    if (response.status !== 200 || typeof response.data !== 'string') {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const xml = response.data;
+    if (
+      /<!DOCTYPE|<!ENTITY/i.test(xml) ||
+      XMLValidator.validate(xml) !== true
+    ) {
+      throw new Error('Terminal noto‘g‘ri XML qaytardi');
+    }
+    const parsed: unknown = new XMLParser({
+      ignoreAttributes: true,
+      removeNSPrefix: true,
+      parseTagValue: false,
+      trimValues: true,
+      processEntities: false,
+    }).parse(xml);
+    const list =
+      isRecord(parsed) && isRecord(parsed.TwoWayAudioChannelList)
+        ? parsed.TwoWayAudioChannelList.TwoWayAudioChannel
+        : null;
+    const channels: unknown[] = Array.isArray(list)
+      ? (list as unknown[])
+      : list
+        ? [list]
+        : [];
+    const info = channels
+      .filter(isRecord)
+      .map((channel) =>
+        [channel.id, channel.audioCompressionType]
+          .filter((part) => typeof part === 'string' && part !== '')
+          .join(' '),
+      )
+      .join('; ')
+      .slice(0, 120);
+
+    return { supported: channels.length > 0, channels: info || null };
+  }
+
   async syncDeviceTime(terminal: Terminal, password: string) {
     const host = terminal.host.includes(':')
       ? `[${terminal.host}]`
@@ -732,6 +820,7 @@ export class HikvisionService {
   async getAllTerminalUsers(
     terminal: Terminal,
     password: string,
+    onProgress?: (loaded: number, total: number) => void,
   ): Promise<HikvisionTerminalUser[]> {
     const searchID = randomUUID();
     const pageSize = 30;
@@ -821,6 +910,8 @@ export class HikvisionService {
         employeeNumbers.add(item.employeeNo);
         users.push(item);
       }
+
+      onProgress?.(users.length, expectedTotal);
 
       if (result.nextPosition === null) {
         if (users.length !== expectedTotal) {

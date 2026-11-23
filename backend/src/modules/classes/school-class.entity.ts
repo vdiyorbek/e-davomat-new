@@ -61,6 +61,10 @@ export class SchoolClass {
   })
   gradeLevel!: number | null;
 
+  /** Sinf rahbari (o‘qituvchi shaxsi). */
+  @Column({ type: 'int', unsigned: true, nullable: true })
+  homeroomPersonId!: number | null;
+
   @CreateDateColumn({
     type: 'datetime',
     precision: 3,

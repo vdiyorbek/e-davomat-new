@@ -1,5 +1,5 @@
 {
-  "title": "Sababli arizalar",
+  "title": "Sababli kelmaslik arizalari",
   "subtitle": "O‘quvchilarning sababli davomat arizalari va asoslovchi hujjatlari.",
   "listTitle": "Arizalar ro‘yxati",
   "emptyTitle": "Arizalar topilmadi",
@@ -17,7 +17,9 @@
   },
   "status": {
     "ACTIVE": "Faol",
-    "CANCELLED": "Bekor qilingan"
+    "CANCELLED": "Bekor qilingan",
+    "PENDING": "Kutilmoqda",
+    "REJECTED": "Rad etilgan"
   },
   "filters": {
     "personId": "O‘quvchi ID",
@@ -104,5 +106,25 @@
   "listTitleTeacher": "O‘qituvchilar arizalari",
   "teacher": "O‘qituvchi",
   "uploadedBy": "Kim yukladi",
-  "daysCount": "{{count}} kun"
+  "daysCount": "{{count}} kun",
+  "approve": {
+    "button": "Tasdiqlash",
+    "title": "Arizani tasdiqlash",
+    "description": "№{{id}} ariza tasdiqlanadi va shundan keyin davomatga ta’sir qiladi.",
+    "confirm": "Tasdiqlash",
+    "failed": "Arizani tasdiqlab bo‘lmadi."
+  },
+  "reject": {
+    "button": "Rad etish",
+    "title": "Arizani rad etish",
+    "description": "№{{id}} ariza rad etiladi. Sinf rahbari sababni ko‘radi.",
+    "reason": "Rad etish sababi",
+    "reasonHint": "Kamida 5 belgi.",
+    "placeholder": "Masalan: hujjat o‘qilmaydi",
+    "confirm": "Rad etish",
+    "failed": "Arizani rad etib bo‘lmadi."
+  },
+  "rejectedReason": "Rad etish sababi: {{reason}}",
+  "pendingBanner": "{{count}} ta ariza tasdiqlashni kutmoqda.",
+  "viewPending": "Ko‘rish"
 }

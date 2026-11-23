@@ -1,0 +1,16 @@
+{
+  "open": "Уведомления",
+  "openWithCount": "Уведомления",
+  "title": "Уведомления",
+  "readAll": "Отметить все прочитанными",
+  "empty": "Новых уведомлений нет.",
+  "types": {
+    "EXCUSE_SUBMITTED": "{{by}} подал(а) заявление для {{student}} ({{className}}): {{from}} — {{to}}",
+    "EXCUSE_APPROVED": "Заявление для {{student}} подтверждено ({{from}} — {{to}}).",
+    "EXCUSE_REJECTED": "Заявление для {{student}} отклонено. Причина: {{reason}}",
+    "ABSENT_STREAK": "{{student}} ({{className}}) не приходит {{days}} дн. подряд (с {{since}}).",
+    "ABSENT_STREAK_INSPECTOR": "{{student}} не ходит в школу {{days}} дн. подряд (с {{since}}).",
+    "SYSTEM_ALERT": "Предупреждение системы: {{checkName}} — {{statusName}}",
+    "SYSTEM_RECOVERED": "{{checkName}}: восстановлено."
+  }
+}

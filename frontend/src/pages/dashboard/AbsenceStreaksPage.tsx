@@ -4,6 +4,8 @@ import { ArrowLeft, Search } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
+import { ExportExcelButton } from '@/components/common/ExportExcelButton';
+import { todayInTashkent } from '@/lib/date';
 import { PageHeader } from '@/components/common/PageHeader';
 import { SelectField } from '@/components/common/SelectField';
 import { AbsenceStreaks } from '@/components/dashboard/AbsenceStreaks';
@@ -44,12 +46,18 @@ export function AbsenceStreaksPage() {
                 title={t('dashboard.streaks.pageTitle')}
                 description={t('dashboard.streaks.description')}
                 actions={
-                    <Button asChild variant="outline">
-                        <Link to={back}>
-                            <ArrowLeft aria-hidden="true" />
-                            {t('dashboard.streaks.back')}
-                        </Link>
-                    </Button>
+                    <div className="flex flex-wrap items-start gap-2">
+                        <ExportExcelButton
+                            path={`/dashboard/absence-streaks/export?${filtered.toString()}`}
+                            filename={`ketma-ket-kelmaganlar-${scope.get('date') ?? todayInTashkent()}.xlsx`}
+                        />
+                        <Button asChild variant="outline">
+                            <Link to={back}>
+                                <ArrowLeft aria-hidden="true" />
+                                {t('dashboard.streaks.back')}
+                            </Link>
+                        </Button>
+                    </div>
                 }
             />
             <Card className="gap-4 p-4 sm:p-5">

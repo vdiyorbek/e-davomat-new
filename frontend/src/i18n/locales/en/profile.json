@@ -1,9 +1,28 @@
 {
-  "title": "Personal details",
+  "title": "My profile",
   "subtitle": "Your user profile and account details.",
   "details": "Account details",
   "detailsHint": "Contact an administrator to change these details.",
   "login": "Login",
   "role": "System role",
-  "notEntered": "Not provided"
+  "notEntered": "Not provided",
+  "security": {
+    "title": "Security",
+    "description": "You can change your password yourself. After the change, sign-ins on other devices are ended.",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "hint": "At least 12 characters. Do not use your login, PINFL or date of birth.",
+    "submit": "Change password",
+    "saving": "Saving…",
+    "success": "The password was changed.",
+    "forcedTitle": "Change your password",
+    "forcedText": "The administrator gave you a temporary password. To continue, set a new password that only you know.",
+    "errors": {
+      "short": "The new password must be 12 to 128 characters.",
+      "mismatch": "The new password and its confirmation do not match.",
+      "same": "The new password must differ from the current one.",
+      "failed": "Could not change the password."
+    }
+  }
 }

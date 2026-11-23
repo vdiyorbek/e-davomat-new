@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { FileSpreadsheet, Plus, Users, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { MembershipDetailsForm } from './MembershipDetailsForm';
 import { ADMIN_ROLES } from '@/lib/roles';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Pagination } from '@/components/common/Pagination';
@@ -19,7 +18,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatDate, todayInTashkent } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import type { SchoolMembership, SchoolMembershipsPage } from '@/types/school-membership';
-import { MemberAccountForm } from './MemberAccountForm';
 import { CreateMemberForm } from './CreateMemberForm';
 import { EndMembershipForm } from './EndMembershipForm';
 import { SchoolMemberActions } from './SchoolMemberActions';
@@ -68,18 +66,8 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
 
     const [ending, setEnding] = useState<SchoolMembership | null>(null);
     const [moving, setMoving] = useState<SchoolMembership | null>(null);
-    const [detailsMember, setDetailsMember] =
-        useState<SchoolMembership | null>(null);
     const [success, setSuccess] = useState('');
-    const [accountMember, setAccountMember] =
-        useState<SchoolMembership | null>(null);
     const role = session?.profile.role;
-    const canManageAccounts = [
-        'SUPER_ADMIN',
-        'REGION_ADMIN',
-        'DISTRICT_ADMIN',
-        'SCHOOL_ADMIN',
-    ].includes(role ?? '');
     const canEnd = role === 'SUPER_ADMIN';
     const canEdit = role === 'SUPER_ADMIN';
     const canChangeClass =
@@ -88,9 +76,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         type === 'STUDENT' && ['SUPER_ADMIN', 'REGION_ADMIN', 'DISTRICT_ADMIN'].includes(role ?? '');
     const actionsDisabled =
         ending !== null ||
-        moving !== null ||
-        detailsMember !== null ||
-        accountMember !== null;
+        moving !== null;
 
     function open(setter: (m: SchoolMembership) => void) {
         return (membership: SchoolMembership) => {
@@ -132,14 +118,10 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         canEdit,
         canEnd,
         canMove: canChangeClass,
-        canManageAccounts,
         actionsDisabled,
 
         onEnd: open(setEnding),
         onMove: open(setMoving),
-        onDetails: open(setDetailsMember),
-        canDetails: type === 'TEACHER',
-        onAccount: open(setAccountMember),
     };
 
     return (
@@ -175,48 +157,6 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                                 <div className="border-t pt-3">
                                     <SchoolMemberActions membership={item} layout="labels" {...actionProps} />
                                 </div>
-
-                                <Dialog
-                                    open={accountMember !== null}
-                                    onOpenChange={(open) => {
-                                        if (!open) {
-                                            setAccountMember(null);
-                                        }
-                                    }}
-                                >
-                                    <DialogContent className="sm:max-w-xl">
-                                        <DialogHeader>
-                                            <DialogTitle>
-                                                {type === 'STUDENT'
-                                                    ? t('memberDetails.studentAccount')
-                                                    : t('memberDetails.teacherAccount')}
-                                            </DialogTitle>
-
-                                            <DialogDescription>
-                                                {t('memberDetails.accountDescription')}
-                                            </DialogDescription>
-                                        </DialogHeader>
-
-                                        {accountMember && (
-                                            <MemberAccountForm
-                                                key={accountMember.id}
-                                                membership={accountMember}
-                                                onCancel={() => {
-                                                    setAccountMember(null);
-                                                }}
-                                                onSaved={() => {
-                                                    setAccountMember(null);
-
-                                                    setSuccess(
-                                                        'Foydalanuvchi akkaunti muvaffaqiyatli yaratildi.',
-                                                    );
-
-                                                    retry();
-                                                }}
-                                            />
-                                        )}
-                                    </DialogContent>
-                                </Dialog>
 
                             </Card>
                         </li>
@@ -315,44 +255,6 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
                             canTransferSchool={canTransferSchool}
                             onCancel={() => setMoving(null)}
                             onSaved={(mode) => handleSaved(t(mode === 'school' ? 'members.transfer.success' : 'members.changeClass.success'))}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            <Dialog
-                open={detailsMember !== null}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setDetailsMember(null);
-                    }
-                }}
-            >
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {type === 'STUDENT'
-                                ? t('memberDetails.studentTitle')
-                                : t('memberDetails.teacherTitle')}
-                        </DialogTitle>
-
-                        <DialogDescription>
-                            {t('memberDetails.detailsDescription')}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    {detailsMember && (
-                        <MembershipDetailsForm
-                            key={detailsMember.id}
-                            membership={detailsMember}
-                            onCancel={() => {
-                                setDetailsMember(null);
-                            }}
-                            onSaved={() => {
-                                setDetailsMember(null);
-                                setSuccess(t('memberDetails.saved'));
-                                retry();
-                            }}
                         />
                     )}
                 </DialogContent>

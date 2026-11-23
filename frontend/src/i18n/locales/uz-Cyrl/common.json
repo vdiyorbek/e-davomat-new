@@ -106,5 +106,8 @@
   "pickTime": "Вақтни танланг",
   "clear": "Тозалаш",
   "hours": "Соат",
-  "minutes": "Дақиқа"
+  "minutes": "Дақиқа",
+  "exportExcel": "Excel юклаб олиш",
+  "exporting": "Excel тайёрланмоқда…",
+  "exportFailed": "Excel экспортда хатолик юз берди."
 }

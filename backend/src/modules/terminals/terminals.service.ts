@@ -4,6 +4,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  BadGatewayException,
+  HttpException,
 } from '@nestjs/common';
 import {
   getTerminalHealthStatus,
@@ -1218,7 +1220,11 @@ export class TerminalsService {
     };
   }
 
-  async compareTerminalPersons(terminalId: number, user: AuthenticatedUser) {
+  async compareTerminalPersons(
+    terminalId: number,
+    user: AuthenticatedUser,
+    onProgress?: (loaded: number, total: number) => void,
+  ) {
     // Mavjud metod orqali terminalning mavjudligi
     // va administratorning hududiy vakolatini tekshiramiz.
     const preview = await this.getPersonSyncPreview(terminalId, user);
@@ -1239,6 +1245,7 @@ export class TerminalsService {
     const terminalUsers = await this.hikvision.getAllTerminalUsers(
       terminal,
       password,
+      onProgress,
     );
 
     // Toshkent bo‘yicha bugungi sana.
@@ -1258,7 +1265,11 @@ export class TerminalsService {
     const persons = await this.schoolMembershipsRepository
       .createQueryBuilder('membership')
       .innerJoin('membership.person', 'person')
-      .select('DISTINCT person.pnfl', 'pnfl')
+      .select('person.pnfl', 'pnfl')
+      .addSelect('MIN(person.lastName)', 'lastName')
+      .addSelect('MIN(person.firstName)', 'firstName')
+      .addSelect('MIN(person.middleName)', 'middleName')
+      .addSelect('MIN(membership.type)', 'type')
       .where('membership.schoolId = :schoolId', {
         schoolId: terminal.schoolId,
       })
@@ -1272,9 +1283,30 @@ export class TerminalsService {
       .andWhere('membership.type IN (:...types)', {
         types: [MembershipType.STUDENT, MembershipType.TEACHER],
       })
-      .getRawMany<{ pnfl: string }>();
+      .groupBy('person.pnfl')
+      .getRawMany<{
+        pnfl: string;
+        lastName: string | null;
+        firstName: string | null;
+        middleName: string | null;
+        type: string;
+      }>();
 
     const databasePnfls = new Set(persons.map((person) => person.pnfl));
+    const nameByPnfl = new Map(
+      persons.map((person) => [
+        person.pnfl,
+        {
+          name: [person.lastName, person.firstName, person.middleName]
+            .filter(Boolean)
+            .join(' '),
+          type: person.type,
+        },
+      ]),
+    );
+    const LIST_LIMIT = 500;
+    const missingList: { pnfl: string; name: string; type: string }[] = [];
+    const extraList: { employeeNo: string; name: string | null }[] = [];
 
     const terminalEmployeeNos = new Set(
       terminalUsers.map((person) => person.employeeNo),
@@ -1291,15 +1323,35 @@ export class TerminalsService {
         matched++;
       } else {
         missingOnTerminal++;
+        if (missingList.length < LIST_LIMIT) {
+          const info = nameByPnfl.get(pnfl);
+          missingList.push({
+            pnfl,
+            name: info?.name ?? '',
+            type: info?.type ?? '',
+          });
+        }
       }
     }
 
     // Terminaldagi, bazada mos kelmaydigan yozuvlar.
+    const terminalNames = new Map(
+      terminalUsers.map((person) => [person.employeeNo, person.name]),
+    );
     for (const employeeNo of terminalEmployeeNos) {
-      if (!/^\d{14}$/.test(employeeNo)) {
+      const isInvalid = !/^\d{14}$/.test(employeeNo);
+      if (isInvalid) {
         invalidEmployeeNo++;
       } else if (!databasePnfls.has(employeeNo)) {
         extraOnTerminal++;
+      } else {
+        continue;
+      }
+      if (extraList.length < LIST_LIMIT) {
+        extraList.push({
+          employeeNo,
+          name: terminalNames.get(employeeNo) ?? null,
+        });
       }
     }
 
@@ -1314,6 +1366,9 @@ export class TerminalsService {
       missingOnTerminal,
       extraOnTerminal,
       invalidEmployeeNo,
+      missingList,
+      extraList,
+      listLimit: LIST_LIMIT,
       note: 'Solishtirish faqat PNFL va employeeNo bo‘yicha bajarildi. Rasmlar hali tekshirilmagan.',
     };
   }
@@ -1335,14 +1390,15 @@ export class TerminalsService {
 
     const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
 
-    // Hikvision qurilmasining imkoniyatlarini olamiz.
-    const capacity = await this.hikvision.getUserCapacity(terminal, password);
-
-    // Qurilmadagi mavjud foydalanuvchilar soni.
-    const registeredPersons = await this.hikvision.getRegisteredPersonsCount(
-      terminal,
-      password,
-    );
+    // Hikvision qurilmasining imkoniyatlarini va undagi shaxslar sonini olamiz.
+    // Terminalga ulanib bo‘lmasa — 500 emas, tushunarli xabar (502).
+    const { capacity, registeredPersons } = await this.fromDevice(async () => ({
+      capacity: await this.hikvision.getUserCapacity(terminal, password),
+      registeredPersons: await this.hikvision.getRegisteredPersonsCount(
+        terminal,
+        password,
+      ),
+    }));
 
     const availableSlots =
       capacity.maxPersons !== null
@@ -1376,6 +1432,20 @@ export class TerminalsService {
     };
   }
 
+  /** Terminal so‘rovidagi xatoni tushunarli 502 xabariga aylantiradi (500 emas). */
+  private async fromDevice<T>(run: () => Promise<T>): Promise<T> {
+    try {
+      return await run();
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new BadGatewayException(
+        error instanceof Error
+          ? error.message.slice(0, 200)
+          : 'Terminal bilan aloqa xatosi',
+      );
+    }
+  }
+
   async getTerminalFaceCount(terminalId: number, user: AuthenticatedUser) {
     // Mavjud metod orqali terminalning mavjudligi
     // va administratorning hududiy vakolatini tekshiramiz.
@@ -1393,7 +1463,9 @@ export class TerminalsService {
 
     const password = this.terminalCrypto.decrypt(terminal.passwordEncrypted);
 
-    const result = await this.hikvision.getFaceRecordsCount(terminal, password);
+    const result = await this.fromDevice(() =>
+      this.hikvision.getFaceRecordsCount(terminal, password),
+    );
 
     return {
       terminalId: terminal.id,

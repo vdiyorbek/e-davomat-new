@@ -1,6 +1,6 @@
 export type ExcuseReason = "ILLNESS" | "OLYMPIAD" | "FAMILY" | "OTHER";
 
-export type ExcuseStatus = "ACTIVE" | "CANCELLED";
+export type ExcuseStatus = "ACTIVE" | "CANCELLED" | "PENDING" | "REJECTED";
 
 export interface AttendanceExcuse {
   id: number;
@@ -35,6 +35,8 @@ export interface AttendanceExcuse {
   cancelledByUserId: number | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
 }
 
