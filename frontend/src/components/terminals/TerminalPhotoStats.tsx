@@ -13,6 +13,7 @@ import { formatDateTime, formatNumber } from '@/lib/date';
 import { cn } from '@/lib/utils';
 
 import { StatTile } from './StatTile';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface PhotoStats {
     terminalId: number;
@@ -206,40 +207,40 @@ export function TerminalPhotoStats({ terminalId, canManage }: Props) {
 
                 {issues && issues.items.length > 0 && (
                     <div className="max-h-80 overflow-auto rounded-lg border">
-                        <table className="w-full min-w-[640px] text-left text-xs">
-                            <thead className="sticky top-0 z-10 bg-muted">
-                                <tr className="text-muted-foreground">
-                                    <th className="px-3 py-2 font-semibold">{t('terminals.photos.eventId')}</th>
-                                    <th className="px-3 py-2 font-semibold">{t('terminals.photos.date')}</th>
-                                    <th className="px-3 py-2 font-semibold">{t('terminals.photos.status')}</th>
-                                    <th className="px-3 py-2 font-semibold">{t('terminals.photos.attempts')}</th>
-                                    <th className="px-3 py-2 font-semibold">{t('terminals.photos.reason')}</th>
-                                    {canManage && <th className="px-3 py-2" />}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
+                        <Table className="w-full min-w-[640px] text-left text-xs">
+                            <TableHeader className="sticky top-0 z-10 bg-muted">
+                                <TableRow className="text-muted-foreground">
+                                    <TableHead className="px-3 py-2 font-semibold">{t('terminals.photos.eventId')}</TableHead>
+                                    <TableHead className="px-3 py-2 font-semibold">{t('terminals.photos.date')}</TableHead>
+                                    <TableHead className="px-3 py-2 font-semibold">{t('terminals.photos.status')}</TableHead>
+                                    <TableHead className="px-3 py-2 font-semibold">{t('terminals.photos.attempts')}</TableHead>
+                                    <TableHead className="px-3 py-2 font-semibold">{t('terminals.photos.reason')}</TableHead>
+                                    {canManage && <TableHead className="px-3 py-2" />}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody className="divide-y">
                                 {issues.items.map((item) => (
-                                    <tr key={item.eventId} className="align-top">
-                                        <td className="px-3 py-2 font-mono">{item.eventId}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(item.eventAt)}</td>
-                                        <td className="px-3 py-2">
+                                    <TableRow key={item.eventId} className="align-top">
+                                        <TableCell className="px-3 py-2 font-mono">{item.eventId}</TableCell>
+                                        <TableCell className="px-3 py-2 whitespace-nowrap">{formatDateTime(item.eventAt)}</TableCell>
+                                        <TableCell className="px-3 py-2">
                                             <StatusBadge tone={item.status === 'FAILED' ? 'danger' : 'warning'}>
                                                 {t(`terminals.photos.statuses.${item.status}`)}
                                             </StatusBadge>
-                                        </td>
-                                        <td className="px-3 py-2 tabular-nums">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 tabular-nums">
                                             {item.attempts}
                                             {item.lastAttemptAt && (
                                                 <div className="whitespace-nowrap text-muted-foreground">
                                                     {formatDateTime(item.lastAttemptAt)}
                                                 </div>
                                             )}
-                                        </td>
-                                        <td className="max-w-[260px] px-3 py-2 break-words text-muted-foreground" title={item.lastError ?? undefined}>
+                                        </TableCell>
+                                        <TableCell className="max-w-[260px] px-3 py-2 break-words text-muted-foreground" title={item.lastError ?? undefined}>
                                             {item.lastError ?? t('terminals.photos.noReason')}
-                                        </td>
+                                        </TableCell>
                                         {canManage && (
-                                            <td className="px-3 py-1.5 text-right">
+                                            <TableCell className="px-3 py-1.5 text-right">
                                                 <Button
                                                     type="button"
                                                     size="xs"
@@ -252,12 +253,12 @@ export function TerminalPhotoStats({ terminalId, canManage }: Props) {
                                                         ? t('terminals.photos.sending')
                                                         : t('terminals.photos.retry')}
                                                 </Button>
-                                            </td>
+                                            </TableCell>
                                         )}
-                                    </tr>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
                 )}
 

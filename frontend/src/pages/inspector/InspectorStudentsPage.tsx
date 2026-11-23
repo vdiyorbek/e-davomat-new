@@ -23,6 +23,8 @@ import type {
     InspectorMahalla,
     InspectorStudentsResponse,
 } from '@/types/inspector';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/common/DatePicker';
 
 const ALL = 'ALL';
 const LIMIT = 20;
@@ -79,10 +81,9 @@ export function InspectorStudentsPage() {
 
             <Card className="p-4 sm:p-5">
                 <form onSubmit={handleSearch} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                    <label className="flex flex-col gap-1.5 text-sm font-semibold">
+                    <Label className="flex flex-col gap-1.5 text-sm font-semibold">
                         {t('inspectors.students.date')}
-                        <Input
-                            type="date"
+                        <DatePicker
                             value={date}
                             max={today}
                             onChange={(event) => {
@@ -92,7 +93,7 @@ export function InspectorStudentsPage() {
                                 }
                             }}
                         />
-                    </label>
+                    </Label>
 
                     <div className="flex flex-col gap-1.5 text-sm font-semibold">
                         {t('inspectors.students.mahalla')}
@@ -126,7 +127,7 @@ export function InspectorStudentsPage() {
                         />
                     </div>
 
-                    <label className="flex flex-col gap-1.5 text-sm font-semibold lg:col-span-2">
+                    <Label className="flex flex-col gap-1.5 text-sm font-semibold lg:col-span-2">
                         {t('inspectors.students.search')}
                         <div className="flex gap-2">
                             <Input
@@ -137,14 +138,14 @@ export function InspectorStudentsPage() {
                             />
                             <Button type="submit">{t('inspectors.students.apply')}</Button>
                         </div>
-                    </label>
+                    </Label>
                 </form>
             </Card>
 
             {data && (
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     {INSPECTOR_STATUSES.map((value) => (
-                        <button
+                        <Button variant="ghost" size="auto"
                             key={value}
                             type="button"
                             onClick={() => {
@@ -156,7 +157,7 @@ export function InspectorStudentsPage() {
                         >
                             <p className="text-sm text-muted-foreground">{t(`inspectors.status.${value}`)}</p>
                             <p className="mt-1 text-2xl font-bold tabular-nums">{formatNumber(data.counts[value])}</p>
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}

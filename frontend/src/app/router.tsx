@@ -27,6 +27,7 @@ const TerminalsPage = lazy(() => import('@/pages/terminals/TerminalsPage').then(
 const AttendanceOverviewPage = lazy(() =>
     import('@/pages/attendance/AttendanceOverviewPage').then((m) => ({ default: m.AttendanceOverviewPage })),
 );
+const AbsenceStreaksPage = lazy(() => import('@/pages/dashboard/AbsenceStreaksPage').then((m) => ({ default: m.AbsenceStreaksPage })));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const SystemSettingsPage = lazy(() =>
     import('@/pages/system-settings/SystemSettingsPage').then((m) => ({ default: m.SystemSettingsPage })),
@@ -148,6 +149,7 @@ export const router = createBrowserRouter([
                         element: <RequireRole roles={ADMIN_ROLES} />,
                         children: [
                             { path: '/dashboard', element: <DashboardPage /> },
+                            { path: '/dashboard/absence-streaks', element: <AbsenceStreaksPage /> },
                             { path: '/schools', element: <SchoolsPage /> },
                             { path: '/students', element: <StudentsPage /> },
                             { path: '/teachers', element: <TeachersPage /> },

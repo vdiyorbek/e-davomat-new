@@ -13,6 +13,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { schoolScopeOptions } from '@/lib/school-scope';
 import type { School } from '@/types/school';
+import { Label } from '@/components/ui/label';
 
 type FilterName = 'regionId' | 'districtId' | 'schoolId' | 'q' | 'status';
 
@@ -34,9 +35,9 @@ function SearchForm({
 
     return (
         <form onSubmit={handleSubmit} role="search" className="min-w-0">
-            <label htmlFor={id} className="sr-only">
+            <Label htmlFor={id} className="sr-only">
                 {t('common.search')}
-            </label>
+            </Label>
             <div className="flex gap-2">
                 <div className="relative min-w-0 flex-1">
                     <Search

@@ -9,15 +9,18 @@ import { todayInTashkent } from '@/lib/date';
 
 import { ResidenceFields } from './ResidenceFields';
 import type { PersonFieldsValue } from './person-fields';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface PersonFieldsProps {
     value: PersonFieldsValue;
     onChange: (value: PersonFieldsValue) => void;
     disabled?: boolean;
+    /** Yangi o‘quvchi: otasining ismi, jins, sana, millat va manzil majburiy. */
+    studentRequired?: boolean;
 }
 
 /** Shaxsning shaxsiy ma’lumotlari: yaratish va tahrirlash formalarida umumiy. */
-export function PersonFields({ value, onChange, disabled = false }: PersonFieldsProps) {
+export function PersonFields({ value, onChange, disabled = false, studentRequired = false }: PersonFieldsProps) {
     const { t } = useTranslation();
     const id = useId();
 
@@ -49,22 +52,24 @@ export function PersonFields({ value, onChange, disabled = false }: PersonFields
                     disabled={disabled}
                 />
             </Field>
-            <Field htmlFor={`${id}-middle`} label={t('common.middleName')}>
+            <Field htmlFor={`${id}-middle`} label={t('common.middleName')} required={studentRequired}>
                 <Input
                     id={`${id}-middle`}
                     value={value.middleName}
                     onChange={(event) => set('middleName', event.target.value)}
                     maxLength={100}
+                    required={studentRequired}
                     autoComplete="additional-name"
                     disabled={disabled}
                 />
             </Field>
-            <Field htmlFor={`${id}-gender`} label={t('persons.gender')}>
+            <Field htmlFor={`${id}-gender`} label={t('persons.gender')} required={studentRequired}>
                 <SelectField
                     id={`${id}-gender`}
                     value={value.gender}
                     onValueChange={(next) => set('gender', next === 'MALE' || next === 'FEMALE' ? next : '')}
                     emptyOption={t('persons.genderNotSet')}
+                    required={studentRequired}
                     options={[
                         { value: 'MALE', label: t('persons.genders.MALE') },
                         { value: 'FEMALE', label: t('persons.genders.FEMALE') },
@@ -72,23 +77,24 @@ export function PersonFields({ value, onChange, disabled = false }: PersonFields
                     disabled={disabled}
                 />
             </Field>
-            <Field htmlFor={`${id}-birth`} label={t('persons.birthDate')}>
-                <Input
+            <Field htmlFor={`${id}-birth`} label={t('persons.birthDate')} required={studentRequired}>
+                <DatePicker
                     id={`${id}-birth`}
-                    type="date"
                     value={value.birthDate}
                     onChange={(event) => set('birthDate', event.target.value)}
                     min="1900-01-01"
                     max={todayInTashkent()}
+                    required={studentRequired}
                     disabled={disabled}
                 />
             </Field>
-            <Field htmlFor={`${id}-nationality`} label={t('persons.nationality')}>
+            <Field htmlFor={`${id}-nationality`} label={t('persons.nationality')} required={studentRequired}>
                 <Input
                     id={`${id}-nationality`}
                     value={value.nationality}
                     onChange={(event) => set('nationality', event.target.value)}
                     placeholder={t('persons.nationalityPlaceholder')}
+                    required={studentRequired}
                     maxLength={100}
                     disabled={disabled}
                 />
@@ -110,13 +116,14 @@ export function PersonFields({ value, onChange, disabled = false }: PersonFields
             <div className="md:col-span-2">
                 <ResidenceFields value={value.residence} onChange={(next) => set('residence', next)} disabled={disabled} />
             </div>
-            <Field htmlFor={`${id}-address`} label={t('persons.address')} className="md:col-span-2">
+            <Field htmlFor={`${id}-address`} label={t('persons.address')} required={studentRequired} className="md:col-span-2">
                 <Textarea
                     id={`${id}-address`}
                     value={value.address}
                     onChange={(event) => set('address', event.target.value)}
                     placeholder={t('persons.addressPlaceholder')}
                     autoComplete="street-address"
+                    required={studentRequired}
                     maxLength={500}
                     rows={3}
                     disabled={disabled}

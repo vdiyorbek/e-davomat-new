@@ -1,0 +1,92 @@
+{
+  "fields": {
+    "studentNumber": "Рақами хонанда",
+    "admissionOrderNumber": "Рақами фармони қабул",
+    "educationLanguage": "Забони таълим",
+    "educationForm": "Шакли таълим",
+    "employeeNumber": "Рақами табел",
+    "position": "Вазифа",
+    "employmentType": "Навъи шуғл",
+    "qualificationCategory": "Тоифаи ихтисосӣ",
+    "specialization": "Ихтисос",
+    "educationLevel": "Маълумот",
+    "hireOrderNumber": "Фармони қабул ба кор"
+  },
+  "placeholders": {
+    "position": "Омӯзгори математика",
+    "specialization": "Математика"
+  },
+  "options": {
+    "educationLanguage": {
+      "UZ": "Ӯзбекӣ",
+      "RU": "Русӣ",
+      "KK": "Қароқалпоқӣ",
+      "TJ": "Тоҷикӣ",
+      "EN": "Англисӣ",
+      "OTHER": "Дигар"
+    },
+    "educationForm": {
+      "FULL_TIME": "Рӯзона",
+      "EVENING": "Шомгоҳӣ",
+      "PART_TIME": "Ғоибона",
+      "DISTANCE": "Фосилавӣ",
+      "DUAL": "Таълими дуалӣ"
+    },
+    "employmentType": {
+      "PRIMARY": "Ҷойи асосии кор",
+      "PART_TIME": "Ҳамкорӣ",
+      "HOURLY": "Соатбай",
+      "TEMPORARY": "Муваққатӣ"
+    },
+    "qualificationCategory": {
+      "OLIY": "Тоифаи олӣ",
+      "BIRINCHI": "Тоифаи якум",
+      "IKKINCHI": "Тоифаи дуюм",
+      "MUTAXASSIS": "Мутахассис",
+      "TOIFASIZ": "Бе тоифа"
+    },
+    "educationLevel": {
+      "SECONDARY": "Миёна",
+      "SECONDARY_SPECIAL": "Миёнаи махсус",
+      "BACHELOR": "Бакалавр",
+      "MASTER": "Магистр",
+      "PHD": "Доктори фалсафа (PhD)",
+      "DSC": "Доктори илм (DSc)"
+    }
+  },
+  "legacyValue": "{{value}} (қимати пешина)",
+  "notSpecified": "Нишон дода нашудааст",
+  "choose": "Интихоб кунед",
+  "emptyHint": "Маълумоти иловагӣ ҳанӯз пур нашудааст. Майдонҳои зеринро пур карда, захира кунед.",
+  "saveFailed": "Захира кардани маълумот муяссар нашуд.",
+  "save": "Захира кардани маълумот",
+  "title": "Маълумоти иловагӣ",
+  "studentTitle": "Маълумоти иловагии хонанда",
+  "teacherTitle": "Маълумоти иловагии омӯзгор",
+  "saved": "Маълумоти иловагӣ захира шуд.",
+  "studentAccount": "Ҳисоби хонанда",
+  "teacherAccount": "Ҳисоби омӯзгор",
+  "accountDescription": "Санҷиши ҳолати ҳисоби корбар ё эҷоди ҳисоби нав.",
+  "detailsDescription": "Ворид ва таҳрири маълумоти иловагӣ дар бораи узвияти шахс дар мактаб.",
+  "account": {
+    "personMissing": "Маълумот дар бораи шахс нест",
+    "type": "Навъи ҳисоб: {{role}}",
+    "loginInvalid": "Логин бояд аз 3–50 ҳарфи хурди лотинӣ, рақам, нуқта ё зерхат иборат бошад.",
+    "passwordLength": "Рамз бояд аз 12 то 128 аломат дошта бошад.",
+    "passwordMismatch": "Рамзҳо мувофиқат намекунанд.",
+    "createFailed": "Эҷоди ҳисоб муяссар нашуд.",
+    "exists": "Ин шахс аллакай ҳисоб дорад",
+    "login": "Логин",
+    "role": "Нақш",
+    "status": "Ҳолат",
+    "active": "Фаъол",
+    "blocked": "Масдуд",
+    "loginHint": "3–50 аломат: a–z, 0–9, нуқта ва зерхат",
+    "password": "Рамзи аввалия",
+    "passwordHint": "На камтар аз 12 аломат. PINFL ё санаи таваллудро истифода набаред.",
+    "confirm": "Тасдиқи рамз",
+    "roleNote": "Нақши ҳисоб (хонанда ё омӯзгор) аз рӯи узвият дар мактаб худкор муайян мешавад.",
+    "create": "Эҷоди ҳисоб",
+    "creating": "Эҷод шуда истодааст…"
+  }
+}

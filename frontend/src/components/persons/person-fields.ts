@@ -51,3 +51,14 @@ export function validatePersonFields(value: PersonFieldsValue): string | null {
     if (length(value.address) > 500) return 'persons.errors.addressLength';
     return null;
 }
+
+/** Yangi o‘quvchi uchun majburiy maydonlar. Xato bo‘lsa i18n kalitini qaytaradi. */
+export function validateStudentRequired(value: PersonFieldsValue): string | null {
+    if (!value.middleName.trim()) return 'members.errors.needMiddleName';
+    if (!value.gender) return 'members.errors.needGender';
+    if (!value.birthDate) return 'members.errors.needBirthDate';
+    if (!value.nationality.trim()) return 'members.errors.needNationality';
+    if (value.residence.mahallaId === null) return 'members.errors.chooseMahalla';
+    if (!value.address.trim()) return 'members.errors.needAddress';
+    return null;
+}

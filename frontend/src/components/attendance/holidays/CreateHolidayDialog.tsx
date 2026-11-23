@@ -16,7 +16,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +29,7 @@ import { schoolScopeOptions } from '@/lib/school-scope';
 import { cn } from '@/lib/utils';
 import type { HolidayAppliesTo, HolidayDayType, HolidayScope } from '@/types/holiday';
 import type { School } from '@/types/school';
+import { DatePicker } from '@/components/common/DatePicker';
 
 const MAX_DAYS = 366;
 
@@ -218,7 +218,7 @@ export function CreateHolidayDialog({ onCreated }: Props) {
                             {AUDIENCES.map(({ value, icon: Icon }) => {
                                 const active = appliesTo === value;
                                 return (
-                                    <button
+                                    <Button variant="ghost" size="auto"
                                         key={value}
                                         type="button"
                                         role="radio"
@@ -241,7 +241,7 @@ export function CreateHolidayDialog({ onCreated }: Props) {
                                             <span className="block text-sm font-semibold">{t(`holidays.audiences.${value}`)}</span>
                                             <span className="block text-xs text-muted-foreground">{t(`holidays.audienceHints.${value}`)}</span>
                                         </span>
-                                    </button>
+                                    </Button>
                                 );
                             })}
                         </div>
@@ -249,9 +249,8 @@ export function CreateHolidayDialog({ onCreated }: Props) {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field htmlFor={`${ids}-start`} label={t('holidays.form.startDate')} required>
-                            <Input
+                            <DatePicker
                                 id={`${ids}-start`}
-                                type="date"
                                 value={startDate}
                                 onChange={(event) => {
                                     const value = event.target.value;
@@ -266,7 +265,7 @@ export function CreateHolidayDialog({ onCreated }: Props) {
                             required
                             hint={days > 0 ? t('holidays.daysCount', { count: days }) : undefined}
                         >
-                            <Input id={`${ids}-end`} type="date" value={endDate} min={startDate || undefined} onChange={(event) => setEndDate(event.target.value)} />
+                            <DatePicker id={`${ids}-end`} value={endDate} min={startDate || undefined} onChange={(event) => setEndDate(event.target.value)} />
                         </Field>
 
                         <Field htmlFor={`${ids}-type`} label={t('holidays.form.dayType')} hint={t(`holidays.dayTypeHints.${dayType}`)}>

@@ -342,14 +342,14 @@ export function TerminalsPage() {
                                     className="bg-background pr-9 pl-9"
                                 />
                                 {searchInput && (
-                                    <button
+                                    <Button variant="ghost" size="auto"
                                         type="button"
                                         onClick={() => setSearchInput('')}
                                         aria-label={t('common.clearSearch')}
                                         className="absolute top-1/2 right-2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                                     >
                                         <X aria-hidden="true" className="size-3.5" />
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
                             <Button
@@ -459,7 +459,7 @@ export function TerminalsPage() {
                             className="inline-flex rounded-xl border bg-background p-1"
                         >
                             {ARCHIVE_STATUSES.map((value) => (
-                                <button
+                                <Button variant="ghost" size="auto"
                                     key={value}
                                     type="button"
                                     role="radio"
@@ -476,7 +476,7 @@ export function TerminalsPage() {
                                     )}
                                 >
                                     {t(`terminals.filters.archiveOptions.${value}`)}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                         {hasFilters && (

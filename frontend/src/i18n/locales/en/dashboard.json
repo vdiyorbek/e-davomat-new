@@ -117,6 +117,14 @@
     "days": "Days",
     "daysN_one": "{{count}} day",
     "daysN_other": "{{count}} days",
-    "since": "since {{date}}"
+    "since": "since {{date}}",
+    "viewAll": "View all ({{count}})",
+    "pageTitle": "Students absent for a long time",
+    "back": "Back to dashboard",
+    "search": "Search by name",
+    "minDays": "At least days",
+    "minDaysAny": "All (5+)",
+    "minDaysN": "{{count}}+ days",
+    "total": "Total: {{count}}"
   }
 }

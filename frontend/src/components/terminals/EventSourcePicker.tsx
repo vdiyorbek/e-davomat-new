@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 import type { TerminalEventSource } from '@/types/terminal';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const OPTIONS = [
     { value: 'PUSH', icon: RadioTower },
@@ -26,9 +28,15 @@ export function EventSourcePicker({
     return (
         <fieldset className="space-y-2" disabled={disabled}>
             <legend className="text-sm font-medium">{t('terminals.eventSource.label')}</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <RadioGroup
+                name={name}
+                value={value}
+                onValueChange={(next) => onChange(next as TerminalEventSource)}
+                disabled={disabled}
+                className="sm:grid-cols-2"
+            >
                 {OPTIONS.map(({ value: option, icon: Icon }) => (
-                    <label
+                    <Label
                         key={option}
                         className={cn(
                             'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
@@ -36,14 +44,7 @@ export function EventSourcePicker({
                             disabled && 'cursor-not-allowed opacity-60',
                         )}
                     >
-                        <input
-                            type="radio"
-                            name={name}
-                            value={option}
-                            checked={value === option}
-                            onChange={() => onChange(option)}
-                            className="mt-1 accent-primary"
-                        />
+                        <RadioGroupItem value={option} className="mt-1" />
                         <span className="min-w-0">
                             <span className="flex items-center gap-1.5 font-semibold">
                                 <Icon aria-hidden="true" className="size-4" />
@@ -56,9 +57,9 @@ export function EventSourcePicker({
                             </span>
                             <span className="mt-0.5 block text-xs text-muted-foreground">{t(`terminals.eventSource.hints.${option}`)}</span>
                         </span>
-                    </label>
+                    </Label>
                 ))}
-            </div>
+            </RadioGroup>
         </fieldset>
     );
 }

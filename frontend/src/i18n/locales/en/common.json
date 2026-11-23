@@ -101,5 +101,10 @@
     "unreachable": "Could not reach the server, or the request timed out.",
     "failedStatus": "Request failed ({{status}}).",
     "tooMany": "Too many attempts. Please try again shortly."
-  }
+  },
+  "pickDate": "Pick a date",
+  "pickTime": "Pick a time",
+  "clear": "Clear",
+  "hours": "Hours",
+  "minutes": "Minutes"
 }

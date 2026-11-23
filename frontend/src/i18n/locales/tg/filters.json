@@ -1,0 +1,12 @@
+{
+  "allRegions": "Ҳамаи вилоятҳо",
+  "allDistricts": "Ҳамаи ноҳияҳо ва шаҳрҳо",
+  "allSchools": "Ҳамаи мактабҳои дастрас",
+  "allClasses": "Ҳамаи синфҳо",
+  "allStatuses": "Ҳамаи ҳолатҳо",
+  "chooseSchoolFirst": "Аввал мактабро интихоб кунед",
+  "advanced": "Филтрҳои васеъшуда",
+  "showMore": "Филтрҳои бештар",
+  "showLess": "Филтрҳои камтар",
+  "activeCount": "Филтрҳои фаъол: {{count}}"
+}

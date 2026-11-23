@@ -15,6 +15,8 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useInterval } from '@/hooks/useInterval';
 import { formatDateTime, formatNumber, todayInTashkent } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface EventRun {
     id: string;
@@ -173,9 +175,8 @@ export function EventSyncHistorySection() {
                             />
                         </Field>
                         <Field htmlFor="event-history-from" label={t('syncHistory.filters.dateFrom')}>
-                            <Input
+                            <DatePicker
                                 id="event-history-from"
-                                type="date"
                                 max={today}
                                 value={dateFromInput}
                                 onChange={(event) => setDateFromInput(event.target.value)}
@@ -183,9 +184,8 @@ export function EventSyncHistorySection() {
                             />
                         </Field>
                         <Field htmlFor="event-history-to" label={t('syncHistory.filters.dateTo')}>
-                            <Input
+                            <DatePicker
                                 id="event-history-to"
-                                type="date"
                                 max={today}
                                 value={dateToInput}
                                 onChange={(event) => setDateToInput(event.target.value)}
@@ -230,48 +230,48 @@ export function EventSyncHistorySection() {
                         <>
                             {/* Kompyuter: jadval */}
                             <div className="hidden overflow-x-auto rounded-xl border lg:block">
-                                <table className="w-full min-w-[880px] text-sm">
-                                    <thead className="border-b bg-muted/50 text-left">
-                                        <tr className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.terminal')}</th>
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.status')}</th>
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.startedAt')}</th>
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.duration')}</th>
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.events')}</th>
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.cursorAfter')}</th>
-                                            <th className="px-3 py-2.5">{t('syncHistory.events.columns.error')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
+                                <Table className="w-full min-w-[880px] text-sm">
+                                    <TableHeader className="border-b bg-muted/50 text-left">
+                                        <TableRow className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.terminal')}</TableHead>
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.status')}</TableHead>
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.startedAt')}</TableHead>
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.duration')}</TableHead>
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.events')}</TableHead>
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.cursorAfter')}</TableHead>
+                                            <TableHead className="px-3 py-2.5">{t('syncHistory.events.columns.error')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="divide-y">
                                         {items.map((item) => (
-                                            <tr key={item.id} className="align-top hover:bg-muted/30">
-                                                <td className="px-3 py-3">
+                                            <TableRow key={item.id} className="align-top hover:bg-muted/30">
+                                                <TableCell className="px-3 py-3">
                                                     <div className="max-w-56 truncate font-semibold" title={item.terminalName ?? undefined}>
                                                         {item.terminalName ?? t('syncHistory.common.terminal')}
                                                     </div>
                                                     <div className="font-mono text-xs text-muted-foreground">#{item.terminalId}</div>
-                                                </td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <StatusBadge tone={item.status === 'SUCCESS' ? 'success' : 'danger'}>
                                                         {statusLabel(item.status)}
                                                     </StatusBadge>
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(item.startedAt)}</td>
-                                                <td className="px-3 py-3 tabular-nums">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 whitespace-nowrap">{formatDateTime(item.startedAt)}</TableCell>
+                                                <TableCell className="px-3 py-3 tabular-nums">
                                                     {t('syncHistory.common.seconds', { value: (item.durationMs / 1000).toFixed(1) })}
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap tabular-nums">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 whitespace-nowrap tabular-nums">
                                                     <EventCounts item={item} />
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 whitespace-nowrap">
                                                     <div>{formatDateTime(item.cursorAfter)}</div>
                                                     <div className="text-xs text-muted-foreground">← {formatDateTime(item.cursorBefore)}</div>
-                                                </td>
-                                                <td className="max-w-48 px-3 py-3 text-xs break-words text-destructive">{item.errorCode ?? '—'}</td>
-                                            </tr>
+                                                </TableCell>
+                                                <TableCell className="max-w-48 px-3 py-3 text-xs break-words text-destructive">{item.errorCode ?? '—'}</TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
 
                             {/* Telefon va planshet: kartalar */}

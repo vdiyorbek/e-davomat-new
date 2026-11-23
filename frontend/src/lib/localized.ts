@@ -18,6 +18,9 @@ export function localizedName(item: LocalizedNames): string {
         case 'uz-Cyrl':
             return item.nameUzCyrl || translitUzLatnToCyrl(item.nameUz);
         case 'ru':
+        case 'kk':
+        case 'ky':
+        case 'tg':
             return item.nameRu || item.nameUz;
         case 'en':
             return item.nameEn || item.nameUz;

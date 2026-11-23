@@ -18,6 +18,7 @@ import { useInterval } from '@/hooks/useInterval';
 import { formatDateTime, formatNumber } from '@/lib/date';
 
 import { ListHeader } from './EventSyncHistorySection';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ClearRun {
     id: string;
@@ -245,46 +246,46 @@ export function ClearHistorySection() {
                         <>
                             {/* Kompyuter: jadval */}
                             <div className="hidden overflow-x-auto rounded-xl border lg:block">
-                                <table className="w-full min-w-[880px] text-sm">
-                                    <thead className="border-b bg-muted/50 text-left">
-                                        <tr className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                <Table className="w-full min-w-[880px] text-sm">
+                                    <TableHeader className="border-b bg-muted/50 text-left">
+                                        <TableRow className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
                                             {(['terminal', 'status', 'result', 'requestedBy', 'time', 'error'] as const).map((key) => (
-                                                <th key={key} className="px-3 py-2.5">{t(`syncHistory.clears.columns.${key}`)}</th>
+                                                <TableHead key={key} className="px-3 py-2.5">{t(`syncHistory.clears.columns.${key}`)}</TableHead>
                                             ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="divide-y">
                                         {runs.map((run) => (
-                                            <tr key={run.id} className="align-top hover:bg-muted/30">
-                                                <td className="px-3 py-3">
+                                            <TableRow key={run.id} className="align-top hover:bg-muted/30">
+                                                <TableCell className="px-3 py-3">
                                                     <div className="max-w-56 truncate font-semibold">
                                                         {run.terminalName ?? t('syncHistory.common.terminal')}
                                                     </div>
                                                     <div className="font-mono text-xs text-muted-foreground">#{run.terminalId}</div>
-                                                </td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <StatusBadge tone={statusTone(run.status)}>{statusLabel(run.status, t)}</StatusBadge>
-                                                </td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <ResultCell run={run} />
-                                                </td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     {run.requestedByName ?? t('syncHistory.clears.unknownUser')}
-                                                </td>
-                                                <td className="px-3 py-3 text-xs whitespace-nowrap">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 text-xs whitespace-nowrap">
                                                     <div>{formatDateTime(run.startedAt ?? run.createdAt, '—')}</div>
                                                     <div className="text-muted-foreground">→ {formatDateTime(run.finishedAt, '—')}</div>
-                                                </td>
-                                                <td
+                                                </TableCell>
+                                                <TableCell
                                                     className="max-w-48 px-3 py-3 text-xs text-destructive"
                                                     title={run.errorMessage ?? undefined}
                                                 >
                                                     {run.errorCode ? errorLabel(run.errorCode, t) : '—'}
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
 
                             {/* Telefon va planshet: kartochkalar */}

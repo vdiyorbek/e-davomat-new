@@ -10,6 +10,8 @@ interface Props {
     value: GuardiansValue;
     onChange: (value: GuardiansValue) => void;
     disabled?: boolean;
+    /** Yangi o‘quvchi: kamida bitta ota yoki ona majburiy ekanini ko‘rsatadi. */
+    requiredHint?: boolean;
 }
 
 function One({
@@ -78,13 +80,18 @@ function One({
 }
 
 /** Ota va ona: familiya, ism, otasining ismi va telefon. */
-export function GuardianFields({ value, onChange, disabled }: Props) {
+export function GuardianFields({ value, onChange, disabled, requiredHint }: Props) {
     const { t } = useTranslation();
     return (
         <section className="space-y-3">
             <div>
-                <h3 className="text-sm font-semibold">{t('persons.guardians.title')}</h3>
-                <p className="text-xs text-muted-foreground">{t('persons.guardians.hint')}</p>
+                <h3 className="text-sm font-semibold">
+                    {t('persons.guardians.title')}
+                    {requiredHint && <span aria-hidden="true" className="ml-1 text-destructive">*</span>}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                    {requiredHint ? t('persons.guardians.requiredHint') : t('persons.guardians.hint')}
+                </p>
             </div>
             <div className="grid gap-4">
                 <One title={t('persons.guardians.father')} value={value.father} onChange={(father) => onChange({ ...value, father })} disabled={disabled} />

@@ -611,25 +611,36 @@ export class DashboardService {
 
     const joins = `FROM absence_streaks a
          JOIN (SELECT s.id AS schoolId, s.name AS schoolName, s.districtId, d.regionId, d.name AS districtName
-                 FROM schools s JOIN districts d ON d.id = s.districtId) x ON x.schoolId = a.schoolId`;
-    const filter = `WHERE a.date = ? AND ${where.sql}`;
+                 FROM schools s JOIN districts d ON d.id = s.districtId) x ON x.schoolId = a.schoolId
+         JOIN persons p ON p.id = a.personId`;
+    let filter = `WHERE a.date = ? AND ${where.sql}`;
+    const extra: unknown[] = [];
+    const search = query.search?.trim();
+    if (search) {
+      const like = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+      filter += ` AND (CONCAT_WS(' ', p.lastName, p.firstName, p.middleName) LIKE ? OR CONCAT_WS(' ', p.firstName, p.lastName) LIKE ?)`;
+      extra.push(like, like);
+    }
+    if (query.minDays) {
+      filter += ` AND a.days >= ?`;
+      extra.push(query.minDays);
+    }
 
     const [count]: { total: number }[] = await this.dataSource.query(
       `SELECT COUNT(*) AS total ${joins} ${filter}`,
-      [date, ...where.params],
+      [date, ...where.params, ...extra],
     );
 
     const rows: Record<string, unknown>[] = await this.dataSource.query(
       `SELECT a.personId, p.firstName, p.lastName, p.middleName, a.days, a.sinceDate,
               a.schoolId, x.schoolName, x.districtName, c.name AS className, m.name AS mahallaName
          ${joins}
-         JOIN persons p ON p.id = a.personId
          JOIN school_classes c ON c.id = a.classId
          LEFT JOIN mahallas m ON m.id = p.mahallaId
          ${filter}
         ORDER BY a.days DESC, p.lastName, p.firstName
         LIMIT ? OFFSET ?`,
-      [date, ...where.params, query.limit, (query.page - 1) * query.limit],
+      [date, ...where.params, ...extra, query.limit, (query.page - 1) * query.limit],
     );
 
     const total = Number(count?.total ?? 0);

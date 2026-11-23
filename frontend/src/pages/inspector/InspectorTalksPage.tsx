@@ -14,7 +14,6 @@ import { InspectorTalkPdf } from '@/components/inspector/InspectorTalkPdf';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +21,8 @@ import { authorizedDelete, authorizedGet } from '@/lib/auth-session';
 import { formatDate } from '@/lib/date';
 import { TALK_RESULTS } from '@/types/inspector';
 import type { InspectorTalkItem, InspectorTalksResponse, TalkResult } from '@/types/inspector';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/common/DatePicker';
 
 const ALL = 'ALL';
 const LIMIT = 20;
@@ -136,10 +137,9 @@ export function InspectorTalksPage() {
 
             <Card className="p-4 sm:p-5">
                 <div className="grid gap-3 sm:grid-cols-3">
-                    <label className="flex flex-col gap-1.5 text-sm font-semibold">
+                    <Label className="flex flex-col gap-1.5 text-sm font-semibold">
                         {t('inspectors.talks.dateFrom')}
-                        <Input
-                            type="date"
+                        <DatePicker
                             value={dateFrom}
                             max={dateTo || undefined}
                             onChange={(event) => {
@@ -147,11 +147,10 @@ export function InspectorTalksPage() {
                                 setPage(1);
                             }}
                         />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-sm font-semibold">
+                    </Label>
+                    <Label className="flex flex-col gap-1.5 text-sm font-semibold">
                         {t('inspectors.talks.dateTo')}
-                        <Input
-                            type="date"
+                        <DatePicker
                             value={dateTo}
                             min={dateFrom || undefined}
                             onChange={(event) => {
@@ -159,7 +158,7 @@ export function InspectorTalksPage() {
                                 setPage(1);
                             }}
                         />
-                    </label>
+                    </Label>
                     <div className="flex flex-col gap-1.5 text-sm font-semibold">
                         {t('inspectors.talks.result')}
                         <SelectField

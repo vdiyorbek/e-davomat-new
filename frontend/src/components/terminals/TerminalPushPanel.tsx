@@ -7,6 +7,7 @@ import { formatDateTime } from '@/lib/date';
 import { disablePushToken, generatePushToken } from '@/lib/terminals-api';
 import type { PushTokenResponse } from '@/lib/terminals-api';
 import type { Terminal } from '@/types/terminal';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 function CopyValue({ label, value }: { label: string; value: string }) {
     const { t } = useTranslation();
@@ -38,6 +39,7 @@ function CopyValue({ label, value }: { label: string; value: string }) {
 /** Push rejimidagi terminal: token yaratish va terminalga yoziladigan manzil. */
 export function TerminalPushPanel({ terminal, canManage, onChanged }: { terminal: Terminal; canManage: boolean; onChanged: () => void }) {
     const { t } = useTranslation();
+    const { confirm, dialog } = useConfirm();
     const [issued, setIssued] = useState<PushTokenResponse | null>(null);
     // Ota sahifa tanlangan terminal obyektini yangilamaydi — holatni shu yerda kuzatamiz.
     const [enabled, setEnabled] = useState(terminal.pushEnabled);
@@ -58,16 +60,16 @@ export function TerminalPushPanel({ terminal, canManage, onChanged }: { terminal
         }
     }
 
-    function issue() {
-        if (enabled && !window.confirm(t('terminals.push.confirmRegenerate'))) return;
+    async function issue() {
+        if (enabled && !(await confirm({ title: t('terminals.push.confirmRegenerate'), destructive: true }))) return;
         void run(async () => {
             setIssued(await generatePushToken(terminal.id));
             setEnabled(true);
         });
     }
 
-    function revoke() {
-        if (!window.confirm(t('terminals.push.confirmDisable'))) return;
+    async function revoke() {
+        if (!(await confirm({ title: t('terminals.push.confirmDisable'), destructive: true }))) return;
         void run(async () => {
             await disablePushToken(terminal.id);
             setIssued(null);
@@ -88,6 +90,7 @@ export function TerminalPushPanel({ terminal, canManage, onChanged }: { terminal
 
     return (
         <section className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            {dialog}
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                     <h3 className="flex items-center gap-1.5 text-sm font-semibold">

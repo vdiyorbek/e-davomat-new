@@ -67,3 +67,21 @@ export function validateGuardian(value: GuardianValue): string | null {
 export function fullGuardianName(value: Guardian | null): string {
     return [value?.lastName, value?.firstName, value?.middleName].filter(Boolean).join(' ');
 }
+
+function isGuardianComplete(value: GuardianValue): boolean {
+    return Boolean(value.lastName.trim() && value.firstName.trim() && value.phoneNumber.trim());
+}
+
+/**
+ * Yangi o‘quvchi uchun: kamida bitta ota yoki ona to‘liq (familiya, ism, telefon) kiritilishi kerak;
+ * qisman to‘ldirilgani xato. Xato bo‘lsa i18n kalitini qaytaradi.
+ */
+export function validateGuardiansRequired(value: GuardiansValue): string | null {
+    const list = [value.father, value.mother];
+    for (const item of list) {
+        const invalid = validateGuardian(item);
+        if (invalid) return invalid;
+        if (!isGuardianEmpty(item) && !isGuardianComplete(item)) return 'members.errors.guardianIncomplete';
+    }
+    return list.some(isGuardianComplete) ? null : 'members.errors.needGuardian';
+}

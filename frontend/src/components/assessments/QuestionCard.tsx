@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { authorizedDelete, authorizedPatch } from '@/lib/auth-session';
 import { cn } from '@/lib/utils';
 import type { AssessmentQuestion } from '@/types/assessment';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -25,6 +27,7 @@ export function QuestionCard({
     onChanged: () => void;
 }) {
     const { t } = useTranslation();
+    const { confirm, dialog } = useConfirm();
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(question.text);
     const [options, setOptions] = useState(question.options);
@@ -63,17 +66,10 @@ export function QuestionCard({
                 />
                 <fieldset className="space-y-2">
                     <legend className="text-xs text-muted-foreground">{t('assessments.question.markCorrect')}</legend>
+                    <RadioGroup value={String(correct)} onValueChange={(next) => setCorrect(Number(next))} disabled={busy}>
                     {options.map((option, index) => (
                         <div key={index} className="flex items-center gap-2">
-                            <input
-                                type="radio"
-                                name={`correct-${question.id}`}
-                                checked={correct === index}
-                                onChange={() => setCorrect(index)}
-                                aria-label={t('assessments.question.correctOption', { letter: LETTERS[index] })}
-                                className="accent-primary"
-                                disabled={busy}
-                            />
+                            <RadioGroupItem value={String(index)} aria-label={t('assessments.question.correctOption', { letter: LETTERS[index] })} />
                             <span className="w-5 text-sm font-semibold">{LETTERS[index]}</span>
                             <Input
                                 value={option}
@@ -86,6 +82,7 @@ export function QuestionCard({
                             />
                         </div>
                     ))}
+                    </RadioGroup>
                 </fieldset>
                 <Textarea
                     value={explanation}
@@ -127,6 +124,7 @@ export function QuestionCard({
 
     return (
         <article className="space-y-3 rounded-2xl border bg-card p-4 break-inside-avoid">
+            {dialog}
             <div className="flex items-start justify-between gap-3">
                 <p className="font-medium whitespace-pre-line">
                     <span className="mr-1 font-bold">{number}.</span>
@@ -143,8 +141,8 @@ export function QuestionCard({
                             size="icon"
                             disabled={busy}
                             aria-label={t('assessments.question.delete', { n: number })}
-                            onClick={() => {
-                                if (window.confirm(t('assessments.question.confirmDelete'))) {
+                            onClick={async () => {
+                                if (await confirm({ title: t('assessments.question.confirmDelete'), destructive: true })) {
                                     void run(() => authorizedDelete(`/teacher/me/assessments/${assessmentId}/questions/${question.id}`));
                                 }
                             }}

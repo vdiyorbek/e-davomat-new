@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useUserPhoto } from '@/hooks/useUserPhoto';
 import { ApiError } from '@/lib/api';
 import { uploadUserPhoto } from '@/lib/user-photos-api';
+import { Label } from '@/components/ui/label';
 
 interface Props {
     userId: number;
@@ -90,9 +91,9 @@ export function UserPhotoEditor({ userId, photoUrl, onUploaded }: Props) {
                     size="icon"
                     className="absolute -right-2 -bottom-2 rounded-full border-4 border-card"
                 >
-                    <label htmlFor={inputId} className="cursor-pointer" aria-label={t('photo.choose')}>
+                    <Label htmlFor={inputId} className="cursor-pointer" aria-label={t('photo.choose')}>
                         <Camera aria-hidden="true" />
-                    </label>
+                    </Label>
                 </Button>
                 <input
                     id={inputId}

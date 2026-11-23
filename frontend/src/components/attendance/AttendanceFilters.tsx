@@ -13,6 +13,7 @@ import { academicYearFor, addDays, todayInTashkent } from '@/lib/date';
 import { schoolScopeOptions } from '@/lib/school-scope';
 import { cn } from '@/lib/utils';
 import type { School } from '@/types/school';
+import { DatePicker } from '@/components/common/DatePicker';
 
 export interface AttendanceFilterValues {
     date: string;
@@ -148,9 +149,8 @@ export function AttendanceFilters({ values, onApply, mode = 'students' }: Props)
                         >
                             <ChevronLeft aria-hidden="true" />
                         </Button>
-                        <Input
+                        <DatePicker
                             id={`${id}-date`}
-                            type="date"
                             required
                             min="2000-01-01"
                             max={today}

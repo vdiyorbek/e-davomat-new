@@ -11,6 +11,7 @@ export interface CreateSchoolStudentInput {
   middleName?: string | null;
   gender?: "MALE" | "FEMALE" | null;
   birthDate?: string | null;
+  nationality?: string | null;
   address?: string | null;
   phoneNumber?: string | null;
   mahallaId: number;

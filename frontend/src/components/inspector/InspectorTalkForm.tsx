@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { authorizedPost } from '@/lib/auth-session';
 import { todayInTashkent } from '@/lib/date';
+import { DatePicker } from '@/components/common/DatePicker';
 
 const MAX_PDF_MB = 10;
 const MAX_PDF_SIZE = MAX_PDF_MB * 1024 * 1024;
@@ -111,9 +112,8 @@ export function InspectorTalkForm({ student, defaultDate, onSaved, onCancel }: P
 
             <div className="grid gap-4 sm:grid-cols-2">
                 <Field htmlFor={`${id}-date`} label={t('inspectors.talk.talkDate')} required>
-                    <Input
+                    <DatePicker
                         id={`${id}-date`}
-                        type="date"
                         required
                         max={today}
                         value={talkDate}
@@ -180,9 +180,8 @@ export function InspectorTalkForm({ student, defaultDate, onSaved, onCancel }: P
                 label={`${t('inspectors.talk.followUpDate')} (${t('common.optional')})`}
                 hint={t('inspectors.talk.followUpHint')}
             >
-                <Input
+                <DatePicker
                     id={`${id}-follow`}
-                    type="date"
                     min={talkDate}
                     value={followUpDate}
                     disabled={saving}

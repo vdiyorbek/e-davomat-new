@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { DashboardChild } from '@/types/dashboard';
 import { binFill, formatCount, formatRate, rateBin } from './viz';
+import { Button } from '@/components/ui/button';
 
 /** Eng past / eng yuqori davomatli hududlar (yoki sinflar); bosilsa — ichiga kiradi. */
 export function RankingList({
@@ -29,7 +30,7 @@ export function RankingList({
         <div className="space-y-3">
             <div role="radiogroup" aria-label={t('dashboard.ranking.order')} className="inline-flex rounded-lg border p-0.5 text-xs">
                 {(['worst', 'best'] as const).map((value) => (
-                    <button
+                    <Button variant="link" size="auto"
                         key={value}
                         type="button"
                         role="radio"
@@ -38,7 +39,7 @@ export function RankingList({
                         className={cn('rounded-md px-3 py-1', order === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}
                     >
                         {t(`dashboard.ranking.${value}`)}
-                    </button>
+                    </Button>
                 ))}
             </div>
             {shown.length === 0 ? (
@@ -71,13 +72,13 @@ export function RankingList({
                         return (
                             <li key={item.id}>
                                 {onSelect ? (
-                                    <button
+                                    <Button variant="ghost" size="auto"
                                         type="button"
                                         onClick={() => onSelect(item)}
                                         className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                     >
                                         {content}
-                                    </button>
+                                    </Button>
                                 ) : (
                                     <div className="flex items-center gap-3 px-2 py-1.5">{content}</div>
                                 )}

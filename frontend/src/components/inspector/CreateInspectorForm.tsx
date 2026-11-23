@@ -13,6 +13,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { authorizedGet, authorizedPost } from '@/lib/auth-session';
+import { Label } from '@/components/ui/label';
 
 const MAX_MAHALLAS = 30;
 
@@ -281,14 +282,14 @@ export function CreateInspectorForm({ onCreated, onCancel }: Props) {
                         <ul className="max-h-56 space-y-1 overflow-y-auto rounded-xl border p-2">
                             {visible.map((item) => (
                                 <li key={item.id}>
-                                    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60">
+                                    <Label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60">
                                         <Checkbox
                                             checked={selected.has(item.id)}
                                             disabled={busy}
                                             onCheckedChange={(value) => toggle(item.id, value === true)}
                                         />
                                         <span className="min-w-0 [overflow-wrap:anywhere]">{item.name}</span>
-                                    </label>
+                                    </Label>
                                 </li>
                             ))}
                         </ul>

@@ -24,6 +24,8 @@ interface Props {
     /** `labels` — telefondagi kartalarda yozuvli tugmalar; `icons` — jadvalda faqat ikonka. */
     layout?: 'labels' | 'icons';
     onDetails: (membership: SchoolMembership) => void;
+    /** Qo‘shimcha ma‘lumotlar faqat o‘qituvchilar uchun. */
+    canDetails: boolean;
     canManageAccounts: boolean;
     onAccount: (membership: SchoolMembership) => void;
 }
@@ -45,6 +47,7 @@ export function SchoolMemberActions({
     onEnd,
     onMove,
     onDetails,
+    canDetails,
     layout = 'icons',
     canManageAccounts,
     onAccount,
@@ -77,12 +80,14 @@ export function SchoolMemberActions({
         });
     }
 
-    actions.push({
-        key: 'details',
-        label: t('memberDetails.title'),
-        icon: FilePenLine,
-        onClick: () => onDetails(membership),
-    });
+    if (canDetails) {
+        actions.push({
+            key: 'details',
+            label: t('memberDetails.title'),
+            icon: FilePenLine,
+            onClick: () => onDetails(membership),
+        });
+    }
     if (personId) {
         actions.push({ key: 'view', label: t('members.actions.view'), icon: Eye, to: `/persons/${personId}` });
         if (canEdit) {

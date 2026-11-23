@@ -3,6 +3,8 @@ import type { FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SelectField } from '@/components/common/SelectField';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { ApiError } from '@/lib/api';
 import { authorizedPost } from '@/lib/auth-session';
@@ -35,12 +37,6 @@ interface DistrictFieldProps {
     onChange: (value: string) => void;
 }
 
-const selectClassName =
-    'h-12 w-full min-w-0 rounded-xl border bg-background px-3 ' +
-    'text-base text-foreground outline-none ' +
-    'focus-visible:ring-2 focus-visible:ring-ring ' +
-    'disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm';
-
 function DistrictField({
     regionId,
     value,
@@ -58,11 +54,11 @@ function DistrictField({
 
     return (
         <div className="min-w-0 space-y-2">
-            <label htmlFor={id} className="text-sm font-medium">
+            <Label htmlFor={id}>
                 Tuman / shahar
-            </label>
+            </Label>
 
-            <select
+            <SelectField
                 id={id}
                 value={value}
                 required
@@ -72,32 +68,21 @@ function DistrictField({
                     Boolean(error) ||
                     districts.length === 0
                 }
-                className={selectClassName}
-                onChange={(event) => {
-                    const next = event.target.value;
-
+                placeholder={
+                    loading ? 'Yuklanmoqda…' : 'Tuman yoki shaharni tanlang'
+                }
+                options={districts.map((district) => ({
+                    value: String(district.id),
+                    label: district.name,
+                }))}
+                onValueChange={(next) => {
                     const exists = districts.some(
                         (district) => String(district.id) === next,
                     );
 
                     onChange(exists ? next : '');
                 }}
-            >
-                <option value="">
-                    {loading
-                        ? 'Yuklanmoqda…'
-                        : 'Tuman yoki shaharni tanlang'}
-                </option>
-
-                {districts.map((district) => (
-                    <option
-                        key={district.id}
-                        value={district.id}
-                    >
-                        {district.name}
-                    </option>
-                ))}
-            </select>
+            />
 
             {error && (
                 <div role="alert" className="space-y-2">
@@ -251,14 +236,12 @@ export function CreateSchoolForm({
         >
             <div className="grid min-w-0 gap-5 md:grid-cols-2">
                 <div className="min-w-0 space-y-2">
-                    <label
-                        htmlFor={`${formId}-region`}
-                        className="text-sm font-medium"
-                    >
+                    <Label
+                        htmlFor={`${formId}-region`}>
                         Viloyat
-                    </label>
+                    </Label>
 
-                    <select
+                    <SelectField
                         id={`${formId}-region`}
                         value={regionId}
                         required
@@ -268,25 +251,19 @@ export function CreateSchoolForm({
                             Boolean(regionsError) ||
                             !regions?.length
                         }
-                        className={selectClassName}
-                        onChange={(event) => {
-                            setRegionId(event.target.value);
+                        placeholder={
+                            regionsLoading ? 'Yuklanmoqda…' : 'Viloyatni tanlang'
+                        }
+                        options={(regions ?? []).map((region) => ({
+                            value: String(region.id),
+                            label: region.name,
+                        }))}
+                        onValueChange={(next) => {
+                            setRegionId(next);
                             setDistrictId('');
                             setSubmitError('');
                         }}
-                    >
-                        <option value="">
-                            {regionsLoading
-                                ? 'Yuklanmoqda…'
-                                : 'Viloyatni tanlang'}
-                        </option>
-
-                        {regions?.map((region) => (
-                            <option key={region.id} value={region.id}>
-                                {region.name}
-                            </option>
-                        ))}
-                    </select>
+                    />
 
                     {regionsError && (
                         <div role="alert" className="space-y-2">
@@ -327,31 +304,28 @@ export function CreateSchoolForm({
                     />
                 ) : (
                     <div className="min-w-0 space-y-2">
-                        <label
-                            htmlFor={`${formId}-district`}
-                            className="text-sm font-medium"
-                        >
+                        <Label
+                            htmlFor={`${formId}-district`}>
                             Tuman / shahar
-                        </label>
+                        </Label>
 
-                        <select
+                        <SelectField
                             id={`${formId}-district`}
+                            value=""
                             disabled
-                            className={selectClassName}
-                        >
-                            <option>Avval viloyatni tanlang</option>
-                        </select>
+                            placeholder="Avval viloyatni tanlang"
+                            options={[]}
+                            onValueChange={() => undefined}
+                        />
                     </div>
                 )}
             </div>
 
             <div className="space-y-2">
-                <label
-                    htmlFor={`${formId}-name`}
-                    className="text-sm font-medium"
-                >
+                <Label
+                    htmlFor={`${formId}-name`}>
                     Maktab nomi
-                </label>
+                </Label>
 
                 <Input
                     id={`${formId}-name`}

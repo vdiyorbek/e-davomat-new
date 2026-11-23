@@ -7,13 +7,17 @@ import { initReactI18next } from 'react-i18next';
  * Tarjimalar `locales/<til>/<bo‘lim>.json` ko‘rinishida saqlanadi.
  * Har bir fayl nomi kalitning birinchi qismiga aylanadi:
  *   locales/uz/attendance.json  →  t('attendance.title')
- * Yangi bo‘lim qo‘shish uchun to‘rtala til papkasiga bir xil nomli fayl qo‘shing.
+ * Yangi bo‘lim qo‘shish uchun uz, uz-Cyrl, ru, en papkalariga bir xil nomli fayl qo‘shing.
+ * kk, ky, tg papkalarida yetishmagan kalitlar rus (keyin o‘zbek) tilidan olinadi.
  */
 export const LANGUAGES = [
     { code: 'uz', short: 'UZ', label: 'O‘zbekcha', intl: 'uz-Latn-UZ' },
     { code: 'uz-Cyrl', short: 'ЎЗ', label: 'Ўзбекча', intl: 'uz-Cyrl-UZ' },
     { code: 'ru', short: 'RU', label: 'Русский', intl: 'ru-RU' },
     { code: 'en', short: 'EN', label: 'English', intl: 'en-GB' },
+    { code: 'kk', short: 'KK', label: 'Қазақша', intl: 'kk-KZ' },
+    { code: 'ky', short: 'KY', label: 'Кыргызча', intl: 'ky-KG' },
+    { code: 'tg', short: 'TG', label: 'Тоҷикӣ', intl: 'tg-TJ' },
 ] as const;
 
 export type LanguageCode = (typeof LANGUAGES)[number]['code'];
@@ -47,7 +51,8 @@ void i18n
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
-        fallbackLng: 'uz',
+        // Qozoq, qirg‘iz va tojik tarjimasi yetishmagan joylarda avval rus, keyin o‘zbek tili chiqadi.
+        fallbackLng: { kk: ['ru', 'uz'], ky: ['ru', 'uz'], tg: ['ru', 'uz'], default: ['uz'] },
         supportedLngs: LANGUAGES.map((l) => l.code),
         nonExplicitSupportedLngs: false,
         load: 'currentOnly',

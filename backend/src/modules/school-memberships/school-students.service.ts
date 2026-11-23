@@ -130,6 +130,7 @@ export class SchoolStudentsService {
               middleName: dto.middleName ?? null,
               gender: dto.gender ?? null,
               birthDate: dto.birthDate ?? null,
+              nationality: dto.nationality ?? null,
               address: dto.address ?? null,
               phoneNumber: dto.phoneNumber ?? null,
               mahallaId: dto.mahallaId,

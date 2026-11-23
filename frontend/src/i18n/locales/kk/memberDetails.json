@@ -1,0 +1,92 @@
+{
+  "fields": {
+    "studentNumber": "Оқушы нөмірі",
+    "admissionOrderNumber": "Қабылдау бұйрығының нөмірі",
+    "educationLanguage": "Оқу тілі",
+    "educationForm": "Оқу түрі",
+    "employeeNumber": "Табель нөмірі",
+    "position": "Лауазымы",
+    "employmentType": "Жұмыс түрі",
+    "qualificationCategory": "Біліктілік санаты",
+    "specialization": "Мамандығы",
+    "educationLevel": "Білімі",
+    "hireOrderNumber": "Жұмысқа қабылдау бұйрығы"
+  },
+  "placeholders": {
+    "position": "Математика мұғалімі",
+    "specialization": "Математика"
+  },
+  "options": {
+    "educationLanguage": {
+      "UZ": "Өзбек",
+      "RU": "Орыс",
+      "KK": "Қарақалпақ",
+      "TJ": "Тәжік",
+      "EN": "Ағылшын",
+      "OTHER": "Басқа"
+    },
+    "educationForm": {
+      "FULL_TIME": "Күндізгі",
+      "EVENING": "Кешкі",
+      "PART_TIME": "Сырттай",
+      "DISTANCE": "Қашықтан",
+      "DUAL": "Дуалды оқыту"
+    },
+    "employmentType": {
+      "PRIMARY": "Негізгі жұмыс орны",
+      "PART_TIME": "Қоса атқару",
+      "HOURLY": "Сағаттық",
+      "TEMPORARY": "Уақытша"
+    },
+    "qualificationCategory": {
+      "OLIY": "Жоғары санат",
+      "BIRINCHI": "Бірінші санат",
+      "IKKINCHI": "Екінші санат",
+      "MUTAXASSIS": "Маман",
+      "TOIFASIZ": "Санатсыз"
+    },
+    "educationLevel": {
+      "SECONDARY": "Орта",
+      "SECONDARY_SPECIAL": "Орта арнаулы",
+      "BACHELOR": "Бакалавр",
+      "MASTER": "Магистр",
+      "PHD": "Философия докторы (PhD)",
+      "DSC": "Ғылым докторы (DSc)"
+    }
+  },
+  "legacyValue": "{{value}} (бұрынғы мән)",
+  "notSpecified": "Көрсетілмеген",
+  "choose": "Таңдаңыз",
+  "emptyHint": "Қосымша мәліметтер әлі толтырылмаған. Төмендегі өрістерді толтырып, сақтаңыз.",
+  "saveFailed": "Деректерді сақтау мүмкін болмады.",
+  "save": "Деректерді сақтау",
+  "title": "Қосымша мәліметтер",
+  "studentTitle": "Оқушының қосымша мәліметтері",
+  "teacherTitle": "Мұғалімнің қосымша мәліметтері",
+  "saved": "Қосымша мәліметтер сақталды.",
+  "studentAccount": "Оқушы аккаунты",
+  "teacherAccount": "Мұғалім аккаунты",
+  "accountDescription": "Пайдаланушы аккаунтының күйін тексеру немесе жаңа аккаунт жасау.",
+  "detailsDescription": "Адамның мектепке мүшелігі туралы қосымша мәліметтерді енгізу және өңдеу.",
+  "account": {
+    "personMissing": "Адам туралы дерек жоқ",
+    "type": "Аккаунт түрі: {{role}}",
+    "loginInvalid": "Логин 3–50 кіші латын әрпінен, саннан, нүктеден немесе астын сызудан тұруы керек.",
+    "passwordLength": "Құпиясөз 12-ден 128 таңбаға дейін болуы керек.",
+    "passwordMismatch": "Құпиясөздер сәйкес келмейді.",
+    "createFailed": "Аккаунт жасау мүмкін болмады.",
+    "exists": "Бұл адамның аккаунты бұрыннан бар",
+    "login": "Логин",
+    "role": "Рөлі",
+    "status": "Күйі",
+    "active": "Белсенді",
+    "blocked": "Бұғатталған",
+    "loginHint": "3–50 таңба: a–z, 0–9, нүкте және астын сызу",
+    "password": "Бастапқы құпиясөз",
+    "passwordHint": "Кемінде 12 таңба. PINFL немесе туған күнді қолданбаңыз.",
+    "confirm": "Құпиясөзді растау",
+    "roleNote": "Аккаунт рөлі (оқушы немесе мұғалім) мектептегі мүшелік бойынша автоматты анықталады.",
+    "create": "Аккаунт жасау",
+    "creating": "Жасалуда…"
+  }
+}

@@ -12,7 +12,6 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -22,6 +21,8 @@ import { academicYearFor, academicYearOptions, formatDate, isValidAcademicYear, 
 import { cn } from '@/lib/utils';
 import { HolidaysPage } from '@/pages/attendance/HolidaysPage';
 import type { School } from '@/types/school';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/common/DatePicker';
 
 type MembershipType = 'STUDENT' | 'TEACHER';
 
@@ -139,7 +140,7 @@ function WeeklySchedules({ schoolId, academicYear }: { schoolId: number; academi
                                     {WEEK.map((index) => {
                                         const checked = (workingDaysMask & (1 << index)) !== 0;
                                         return (
-                                            <label
+                                            <Label
                                                 key={index}
                                                 className={cn(
                                                     'flex cursor-pointer flex-col items-center gap-2 rounded-xl border px-2 py-2.5 text-xs font-semibold transition-colors',
@@ -152,7 +153,7 @@ function WeeklySchedules({ schoolId, academicYear }: { schoolId: number; academi
                                                     aria-label={weekdayName(index)}
                                                 />
                                                 {weekdayName(index, 'short')}
-                                            </label>
+                                            </Label>
                                         );
                                     })}
                                 </div>
@@ -168,9 +169,8 @@ function WeeklySchedules({ schoolId, academicYear }: { schoolId: number; academi
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
-                                    <Input
+                                    <DatePicker
                                         id={`${id}-start`}
-                                        type="date"
                                         value={effectiveFrom}
                                         min={`${academicYear.slice(0, 4)}-09-01`}
                                         max={`${academicYear.slice(5)}-08-31`}
@@ -179,9 +179,8 @@ function WeeklySchedules({ schoolId, academicYear }: { schoolId: number; academi
                                     />
                                 </Field>
                                 <Field htmlFor={`${id}-end`} label={t('membership.endDate')}>
-                                    <Input
+                                    <DatePicker
                                         id={`${id}-end`}
-                                        type="date"
                                         value={effectiveTo}
                                         min={effectiveFrom}
                                         max={`${academicYear.slice(5)}-08-31`}

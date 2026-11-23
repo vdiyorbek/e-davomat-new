@@ -82,7 +82,15 @@
     "chooseSchool": "Ro‘yxatdan maktabni tanlang.",
     "startDate": "Boshlanish sanasini to‘g‘ri kiriting.",
     "endDate": "Tugash sanasini to‘g‘ri kiriting.",
-    "chooseMahalla": "Yashash mahallasini tanlang."
+    "chooseMahalla": "Yashash mahallasini tanlang.",
+    "needMiddleName": "Otasining ismini kiriting.",
+    "needGender": "Jinsini tanlang.",
+    "needBirthDate": "Tug‘ilgan sanani kiriting.",
+    "needNationality": "Millatini kiriting.",
+    "needAddress": "Yashash manzilini kiriting.",
+    "needPhoto": "O‘quvchining rasmini yuklang.",
+    "needGuardian": "Kamida ota yoki onaning familiyasi, ismi va telefon raqamini kiriting.",
+    "guardianIncomplete": "Ota yoki onaning familiyasi, ismi va telefon raqamini to‘liq kiriting (yoki butunlay bo‘sh qoldiring)."
   },
   "create": {
     "description": "Avval PNFL bo‘yicha tizimda shaxs bor-yo‘qligi tekshiriladi.",
@@ -113,7 +121,8 @@
     "uncertain": "Biriktirish natijasini tasdiqlab bo‘lmadi. Oynani yoping va ro‘yxatni yangilab tekshiring. Shaxsni qaytadan yaratish shart emas.",
     "photoUncertain": "Rasm yuklash natijasini tasdiqlab bo‘lmadi. Shaxs yozuvi mavjud, lekin maktabga biriktirish hali bajarilmadi. Rasmni qayta yuklash mumkin.",
     "existsInScope": "Bu shaxs allaqachon sizning doirangizda mavjud. Ma’lumotlarini o‘zgartirish yoki rasm yuklash uchun uning sahifasini oching.",
-    "studentPhotoFailed": "O‘quvchi yaratildi, lekin rasm yuklanmadi. Oynani yoping va o‘quvchi sahifasidan rasmni qayta yuklang."
+    "studentPhotoFailed": "O‘quvchi yaratildi, lekin rasm yuklanmadi. Oynani yoping va o‘quvchi sahifasidan rasmni qayta yuklang.",
+    "guardiansFailed": "O‘quvchi saqlandi, lekin ota-ona ma’lumotini saqlab bo‘lmadi. O‘quvchi sahifasidan qayta kiriting."
   },
   "import": {
     "button": "Excel orqali yuklash",

@@ -4,7 +4,6 @@ import type { TFunction } from 'i18next';
 
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useInterval } from '@/hooks/useInterval';
@@ -12,6 +11,7 @@ import { formatDateTime, todayInTashkent } from '@/lib/date';
 import { cn } from '@/lib/utils';
 
 import { StatTile } from './StatTile';
+import { DatePicker } from '@/components/common/DatePicker';
 
 type TimelineStatus = 'ONLINE' | 'OFFLINE' | 'UNKNOWN';
 
@@ -98,8 +98,7 @@ export function TerminalStatusTimeline({ terminalId }: { terminalId: number }) {
                             {t('terminals.uptime.today')}
                         </Button>
                     )}
-                    <Input
-                        type="date"
+                    <DatePicker
                         aria-label={t('terminals.uptime.date')}
                         value={date || today}
                         max={today}

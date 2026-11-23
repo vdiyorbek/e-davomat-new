@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 
 import { humanLag } from './push-shared';
 import type { ActivityResponse, Source } from './push-shared';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DatePicker } from '@/components/common/DatePicker';
 
 const SOURCE_TONE: Record<Source, StatusTone> = { PUSH: 'info', AUTO_PULL: 'warning', MANUAL_PULL: 'primary' };
 const PAGE_SIZE = 20;
@@ -105,10 +107,10 @@ export function PushJournal() {
                             />
                         </Field>
                         <Field htmlFor="push-activity-from" label={t('syncHistory.filters.dateFrom')}>
-                            <Input id="push-activity-from" type="date" max={today} value={dateFromInput} onChange={(event) => setDateFromInput(event.target.value)} className="bg-background" />
+                            <DatePicker id="push-activity-from" max={today} value={dateFromInput} onChange={(event) => setDateFromInput(event.target.value)} className="bg-background" />
                         </Field>
                         <Field htmlFor="push-activity-to" label={t('syncHistory.filters.dateTo')}>
-                            <Input id="push-activity-to" type="date" max={today} value={dateToInput} onChange={(event) => setDateToInput(event.target.value)} className="bg-background" />
+                            <DatePicker id="push-activity-to" max={today} value={dateToInput} onChange={(event) => setDateToInput(event.target.value)} className="bg-background" />
                         </Field>
                         <div className="flex gap-2 sm:col-span-2 lg:col-span-1">
                             <Button type="submit" className="flex-1 lg:flex-none">
@@ -149,50 +151,50 @@ export function PushJournal() {
                     ) : (
                         <>
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[820px] text-sm">
-                                    <thead>
-                                        <tr className="text-left text-xs text-muted-foreground">
-                                            <th className="py-2 pr-3 font-medium">{t('syncHistory.push.table.hour')}</th>
-                                            <th className="py-2 pr-3 font-medium">{t('syncHistory.push.table.terminal')}</th>
-                                            <th className="py-2 pr-3 font-medium">{t('syncHistory.push.table.source')}</th>
-                                            <th className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.received')}</th>
-                                            <th className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.inserted')}</th>
-                                            <th className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.duplicates')}</th>
-                                            <th className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.photos')}</th>
-                                            <th className="py-2 font-medium">{t('syncHistory.push.table.lag')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="tabular-nums">
+                                <Table className="w-full min-w-[820px] text-sm">
+                                    <TableHeader>
+                                        <TableRow className="text-left text-xs text-muted-foreground">
+                                            <TableHead className="py-2 pr-3 font-medium">{t('syncHistory.push.table.hour')}</TableHead>
+                                            <TableHead className="py-2 pr-3 font-medium">{t('syncHistory.push.table.terminal')}</TableHead>
+                                            <TableHead className="py-2 pr-3 font-medium">{t('syncHistory.push.table.source')}</TableHead>
+                                            <TableHead className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.received')}</TableHead>
+                                            <TableHead className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.inserted')}</TableHead>
+                                            <TableHead className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.duplicates')}</TableHead>
+                                            <TableHead className="py-2 pr-3 text-right font-medium">{t('syncHistory.push.table.photos')}</TableHead>
+                                            <TableHead className="py-2 font-medium">{t('syncHistory.push.table.lag')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="tabular-nums">
                                         {items.map((row) => (
-                                            <tr key={`${row.terminalId}-${row.source}-${row.hourStart}`} className="border-t">
-                                                <td className="py-2 pr-3 whitespace-nowrap">{formatDateTime(row.hourStart).slice(0, 17)}</td>
-                                                <td className="py-2 pr-3">
+                                            <TableRow key={`${row.terminalId}-${row.source}-${row.hourStart}`} className="border-t">
+                                                <TableCell className="py-2 pr-3 whitespace-nowrap">{formatDateTime(row.hourStart).slice(0, 17)}</TableCell>
+                                                <TableCell className="py-2 pr-3">
                                                     <span className="font-medium">{row.terminalName ?? `#${row.terminalId}`}</span>
                                                     <span className="block text-xs text-muted-foreground">
                                                         #{row.terminalId}
                                                         {row.schoolName ? ` · ${row.schoolName}` : ''}
                                                     </span>
-                                                </td>
-                                                <td className="py-2 pr-3">
+                                                </TableCell>
+                                                <TableCell className="py-2 pr-3">
                                                     <StatusBadge tone={SOURCE_TONE[row.source]} dot={false}>
                                                         {t(`syncHistory.push.source.${row.source}`)}
                                                     </StatusBadge>
                                                     {row.source !== 'PUSH' && row.runs > 0 && (
                                                         <span className="ml-1 text-xs text-muted-foreground">×{row.runs}</span>
                                                     )}
-                                                </td>
-                                                <td className="py-2 pr-3 text-right">{formatNumber(row.received)}</td>
-                                                <td className="py-2 pr-3 text-right font-semibold">{formatNumber(row.inserted)}</td>
-                                                <td className="py-2 pr-3 text-right text-muted-foreground">{formatNumber(row.duplicates)}</td>
-                                                <td className="py-2 pr-3 text-right">
+                                                </TableCell>
+                                                <TableCell className="py-2 pr-3 text-right">{formatNumber(row.received)}</TableCell>
+                                                <TableCell className="py-2 pr-3 text-right font-semibold">{formatNumber(row.inserted)}</TableCell>
+                                                <TableCell className="py-2 pr-3 text-right text-muted-foreground">{formatNumber(row.duplicates)}</TableCell>
+                                                <TableCell className="py-2 pr-3 text-right">
                                                     {formatNumber(row.withPicture)}
                                                     <span className="text-muted-foreground"> / {formatNumber(row.withoutPicture)}</span>
-                                                </td>
-                                                <td className="py-2">{row.source === 'PUSH' ? lagText(row.maxLagSeconds) : '—'}</td>
-                                            </tr>
+                                                </TableCell>
+                                                <TableCell className="py-2">{row.source === 'PUSH' ? lagText(row.maxLagSeconds) : '—'}</TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
                             <Pagination
                                 page={list.data.pagination.page}

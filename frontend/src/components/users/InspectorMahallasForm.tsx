@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { authorizedGet, authorizedPut } from '@/lib/auth-session';
+import { Label } from '@/components/ui/label';
 
 const MAX_MAHALLAS = 30;
 
@@ -144,14 +145,14 @@ export function InspectorMahallasForm({ user, onUpdated, onCancel }: Props) {
                 <ul className="max-h-72 space-y-1 overflow-y-auto rounded-xl border p-2">
                     {visible.map((item) => (
                         <li key={item.id}>
-                            <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60">
+                            <Label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60">
                                 <Checkbox
                                     checked={selected.has(item.id)}
                                     disabled={busy}
                                     onCheckedChange={(value) => toggle(item.id, value === true)}
                                 />
                                 <span className="min-w-0 [overflow-wrap:anywhere]">{item.name}</span>
-                            </label>
+                            </Label>
                         </li>
                     ))}
                 </ul>

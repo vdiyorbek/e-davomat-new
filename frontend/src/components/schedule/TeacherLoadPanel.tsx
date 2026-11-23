@@ -93,7 +93,7 @@ export function TeacherLoadPanel({ schoolId, academicYear }: { schoolId: number;
                     const expanded = open === teacher.teacherMembershipId;
                     return (
                         <li key={teacher.teacherMembershipId} className="rounded-2xl border bg-card shadow-sm">
-                            <button
+                            <Button variant="ghost" size="auto"
                                 type="button"
                                 aria-expanded={expanded}
                                 onClick={() => setOpen(expanded ? null : teacher.teacherMembershipId)}
@@ -123,7 +123,7 @@ export function TeacherLoadPanel({ schoolId, academicYear }: { schoolId: number;
                                     </StatusBadge>
                                 )}
                                 <ChevronDown aria-hidden="true" className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
-                            </button>
+                            </Button>
                             {expanded && (
                                 <div className="divide-y border-t">
                                     {teacher.assignments.map((assignment) => (

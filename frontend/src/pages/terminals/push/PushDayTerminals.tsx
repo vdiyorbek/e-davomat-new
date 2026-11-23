@@ -10,6 +10,7 @@ import { formatDate, formatNumber } from '@/lib/date';
 
 import { humanLag, percent } from './push-shared';
 import type { DayResponse } from './push-shared';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type Sort = 'received' | 'noPicture' | 'lag' | 'name';
 
@@ -78,35 +79,35 @@ export function PushDayTerminals({ data, date }: { data: DayResponse | null; dat
                 </div>
             ) : (
                 <div className="max-h-[34rem] overflow-auto">
-                    <table className="w-full min-w-[860px] text-sm">
-                        <thead className="sticky top-0 bg-card text-left text-xs text-muted-foreground">
-                            <tr className="border-b">
-                                <th className="py-2.5 pr-3 pl-4 font-medium">{t('syncHistory.push.table.terminal')}</th>
-                                <th className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.received')}</th>
-                                <th className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.inserted')}</th>
-                                <th className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.duplicates')}</th>
-                                <th className="py-2.5 pr-3 font-medium">{t('syncHistory.push.day.withPicture')}</th>
-                                <th className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.pull')}</th>
-                                <th className="py-2.5 pr-4 font-medium">{t('syncHistory.push.byTerminal.lag')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="tabular-nums">
+                    <Table className="w-full min-w-[860px] text-sm">
+                        <TableHeader className="sticky top-0 bg-card text-left text-xs text-muted-foreground">
+                            <TableRow className="border-b">
+                                <TableHead className="py-2.5 pr-3 pl-4 font-medium">{t('syncHistory.push.table.terminal')}</TableHead>
+                                <TableHead className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.received')}</TableHead>
+                                <TableHead className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.inserted')}</TableHead>
+                                <TableHead className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.duplicates')}</TableHead>
+                                <TableHead className="py-2.5 pr-3 font-medium">{t('syncHistory.push.day.withPicture')}</TableHead>
+                                <TableHead className="py-2.5 pr-3 text-right font-medium">{t('syncHistory.push.day.pull')}</TableHead>
+                                <TableHead className="py-2.5 pr-4 font-medium">{t('syncHistory.push.byTerminal.lag')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody className="tabular-nums">
                             {rows.map((row) => {
                                 const pictures = row.push.withPicture + row.push.withoutPicture;
                                 const photoPercent = percent(row.push.withPicture, pictures);
                                 return (
-                                    <tr key={row.terminalId} className="border-b last:border-0 hover:bg-muted/30">
-                                        <td className="py-2.5 pr-3 pl-4">
+                                    <TableRow key={row.terminalId} className="border-b last:border-0 hover:bg-muted/30">
+                                        <TableCell className="py-2.5 pr-3 pl-4">
                                             <span className="block font-medium">{row.terminalName ?? `#${row.terminalId}`}</span>
                                             <span className="block text-xs text-muted-foreground">
                                                 #{row.terminalId}
                                                 {row.schoolName ? ` · ${row.schoolName}` : ''}
                                             </span>
-                                        </td>
-                                        <td className="py-2.5 pr-3 text-right">{formatNumber(row.push.received)}</td>
-                                        <td className="py-2.5 pr-3 text-right font-semibold">{formatNumber(row.push.inserted)}</td>
-                                        <td className="py-2.5 pr-3 text-right text-muted-foreground">{formatNumber(row.push.duplicates)}</td>
-                                        <td className="py-2.5 pr-3">
+                                        </TableCell>
+                                        <TableCell className="py-2.5 pr-3 text-right">{formatNumber(row.push.received)}</TableCell>
+                                        <TableCell className="py-2.5 pr-3 text-right font-semibold">{formatNumber(row.push.inserted)}</TableCell>
+                                        <TableCell className="py-2.5 pr-3 text-right text-muted-foreground">{formatNumber(row.push.duplicates)}</TableCell>
+                                        <TableCell className="py-2.5 pr-3">
                                             {photoPercent === null ? (
                                                 <span className="text-muted-foreground">—</span>
                                             ) : (
@@ -117,14 +118,14 @@ export function PushDayTerminals({ data, date }: { data: DayResponse | null; dat
                                                     <span className="w-9 text-right text-xs">{photoPercent}%</span>
                                                 </span>
                                             )}
-                                        </td>
-                                        <td className="py-2.5 pr-3 text-right">{row.pull.inserted > 0 ? formatNumber(row.pull.inserted) : '—'}</td>
-                                        <td className="py-2.5 pr-4 text-xs">{row.push.received > 0 ? humanLag(row.push.maxLagSeconds, t) : '—'}</td>
-                                    </tr>
+                                        </TableCell>
+                                        <TableCell className="py-2.5 pr-3 text-right">{row.pull.inserted > 0 ? formatNumber(row.pull.inserted) : '—'}</TableCell>
+                                        <TableCell className="py-2.5 pr-4 text-xs">{row.push.received > 0 ? humanLag(row.push.maxLagSeconds, t) : '—'}</TableCell>
+                                    </TableRow>
                                 );
                             })}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             )}
         </Card>

@@ -12,6 +12,7 @@ import { authorizedPatch } from '@/lib/auth-session';
 import { todayInTashkent } from '@/lib/date';
 import { TALK_RESULTS, TALK_SPOKE_WITH } from '@/types/inspector';
 import type { InspectorTalkItem } from '@/types/inspector';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface Props {
     talk: InspectorTalkItem;
@@ -66,9 +67,8 @@ export function InspectorTalkEditForm({ talk, onSaved, onCancel }: Props) {
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
                 <Field htmlFor={`${id}-date`} label={t('inspectors.talk.talkDate')} required>
-                    <Input
+                    <DatePicker
                         id={`${id}-date`}
-                        type="date"
                         required
                         max={today}
                         value={talkDate}
@@ -131,9 +131,8 @@ export function InspectorTalkEditForm({ talk, onSaved, onCancel }: Props) {
                 label={`${t('inspectors.talk.followUpDate')} (${t('common.optional')})`}
                 hint={t('inspectors.talk.followUpHint')}
             >
-                <Input
+                <DatePicker
                     id={`${id}-follow`}
-                    type="date"
                     min={talkDate}
                     value={followUpDate}
                     disabled={saving}

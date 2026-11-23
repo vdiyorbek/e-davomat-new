@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { authorizedPost } from '@/lib/auth-session';
 import { todayInTashkent } from '@/lib/date';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface Props {
     terminalId: number;
@@ -64,9 +64,8 @@ export function StartTerminalSyncForm({ terminalId, isActive, onStarted }: Props
                 hint={isActive ? t('terminals.sync.hint') : t('terminals.sync.inactive')}
                 error={error || undefined}
             >
-                <Input
+                <DatePicker
                     id={inputId}
-                    type="date"
                     required
                     min="2000-01-01"
                     max={todayInTashkent()}

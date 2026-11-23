@@ -8,12 +8,12 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { SuccessNotice } from '@/components/common/states';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authorizedPost } from '@/lib/auth-session';
 import { formatDate, todayInTashkent } from '@/lib/date';
 import { BulkTerminalClear } from './BulkTerminalClear';
 import { BulkPersonSyncPanel } from './BulkPersonSyncPanel';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface PreviewResult {
     terminalId: number;
@@ -198,9 +198,8 @@ export function TerminalBulkActions({ terminalIds, onSubmitted }: Props) {
                         label={t('terminals.bulk.syncTime.label')}
                         hint={t('terminals.bulk.syncTime.hint')}
                     >
-                        <Input
+                        <DatePicker
                             id={dateId}
-                            type="date"
                             min="2000-01-01"
                             max={todayInTashkent()}
                             value={syncStartDate}

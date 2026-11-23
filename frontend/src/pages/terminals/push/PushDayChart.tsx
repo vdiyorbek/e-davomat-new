@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { addDays, formatDate, formatNumber, todayInTashkent } from '@/lib/date';
 
 import { percent } from './push-shared';
 import type { DayResponse } from './push-shared';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface Props {
     date: string;
@@ -53,8 +53,7 @@ export function PushDayChart({ date, onDateChange, data, loading, error, onRetry
                     <Button type="button" variant="outline" size="icon" aria-label={t('syncHistory.push.day.prev')} onClick={() => onDateChange(addDays(date, -1))}>
                         <ChevronLeft aria-hidden="true" />
                     </Button>
-                    <Input
-                        type="date"
+                    <DatePicker
                         value={date}
                         max={today}
                         aria-label={t('syncHistory.push.day.date')}

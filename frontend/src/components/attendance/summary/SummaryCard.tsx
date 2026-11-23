@@ -6,6 +6,7 @@ import { bandBarClass, bandTone } from '@/lib/attendance-summary';
 import { formatNumber } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { SummaryItem, SummaryMembershipType } from '@/types/attendance-summary';
+import { Button } from '@/components/ui/button';
 
 interface Props {
     item: SummaryItem;
@@ -80,7 +81,7 @@ export function SummaryCard({ item, title, subtitle, membershipType, actionLabel
             </dl>
 
             {/* Butun karta bosiladigan bo‘lishi uchun tugma kartani to‘liq qoplaydi. */}
-            <button
+            <Button variant="link" size="auto"
                 type="button"
                 onClick={onOpen}
                 className="mt-auto inline-flex w-fit items-center gap-1 text-xs font-semibold text-primary outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-3 focus-visible:after:ring-ring/50"
@@ -88,7 +89,7 @@ export function SummaryCard({ item, title, subtitle, membershipType, actionLabel
             >
                 {actionLabel}
                 <ChevronRight aria-hidden="true" className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </button>
+            </Button>
         </article>
     );
 }

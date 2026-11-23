@@ -3,9 +3,12 @@ import { History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { authorizedGet, authorizedPost } from '@/lib/auth-session';
 import { addDays, formatDate, formatDateTime, todayInTashkent } from '@/lib/date';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/common/DatePicker';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 interface BackfillDay {
     date: string;
@@ -31,6 +34,7 @@ interface BackfillStatus {
  */
 export function TerminalEventBackfill({ terminalId }: { terminalId: number }) {
     const { t } = useTranslation();
+    const { confirm, dialog } = useConfirm();
     const today = todayInTashkent();
     const [from, setFrom] = useState(addDays(today, -7));
     const [to, setTo] = useState(today);
@@ -65,7 +69,7 @@ export function TerminalEventBackfill({ terminalId }: { terminalId: number }) {
 
     async function start() {
         if (busy || running) return;
-        if (!window.confirm(t('terminals.backfill.confirm', { from: formatDate(from), to: formatDate(to) }))) return;
+        if (!(await confirm({ title: t('terminals.backfill.confirm', { from: formatDate(from), to: formatDate(to) }) }))) return;
         setBusy(true);
         setError('');
         try {
@@ -79,6 +83,7 @@ export function TerminalEventBackfill({ terminalId }: { terminalId: number }) {
 
     return (
         <section aria-labelledby={`backfill-${terminalId}`} className="space-y-3 rounded-xl border p-4">
+            {dialog}
             <div className="flex items-center gap-2">
                 <History aria-hidden="true" className="size-4 text-primary" />
                 <h3 id={`backfill-${terminalId}`} className="font-heading text-sm font-bold">
@@ -88,14 +93,14 @@ export function TerminalEventBackfill({ terminalId }: { terminalId: number }) {
             <p className="text-xs text-muted-foreground">{t('terminals.backfill.description')}</p>
 
             <div className="flex flex-wrap items-end gap-2">
-                <label className="space-y-1 text-xs text-muted-foreground">
+                <Label className="space-y-1 text-xs text-muted-foreground">
                     {t('terminals.backfill.from')}
-                    <Input type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} className="h-9 w-auto" />
-                </label>
-                <label className="space-y-1 text-xs text-muted-foreground">
+                    <DatePicker value={from} max={to} onChange={(event) => setFrom(event.target.value)} className="h-9 w-auto" />
+                </Label>
+                <Label className="space-y-1 text-xs text-muted-foreground">
                     {t('terminals.backfill.to')}
-                    <Input type="date" value={to} min={from} max={today} onChange={(event) => setTo(event.target.value)} className="h-9 w-auto" />
-                </label>
+                    <DatePicker value={to} min={from} max={today} onChange={(event) => setTo(event.target.value)} className="h-9 w-auto" />
+                </Label>
                 <Button type="button" size="sm" onClick={() => void start()} disabled={busy || running || !from || !to || from > to}>
                     {running ? t('terminals.backfill.running') : t('terminals.backfill.start')}
                 </Button>
@@ -115,34 +120,34 @@ export function TerminalEventBackfill({ terminalId }: { terminalId: number }) {
                             : t(`terminals.backfill.state.${status.state}`, { time: formatDateTime(status.updatedAt) })}
                     </p>
                     {status.days.length > 0 && (
-                        <table className="w-full text-xs tabular-nums">
-                            <thead>
-                                <tr className="text-left text-muted-foreground">
-                                    <th className="py-1 font-medium">{t('terminals.backfill.columns.date')}</th>
-                                    <th className="py-1 text-right font-medium">{t('terminals.backfill.columns.fetched')}</th>
-                                    <th className="py-1 text-right font-medium">{t('terminals.backfill.columns.inserted')}</th>
-                                    <th className="py-1 text-right font-medium">{t('terminals.backfill.columns.duplicates')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table className="w-full text-xs tabular-nums">
+                            <TableHeader>
+                                <TableRow className="text-left text-muted-foreground">
+                                    <TableHead className="py-1 font-medium">{t('terminals.backfill.columns.date')}</TableHead>
+                                    <TableHead className="py-1 text-right font-medium">{t('terminals.backfill.columns.fetched')}</TableHead>
+                                    <TableHead className="py-1 text-right font-medium">{t('terminals.backfill.columns.inserted')}</TableHead>
+                                    <TableHead className="py-1 text-right font-medium">{t('terminals.backfill.columns.duplicates')}</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {status.days.map((day) => (
-                                    <tr key={day.date} className="border-t">
-                                        <td className="py-1">{formatDate(day.date)}</td>
+                                    <TableRow key={day.date} className="border-t">
+                                        <TableCell className="py-1">{formatDate(day.date)}</TableCell>
                                         {day.error ? (
-                                            <td colSpan={3} className="py-1 text-destructive">
+                                            <TableCell colSpan={3} className="py-1 text-destructive">
                                                 {day.error}
-                                            </td>
+                                            </TableCell>
                                         ) : (
                                             <>
-                                                <td className="py-1 text-right">{day.fetched}</td>
-                                                <td className="py-1 text-right font-semibold">{day.inserted}</td>
-                                                <td className="py-1 text-right text-muted-foreground">{day.duplicates}</td>
+                                                <TableCell className="py-1 text-right">{day.fetched}</TableCell>
+                                                <TableCell className="py-1 text-right font-semibold">{day.inserted}</TableCell>
+                                                <TableCell className="py-1 text-right text-muted-foreground">{day.duplicates}</TableCell>
                                             </>
                                         )}
-                                    </tr>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     )}
                 </div>
             )}

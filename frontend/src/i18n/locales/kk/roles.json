@@ -1,0 +1,10 @@
+{
+  "USER": "Жеке кабинет",
+  "SUPER_ADMIN": "Бас әкімші",
+  "REGION_ADMIN": "Облыс әкімшісі",
+  "DISTRICT_ADMIN": "Аудан әкімшісі",
+  "SCHOOL_ADMIN": "Мектеп әкімшісі",
+  "TEACHER": "Мұғалім",
+  "STUDENT": "Оқушы",
+  "MAHALLA_INSPECTOR": "Махалла учаскелік инспекторы"
+}

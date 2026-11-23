@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatNumber } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export type KpiTone = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 
@@ -71,14 +72,14 @@ export function KpiCard({
                 active && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
             )}
         >
-            <button
+            <Button variant="ghost" size="auto"
                 type="button"
                 onClick={onClick}
                 aria-pressed={active}
                 className="w-full rounded-[inherit] p-4 text-left outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
             >
                 {content}
-            </button>
+            </Button>
         </Card>
     );
 }

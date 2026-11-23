@@ -21,6 +21,8 @@ import type { School } from '@/types/school';
 
 import { LessonScheduleActions } from './LessonScheduleActions';
 import { SCHOOL_DAYS, shortTime } from './schedule-utils';
+import { DatePicker } from '@/components/common/DatePicker';
+import { TimePicker } from '@/components/common/TimePicker';
 
 interface SchoolClass {
     id: number;
@@ -192,15 +194,14 @@ function ClassSchedule({
                                     />
                                 </Field>
                                 <Field htmlFor={`${id}-start-time`} label={t('schedule.startTime')} required>
-                                    <Input id={`${id}-start-time`} type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} required />
+                                    <TimePicker id={`${id}-start-time`} value={startTime} onChange={(event) => setStartTime(event.target.value)} required />
                                 </Field>
                                 <Field htmlFor={`${id}-end-time`} label={t('schedule.endTime')} required>
-                                    <Input id={`${id}-end-time`} type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} required />
+                                    <TimePicker id={`${id}-end-time`} value={endTime} onChange={(event) => setEndTime(event.target.value)} required />
                                 </Field>
                                 <Field htmlFor={`${id}-start-date`} label={t('schedule.validFrom')} required>
-                                    <Input
+                                    <DatePicker
                                         id={`${id}-start-date`}
-                                        type="date"
                                         min={yearMin}
                                         max={yearMax}
                                         value={startDate}
@@ -209,9 +210,8 @@ function ClassSchedule({
                                     />
                                 </Field>
                                 <Field htmlFor={`${id}-end-date`} label={`${t('schedule.validTo')} (${t('common.optional')})`}>
-                                    <Input
+                                    <DatePicker
                                         id={`${id}-end-date`}
-                                        type="date"
                                         min={startDate}
                                         max={yearMax}
                                         value={endDate}
@@ -259,9 +259,8 @@ function ClassSchedule({
                     </Tabs>
                     {viewMode === 'date' && (
                         <Field htmlFor={`${id}-history-date`} label={t('schedule.view.dateLabel')} className="sm:w-56">
-                            <Input
+                            <DatePicker
                                 id={`${id}-history-date`}
-                                type="date"
                                 min={yearMin}
                                 max={yearMax}
                                 value={selectedDate}

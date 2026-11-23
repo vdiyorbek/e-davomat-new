@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { formatNumber } from '@/lib/date';
 import { getPageItems, PAGE_SIZE_OPTIONS } from '@/lib/pagination';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 interface PaginationProps {
     page: number;
@@ -87,9 +88,9 @@ function JumpToPage({ pages, onPageChange }: { pages: number; onPageChange: (pag
                 submit();
             }}
         >
-            <label htmlFor={id} className="text-sm whitespace-nowrap text-muted-foreground max-sm:sr-only">
+            <Label htmlFor={id} className="text-sm whitespace-nowrap text-muted-foreground @max-md:sr-only">
                 {t('common.pagination.jump')}
-            </label>
+            </Label>
             <Input
                 id={id}
                 type="number"
@@ -99,7 +100,7 @@ function JumpToPage({ pages, onPageChange }: { pages: number; onPageChange: (pag
                 value={value}
                 onChange={(event) => setValue(event.target.value)}
                 placeholder={`1–${pages}`}
-                className="h-8 w-16 text-center tabular-nums sm:h-9 sm:w-24 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="h-8 w-16 text-center tabular-nums @md:h-9 @md:w-24 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
         </form>
     );
@@ -138,21 +139,19 @@ export function Pagination({
         ) : null;
 
     return (
+        <div className={cn('@container', className)}>
         <nav
             aria-label={label ?? t('common.pagination.label')}
-            className={cn(
-                'flex flex-col gap-3 border-t pt-4 md:flex-row md:items-center md:justify-between',
-                className,
-            )}
+            className="flex flex-col gap-3 border-t pt-4 @2xl:flex-row @2xl:items-center @2xl:justify-between"
         >
             {/* Telefonda: «1–20, jami 345» va «Sahifada [20]» bitta qatorda */}
             <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground tabular-nums">{range}</p>
-                {pageSizeControl && <div className="md:hidden">{pageSizeControl}</div>}
+                <p className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">{range}</p>
+                {pageSizeControl && <div className="@2xl:hidden">{pageSizeControl}</div>}
             </div>
 
             {(pages > 1 || pageSizeControl) && (
-                <div className={cn('flex items-center justify-center gap-2 sm:gap-4', pages <= 1 && 'max-md:hidden')}>
+                <div className={cn('flex flex-wrap items-center justify-center gap-2 @md:gap-4', pages <= 1 && '@max-2xl:hidden')}>
                     {pages > 1 && (
                         <div className="flex items-center gap-1">
                             <Button
@@ -168,8 +167,8 @@ export function Pagination({
                             </Button>
 
                             {/* Telefonda: 1 … 10 … 20; kattaroq ekranda: 1 … 9 10 11 … 20 */}
-                            <PageButtons page={page} pages={pages} siblings={0} onPageChange={go} className="sm:hidden" />
-                            <PageButtons page={page} pages={pages} siblings={1} onPageChange={go} className="max-sm:hidden" />
+                            <PageButtons page={page} pages={pages} siblings={0} onPageChange={go} className="@md:hidden" />
+                            <PageButtons page={page} pages={pages} siblings={1} onPageChange={go} className="@max-md:hidden" />
 
                             <Button
                                 type="button"
@@ -188,9 +187,10 @@ export function Pagination({
                     {pages > 7 && <JumpToPage pages={pages} onPageChange={go} />}
 
                     {/* Kompyuterda tanlov o‘ng tomonda, sahifa tugmalaridan keyin */}
-                    {pageSizeControl && <div className="max-md:hidden">{pageSizeControl}</div>}
+                    {pageSizeControl && <div className="@max-2xl:hidden">{pageSizeControl}</div>}
                 </div>
             )}
         </nav>
+        </div>
     );
 }

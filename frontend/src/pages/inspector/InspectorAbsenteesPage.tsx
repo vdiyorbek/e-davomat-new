@@ -17,6 +17,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPost } from '@/lib/auth-session';
 import { formatDate } from '@/lib/date';
 import type { InspectorAbsenteesResponse, InspectorMahalla } from '@/types/inspector';
+import { Label } from '@/components/ui/label';
 
 const ALL = 'ALL';
 const LIMIT = 20;
@@ -111,7 +112,7 @@ export function InspectorAbsenteesPage() {
                             ]}
                         />
                     </div>
-                    <label className="flex flex-col gap-1.5 text-sm font-semibold lg:col-span-2">
+                    <Label className="flex flex-col gap-1.5 text-sm font-semibold lg:col-span-2">
                         {t('inspectors.students.search')}
                         <div className="flex gap-2">
                             <Input
@@ -122,7 +123,7 @@ export function InspectorAbsenteesPage() {
                             />
                             <Button type="submit">{t('inspectors.students.apply')}</Button>
                         </div>
-                    </label>
+                    </Label>
                 </form>
             </Card>
 

@@ -11,6 +11,7 @@ import {
     DialogContent,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface PersonPhotoProps {
     personId?: number;
@@ -172,7 +173,7 @@ export function PersonPhoto({
     return (
         <div className="min-w-0 space-y-2">
             {canEnlarge ? (
-                <button
+                <Button variant="ghost" size="auto"
                     type="button"
                     className={cn(
                         photoClassName,
@@ -186,7 +187,7 @@ export function PersonPhoto({
                     onClick={() => setPreviewOpen(true)}
                 >
                     {photoContent}
-                </button>
+                </Button>
             ) : (
                 <div className={photoClassName}>
                     {photoContent}

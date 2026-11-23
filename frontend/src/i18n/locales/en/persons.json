@@ -63,6 +63,7 @@
     "errors": {
       "nameLength": "A parent's last name, first name and patronymic must be at most 100 characters.",
       "phone": "Enter the parent's phone in international format: +998901234567."
-    }
+    },
+    "requiredHint": "At least one is required: last name, first name and phone number."
   }
 }

@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Field } from '@/components/common/Field';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPut } from '@/lib/auth-session';
 import type { SchoolShift } from '@/types/school-class';
+import { TimePicker } from '@/components/common/TimePicker';
 
 interface ShiftSettingsFormProps {
     schoolId: string;
@@ -61,18 +61,16 @@ function Editor({ initial, schoolId, onCancel, onSaved }: ShiftSettingsFormProps
                     <legend className="px-1 font-heading text-base font-bold">{t('classes.shift.nameN', { code: shift.code })}</legend>
                     <div className="grid gap-3 sm:grid-cols-2">
                         <Field htmlFor={`${ids}-${shift.code}-start`} label={t('classes.shift.start')}>
-                            <Input
+                            <TimePicker
                                 id={`${ids}-${shift.code}-start`}
-                                type="time"
                                 value={shift.startTime}
                                 disabled={busy}
                                 onChange={(event) => change(shift.code, 'startTime', event.target.value)}
                             />
                         </Field>
                         <Field htmlFor={`${ids}-${shift.code}-end`} label={t('classes.shift.end')}>
-                            <Input
+                            <TimePicker
                                 id={`${ids}-${shift.code}-end`}
-                                type="time"
                                 value={shift.endTime}
                                 disabled={busy}
                                 onChange={(event) => change(shift.code, 'endTime', event.target.value)}

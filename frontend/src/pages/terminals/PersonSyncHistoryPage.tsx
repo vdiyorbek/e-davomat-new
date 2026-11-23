@@ -21,6 +21,7 @@ import { useInterval } from '@/hooks/useInterval';
 import { formatDateTime, formatNumber } from '@/lib/date';
 
 import { ListHeader } from './EventSyncHistorySection';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type Counts = Record<string, number>;
 
@@ -238,42 +239,42 @@ function BatchDetails({ batchId, onBack }: { batchId: string; onBack: () => void
                             ) : (
                                 <>
                                     <div className="hidden overflow-x-auto rounded-xl border lg:block">
-                                        <table className="w-full min-w-[820px] text-sm">
-                                            <thead className="border-b bg-muted/50 text-left">
-                                                <tr className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                        <Table className="w-full min-w-[820px] text-sm">
+                                            <TableHeader className="border-b bg-muted/50 text-left">
+                                                <TableRow className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
                                                     {(['person', 'terminal', 'status', 'attempts', 'error', 'time'] as const).map((key) => (
-                                                        <th key={key} className="px-3 py-2.5">{t(`syncHistory.batch.columns.${key}`)}</th>
+                                                        <TableHead key={key} className="px-3 py-2.5">{t(`syncHistory.batch.columns.${key}`)}</TableHead>
                                                     ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y">
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody className="divide-y">
                                                 {data.items.map((item) => (
-                                                    <tr key={item.id} className="align-top hover:bg-muted/30">
-                                                        <td className="px-3 py-3">
+                                                    <TableRow key={item.id} className="align-top hover:bg-muted/30">
+                                                        <TableCell className="px-3 py-3">
                                                             <div className="max-w-60 truncate font-semibold" title={item.personName ?? undefined}>
                                                                 {item.personName ?? '—'}
                                                             </div>
                                                             <div className="font-mono text-xs text-muted-foreground">
                                                                 {t('syncHistory.batch.personId', { id: item.personId })}
                                                             </div>
-                                                        </td>
-                                                        <td className="px-3 py-3">
+                                                        </TableCell>
+                                                        <TableCell className="px-3 py-3">
                                                             <div className="max-w-48 truncate">{item.terminalName ?? t('syncHistory.common.terminal')}</div>
                                                             <div className="font-mono text-xs text-muted-foreground">#{item.terminalId}</div>
-                                                        </td>
-                                                        <td className="px-3 py-3">
+                                                        </TableCell>
+                                                        <TableCell className="px-3 py-3">
                                                             <StatusBadge tone={statusTone(item.status)}>{itemStatusLabel(item.status, t)}</StatusBadge>
-                                                        </td>
-                                                        <td className="px-3 py-3 tabular-nums">{item.attempts}</td>
-                                                        <td className="max-w-40 px-3 py-3 text-xs break-all text-destructive">{item.errorCode ?? '—'}</td>
-                                                        <td className="px-3 py-3 text-xs whitespace-nowrap">
+                                                        </TableCell>
+                                                        <TableCell className="px-3 py-3 tabular-nums">{item.attempts}</TableCell>
+                                                        <TableCell className="max-w-40 px-3 py-3 text-xs break-all text-destructive">{item.errorCode ?? '—'}</TableCell>
+                                                        <TableCell className="px-3 py-3 text-xs whitespace-nowrap">
                                                             <div>{formatDateTime(item.startedAt, '—')}</div>
                                                             <div className="text-muted-foreground">→ {formatDateTime(item.finishedAt, '—')}</div>
-                                                        </td>
-                                                    </tr>
+                                                        </TableCell>
+                                                    </TableRow>
                                                 ))}
-                                            </tbody>
-                                        </table>
+                                            </TableBody>
+                                        </Table>
                                     </div>
 
                                     <ul className="grid gap-3 md:grid-cols-2 lg:hidden">
@@ -493,42 +494,42 @@ export function PersonSyncHistoryPage({ embedded = false }: { embedded?: boolean
                     ) : (
                         <>
                             <div className="hidden overflow-x-auto rounded-xl border lg:block">
-                                <table className="w-full min-w-[880px] text-sm">
-                                    <thead className="border-b bg-muted/50 text-left">
-                                        <tr className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                <Table className="w-full min-w-[880px] text-sm">
+                                    <TableHeader className="border-b bg-muted/50 text-left">
+                                        <TableRow className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
                                             {(['task', 'createdAt', 'type', 'terminals', 'status', 'progress'] as const).map((key) => (
-                                                <th key={key} className="px-3 py-2.5">{t(`syncHistory.batches.columns.${key}`)}</th>
+                                                <TableHead key={key} className="px-3 py-2.5">{t(`syncHistory.batches.columns.${key}`)}</TableHead>
                                             ))}
-                                            <th className="px-3 py-2.5 text-right">{t('syncHistory.batches.columns.actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
+                                            <TableHead className="px-3 py-2.5 text-right">{t('syncHistory.batches.columns.actions')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="divide-y">
                                         {batches.map((batch) => (
-                                            <tr key={batch.id} className="align-middle hover:bg-muted/30">
-                                                <td className="px-3 py-3 font-mono font-semibold">#{batch.id}</td>
-                                                <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(batch.createdAt, '—')}</td>
-                                                <td className="px-3 py-3">{t(`syncHistory.batches.types.${batch.type}`)}</td>
-                                                <td className="px-3 py-3 tabular-nums">{batch.terminalCount}</td>
-                                                <td className="px-3 py-3">
+                                            <TableRow key={batch.id} className="align-middle hover:bg-muted/30">
+                                                <TableCell className="px-3 py-3 font-mono font-semibold">#{batch.id}</TableCell>
+                                                <TableCell className="px-3 py-3 whitespace-nowrap">{formatDateTime(batch.createdAt, '—')}</TableCell>
+                                                <TableCell className="px-3 py-3">{t(`syncHistory.batches.types.${batch.type}`)}</TableCell>
+                                                <TableCell className="px-3 py-3 tabular-nums">{batch.terminalCount}</TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <StatusBadge tone={statusTone(batch.status)}>{batchStatusLabel(batch.status, t)}</StatusBadge>
-                                                </td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <SyncProgress
                                                         counts={batch.counts}
                                                         total={batch.totalItems}
                                                         active={ACTIVE_BATCH.includes(batch.status)}
                                                     />
-                                                </td>
-                                                <td className="px-3 py-3 text-right">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 text-right">
                                                     <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedBatchId(batch.id)}>
                                                         <Eye aria-hidden="true" />
                                                         {t('syncHistory.batches.details')}
                                                     </Button>
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
 
                             <ul className="grid gap-3 md:grid-cols-2 lg:hidden">

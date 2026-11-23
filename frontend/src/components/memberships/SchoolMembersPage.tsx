@@ -138,6 +138,7 @@ function MembersResults({ path, type, onPageChange }: MembersResultsProps) {
         onEnd: open(setEnding),
         onMove: open(setMoving),
         onDetails: open(setDetailsMember),
+        canDetails: type === 'TEACHER',
         onAccount: open(setAccountMember),
     };
 

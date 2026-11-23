@@ -8,6 +8,7 @@ import { ErrorState, LoadingState } from '@/components/common/states';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { addDays, todayInTashkent, weekStart as mondayOf } from '@/lib/date';
 import type { TeacherCabinetLesson } from '@/types/cabinet';
+import { Button } from '@/components/ui/button';
 
 export function TeacherTimetablePage() {
     const { t } = useTranslation();
@@ -30,7 +31,7 @@ export function TeacherTimetablePage() {
                     dateOf={(lesson) => lesson.date}
                     keyOf={(lesson) => `${lesson.lessonScheduleId}-${lesson.date}`}
                     renderLesson={(lesson) => (
-                        <button
+                        <Button variant="ghost" size="auto"
                             type="button"
                             onClick={() => setActive(lesson)}
                             className="w-full rounded-xl border bg-background p-2.5 text-left transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -47,7 +48,7 @@ export function TeacherTimetablePage() {
                             <span className="block truncate text-xs text-muted-foreground">
                                 {lesson.session?.topicTitle ?? t('teacher.journal.noTopic')}
                             </span>
-                        </button>
+                        </Button>
                     )}
                 />
             )}

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { formatDate, formatTime } from '@/lib/date';
 import type { AttendancePhotoStatus } from '@/types/daily-attendance';
 import { AttendancePhoto } from './AttendancePhoto';
+import { Button } from '@/components/ui/button';
 
 interface TimePhotoProps {
     /** Kirish/chiqish vaqti (ISO). */
@@ -37,7 +38,7 @@ export function TimePhoto({ time, url, status, label, name, date }: TimePhotoPro
 
     return (
         <>
-            <button
+            <Button variant="link" size="auto"
                 type="button"
                 onClick={() => setOpen(true)}
                 aria-label={`${label} ${text}: ${t('attendance.photoOpen')}`}
@@ -45,7 +46,7 @@ export function TimePhoto({ time, url, status, label, name, date }: TimePhotoPro
             >
                 {text}
                 <Camera aria-hidden="true" className="size-3.5" />
-            </button>
+            </Button>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>

@@ -115,6 +115,14 @@
     "mahalla": "Mahalla",
     "days": "Kunlar",
     "daysN": "{{count}} kun",
-    "since": "{{date}} dan beri"
+    "since": "{{date}} dan beri",
+    "viewAll": "Hammasini ko‘rish ({{count}})",
+    "pageTitle": "Uzoq vaqt kelmayotgan o‘quvchilar",
+    "back": "Dashboardga qaytish",
+    "search": "F.I.Sh. bo‘yicha qidirish",
+    "minDays": "Kamida kun",
+    "minDaysAny": "Barchasi (5+)",
+    "minDaysN": "{{count}}+ kun",
+    "total": "Jami: {{count}}"
   }
 }

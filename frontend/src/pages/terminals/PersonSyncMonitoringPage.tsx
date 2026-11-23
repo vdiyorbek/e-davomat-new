@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { formatDateTime, formatNumber } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type SyncStatus = 'SUCCESS' | 'TIMEOUT' | 'ERROR' | 'NOT_CHECKED';
 type StatusFilter = SyncStatus | 'ALL';
@@ -209,37 +210,37 @@ export function PersonSyncMonitoringPage() {
                         <>
                             {/* Kompyuter: jadval */}
                             <div className="hidden overflow-x-auto rounded-xl border lg:block">
-                                <table className="w-full min-w-[880px] text-sm">
-                                    <thead className="border-b bg-muted/50 text-left">
-                                        <tr className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                <Table className="w-full min-w-[880px] text-sm">
+                                    <TableHeader className="border-b bg-muted/50 text-left">
+                                        <TableRow className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
                                             {(['terminal', 'school', 'status', 'teachers', 'onTerminal', 'missing', 'duration', 'checkedAt'] as const).map((key) => (
-                                                <th key={key} className="px-3 py-2.5">{t(`terminals.monitoring.columns.${key}`)}</th>
+                                                <TableHead key={key} className="px-3 py-2.5">{t(`terminals.monitoring.columns.${key}`)}</TableHead>
                                             ))}
-                                            <th className="px-3 py-2.5 text-right">{t('terminals.monitoring.columns.actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
+                                            <TableHead className="px-3 py-2.5 text-right">{t('terminals.monitoring.columns.actions')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="divide-y">
                                         {data.terminals.map((item) => (
-                                            <tr key={item.terminalId} className="align-top hover:bg-muted/30">
-                                                <td className="px-3 py-3">
+                                            <TableRow key={item.terminalId} className="align-top hover:bg-muted/30">
+                                                <TableCell className="px-3 py-3">
                                                     <div className="font-semibold">{item.terminalName}</div>
                                                     <div className="font-mono text-xs text-muted-foreground">#{item.terminalId}</div>
-                                                </td>
-                                                <td className="px-3 py-3 font-mono text-xs">{item.schoolId}</td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 font-mono text-xs">{item.schoolId}</TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <StatusBadge tone={statusTones[item.status]}>{statusLabel(item.status)}</StatusBadge>
                                                     {item.errorCode && (
                                                         <p className="mt-1 max-w-48 text-xs break-words text-destructive">{item.errorCode}</p>
                                                     )}
-                                                </td>
-                                                <td className="px-3 py-3 tabular-nums">{numberOrDash(item.databaseTeachers)}</td>
-                                                <td className="px-3 py-3 tabular-nums">{numberOrDash(item.terminalUsers)}</td>
-                                                <td className={cn('px-3 py-3 font-semibold tabular-nums', (item.missingCount ?? 0) > 0 && 'text-destructive')}>
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 tabular-nums">{numberOrDash(item.databaseTeachers)}</TableCell>
+                                                <TableCell className="px-3 py-3 tabular-nums">{numberOrDash(item.terminalUsers)}</TableCell>
+                                                <TableCell className={cn('px-3 py-3 font-semibold tabular-nums', (item.missingCount ?? 0) > 0 && 'text-destructive')}>
                                                     {numberOrDash(item.missingCount)}
-                                                </td>
-                                                <td className="px-3 py-3 tabular-nums">{duration(item.durationMs)}</td>
-                                                <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(item.checkedAt)}</td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 tabular-nums">{duration(item.durationMs)}</TableCell>
+                                                <TableCell className="px-3 py-3 whitespace-nowrap">{formatDateTime(item.checkedAt)}</TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <div className="flex flex-col items-end gap-2">
                                                         <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedTerminalId(item.terminalId)}>
                                                             <Eye aria-hidden="true" />
@@ -247,11 +248,11 @@ export function PersonSyncMonitoringPage() {
                                                         </Button>
                                                         <PersonSyncRecheckButton terminalId={item.terminalId} onFinished={retry} />
                                                     </div>
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
 
                             {/* Telefon va planshet: kartalar */}

@@ -14,6 +14,8 @@ import { authorizedPost } from '@/lib/auth-session';
 import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { AssessmentDifficulty, AssessmentTopic, AssessmentType } from '@/types/assessment';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export interface TeacherAssignmentOption {
     id: number;
@@ -108,7 +110,7 @@ function TopicPicker({
                                 {chapter.title}
                             </legend>
                             {chapter.topics.map((topic) => (
-                                <label key={topic.id} className="flex cursor-pointer items-start gap-2 rounded-lg py-1 pl-6 text-sm hover:bg-muted/50">
+                                <Label key={topic.id} className="flex cursor-pointer items-start gap-2 rounded-lg py-1 pl-6 text-sm hover:bg-muted/50">
                                     <Checkbox
                                         className="mt-0.5"
                                         checked={selected.has(topic.id)}
@@ -123,7 +125,7 @@ function TopicPicker({
                                             {t('assessments.create.taughtOn', { date: formatDate(topic.taughtOn) })}
                                         </StatusBadge>
                                     )}
-                                </label>
+                                </Label>
                             ))}
                         </fieldset>
                     );
@@ -209,9 +211,16 @@ export function CreateAssessmentForm({
 
             <fieldset className="space-y-2">
                 <legend className="text-sm font-medium">{t('assessments.create.type')}</legend>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <RadioGroup
+                    value={type}
+                    onValueChange={(next) => {
+                        setType(next as typeof type);
+                        setTopics(new Set());
+                    }}
+                    className="sm:grid-cols-2"
+                >
                     {(['CHSB', 'BSB'] as const).map((value) => (
-                        <label
+                        <Label
                             key={value}
                             className={cn(
                                 'flex cursor-pointer flex-col gap-0.5 rounded-xl border p-3 transition-colors',
@@ -219,23 +228,13 @@ export function CreateAssessmentForm({
                             )}
                         >
                             <span className="flex items-center gap-2 font-semibold">
-                                <input
-                                    type="radio"
-                                    name={`${ids}-type`}
-                                    value={value}
-                                    checked={type === value}
-                                    onChange={() => {
-                                        setType(value);
-                                        setTopics(new Set());
-                                    }}
-                                    className="accent-primary"
-                                />
+                                <RadioGroupItem value={value} />
                                 {t(`assessments.types.${value}`)}
                             </span>
                             <span className="text-xs text-muted-foreground">{t(`assessments.typeHints.${value}`)}</span>
-                        </label>
+                        </Label>
                     ))}
-                </div>
+                </RadioGroup>
             </fieldset>
 
             {type === 'CHSB' && (

@@ -4,9 +4,12 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  IsString,
   Matches,
   Max,
+  MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -63,6 +66,21 @@ export class DashboardStreaksDto extends DashboardDayDto {
   @Min(1)
   @Max(100)
   limit: number = 20;
+
+  /** F.I.Sh. bo‘yicha qidiruv. */
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(60)
+  search?: string;
+
+  /** Eng kamida shuncha kun ketma-ket kelmaganlar. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  minDays?: number;
 }
 
 export class BackfillStatsDto {

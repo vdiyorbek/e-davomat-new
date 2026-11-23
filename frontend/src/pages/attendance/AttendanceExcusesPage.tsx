@@ -15,7 +15,6 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/common/states
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -26,6 +25,7 @@ import { DEFAULT_PAGE_SIZE, parsePageSize } from '@/lib/pagination';
 import { personFullName } from '@/lib/person';
 import type { AttendanceExcuse, AttendanceExcusesPageResponse, ExcuseReason } from '@/types/attendance-excuse';
 import type { School } from '@/types/school';
+import { DatePicker } from '@/components/common/DatePicker';
 
 type ExcuseType = 'STUDENT' | 'TEACHER';
 type StatusFilter = 'ACTIVE' | 'CANCELLED' | 'all';
@@ -262,14 +262,14 @@ export function AttendanceExcusesPage() {
                         />
                     </Field>
                     <Field htmlFor={`${ids}-from`} label={t('excuses.filters.from')}>
-                        <Input id={`${ids}-from`} type="date" value={from} max={to || undefined} onChange={(event) => update({ from: event.target.value })} />
+                        <DatePicker id={`${ids}-from`} value={from} max={to || undefined} onChange={(event) => update({ from: event.target.value })} />
                     </Field>
                     <Field
                         htmlFor={`${ids}-to`}
                         label={t('excuses.filters.to')}
                         error={rangeInvalid ? t('excuses.errors.range') : undefined}
                     >
-                        <Input id={`${ids}-to`} type="date" value={to} min={from || undefined} onChange={(event) => update({ to: event.target.value })} />
+                        <DatePicker id={`${ids}-to`} value={to} min={from || undefined} onChange={(event) => update({ to: event.target.value })} />
                     </Field>
                 </div>
 

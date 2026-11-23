@@ -264,7 +264,7 @@ function SummaryResults({ path, type, live, band, sort, onBandChange, onSortChan
                                 : null;
 
                         return (
-                            <button
+                            <Button variant="link" size="auto"
                                 key={key}
                                 type="button"
                                 aria-pressed={active}
@@ -290,7 +290,7 @@ function SummaryResults({ path, type, live, band, sort, onBandChange, onSortChan
                                 >
                                     {bandCounts[key]}
                                 </span>
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
@@ -467,13 +467,13 @@ export function AttendanceOverviewPage() {
                 <nav aria-label={t('attendanceSummary.breadcrumbLabel')}>
                     <ol className="flex flex-wrap items-center gap-1 text-sm">
                         <li>
-                            <button
+                            <Button variant="link" size="auto"
                                 type="button"
                                 onClick={() => update({ regionId: '', districtId: '', schoolId: '', classId: '' })}
                                 className="rounded-md px-1.5 py-0.5 font-medium text-primary hover:bg-primary/10"
                             >
                                 {t('attendanceSummary.breadcrumbRoot')}
-                            </button>
+                            </Button>
                         </li>
                         {crumbs.map((crumb, index) => {
                             const last = index === crumbs.length - 1 && !place.classId;
@@ -485,13 +485,13 @@ export function AttendanceOverviewPage() {
                                             {crumb.label}
                                         </span>
                                     ) : (
-                                        <button
+                                        <Button variant="link" size="auto"
                                             type="button"
                                             onClick={() => update(crumb.patch)}
                                             className="rounded-md px-1.5 py-0.5 font-medium text-primary hover:bg-primary/10"
                                         >
                                             {crumb.label}
-                                        </button>
+                                        </Button>
                                     )}
                                 </li>
                             );

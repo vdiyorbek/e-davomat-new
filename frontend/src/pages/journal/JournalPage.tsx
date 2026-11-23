@@ -19,6 +19,7 @@ import { personFullName } from '@/lib/person';
 import type { School } from '@/types/school';
 
 import { shortTime } from '../lesson-schedules/schedule-utils';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface SchoolClass {
     id: number;
@@ -453,7 +454,7 @@ export function JournalPage() {
                         <Button type="button" variant="outline" size="icon" className="h-11 shrink-0 bg-card" aria-label={t('attendance.prevDay')} onClick={() => shiftDate(-1)}>
                             <ChevronLeft aria-hidden="true" />
                         </Button>
-                        <Input id={`${id}-date`} type="date" min={yearMin} max={yearMax} value={date} onChange={(event) => setDate(event.target.value)} className="min-w-0" />
+                        <DatePicker id={`${id}-date`} min={yearMin} max={yearMax} value={date} onChange={(event) => setDate(event.target.value)} className="min-w-0" />
                         <Button type="button" variant="outline" size="icon" className="h-11 shrink-0 bg-card" aria-label={t('attendance.nextDay')} onClick={() => shiftDate(1)}>
                             <ChevronRight aria-hidden="true" />
                         </Button>

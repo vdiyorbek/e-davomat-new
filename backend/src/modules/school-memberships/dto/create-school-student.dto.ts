@@ -71,6 +71,12 @@ export class CreateSchoolStudentDto {
   @IsOptional()
   @Transform(trimString)
   @IsString()
+  @Length(1, 100)
+  nationality?: string | null;
+
+  @IsOptional()
+  @Transform(trimString)
+  @IsString()
   @Length(1, 500)
   address?: string | null;
 

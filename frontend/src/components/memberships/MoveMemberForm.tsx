@@ -6,7 +6,6 @@ import { Field } from '@/components/common/Field';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { academicYearFor, academicYearOptions, isValidAcademicYear, todayInTashkent } from '@/lib/date';
 import { changeMembershipClass, transferSchoolMembership } from '@/lib/school-memberships-api';
@@ -15,6 +14,7 @@ import type { SchoolMembership } from '@/types/school-membership';
 
 import { MemberSummary } from './MemberSummary';
 import { SchoolClassSelect } from './SchoolClassSelect';
+import { DatePicker } from '@/components/common/DatePicker';
 
 export type MoveMode = 'class' | 'school';
 
@@ -137,9 +137,8 @@ export function MoveMemberForm({ membership, canTransferSchool, onSaved, onCance
                 </div>
 
                 <Field htmlFor={`${id}-date`} label={t('members.changeClass.date')} hint={t('members.changeClass.hint')} required>
-                    <Input
+                    <DatePicker
                         id={`${id}-date`}
-                        type="date"
                         min={membership.startDate}
                         value={startDate}
                         onChange={(event) => setStartDate(event.target.value)}

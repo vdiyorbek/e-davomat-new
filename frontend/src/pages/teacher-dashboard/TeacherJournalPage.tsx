@@ -17,7 +17,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { todayInTashkent } from '@/lib/date';
@@ -26,6 +25,8 @@ import { authorizedPost } from '@/lib/auth-session';
 import {
     TeacherSessionEditor,
 } from './TeacherSessionEditor';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface TeacherJournalResponse {
     assignment: {
@@ -151,15 +152,14 @@ export function TeacherJournalPage() {
                     <Card>
                         <CardContent className="flex flex-wrap items-end gap-4">
                             <div className="space-y-2">
-                                <label
+                                <Label
                                     htmlFor="teacher-journal-date"
                                     className="text-sm font-medium"
                                 >
                                     {t('teacher.journal.date')}
-                                </label>
-                                <Input
+                                </Label>
+                                <DatePicker
                                     id="teacher-journal-date"
-                                    type="date"
                                     value={date}
                                     onChange={(event) =>
                                         setDate(event.target.value)

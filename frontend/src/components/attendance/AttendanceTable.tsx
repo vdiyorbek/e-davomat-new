@@ -15,6 +15,7 @@ import { AttendanceExcuseDialog } from './AttendanceExcuseDialog';
 import { PersonAttendanceDialog } from './PersonAttendanceDialog';
 import { TimePhoto } from './TimePhoto';
 import { ATTENDANCE_STRIPE, ATTENDANCE_TONE } from './status';
+import { Button } from '@/components/ui/button';
 
 interface Props {
     items: DailyAttendance[];
@@ -56,13 +57,13 @@ export function AttendanceTable({ items, startIndex, onExcuseSaved, mode = 'stud
     function renderName(item: DailyAttendance) {
         const name = personFullName(item.person, t('attendance.noPerson'));
         return item.person ? (
-            <button
+            <Button variant="link" size="auto"
                 type="button"
                 onClick={() => openPerson(item)}
                 className="text-left font-semibold text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
             >
                 {name}
-            </button>
+            </Button>
         ) : (
             <span className="text-muted-foreground">{name}</span>
         );

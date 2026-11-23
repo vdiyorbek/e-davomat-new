@@ -12,6 +12,8 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedDelete, authorizedPut } from '@/lib/auth-session';
 import { formatDateTime } from '@/lib/date';
 import type { SettingGroup, SystemSetting, SystemSettingHistory } from '@/types/system-settings';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Label } from '@/components/ui/label';
 
 const GROUPS: SettingGroup[] = ['calendar', 'photos', 'push', 'lag', 'live'];
 
@@ -66,9 +68,9 @@ function SettingRow({ setting, onChanged }: { setting: SystemSetting; onChanged:
         <li className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
             <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor={inputId} className="text-sm font-semibold">
+                    <Label htmlFor={inputId} className="text-sm font-semibold">
                         {t(`systemSettings.items.${setting.key}.label`)}
-                    </label>
+                    </Label>
                     <StatusBadge tone={setting.overridden ? 'primary' : 'neutral'} dot={false}>
                         {setting.overridden ? t('systemSettings.changed') : t('systemSettings.standard')}
                     </StatusBadge>
@@ -156,28 +158,28 @@ function HistoryTable() {
     const show = (value: string | null) => (value === null ? t('systemSettings.history.standard') : value === 'true' ? t('systemSettings.on') : value === 'false' ? t('systemSettings.off') : value);
     return (
         <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
-                <thead>
-                    <tr className="text-left text-xs text-muted-foreground">
-                        <th className="py-2 pr-3 font-medium">{t('systemSettings.history.date')}</th>
-                        <th className="py-2 pr-3 font-medium">{t('systemSettings.history.setting')}</th>
-                        <th className="py-2 pr-3 font-medium">{t('systemSettings.history.change')}</th>
-                        <th className="py-2 font-medium">{t('systemSettings.history.who')}</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <Table className="w-full min-w-[520px] text-sm">
+                <TableHeader>
+                    <TableRow className="text-left text-xs text-muted-foreground">
+                        <TableHead className="py-2 pr-3 font-medium">{t('systemSettings.history.date')}</TableHead>
+                        <TableHead className="py-2 pr-3 font-medium">{t('systemSettings.history.setting')}</TableHead>
+                        <TableHead className="py-2 pr-3 font-medium">{t('systemSettings.history.change')}</TableHead>
+                        <TableHead className="py-2 font-medium">{t('systemSettings.history.who')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {rows.map((row) => (
-                        <tr key={row.id} className="border-t">
-                            <td className="py-2 pr-3 whitespace-nowrap tabular-nums">{formatDateTime(row.changedAt)}</td>
-                            <td className="py-2 pr-3">{t(`systemSettings.items.${row.key}.label`, { defaultValue: row.key })}</td>
-                            <td className="py-2 pr-3 tabular-nums">
+                        <TableRow key={row.id} className="border-t">
+                            <TableCell className="py-2 pr-3 whitespace-nowrap tabular-nums">{formatDateTime(row.changedAt)}</TableCell>
+                            <TableCell className="py-2 pr-3">{t(`systemSettings.items.${row.key}.label`, { defaultValue: row.key })}</TableCell>
+                            <TableCell className="py-2 pr-3 tabular-nums">
                                 {show(row.oldValue)} → {show(row.newValue)}
-                            </td>
-                            <td className="py-2">{row.changedBy ? (row.changedBy.name ?? row.changedBy.login) : '—'}</td>
-                        </tr>
+                            </TableCell>
+                            <TableCell className="py-2">{row.changedBy ? (row.changedBy.name ?? row.changedBy.login) : '—'}</TableCell>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 }

@@ -1,3 +1,5 @@
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,6 +8,7 @@ import { cn } from '@/lib/utils';
 import type { DashboardArrivals } from '@/types/dashboard';
 import { ChartTooltip, TooltipRow } from './ChartTooltip';
 import { formatCount } from './viz';
+import { Button } from '@/components/ui/button';
 
 const HEIGHT = 200;
 const PAD = { top: 22, right: 20, bottom: 28, left: 40 };
@@ -45,7 +48,7 @@ export function ArrivalsChart({ data }: { data: DashboardArrivals }) {
         <div className="space-y-3">
             <div role="radiogroup" aria-label={t('dashboard.arrivals.who')} className="inline-flex rounded-lg border p-0.5 text-xs">
                 {(['STUDENT', 'TEACHER'] as const).map((value) => (
-                    <button
+                    <Button variant="link" size="auto"
                         key={value}
                         type="button"
                         role="radio"
@@ -54,7 +57,7 @@ export function ArrivalsChart({ data }: { data: DashboardArrivals }) {
                         className={cn('rounded-md px-3 py-1', type === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}
                     >
                         {t(`dashboard.series.${value === 'STUDENT' ? 'students' : 'teachers'}`)}
-                    </button>
+                    </Button>
                 ))}
             </div>
             <div ref={ref} className="relative" onPointerLeave={() => setHover(null)}>
@@ -131,24 +134,28 @@ export function ArrivalsChart({ data }: { data: DashboardArrivals }) {
                     </ChartTooltip>
                 )}
             </div>
-            <details className="text-xs">
-                <summary className="cursor-pointer text-muted-foreground">{t('dashboard.tableView')}</summary>
-                <table className="mt-2 w-full tabular-nums">
-                    <tbody>
+            <Collapsible className="text-xs">
+                <CollapsibleTrigger className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    {t('dashboard.tableView')}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                <Table className="mt-2 w-full tabular-nums">
+                    <TableBody>
                         {buckets
                             .slice()
                             .sort((a, b) => a.minute - b.minute)
                             .map((bucket) => (
-                                <tr key={bucket.minute} className="border-t">
-                                    <td className="py-1">
+                                <TableRow key={bucket.minute} className="border-t">
+                                    <TableCell className="py-1">
                                         {clock(bucket.minute)}–{clock(bucket.minute + step)}
-                                    </td>
-                                    <td className="py-1 text-right">{formatCount(bucket.count)}</td>
-                                </tr>
+                                    </TableCell>
+                                    <TableCell className="py-1 text-right">{formatCount(bucket.count)}</TableCell>
+                                </TableRow>
                             ))}
-                    </tbody>
-                </table>
-            </details>
+                    </TableBody>
+                </Table>
+                </CollapsibleContent>
+            </Collapsible>
         </div>
     );
 }

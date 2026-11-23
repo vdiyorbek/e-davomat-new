@@ -1,3 +1,5 @@
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -139,27 +141,31 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                     </ChartTooltip>
                 )}
             </div>
-            <details className="text-xs">
-                <summary className="cursor-pointer text-muted-foreground">{t('dashboard.tableView')}</summary>
-                <table className="mt-2 w-full tabular-nums">
-                    <thead>
-                        <tr className="text-left text-muted-foreground">
-                            <th className="py-1 font-medium">{t('dashboard.date')}</th>
-                            <th className="py-1 text-right font-medium">{t('dashboard.series.students')}</th>
-                            <th className="py-1 text-right font-medium">{t('dashboard.series.teachers')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <Collapsible className="text-xs">
+                <CollapsibleTrigger className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    {t('dashboard.tableView')}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                <Table className="mt-2 w-full tabular-nums">
+                    <TableHeader>
+                        <TableRow className="text-left text-muted-foreground">
+                            <TableHead className="py-1 font-medium">{t('dashboard.date')}</TableHead>
+                            <TableHead className="py-1 text-right font-medium">{t('dashboard.series.students')}</TableHead>
+                            <TableHead className="py-1 text-right font-medium">{t('dashboard.series.teachers')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {days.map((day) => (
-                            <tr key={day.date} className="border-t">
-                                <td className="py-1">{formatDate(day.date)}</td>
-                                <td className="py-1 text-right">{formatRate(day.students?.rate)}</td>
-                                <td className="py-1 text-right">{formatRate(day.teachers?.rate)}</td>
-                            </tr>
+                            <TableRow key={day.date} className="border-t">
+                                <TableCell className="py-1">{formatDate(day.date)}</TableCell>
+                                <TableCell className="py-1 text-right">{formatRate(day.students?.rate)}</TableCell>
+                                <TableCell className="py-1 text-right">{formatRate(day.teachers?.rate)}</TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </details>
+                    </TableBody>
+                </Table>
+                </CollapsibleContent>
+            </Collapsible>
         </div>
     );
 }

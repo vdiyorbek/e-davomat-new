@@ -8,8 +8,11 @@ import { FileInput } from '@/components/common/FileInput';
 import { validateFacePhoto } from '@/lib/face-photo-validation';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState } from '@/components/common/states';
+import { GuardianFields } from '@/components/persons/GuardianFields';
+import { EMPTY_GUARDIAN, guardianPayload, validateGuardiansRequired } from '@/components/persons/guardians';
+import type { GuardiansValue } from '@/components/persons/guardians';
 import { PersonFields } from '@/components/persons/PersonFields';
-import { EMPTY_PERSON_FIELDS, isValidDate, validatePersonFields } from '@/components/persons/person-fields';
+import { EMPTY_PERSON_FIELDS, isValidDate, validatePersonFields, validateStudentRequired } from '@/components/persons/person-fields';
 import type { PersonFieldsValue } from '@/components/persons/person-fields';
 import { PersonPhoto } from '@/components/persons/PersonPhoto';
 import { PersonSchools } from '@/components/persons/PersonSchools';
@@ -22,12 +25,13 @@ import { ApiError } from '@/lib/api';
 import { formatDate, todayInTashkent } from '@/lib/date';
 import { personFullName } from '@/lib/person';
 import { uploadPersonPhoto } from '@/lib/person-photos-api';
-import { createPerson, findPersonByPnfl } from '@/lib/persons-api';
+import { createPerson, findPersonByPnfl, saveGuardians } from '@/lib/persons-api';
 import { createSchoolMembership } from '@/lib/school-memberships-api';
 import { createSchoolStudent } from '@/lib/school-students-api';
 import type { Person } from '@/types/person';
 import type { School } from '@/types/school';
 import type { SchoolMembership } from '@/types/school-membership';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface CreateMemberFormProps {
     type: SchoolMembership['type'];
@@ -56,6 +60,7 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
     const [checked, setChecked] = useState(false);
     const [person, setPerson] = useState<Person | null>(null);
     const [fields, setFields] = useState<PersonFieldsValue>(EMPTY_PERSON_FIELDS);
+    const [guardians, setGuardians] = useState<GuardiansValue>({ father: EMPTY_GUARDIAN, mother: EMPTY_GUARDIAN });
 
     const [schoolId, setSchoolId] = useState(initialSchoolId ? String(initialSchoolId) : '');
     const [startDate, setStartDate] = useState(todayInTashkent);
@@ -70,6 +75,23 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
     const kind = type === 'STUDENT' ? 'student' : 'teacher';
     const existingBlocked = studentEndpoint && person !== null;
     const blocked = existingBlocked || createdId !== null;
+    // Yangi o‘quvchi yaratilayotganda ko‘plab maydonlar majburiy.
+    const newStudent = type === 'STUDENT' && person === null;
+
+    /** Yangi o‘quvchi uchun majburiy maydonlar, rasm va ota-ona. Xato bo‘lsa i18n kaliti. */
+    function newStudentError(): string | null {
+        const missing = validateStudentRequired(fields);
+        if (missing) return missing;
+        if (!photoFile) return 'members.errors.needPhoto';
+        return validateGuardiansRequired(guardians);
+    }
+
+    async function saveParents(personId: number) {
+        await saveGuardians(personId, {
+            father: guardianPayload(guardians.father),
+            mother: guardianPayload(guardians.mother),
+        });
+    }
 
     useEffect(() => {
         mounted.current = true;
@@ -82,6 +104,7 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
         setChecked(false);
         setPerson(null);
         setFields(EMPTY_PERSON_FIELDS);
+        setGuardians({ father: EMPTY_GUARDIAN, mother: EMPTY_GUARDIAN });
         setEndDate('');
         setError('');
         setNotice('');
@@ -167,6 +190,11 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
             setError(t('members.errors.chooseMahalla'));
             return;
         }
+        const required = newStudentError();
+        if (required) {
+            setError(t(required));
+            return;
+        }
 
         operationBusy.current = true;
         setBusy(true);
@@ -182,6 +210,7 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                 middleName: fields.middleName.trim() || null,
                 gender: fields.gender || null,
                 birthDate: fields.birthDate || null,
+                nationality: fields.nationality.trim() || null,
                 phoneNumber: fields.phoneNumber.trim() || null,
                 address: fields.address.trim() || null,
                 mahallaId,
@@ -197,6 +226,14 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                     setError(t('members.create.studentPhotoFailed'));
                     return;
                 }
+            }
+
+            try {
+                await saveParents(created.person.id);
+            } catch {
+                if (!mounted.current) return;
+                setError(t('members.create.guardiansFailed'));
+                return;
             }
 
             completed = true;
@@ -260,6 +297,13 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                 setError(t(invalid));
                 return;
             }
+            if (type === 'STUDENT') {
+                const required = newStudentError();
+                if (required) {
+                    setError(t(required));
+                    return;
+                }
+            }
         }
 
         operationBusy.current = true;
@@ -298,6 +342,10 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                 setPerson(selectedPerson);
                 setPhotoFile(null);
                 setPhotoError('');
+            }
+
+            if (type === 'STUDENT' && newStudent) {
+                await saveParents(selectedPerson.id);
             }
 
             savingStage = 'membership';
@@ -425,13 +473,16 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
             ) : (
                 <section className="space-y-4">
                     <h3 className="font-heading text-base font-semibold">{t('members.create.personDetails')}</h3>
-                    <PersonFields value={fields} onChange={setFields} disabled={busy} />
+                    <PersonFields value={fields} onChange={setFields} disabled={busy} studentRequired={type === 'STUDENT'} />
                 </section>
             )}
             {!existingBlocked && (
                 <section className="space-y-4 rounded-xl border p-4">
                     <div>
-                        <h3 className="text-sm font-semibold">{t('members.create.photoTitle')}</h3>
+                        <h3 className="text-sm font-semibold">
+                            {t('members.create.photoTitle')}
+                            {newStudent && <span aria-hidden="true" className="ml-1 text-destructive">*</span>}
+                        </h3>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('members.create.photoHint', { size: 5 })}</p>
                     </div>
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
@@ -463,6 +514,9 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                         </div>
                     </div>
                 </section>
+            )}
+            {newStudent && !existingBlocked && (
+                <GuardianFields value={guardians} onChange={setGuardians} disabled={busy} requiredHint />
             )}
             {!existingBlocked && (
                 <section className="space-y-4">
@@ -498,9 +552,8 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                     {!studentEndpoint && (
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field htmlFor={`${id}-start`} label={t(`members.create.${kind}Start`)} required>
-                                <Input
+                                <DatePicker
                                     id={`${id}-start`}
-                                    type="date"
                                     value={startDate}
                                     onChange={(event) => setStartDate(event.target.value)}
                                     min="1900-01-01"
@@ -510,9 +563,8 @@ export function CreateMemberForm({ type, initialSchoolId, onSaved, onCancel }: C
                                 />
                             </Field>
                             <Field htmlFor={`${id}-end`} label={t(`members.create.${kind}End`)} hint={t('members.create.endHint')}>
-                                <Input
+                                <DatePicker
                                     id={`${id}-end`}
-                                    type="date"
                                     value={endDate}
                                     onChange={(event) => setEndDate(event.target.value)}
                                     min={startDate || '1900-01-01'}

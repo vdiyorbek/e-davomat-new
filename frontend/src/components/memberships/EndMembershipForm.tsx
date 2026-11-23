@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Field } from '@/components/common/Field';
 import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { addDays } from '@/lib/date';
 import { endSchoolMembership } from '@/lib/school-memberships-api';
 import type { SchoolMembership } from '@/types/school-membership';
 
 import { MemberSummary } from './MemberSummary';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface EndMembershipFormProps {
     membership: SchoolMembership;
@@ -60,9 +60,8 @@ export function EndMembershipForm({ membership, onSaved, onCancel }: EndMembersh
             <MemberSummary membership={membership} />
 
             <Field htmlFor={inputId} label={t('membership.endExclusive')} hint={t('members.end.hint')} required>
-                <Input
+                <DatePicker
                     id={inputId}
-                    type="date"
                     required
                     min={addDays(membership.startDate, 1)}
                     max={membership.endDate ?? '9999-12-31'}

@@ -13,6 +13,8 @@ import { authorizedGet, authorizedPost, authorizedPut } from '@/lib/auth-session
 import { formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { StudentAssessmentItem, StudentAssessmentResult, StudentAttemptSession } from '@/types/assessment';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -181,7 +183,7 @@ function TestRunner({ session, onFinished }: { session: StudentAttemptSession; o
 
             <nav aria-label={t('student.test.navigator')} className="flex flex-wrap gap-1.5">
                 {session.questions.map((item, index) => (
-                    <button
+                    <Button variant="ghost" size="auto"
                         key={item.id}
                         type="button"
                         onClick={() => setCurrent(index)}
@@ -194,7 +196,7 @@ function TestRunner({ session, onFinished }: { session: StudentAttemptSession; o
                         )}
                     >
                         {item.number}
-                    </button>
+                    </Button>
                 ))}
             </nav>
 
@@ -205,31 +207,28 @@ function TestRunner({ session, onFinished }: { session: StudentAttemptSession; o
                         <span className="mr-1 font-bold">{question.number}.</span>
                         {question.text}
                     </p>
-                    <div className="grid gap-2">
+                    <RadioGroup
+                        value={answers[String(question.id)] === undefined ? '' : String(answers[String(question.id)])}
+                        onValueChange={(next) => choose(question.id, Number(next))}
+                        disabled={submitting}
+                    >
                         {question.options.map((option, index) => {
                             const selected = answers[String(question.id)] === index;
                             return (
-                                <label
+                                <Label
                                     key={index}
                                     className={cn(
                                         'flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
                                         selected ? 'border-primary bg-primary/10' : 'hover:bg-muted/50',
                                     )}
                                 >
-                                    <input
-                                        type="radio"
-                                        name={`q-${question.id}`}
-                                        checked={selected}
-                                        onChange={() => choose(question.id, index)}
-                                        className="size-4 accent-primary"
-                                        disabled={submitting}
-                                    />
+                                    <RadioGroupItem value={String(index)} />
                                     <span className="font-semibold">{LETTERS[index]})</span>
                                     <span>{option}</span>
-                                </label>
+                                </Label>
                             );
                         })}
-                    </div>
+                    </RadioGroup>
                     <div className="flex justify-between gap-2 pt-2">
                         <Button type="button" variant="outline" disabled={current === 0} onClick={() => setCurrent((value) => value - 1)}>
                             {t('student.test.prev')}

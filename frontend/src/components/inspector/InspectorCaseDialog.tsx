@@ -10,13 +10,13 @@ import { GuardianContacts } from '@/components/inspector/GuardianContacts';
 import { InspectorCasePdf } from '@/components/inspector/InspectorCasePdf';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedPatch, authorizedPost } from '@/lib/auth-session';
 import { addDays, formatDate, todayInTashkent } from '@/lib/date';
 import { CASE_CONTACTS, CASE_OUTCOMES, CASE_REASONS } from '@/types/inspector';
 import type { InspectorCaseDetail } from '@/types/inspector';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface Props {
     caseId: number | null;
@@ -145,9 +145,8 @@ function CaseForm({ data, onChanged, onClose }: { data: InspectorCaseDetail; onC
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Field htmlFor={`${id}-visit`} label={t('inspectors.cases.fields.visitDate')} required>
-                        <Input
+                        <DatePicker
                             id={`${id}-visit`}
-                            type="date"
                             min={data.absentSince}
                             max={today}
                             value={visitDate}
@@ -220,9 +219,8 @@ function CaseForm({ data, onChanged, onClose }: { data: InspectorCaseDetail; onC
                         label={t('inspectors.cases.fields.followUp')}
                         hint={t('inspectors.cases.fields.followUpHint')}
                     >
-                        <Input
+                        <DatePicker
                             id={`${id}-follow`}
-                            type="date"
                             min={addDays(today, 1)}
                             value={followUpDate}
                             disabled={closed || busy}

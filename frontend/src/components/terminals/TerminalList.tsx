@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import type { Terminal, TerminalMonitoringItem } from '@/types/terminal';
 
 import { connectionBadge, isArchived, syncInfo, systemBadge } from './terminal-status';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export interface TerminalListProps {
     terminals: Terminal[];
@@ -181,7 +182,7 @@ function TerminalTable({
 
     return (
         <div className="overflow-x-auto rounded-xl border">
-            <table className="w-full min-w-[960px] table-fixed text-sm">
+            <Table className="w-full min-w-[960px] table-fixed text-sm">
                 <colgroup>
                     {canManage && <col className="w-11" />}
                     <col className="w-[22%]" />
@@ -192,28 +193,28 @@ function TerminalTable({
                     <col className="w-[12%]" />
                     <col className="w-28" />
                 </colgroup>
-                <thead className="border-b bg-muted/50">
-                    <tr>
+                <TableHeader className="border-b bg-muted/50">
+                    <TableRow>
                         {canManage && (
-                            <th className={th}>
+                            <TableHead className={th}>
                                 <Checkbox
                                     aria-label={t('terminals.list.selectAll')}
                                     checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                                     disabled={selectable.length === 0}
                                     onCheckedChange={(checked) => onTogglePage(checked === true)}
                                 />
-                            </th>
+                            </TableHead>
                         )}
-                        <th className={th}>{t('terminals.columns.terminal')}</th>
-                        <th className={th}>{t('terminals.columns.school')}</th>
-                        <th className={th}>{t('terminals.columns.address')}</th>
-                        <th className={th}>{t('terminals.columns.status')}</th>
-                        <th className={th}>{t('terminals.columns.sync')}</th>
-                        <th className={th}>{t('terminals.columns.events')}</th>
-                        <th className={cn(th, 'text-right')}>{t('terminals.columns.actions')}</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y">
+                        <TableHead className={th}>{t('terminals.columns.terminal')}</TableHead>
+                        <TableHead className={th}>{t('terminals.columns.school')}</TableHead>
+                        <TableHead className={th}>{t('terminals.columns.address')}</TableHead>
+                        <TableHead className={th}>{t('terminals.columns.status')}</TableHead>
+                        <TableHead className={th}>{t('terminals.columns.sync')}</TableHead>
+                        <TableHead className={th}>{t('terminals.columns.events')}</TableHead>
+                        <TableHead className={cn(th, 'text-right')}>{t('terminals.columns.actions')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y">
                     {terminals.map((terminal) => {
                         const archived = isArchived(terminal);
                         const selected = selectedIds.includes(terminal.id);
@@ -222,7 +223,7 @@ function TerminalTable({
                         const sync = syncInfo(terminal, now, t);
 
                         return (
-                            <tr
+                            <TableRow
                                 key={terminal.id}
                                 className={cn(
                                     'align-top transition-colors hover:bg-muted/30',
@@ -231,62 +232,62 @@ function TerminalTable({
                                 )}
                             >
                                 {canManage && (
-                                    <td className="px-3 py-3">
+                                    <TableCell className="px-3 py-3">
                                         <Checkbox
                                             aria-label={t('terminals.list.select', { name: terminal.name })}
                                             checked={selected}
                                             disabled={archived}
                                             onCheckedChange={(checked) => onToggle(terminal.id, checked === true)}
                                         />
-                                    </td>
+                                    </TableCell>
                                 )}
-                                <td className="px-3 py-3">
-                                    <button
+                                <TableCell className="px-3 py-3">
+                                    <Button variant="link" size="auto"
                                         type="button"
                                         onClick={() => onOpen(terminal)}
                                         className="block max-w-full truncate text-left font-semibold text-foreground underline-offset-4 outline-none hover:text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                                         title={terminal.name}
                                     >
                                         {terminal.name}
-                                    </button>
+                                    </Button>
                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                                         <span className="font-mono">#{terminal.id}</span>
                                         <DirectionChip direction={terminal.direction} />
                                         <SourceChip source={terminal.eventSource} />
                                     </div>
-                                </td>
-                                <td className="px-3 py-3">
+                                </TableCell>
+                                <TableCell className="px-3 py-3">
                                     <div className="truncate font-medium" title={terminal.school.name}>
                                         {terminal.school.name}
                                     </div>
                                     <div className="truncate text-xs text-muted-foreground">
                                         {terminal.school.district.name}
                                     </div>
-                                </td>
-                                <td className="px-3 py-3">
+                                </TableCell>
+                                <TableCell className="px-3 py-3">
                                     <span className="font-mono text-xs break-all">{terminal.host}</span>
                                     <div className="text-xs text-muted-foreground">
                                         {terminal.protocol} · {terminal.port}
                                     </div>
-                                </td>
-                                <td className="px-3 py-3">
+                                </TableCell>
+                                <TableCell className="px-3 py-3">
                                     <div className="flex flex-col items-start gap-1">
                                         <StatusBadge tone={connection.tone}>{connection.text}</StatusBadge>
                                         <StatusBadge tone={system.tone} dot={false}>{system.text}</StatusBadge>
                                     </div>
-                                </td>
-                                <td className="px-3 py-3">
+                                </TableCell>
+                                <TableCell className="px-3 py-3">
                                     <StatusBadge tone={sync.tone}>{sync.text}</StatusBadge>
                                     {sync.delay && (
                                         <div className="mt-1 text-xs text-muted-foreground tabular-nums">
                                             {t('terminals.delay.value', { value: sync.delay })}
                                         </div>
                                     )}
-                                </td>
-                                <td className="px-3 py-3">
+                                </TableCell>
+                                <TableCell className="px-3 py-3">
                                     <EventsCell stats={monitoringById.get(terminal.id)} />
-                                </td>
-                                <td className="px-2 py-2.5">
+                                </TableCell>
+                                <TableCell className="px-2 py-2.5">
                                     <RowActions
                                         terminal={terminal}
                                         canManage={canManage}
@@ -294,12 +295,12 @@ function TerminalTable({
                                         onEdit={onEdit}
                                         onArchiveAction={onArchiveAction}
                                     />
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         );
                     })}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 }
@@ -348,14 +349,14 @@ function TerminalCard({
                     <ScanFace className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                    <button
+                    <Button variant="link" size="auto"
                         type="button"
                         onClick={() => onOpen(terminal)}
                         className="line-clamp-2 text-left font-heading text-base leading-snug font-bold break-words outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
                         title={terminal.name}
                     >
                         {terminal.name}
-                    </button>
+                    </Button>
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         <span className="font-mono">#{terminal.id}</span>
                         <DirectionChip direction={terminal.direction} />

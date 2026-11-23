@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Field } from '@/components/common/Field';
 import { SelectField } from '@/components/common/SelectField';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +13,7 @@ import { schoolScopeOptions } from '@/lib/school-scope';
 import type { SummaryMembershipType } from '@/types/attendance-summary';
 import type { School } from '@/types/school';
 import type { SchoolClass } from '@/types/school-class';
+import { DatePicker } from '@/components/common/DatePicker';
 
 export interface PlaceFilters {
     regionId: string;
@@ -147,9 +147,8 @@ export function SummaryFilters({
                     {period === 'custom' && (
                         <div className="grid grid-cols-2 gap-2">
                             <Field htmlFor={`${ids}-from`} label={t('attendanceSummary.from')}>
-                                <Input
+                                <DatePicker
                                     id={`${ids}-from`}
-                                    type="date"
                                     min="2000-01-01"
                                     max={today}
                                     value={from}
@@ -158,9 +157,8 @@ export function SummaryFilters({
                                 />
                             </Field>
                             <Field htmlFor={`${ids}-to`} label={t('attendanceSummary.to')}>
-                                <Input
+                                <DatePicker
                                     id={`${ids}-to`}
-                                    type="date"
                                     min="2000-01-01"
                                     max={today}
                                     value={to}

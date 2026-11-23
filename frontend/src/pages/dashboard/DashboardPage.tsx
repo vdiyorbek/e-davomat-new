@@ -15,7 +15,6 @@ import { binFill, binInk, formatCount, formatRate, rateBin } from '@/components/
 import { PageHeader } from '@/components/common/PageHeader';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { useInterval } from '@/hooks/useInterval';
@@ -23,6 +22,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { addDays, formatDate, formatDateLong, formatTime, todayInTashkent } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { DashboardArrivals, DashboardChild, DashboardOverview, DashboardTrend } from '@/types/dashboard';
+import { DatePicker } from '@/components/common/DatePicker';
 
 const ID = /^[1-9]\d*$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -148,7 +148,7 @@ export function DashboardPage() {
                         { label: t('dashboard.dates.today'), value: today },
                         { label: t('dashboard.dates.yesterday'), value: addDays(today, -1) },
                     ].map((preset) => (
-                        <button
+                        <Button variant="link" size="auto"
                             key={preset.value}
                             type="button"
                             role="radio"
@@ -157,11 +157,10 @@ export function DashboardPage() {
                             className={cn('rounded-md px-3 py-1', date === preset.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}
                         >
                             {preset.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
-                <Input
-                    type="date"
+                <DatePicker
                     value={date}
                     max={today}
                     onChange={(event) => DATE.test(event.target.value) && navigate({ date: event.target.value === today ? null : event.target.value })}
@@ -177,9 +176,9 @@ export function DashboardPage() {
                                     {crumb.label}
                                 </span>
                             ) : (
-                                <button type="button" className="text-primary hover:underline" onClick={() => navigate(crumb.params)}>
+                                <Button variant="link" size="auto" type="button" className="text-primary hover:underline" onClick={() => navigate(crumb.params)}>
                                     {crumb.label}
-                                </button>
+                                </Button>
                             )}
                         </span>
                     ))}
@@ -247,7 +246,7 @@ export function DashboardPage() {
                             {arrivals.loading ? <LoadingState rows={4} /> : arrivals.error ? <ErrorState message={arrivals.error} onRetry={arrivals.retry} /> : arrivals.data && <ArrivalsChart data={arrivals.data} />}
                         </Panel>
                         <Panel title={t('dashboard.streaks.title')} description={t('dashboard.streaks.description')}>
-                            <AbsenceStreaks key={scopeQuery} scopeQuery={scopeQuery} level={data.scope.level} />
+                            <AbsenceStreaks key={scopeQuery} scopeQuery={scopeQuery} level={data.scope.level} viewAllTo={`/dashboard/absence-streaks?${scopeQuery}`} />
                         </Panel>
                     </div>
 

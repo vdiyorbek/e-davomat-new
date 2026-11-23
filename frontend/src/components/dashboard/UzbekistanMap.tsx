@@ -3,6 +3,7 @@ import { MapPinOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { ErrorState, LoadingState } from '@/components/common/states';
+import { SelectField } from '@/components/common/SelectField';
 import { Button } from '@/components/ui/button';
 import { authorizedPut } from '@/lib/auth-session';
 import { inUzbekistan, matchUnits, projectLatLng, useUzbekistanGeo } from '@/lib/geo';
@@ -58,7 +59,9 @@ export function UzbekistanMap({ overview, canMapGeo, onSelect, onGeoChanged }: P
     const { geo, error } = useUzbekistanGeo();
     const containerRef = useRef<HTMLDivElement>(null);
     const [hover, setHover] = useState<Hover | null>(null);
-    const language = (i18n.resolvedLanguage ?? 'uz') as 'uz' | 'uz-Cyrl' | 'ru' | 'en';
+    const resolved = i18n.resolvedLanguage ?? 'uz';
+    // Qozoq, qirg‘iz va tojik tillari uchun hudud nomlari ruscha beriladi.
+    const language = (['kk', 'ky', 'tg'].includes(resolved) ? 'ru' : resolved) as 'uz' | 'uz-Cyrl' | 'ru' | 'en';
 
     const { level, region, district } = overview.scope;
 
@@ -350,20 +353,18 @@ function UnmatchedUnits({
                     {units.map((unit) => (
                         <li key={unit.id} className="flex flex-wrap items-center gap-2">
                             <span className="min-w-40">{unit.name}</span>
-                            <select
-                                className="h-8 rounded-md border bg-background px-2"
-                                defaultValue=""
+                            <SelectField
+                                className="h-8 w-56"
+                                value=""
                                 disabled={busy}
                                 aria-label={t('dashboard.map.assignFor', { name: unit.name })}
-                                onChange={(event) => event.target.value && void save(unit.id, event.target.value)}
-                            >
-                                <option value="">{t('dashboard.map.chooseShape')}</option>
-                                {shapes.map((shape) => (
-                                    <option key={shape.id} value={shape.id}>
-                                        {shape.name}
-                                    </option>
-                                ))}
-                            </select>
+                                placeholder={t('dashboard.map.chooseShape')}
+                                options={shapes.map((shape) => ({
+                                    value: String(shape.id),
+                                    label: shape.name,
+                                }))}
+                                onValueChange={(next) => next && void save(unit.id, next)}
+                            />
                         </li>
                     ))}
                 </ul>

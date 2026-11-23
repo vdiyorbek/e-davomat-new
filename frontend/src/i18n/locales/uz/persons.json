@@ -63,6 +63,7 @@
     "errors": {
       "nameLength": "Ota-ona familiyasi, ismi va otasining ismi 100 belgidan oshmasin.",
       "phone": "Ota-ona telefon raqamini xalqaro formatda kiriting: +998901234567."
-    }
+    },
+    "requiredHint": "Kamida bittasi majburiy: familiya, ism va telefon raqami."
   }
 }

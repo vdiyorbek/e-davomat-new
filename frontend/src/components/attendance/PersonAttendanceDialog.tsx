@@ -19,6 +19,7 @@ import { addDays, formatDate, formatDateLong, weekdayIndex, weekdayName } from '
 import { personFullName } from '@/lib/person';
 import { cn } from '@/lib/utils';
 import type { PersonAttendanceDay, PersonAttendanceHistory, PersonDayStatus } from '@/types/person-attendance';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type Mode = 'students' | 'teachers';
 type Range = 'last7' | 'last14' | 'month' | 'last30';
@@ -260,45 +261,45 @@ function HistoryBody({
 
                 {/* Planshet va kompyuter: jadval */}
                 <div className="hidden max-h-[22rem] overflow-auto rounded-xl border md:block">
-                    <table className="w-full min-w-[640px] text-sm">
-                        <thead className="sticky top-0 bg-muted text-left text-xs text-muted-foreground">
-                            <tr>
-                                <th className="w-10 px-3 py-2 font-semibold">{t('common.number')}</th>
-                                <th className="px-3 py-2 font-semibold">{t('attendance.person.date')}</th>
-                                <th className="px-3 py-2 font-semibold">{t('attendance.in')}</th>
-                                <th className="px-3 py-2 font-semibold">{t('attendance.out')}</th>
-                                <th className="px-3 py-2 font-semibold">{t('common.status')}</th>
-                                <th className="px-3 py-2 font-semibold">{t('attendance.person.reason')}</th>
-                                <th className="px-3 py-2 text-right font-semibold">{t('attendance.person.document')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
+                    <Table className="w-full min-w-[640px] text-sm">
+                        <TableHeader className="sticky top-0 bg-muted text-left text-xs text-muted-foreground">
+                            <TableRow>
+                                <TableHead className="w-10 px-3 py-2 font-semibold">{t('common.number')}</TableHead>
+                                <TableHead className="px-3 py-2 font-semibold">{t('attendance.person.date')}</TableHead>
+                                <TableHead className="px-3 py-2 font-semibold">{t('attendance.in')}</TableHead>
+                                <TableHead className="px-3 py-2 font-semibold">{t('attendance.out')}</TableHead>
+                                <TableHead className="px-3 py-2 font-semibold">{t('common.status')}</TableHead>
+                                <TableHead className="px-3 py-2 font-semibold">{t('attendance.person.reason')}</TableHead>
+                                <TableHead className="px-3 py-2 text-right font-semibold">{t('attendance.person.document')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody className="divide-y">
                             {data.days.map((day, index) => (
-                                <tr key={day.date} className={cn(day.status === 'absent' && 'bg-destructive/5')}>
-                                    <td className="px-3 py-2 text-muted-foreground tabular-nums">{index + 1}</td>
-                                    <td className="px-3 py-2 whitespace-nowrap tabular-nums">
+                                <TableRow key={day.date} className={cn(day.status === 'absent' && 'bg-destructive/5')}>
+                                    <TableCell className="px-3 py-2 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                                    <TableCell className="px-3 py-2 whitespace-nowrap tabular-nums">
                                         {formatDate(day.date)}{' '}
                                         <span className="text-xs text-muted-foreground">
                                             {weekdayName(weekdayIndex(day.date), 'short')}
                                         </span>
-                                    </td>
-                                    <td className="px-3 py-2 font-semibold tabular-nums">
+                                    </TableCell>
+                                    <TableCell className="px-3 py-2 font-semibold tabular-nums">
                                         <TimePhoto time={day.firstInTime} url={day.firstInUrl} label={t('attendance.in')} name={fullName} date={day.date} />
-                                    </td>
-                                    <td className="px-3 py-2 font-semibold tabular-nums">
+                                    </TableCell>
+                                    <TableCell className="px-3 py-2 font-semibold tabular-nums">
                                         <TimePhoto time={day.lastOutTime} url={day.lastOutUrl} label={t('attendance.out')} name={fullName} date={day.date} />
-                                    </td>
-                                    <td className="px-3 py-2">
+                                    </TableCell>
+                                    <TableCell className="px-3 py-2">
                                         <StatusBadge tone={DAY_TONE[day.status]}>
                                             {t(`attendance.status.${statusKey(day.status)}`)}
                                         </StatusBadge>
-                                    </td>
-                                    <td className="max-w-56 px-3 py-2 text-xs [overflow-wrap:anywhere]">{reasonText(day)}</td>
-                                    <td className="px-3 py-2 text-right">{documentCell(day)}</td>
-                                </tr>
+                                    </TableCell>
+                                    <TableCell className="max-w-56 px-3 py-2 text-xs [overflow-wrap:anywhere]">{reasonText(day)}</TableCell>
+                                    <TableCell className="px-3 py-2 text-right">{documentCell(day)}</TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
 
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

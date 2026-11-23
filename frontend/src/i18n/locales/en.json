@@ -8,7 +8,12 @@
     "theme": "Theme",
     "unexpected": "An unexpected error occurred.",
     "signOutFailed": "Could not sign out. Please try again.",
-    "today": "Today"
+    "today": "Today",
+    "pickDate": "Pick a date",
+    "pickTime": "Pick a time",
+    "clear": "Clear",
+    "hours": "Hours",
+    "minutes": "Minutes"
   },
   "brand": {
     "name": "E-davomat",

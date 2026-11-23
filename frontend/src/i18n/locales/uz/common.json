@@ -101,5 +101,10 @@
     "unreachable": "Server bilan bog‘lanib bo‘lmadi yoki javob vaqti tugadi.",
     "failedStatus": "So‘rov bajarilmadi ({{status}}).",
     "tooMany": "Urinishlar soni oshdi. Birozdan keyin qayta urining."
-  }
+  },
+  "pickDate": "Sanani tanlang",
+  "pickTime": "Vaqtni tanlang",
+  "clear": "Tozalash",
+  "hours": "Soat",
+  "minutes": "Daqiqa"
 }

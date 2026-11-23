@@ -14,6 +14,8 @@ import { addDays, formatDate, todayInTashkent, weekdayName } from '@/lib/date';
 import { localizedName } from '@/lib/localized';
 
 import { SCHOOL_DAYS } from './schedule-utils';
+import { DatePicker } from '@/components/common/DatePicker';
+import { TimePicker } from '@/components/common/TimePicker';
 
 interface Lesson {
     id: number;
@@ -126,9 +128,8 @@ export function LessonScheduleActions({ lesson, onUpdated }: Props) {
             hint={mode === 'cancel' ? t('schedule.cancel.hint') : t('schedule.edit.effectiveHint')}
             required
         >
-            <Input
+            <DatePicker
                 id={`${id}-effective`}
-                type="date"
                 value={effectiveDate}
                 min={minDate}
                 max={maxDate}
@@ -200,10 +201,10 @@ export function LessonScheduleActions({ lesson, onUpdated }: Props) {
                                     />
                                 </Field>
                                 <Field htmlFor={`${id}-start`} label={t('schedule.startTime')} required>
-                                    <Input id={`${id}-start`} type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} disabled={busy} required />
+                                    <TimePicker id={`${id}-start`} value={startTime} onChange={(event) => setStartTime(event.target.value)} disabled={busy} required />
                                 </Field>
                                 <Field htmlFor={`${id}-end`} label={t('schedule.endTime')} required>
-                                    <Input id={`${id}-end`} type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} disabled={busy} required />
+                                    <TimePicker id={`${id}-end`} value={endTime} onChange={(event) => setEndTime(event.target.value)} disabled={busy} required />
                                 </Field>
                             </div>
                             {dateField}

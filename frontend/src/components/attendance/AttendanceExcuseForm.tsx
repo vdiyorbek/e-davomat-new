@@ -8,13 +8,13 @@ import { FileInput } from '@/components/common/FileInput';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { authorizedPost } from '@/lib/auth-session';
 import { personFullName } from '@/lib/person';
 import { EXCUSE_REASONS } from '@/types/attendance-excuse';
 import type { ExcuseReason } from '@/types/attendance-excuse';
 import type { DailyAttendance } from '@/types/daily-attendance';
+import { DatePicker } from '@/components/common/DatePicker';
 
 export interface ExcuseStudentSelection {
     personId: number;
@@ -129,10 +129,10 @@ export function AttendanceExcuseForm({ item, selection, onSaved, onCancel }: Pro
 
             <div className="grid gap-4 sm:grid-cols-2">
                 <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
-                    <Input id={`${id}-start`} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={saving} />
+                    <DatePicker id={`${id}-start`} required value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={saving} />
                 </Field>
                 <Field htmlFor={`${id}-end`} label={t('membership.endDate')} required>
-                    <Input id={`${id}-end`} type="date" required min={startDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={saving} />
+                    <DatePicker id={`${id}-end`} required min={startDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={saving} />
                 </Field>
             </div>
 

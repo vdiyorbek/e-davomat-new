@@ -20,6 +20,7 @@ import { academicYearFor, academicYearOptions, formatDate, isValidAcademicYear, 
 import { localizedName } from '@/lib/localized';
 import { personFullName } from '@/lib/person';
 import type { School } from '@/types/school';
+import { DatePicker } from '@/components/common/DatePicker';
 
 interface SchoolClass {
     id: number;
@@ -217,10 +218,10 @@ function AssignmentsForSchool({ schoolId, academicYear }: { schoolId: number; ac
                                 />
                             </Field>
                             <Field htmlFor={`${id}-start`} label={t('membership.startDate')} required>
-                                <Input id={`${id}-start`} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={busy} required />
+                                <DatePicker id={`${id}-start`} value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={busy} required />
                             </Field>
                             <Field htmlFor={`${id}-end`} label={`${t('membership.endDate')} (${t('common.optional')})`}>
-                                <Input id={`${id}-end`} type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} disabled={busy} />
+                                <DatePicker id={`${id}-end`} value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} disabled={busy} />
                             </Field>
                         </div>
 

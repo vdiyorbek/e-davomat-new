@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 interface FileInputProps {
     id?: string;
@@ -48,10 +49,10 @@ export function FileInput({
             )}
         >
             <Button asChild type="button" variant="outline" className="w-full shrink-0 bg-card sm:w-auto">
-                <label htmlFor={inputId} className={cn('cursor-pointer', disabled && 'pointer-events-none')}>
+                <Label htmlFor={inputId} className={cn('cursor-pointer', disabled && 'pointer-events-none')}>
                     {icon ?? <FileUp aria-hidden="true" />}
                     {buttonLabel ?? t('file.choose')}
-                </label>
+                </Label>
             </Button>
             <input
                 id={inputId}

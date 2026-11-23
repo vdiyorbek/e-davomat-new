@@ -121,6 +121,14 @@
     "daysN_few": "{{count}} дня",
     "daysN_many": "{{count}} дней",
     "daysN_other": "{{count}} дн.",
-    "since": "с {{date}}"
+    "since": "с {{date}}",
+    "viewAll": "Показать все ({{count}})",
+    "pageTitle": "Ученики, долго не приходящие в школу",
+    "back": "Назад к дашборду",
+    "search": "Поиск по ФИО",
+    "minDays": "Не менее дней",
+    "minDaysAny": "Все (5+)",
+    "minDaysN": "{{count}}+ дней",
+    "total": "Всего: {{count}}"
   }
 }

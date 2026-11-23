@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type Status = 'present' | 'late' | 'absent' | 'empty';
 
@@ -57,40 +58,40 @@ export function AttendancePreview() {
                 </span>
             </div>
 
-            <table className="w-full table-fixed border-separate border-spacing-1.5 text-sm">
+            <Table className="w-full table-fixed border-separate border-spacing-1.5 text-sm">
                 <caption className="sr-only">
                     {t('preview.caption')}
                 </caption>
-                <thead>
-                    <tr>
-                        <th scope="col" className="w-[27%]">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead scope="col" className="w-[27%]">
                             <span className="sr-only">{t('preview.student')}</span>
-                        </th>
+                        </TableHead>
                         {days.map((day) => (
-                            <th
+                            <TableHead
                                 key={day}
                                 scope="col"
                                 className="pb-2 text-center font-normal text-white/50"
                             >
                                 {day}
-                            </th>
+                            </TableHead>
                         ))}
-                    </tr>
-                </thead>
-                <tbody>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {students.map((student) => (
-                        <tr key={student.name}>
-                            <th
+                        <TableRow key={student.name}>
+                            <TableHead
                                 scope="row"
                                 className="text-left text-xs font-normal text-white/80 xl:text-sm"
                             >
                                 {student.name}
-                            </th>
+                            </TableHead>
                             {student.days.map((status, index) => {
                                 const item = statuses[status];
 
                                 return (
-                                    <td key={days[index]} className="p-0">
+                                    <TableCell key={days[index]} className="p-0">
                                         <span
                                             title={t(`preview.${status}`)}
                                             className={`flex h-8 items-center justify-center rounded-lg text-lg font-semibold xl:h-9 ${item.className}`}
@@ -98,13 +99,13 @@ export function AttendancePreview() {
                                             <span aria-hidden="true">{item.symbol}</span>
                                             <span className="sr-only">{t(`preview.${status}`)}</span>
                                         </span>
-                                    </td>
+                                    </TableCell>
                                 );
                             })}
-                        </tr>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
 
             <div className="mt-4 flex flex-wrap gap-4 border-t border-white/10 pt-4 text-xs text-white/70">
                 {(['present', 'late', 'absent'] as const).map((status) => (

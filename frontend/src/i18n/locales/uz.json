@@ -8,7 +8,12 @@
     "theme": "Mavzu",
     "unexpected": "Kutilmagan xatolik yuz berdi.",
     "signOutFailed": "Chiqish amalga oshmadi. Qayta urinib ko‘ring.",
-    "today": "Bugun"
+    "today": "Bugun",
+    "pickDate": "Sanani tanlang",
+    "pickTime": "Vaqtni tanlang",
+    "clear": "Tozalash",
+    "hours": "Soat",
+    "minutes": "Daqiqa"
   },
   "brand": {
     "name": "E-davomat",
