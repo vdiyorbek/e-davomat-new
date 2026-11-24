@@ -33,6 +33,8 @@ const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then(
 const AnnouncementsPage = lazy(() =>
     import('@/pages/announcements/AnnouncementsPage').then((m) => ({ default: m.AnnouncementsPage })),
 );
+const ParentNotifyPage = lazy(() => import('@/pages/parent-notify/ParentNotifyPage').then((m) => ({ default: m.ParentNotifyPage })));
+const ParentApp = lazy(() => import('@/pages/parent/ParentApp').then((m) => ({ default: m.ParentApp })));
 const SystemHealthPage = lazy(() =>
     import('@/pages/system-health/SystemHealthPage').then((m) => ({ default: m.SystemHealthPage })),
 );
@@ -89,6 +91,8 @@ const SyncHistoryPage = lazy(() =>
 
 
 export const router = createBrowserRouter([
+    // Telegram Mini App (ota-onalar): sessiyasiz, Telegram imzosi bilan.
+    { path: '/parent', element: <ParentApp /> },
     {
         element: <AuthLayout />,
         children: [
@@ -226,6 +230,7 @@ export const router = createBrowserRouter([
                                     { path: '/system-settings', element: <SystemSettingsPage /> },
                                     { path: '/system/health', element: <SystemHealthPage /> },
                                     { path: '/announcements', element: <AnnouncementsPage /> },
+                                    { path: '/parent-notify', element: <ParentNotifyPage /> },
                                     {
                                         path: '/textbooks',
                                         element: <TextbooksPage />,

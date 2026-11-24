@@ -55,7 +55,8 @@
     "inspectorsManage": "Махалла инспекторлары",
     "homeroom": "Сынып жетекшісі",
     "systemHealth": "Жүйе күйі",
-    "announcements": "Хабарлар"
+    "announcements": "Хабарлар",
+    "parentNotify": "Ата-аналарға хабар"
   },
   "short": {
     "profile": "Профиль",
@@ -78,6 +79,7 @@
     "inspectorsManage": "Инспектор",
     "homeroom": "Менің сыныбым",
     "systemHealth": "Күйі",
-    "announcements": "Хабарлар"
+    "announcements": "Хабарлар",
+    "parentNotify": "Ата-ана"
   }
 }

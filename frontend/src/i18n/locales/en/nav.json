@@ -55,7 +55,8 @@
     "inspectorsManage": "Neighbourhood inspectors",
     "homeroom": "Homeroom teacher",
     "systemHealth": "System health",
-    "announcements": "Announcements"
+    "announcements": "Announcements",
+    "parentNotify": "Parent notifications"
   },
   "short": {
     "profile": "Profile",
@@ -78,6 +79,7 @@
     "inspectorsManage": "Inspector",
     "homeroom": "My class",
     "systemHealth": "Health",
-    "announcements": "Notices"
+    "announcements": "Notices",
+    "parentNotify": "Parents"
   }
 }

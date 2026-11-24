@@ -55,7 +55,8 @@
     "inspectorsManage": "Mahalla inspektorlari",
     "homeroom": "Sinf rahbari",
     "systemHealth": "Tizim holati",
-    "announcements": "Xabarlar"
+    "announcements": "Xabarlar",
+    "parentNotify": "Ota-onalarga xabar"
   },
   "short": {
     "profile": "Profil",
@@ -78,6 +79,7 @@
     "inspectorsManage": "Inspektor",
     "homeroom": "Sinfim",
     "systemHealth": "Holat",
-    "announcements": "Xabarlar"
+    "announcements": "Xabarlar",
+    "parentNotify": "Ota-ona"
   }
 }

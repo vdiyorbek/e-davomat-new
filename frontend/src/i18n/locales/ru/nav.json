@@ -55,7 +55,8 @@
     "inspectorsManage": "Инспекторы махалли",
     "homeroom": "Классный руководитель",
     "systemHealth": "Состояние системы",
-    "announcements": "Сообщения"
+    "announcements": "Сообщения",
+    "parentNotify": "Уведомления родителям"
   },
   "short": {
     "profile": "Профиль",
@@ -78,6 +79,7 @@
     "inspectorsManage": "Инспект.",
     "homeroom": "Мой класс",
     "systemHealth": "Состояние",
-    "announcements": "Сообщ."
+    "announcements": "Сообщ.",
+    "parentNotify": "Родители"
   }
 }

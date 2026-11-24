@@ -37,6 +37,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { EventCompactionModule } from './modules/event-compaction/event-compaction.module';
+import { ParentNotifyModule } from './modules/parent-notify/parent-notify.module';
 import { SystemMonitorModule } from './modules/system-monitor/system-monitor.module';
 import { LiveModule } from './modules/live/live.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -75,6 +76,7 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
     AnnouncementsModule,
     WeatherModule,
     EventCompactionModule,
+    ParentNotifyModule,
     SystemMonitorModule,
     HomeroomModule,
     AttendanceCalendarModule,

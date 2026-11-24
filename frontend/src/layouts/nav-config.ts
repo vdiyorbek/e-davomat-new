@@ -27,6 +27,7 @@ import {
   SlidersHorizontal,
   HeartPulse,
   Megaphone,
+  Send,
   UserX,
   UserPlus,
   UserRoundCheck,
@@ -270,6 +271,12 @@ export const NAV_GROUPS: NavGroup[] = [
         to: "/terminals/sync-history",
         key: "syncHistory",
         icon: History,
+        roles: ["SUPER_ADMIN"],
+      },
+      {
+        to: "/parent-notify",
+        key: "parentNotify",
+        icon: Send,
         roles: ["SUPER_ADMIN"],
       },
       {

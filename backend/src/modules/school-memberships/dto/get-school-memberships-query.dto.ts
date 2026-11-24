@@ -54,6 +54,13 @@ export class GetSchoolMembershipsQueryDto {
   schoolId?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(4294967295)
+  classId?: number;
+
+  @IsOptional()
   @IsEnum(MembershipType)
   type?: MembershipType;
 

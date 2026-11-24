@@ -55,7 +55,8 @@
     "inspectorsManage": "Нозирони маҳалла",
     "homeroom": "Роҳбари синф",
     "systemHealth": "Ҳолати система",
-    "announcements": "Паёмҳо"
+    "announcements": "Паёмҳо",
+    "parentNotify": "Огоҳӣ ба падару модарон"
   },
   "short": {
     "profile": "Профил",
@@ -78,6 +79,7 @@
     "inspectorsManage": "Нозир",
     "homeroom": "Синфи ман",
     "systemHealth": "Ҳолат",
-    "announcements": "Паём"
+    "announcements": "Паём",
+    "parentNotify": "Падару модар"
   }
 }

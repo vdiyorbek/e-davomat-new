@@ -286,6 +286,7 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
     const schoolValue = searchParams.get('schoolId');
     const regionValue = searchParams.get('regionId');
     const districtValue = searchParams.get('districtId');
+    const classValue = searchParams.get('classId');
     const statusValue = searchParams.get('status') ?? '';
     const searchValue = searchParams.get('q') ?? '';
     const page = Number(pageValue);
@@ -303,6 +304,7 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
         validId(schoolValue) &&
         validId(regionValue) &&
         validId(districtValue) &&
+        validId(classValue) &&
         searchValue.length <= 100 &&
         ['', 'ACTIVE', 'ENDED', 'PLANNED'].includes(statusValue);
 
@@ -361,6 +363,7 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
     if (schoolValue !== null) query.set('schoolId', String(Number(schoolValue)));
     if (regionValue) query.set('regionId', regionValue);
     if (districtValue) query.set('districtId', districtValue);
+    if (classValue) query.set('classId', classValue);
     if (searchValue.trim()) query.set('q', searchValue.trim());
     if (statusValue) query.set('status', statusValue);
     const path = `/school-memberships?${query.toString()}`;
@@ -385,7 +388,7 @@ export function SchoolMembersPage({ type }: SchoolMembersPageProps) {
 
             {success && <SuccessNotice>{success}</SuccessNotice>}
 
-            <SchoolMembersFilters />
+            <SchoolMembersFilters showClass={type === 'STUDENT'} />
 
             <MembersResults key={`${path}-${refreshVersion}`} path={path} type={type} onPageChange={changePage} />
             {canCreate && (

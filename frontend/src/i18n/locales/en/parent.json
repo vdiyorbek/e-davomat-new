@@ -1,0 +1,54 @@
+{
+  "title": "My child’s attendance",
+  "notLinked": "Your phone number is not linked. Go back to the bot, press /start and share your number.",
+  "openInTelegram": "This page opens as an app inside Telegram. Press “Open attendance” in the bot.",
+  "failed": "Could not load the data.",
+  "child": "Child",
+  "tabs": {
+    "attendance": "Attendance",
+    "excuses": "Excuses",
+    "settings": "Settings"
+  },
+  "today": "Today",
+  "noDataToday": "No data for today yet.",
+  "status": {
+    "left": "Arrived",
+    "inside": "In school",
+    "absent": "Absent",
+    "excused": "Excused",
+    "day_off": "Day off",
+    "anomaly": "Under review",
+    "unknown": "No data"
+  },
+  "arrived": "Arrived: {{time}}",
+  "left": "Left: {{time}}",
+  "stats": {
+    "present": "Days present",
+    "absent": "Absent",
+    "excused": "Excused"
+  },
+  "prevMonth": "Previous month",
+  "nextMonth": "Next month",
+  "noExcuses": "No excuses.",
+  "excuseStatus": {
+    "PENDING": "Under review",
+    "ACTIVE": "Approved",
+    "REJECTED": "Rejected",
+    "CANCELLED": "Cancelled"
+  },
+  "reasons": {
+    "ILLNESS": "Illness",
+    "OLYMPIAD": "Olympiad",
+    "FAMILY": "Family reason",
+    "OTHER": "Other"
+  },
+  "rejectedReason": "Reason: {{text}}",
+  "language": "Language",
+  "notifications": "Notifications",
+  "prefs": {
+    "arrival": "Arrived at school",
+    "leave": "Left school",
+    "absent": "Absent",
+    "excuse": "Excuse result"
+  }
+}

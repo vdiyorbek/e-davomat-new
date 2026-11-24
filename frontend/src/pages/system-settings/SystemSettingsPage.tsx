@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedDelete, authorizedPut } from '@/lib/auth-session';
 import { formatDateTime } from '@/lib/date';
+import { TelegramConfigCard } from '@/components/system-settings/TelegramConfigCard';
 import { EventCompactionCard } from '@/components/system-settings/EventCompactionCard';
 import type { SettingGroup, SystemSetting, SystemSettingHistory } from '@/types/system-settings';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -224,6 +225,8 @@ export function SystemSettingsPage() {
                 })}
 
             <EventCompactionCard />
+
+            <TelegramConfigCard />
 
             <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">{t('systemSettings.secretsNote')}</p>
 

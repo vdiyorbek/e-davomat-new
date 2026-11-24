@@ -11,11 +11,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/hooks/useAuth';
+import { academicYearFor, todayInTashkent } from '@/lib/date';
 import { schoolScopeOptions } from '@/lib/school-scope';
 import type { School } from '@/types/school';
 import { Label } from '@/components/ui/label';
 
-type FilterName = 'regionId' | 'districtId' | 'schoolId' | 'q' | 'status';
+type FilterName = 'regionId' | 'districtId' | 'schoolId' | 'classId' | 'q' | 'status';
+
+interface ClassOption {
+    id: number;
+    name: string;
+}
 
 function SearchForm({
     initialValue,
@@ -63,7 +69,26 @@ function SearchForm({
     );
 }
 
-export function SchoolMembersFilters() {
+function ClassFilter({ id, schoolId, value, onChange }: { id: string; schoolId: number; value: string; onChange: (value: string) => void }) {
+    const { t } = useTranslation();
+    const params = new URLSearchParams({ schoolId: String(schoolId), academicYear: academicYearFor(todayInTashkent()) });
+    const classes = useApiQuery<ClassOption[]>(`/classes?${params.toString()}`);
+
+    return (
+        <Field htmlFor={id} label={t('common.class')}>
+            <SelectField
+                id={id}
+                value={value}
+                onValueChange={onChange}
+                emptyOption={t('filters.allClasses')}
+                options={(classes.data ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
+                disabled={classes.loading || Boolean(classes.error)}
+            />
+        </Field>
+    );
+}
+
+export function SchoolMembersFilters({ showClass = false }: { showClass?: boolean }) {
     const { t } = useTranslation();
     const { session } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -75,6 +100,7 @@ export function SchoolMembersFilters() {
     const regionId = searchParams.get('regionId') ?? '';
     const districtId = searchParams.get('districtId') ?? '';
     const schoolId = searchParams.get('schoolId') ?? '';
+    const classId = searchParams.get('classId') ?? '';
     const search = searchParams.get('q') ?? '';
     const status = searchParams.get('status') ?? '';
 
@@ -83,6 +109,8 @@ export function SchoolMembersFilters() {
     const canSelectSchool = canSelectDistrict || role === 'DISTRICT_ADMIN';
 
     const scope = schoolScopeOptions(schools, regionId, districtId);
+
+    const classSchoolId = session?.profile.schoolId ?? (schoolId ? Number(schoolId) : null);
     const optionsDisabled = loading || Boolean(error);
 
     function changeFilter(name: FilterName, value: string) {
@@ -95,6 +123,7 @@ export function SchoolMembersFilters() {
             next.delete('schoolId');
         }
         if (name === 'districtId') next.delete('schoolId');
+        if (name === 'regionId' || name === 'districtId' || name === 'schoolId') next.delete('classId');
 
         next.set('page', '1');
         setSearchParams(next);
@@ -102,12 +131,12 @@ export function SchoolMembersFilters() {
 
     function clearFilters() {
         const next = new URLSearchParams(searchParams);
-        (['regionId', 'districtId', 'schoolId', 'q', 'status'] as const).forEach((key) => next.delete(key));
+        (['regionId', 'districtId', 'schoolId', 'classId', 'q', 'status'] as const).forEach((key) => next.delete(key));
         next.set('page', '1');
         setSearchParams(next);
     }
 
-    const hasFilters = Boolean(regionId || districtId || schoolId || search || status);
+    const hasFilters = Boolean(regionId || districtId || schoolId || classId || search || status);
 
     return (
         <section
@@ -133,6 +162,15 @@ export function SchoolMembersFilters() {
                         }))}
                     />
                 </Field>
+
+                {showClass && classSchoolId && (
+                    <ClassFilter
+                        id={`${ids}-class`}
+                        schoolId={classSchoolId}
+                        value={classId}
+                        onChange={(value) => changeFilter('classId', value)}
+                    />
+                )}
 
                 {canSelectRegion && (
                     <Field htmlFor={`${ids}-region`} label={t('common.region')}>

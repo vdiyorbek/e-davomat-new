@@ -1,0 +1,54 @@
+{
+  "title": "Farzandim davomati",
+  "notLinked": "Telefon raqamingiz ulanmagan. Botga qaytib /start bosing va raqamni ulashing.",
+  "openInTelegram": "Bu sahifa Telegram ichidagi ilova sifatida ochiladi. Botdan «Davomatni ochish» tugmasini bosing.",
+  "failed": "Ma’lumotni yuklab bo‘lmadi.",
+  "child": "Farzand",
+  "tabs": {
+    "attendance": "Davomat",
+    "excuses": "Arizalar",
+    "settings": "Sozlamalar"
+  },
+  "today": "Bugun",
+  "noDataToday": "Bugun uchun ma’lumot hali yo‘q.",
+  "status": {
+    "left": "Keldi",
+    "inside": "Maktabda",
+    "absent": "Kelmadi",
+    "excused": "Sababli",
+    "day_off": "Dam olish kuni",
+    "anomaly": "Tekshiriladi",
+    "unknown": "Ma’lumot yo‘q"
+  },
+  "arrived": "Keldi: {{time}}",
+  "left": "Ketdi: {{time}}",
+  "stats": {
+    "present": "Kelgan kunlar",
+    "absent": "Kelmagan",
+    "excused": "Sababli"
+  },
+  "prevMonth": "Oldingi oy",
+  "nextMonth": "Keyingi oy",
+  "noExcuses": "Arizalar yo‘q.",
+  "excuseStatus": {
+    "PENDING": "Ko‘rib chiqilmoqda",
+    "ACTIVE": "Tasdiqlandi",
+    "REJECTED": "Rad etildi",
+    "CANCELLED": "Bekor qilindi"
+  },
+  "reasons": {
+    "ILLNESS": "Kasallik",
+    "OLYMPIAD": "Olimpiada",
+    "FAMILY": "Oilaviy sabab",
+    "OTHER": "Boshqa"
+  },
+  "rejectedReason": "Sabab: {{text}}",
+  "language": "Til",
+  "notifications": "Xabarnomalar",
+  "prefs": {
+    "arrival": "Maktabga keldi",
+    "leave": "Maktabdan chiqdi",
+    "absent": "Kelmadi",
+    "excuse": "Ariza natijasi"
+  }
+}

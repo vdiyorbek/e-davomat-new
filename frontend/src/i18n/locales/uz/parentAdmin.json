@@ -1,0 +1,56 @@
+{
+  "title": "Ota-onalarga xabar (Telegram)",
+  "description": "Telegram bot orqali ota-onalarga «keldi/ketdi/kelmadi» va ariza natijasi xabarlari. Hozircha faqat tanlangan sinov maktablarida ishlaydi.",
+  "refresh": "Yangilash",
+  "failed": "Bajarib bo‘lmadi.",
+  "save": "Saqlash",
+  "bot": {
+    "title": "Telegram bot",
+    "token": "Bot tokeni",
+    "configured": "Sozlangan",
+    "notConfigured": "Sozlanmagan",
+    "username": "Bot",
+    "webhook": "Webhook",
+    "webhookOn": "Ulangan",
+    "webhookOff": "O‘rnatilmagan",
+    "parents": "Ulangan ota-onalar",
+    "parentsValue": "{{total}} ta (bloklagan: {{blocked}})",
+    "envHint": "Token va manzilni «Tizim sozlamalari» sahifasidagi «Telegram bot ulanishi» kartasida kiriting.",
+    "publicUrlHint": "Token va manzilni «Tizim sozlamalari» sahifasidagi «Telegram bot ulanishi» kartasida kiriting.",
+    "setup": "Webhook o‘rnatish",
+    "today": "Bugun: yuborildi {{sent}}, navbatda {{pending}}, xato/o‘tkazib yuborilgan {{failed}}"
+  },
+  "schools": {
+    "title": "Sinov maktablari",
+    "description": "Xabarlar faqat shu maktablarning o‘quvchilari ota-onalariga yuboriladi. «Kelmadi» xabari smena boshlanishi + kutish vaqtidan keyin (smena yo‘q sinflar uchun — standart vaqtda) bir marta yuboriladi.",
+    "pick": "Maktab tanlang",
+    "add": "Qo‘shish",
+    "empty": "Hali maktab qo‘shilmagan.",
+    "school": "Maktab",
+    "students": "O‘quvchilar",
+    "linked": "Ulangan ota-onalar",
+    "absentTime": "Kelmadi vaqti",
+    "grace": "Kutish (daq)",
+    "enabled": "Yoqilgan"
+  },
+  "messages": {
+    "title": "Oxirgi xabarlar",
+    "empty": "Hali xabar yo‘q.",
+    "time": "Vaqti",
+    "student": "O‘quvchi",
+    "kind": "Turi",
+    "status": "Holat",
+    "kinds": {
+      "ARRIVED": "Keldi",
+      "LEFT": "Ketdi",
+      "ABSENT": "Kelmadi",
+      "EXCUSE": "Ariza natijasi"
+    },
+    "statuses": {
+      "SENT": "Yuborildi",
+      "PENDING": "Navbatda",
+      "FAILED": "Xato",
+      "SKIPPED": "O‘tkazib yuborildi"
+    }
+  }
+}

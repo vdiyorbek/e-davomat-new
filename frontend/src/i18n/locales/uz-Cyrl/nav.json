@@ -55,7 +55,8 @@
     "inspectorsManage": "Маҳалла инспекторлари",
     "homeroom": "Синф раҳбари",
     "systemHealth": "Тизим ҳолати",
-    "announcements": "Хабарлар"
+    "announcements": "Хабарлар",
+    "parentNotify": "Ота-оналарга хабар"
   },
   "short": {
     "profile": "Профил",
@@ -78,6 +79,7 @@
     "inspectorsManage": "Инспектор",
     "homeroom": "Синфим",
     "systemHealth": "Ҳолат",
-    "announcements": "Хабарлар"
+    "announcements": "Хабарлар",
+    "parentNotify": "Ота-она"
   }
 }

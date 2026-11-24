@@ -165,5 +165,33 @@
       "PARTIAL": "Qisman (keyingi safar davom etadi)",
       "FAILED": "Xato"
     }
+  },
+  "telegram": {
+    "title": "Telegram bot ulanishi",
+    "description": "Ota-onalarga xabar yuboradigan bot sozlamalari. Token va maxfiy so‘z bazada shifrlangan holda saqlanadi va qayta ko‘rsatilmaydi. Bu yerda bo‘sh bo‘lsa, serverdagi .env qiymati ishlatiladi.",
+    "token": "Bot tokeni",
+    "secret": "Webhook maxfiy so‘zi",
+    "publicUrl": "Ommaviy manzil (https)",
+    "set": "Sozlangan",
+    "notSet": "Sozlanmagan",
+    "newToken": "Yangi token (@BotFather’dan)",
+    "hint": "Token faqat yangilash uchun kiritiladi, bo‘sh qoldirsangiz o‘zgarmaydi. Maxfiy so‘z avtomatik yaratiladi. Token, maxfiy so‘z yoki manzil o‘zgargach «Webhook o‘rnatish» tugmasini bosing.",
+    "save": "Saqlash",
+    "regenerate": "Maxfiy so‘zni yangilash",
+    "webhook": "Webhook o‘rnatish",
+    "clear": "Bazadagi tokenni o‘chirish",
+    "clearTitle": "Tokenni o‘chirasizmi?",
+    "clearText": "Bazadagi token o‘chiriladi. Serverdagi .env da token bo‘lsa, shu ishlatiladi, aks holda xabar yuborish to‘xtaydi.",
+    "cleared": "Token o‘chirildi.",
+    "refresh": "Yangilash",
+    "saved": "Saqlandi.",
+    "savedBot": "Saqlandi. Bot: @{{name}}",
+    "webhookDone": "Webhook o‘rnatildi.",
+    "needsWebhook": "Sozlama o‘zgardi: «Webhook o‘rnatish» tugmasini bosing, aks holda Telegram eski sozlama bilan ishlaydi.",
+    "failed": "Bajarib bo‘lmadi.",
+    "source": {
+      "db": "Bazadan",
+      "env": "Serverdan (.env)"
+    }
   }
 }

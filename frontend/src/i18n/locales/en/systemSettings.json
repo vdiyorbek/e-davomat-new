@@ -165,5 +165,33 @@
       "PARTIAL": "Partial (continues next time)",
       "FAILED": "Failed"
     }
+  },
+  "telegram": {
+    "title": "Telegram bot connection",
+    "description": "Settings of the bot that sends parent notifications. The token and webhook secret are stored encrypted in the database and are never shown again. If a value is empty here, the server’s .env value is used.",
+    "token": "Bot token",
+    "secret": "Webhook secret",
+    "publicUrl": "Public address (https)",
+    "set": "Configured",
+    "notSet": "Not configured",
+    "newToken": "New token (from @BotFather)",
+    "hint": "Enter the token only to replace it; leave it empty to keep the current one. The secret is generated automatically. After changing the token, secret or address, press “Set webhook”.",
+    "save": "Save",
+    "regenerate": "Regenerate secret",
+    "webhook": "Set webhook",
+    "clear": "Remove token from database",
+    "clearTitle": "Remove the token?",
+    "clearText": "The token is removed from the database. If the server .env has a token it will be used, otherwise messages stop being sent.",
+    "cleared": "Token removed.",
+    "refresh": "Refresh",
+    "saved": "Saved.",
+    "savedBot": "Saved. Bot: @{{name}}",
+    "webhookDone": "Webhook set.",
+    "needsWebhook": "Settings changed: press “Set webhook”, otherwise Telegram keeps using the old ones.",
+    "failed": "Could not complete.",
+    "source": {
+      "db": "Database",
+      "env": "Server .env"
+    }
   }
 }

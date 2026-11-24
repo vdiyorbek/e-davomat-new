@@ -171,8 +171,17 @@ export class SchoolMembershipsService {
     query: GetSchoolMembershipsQueryDto,
     user: AuthenticatedUser,
   ): Promise<SchoolMembershipsPage> {
-    const { page, limit, personId, regionId, districtId, schoolId, type, q } =
-      query;
+    const {
+      page,
+      limit,
+      personId,
+      regionId,
+      districtId,
+      schoolId,
+      classId,
+      type,
+      q,
+    } = query;
 
     const builder = this.membershipsRepository
       .createQueryBuilder('membership')
@@ -231,6 +240,12 @@ export class SchoolMembershipsService {
     if (schoolId !== undefined) {
       builder.andWhere('membership.schoolId = :filterSchoolId', {
         filterSchoolId: schoolId,
+      });
+    }
+
+    if (classId !== undefined) {
+      builder.andWhere('membership.classId = :filterClassId', {
+        filterClassId: classId,
       });
     }
 

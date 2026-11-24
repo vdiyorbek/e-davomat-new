@@ -1,0 +1,56 @@
+{
+  "title": "Parent notifications (Telegram)",
+  "description": "Messages to parents via the Telegram bot: “arrived / left / absent” and the excuse result. For now it works only in the selected pilot schools.",
+  "refresh": "Refresh",
+  "failed": "Could not complete.",
+  "save": "Save",
+  "bot": {
+    "title": "Telegram bot",
+    "token": "Bot token",
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "username": "Bot",
+    "webhook": "Webhook",
+    "webhookOn": "Connected",
+    "webhookOff": "Not set",
+    "parents": "Linked parents",
+    "parentsValue": "{{total}} (blocked: {{blocked}})",
+    "envHint": "Enter the token and address in the “Telegram bot connection” card on the System settings page.",
+    "publicUrlHint": "Enter the token and address in the “Telegram bot connection” card on the System settings page.",
+    "setup": "Set webhook",
+    "today": "Today: sent {{sent}}, queued {{pending}}, failed/skipped {{failed}}"
+  },
+  "schools": {
+    "title": "Pilot schools",
+    "description": "Messages go only to parents of students in these schools. “Absent” is sent once after the shift start + waiting time (for classes without a shift — at the default time).",
+    "pick": "Choose a school",
+    "add": "Add",
+    "empty": "No schools added yet.",
+    "school": "School",
+    "students": "Students",
+    "linked": "Linked parents",
+    "absentTime": "“Absent” time",
+    "grace": "Wait (min)",
+    "enabled": "Enabled"
+  },
+  "messages": {
+    "title": "Latest messages",
+    "empty": "No messages yet.",
+    "time": "Time",
+    "student": "Student",
+    "kind": "Type",
+    "status": "Status",
+    "kinds": {
+      "ARRIVED": "Arrived",
+      "LEFT": "Left",
+      "ABSENT": "Absent",
+      "EXCUSE": "Excuse result"
+    },
+    "statuses": {
+      "SENT": "Sent",
+      "PENDING": "Queued",
+      "FAILED": "Failed",
+      "SKIPPED": "Skipped"
+    }
+  }
+}

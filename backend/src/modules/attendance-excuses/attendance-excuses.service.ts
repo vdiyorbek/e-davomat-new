@@ -1,3 +1,4 @@
+import { ParentNotifyService } from '../parent-notify/parent-notify.service';
 import {
   BadRequestException,
   ConflictException,
@@ -50,6 +51,8 @@ export class AttendanceExcusesService {
     private readonly statsQueue: DashboardStatsQueue,
 
     private readonly notifications: NotificationsService,
+
+    private readonly parents: ParentNotifyService,
   ) {}
 
   /** Ariza oralig‘idagi (bugungacha, ko‘pi bilan 62 kun) kunlar statistikasi qayta hisoblanadi. */
@@ -678,6 +681,15 @@ export class AttendanceExcusesService {
         `SELECT CONCAT_WS(' ', lastName, firstName) AS student FROM persons WHERE id = ?`,
         [excuse.personId],
       );
+    // Ota-onaga (Telegram) — faqat sinov maktablari; xatolik jarayonni to‘xtatmaydi.
+    await this.parents.notifyExcuseResult({
+      excuseId: excuse.id,
+      personId: excuse.personId,
+      approved: type === 'EXCUSE_APPROVED',
+      from: excuse.startDate,
+      to: excuse.endDate,
+      reason,
+    });
     await this.notifications.notify([
       {
         userId: excuse.uploadedByUserId,
