@@ -8,6 +8,7 @@ import {
   Patch,
   Query,
   Req,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 
@@ -57,6 +58,21 @@ export class ParentApiController {
     @Query('month') month?: string,
   ) {
     return this.service.monthAttendance(linkOf(request), personId, month);
+  }
+
+  @Get('children/:personId/photo')
+  @Header('Cache-Control', 'private, max-age=300')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async photo(
+    @Req() request: ParentRequest,
+    @Param('personId', ParseIntPipe) personId: number,
+  ): Promise<StreamableFile> {
+    const buffer = await this.service.photo(linkOf(request), personId);
+    return new StreamableFile(buffer, {
+      type: 'image/jpeg',
+      disposition: 'inline',
+      length: buffer.length,
+    });
   }
 
   @Get('children/:personId/excuses')

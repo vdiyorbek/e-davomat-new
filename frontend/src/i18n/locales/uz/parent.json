@@ -50,5 +50,7 @@
     "leave": "Maktabdan chiqdi",
     "absent": "Kelmadi",
     "excuse": "Ariza natijasi"
-  }
+  },
+  "monthPercent": "Oylik davomat",
+  "selectDay": "Kunni tanlang, tafsilot shu yerda ko‘rinadi."
 }

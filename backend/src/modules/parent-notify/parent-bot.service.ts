@@ -3,9 +3,11 @@ import { DataSource } from 'typeorm';
 
 import { ParentNotifyService, phoneKeyOf } from './parent-notify.service';
 import {
+  escapeHtml,
   fill,
   isParentLanguage,
   LANGUAGE_NAMES,
+  niceName,
   PARENT_LANGUAGES,
   TEXTS,
   type ParentLanguage,
@@ -112,7 +114,7 @@ export class ParentBotService {
   private async sendLanguagePicker(chatId: number): Promise<void> {
     await this.telegram.sendMessage(
       chatId,
-      'Tilni tanlang · Выберите язык · Choose language · Тилди тандаңыз · Забонро интихоб кунед',
+      '🌐 Tilni tanlang · Выберите язык · Choose language · Тілді таңдаңыз · Тилди тандаңыз · Забонро интихоб кунед',
       { reply_markup: this.languageKeyboard() },
     );
   }
@@ -241,12 +243,12 @@ export class ParentBotService {
     const list = children
       .map(
         (child) =>
-          `• ${child.lastName} ${child.firstName}${child.className ? ` (${child.className})` : ''}`,
+          `• <b>${escapeHtml(niceName(`${child.lastName} ${child.firstName}`))}</b>${child.className ? ` · ${escapeHtml(child.className)}` : ''}`,
       )
       .join('\n');
     await this.telegram.sendMessage(
       chatId,
-      fill(t.linked, { children: list }),
+      fill(t.linked, { children: list }, ['children']),
       {
         reply_markup: this.appButton(language) ?? { remove_keyboard: true },
       },

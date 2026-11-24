@@ -2,8 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DataSource } from 'typeorm';
 
+import { PersonPhotosService } from '../persons/person-photos.service';
+
 import { TelegramApiService, TelegramError } from './telegram-api.service';
-import { fill, isParentLanguage, TEXTS } from './parent-texts';
+import { INTERNAL_USER } from './internal-user';
+import { fill, isParentLanguage, niceName, TEXTS } from './parent-texts';
 import type { ParentLanguage } from './parent-texts';
 import { str } from './str';
 
@@ -27,6 +30,7 @@ export class ParentSenderService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly telegram: TelegramApiService,
+    private readonly photos: PersonPhotosService,
   ) {}
 
   private compose(
@@ -35,7 +39,7 @@ export class ParentSenderService {
     payload: Record<string, unknown>,
   ): string {
     const t = TEXTS[language];
-    const name = str(payload.name ?? '');
+    const name = niceName(str(payload.name ?? ''));
     switch (kind) {
       case 'ARRIVED':
         return fill(t.arrived, { name, time: str(payload.time ?? '') });
@@ -51,13 +55,26 @@ export class ParentSenderService {
           payload.reason !== ''
             ? fill(t.reason, { text: payload.reason })
             : '';
-        return fill(approved ? t.excuseApproved : t.excuseRejected, {
-          name,
-          from: formatDay(str(payload.from ?? '')),
-          to: formatDay(str(payload.to ?? '')),
-          reason,
-        });
+        return fill(
+          approved ? t.excuseApproved : t.excuseRejected,
+          {
+            name,
+            from: formatDay(str(payload.from ?? '')),
+            to: formatDay(str(payload.to ?? '')),
+            reason,
+          },
+          ['reason'],
+        );
       }
+    }
+  }
+
+  /** Farzand rasmi bo‘lsa — baytlari, yo‘q bo‘lsa yoki o‘qib bo‘lmasa null. */
+  private async photoOf(personId: number): Promise<Buffer | null> {
+    try {
+      return await this.photos.read(personId, INTERNAL_USER);
+    } catch {
+      return null;
     }
   }
 
@@ -67,7 +84,7 @@ export class ParentSenderService {
     this.running = true;
     try {
       const rows: Row[] = await this.dataSource.query(
-        `SELECT m.id, m.kind, m.payload, m.attempts, l.id AS linkId, l.chatId, l.language
+        `SELECT m.id, m.kind, m.personId, m.payload, m.attempts, l.id AS linkId, l.chatId, l.language
            FROM parent_messages m JOIN parent_telegram_links l ON l.id = m.linkId
           WHERE m.status = 'PENDING' AND m.sendAfter <= NOW(3)
           ORDER BY m.id ASC LIMIT ${BATCH}`,
@@ -80,10 +97,29 @@ export class ParentSenderService {
             : ((row.payload as Record<string, unknown> | null) ?? {});
         const language = isParentLanguage(row.language) ? row.language : 'uz';
         try {
-          await this.telegram.sendMessage(
-            str(row.chatId),
-            this.compose(str(row.kind), language, payload),
-          );
+          const text = this.compose(str(row.kind), language, payload);
+          const kind = str(row.kind);
+          const photo =
+            kind === 'ARRIVED' || kind === 'LEFT' || kind === 'ABSENT'
+              ? await this.photoOf(Number(row.personId))
+              : null;
+          let sentWithPhoto = false;
+          if (photo) {
+            try {
+              await this.telegram.sendPhoto(str(row.chatId), photo, text);
+              sentWithPhoto = true;
+            } catch (photoError) {
+              // Rasm bilan bo‘lmadi (masalan, fayl muammosi): oddiy matn yuboriladi.
+              // Bot bloklangan bo‘lsa, matn yuborishda xuddi shu xato qayta chiqadi va quyida hal qilinadi.
+              if (
+                photoError instanceof TelegramError &&
+                photoError.code === 429
+              )
+                throw photoError;
+            }
+          }
+          if (!sentWithPhoto)
+            await this.telegram.sendMessage(str(row.chatId), text);
           await this.dataSource.query(
             "UPDATE parent_messages SET status = 'SENT', sentAt = NOW(3), attempts = attempts + 1, error = NULL WHERE id = ?",
             [id],

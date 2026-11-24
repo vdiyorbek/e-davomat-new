@@ -5,29 +5,16 @@ import {
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
+import { PersonPhotosService } from '../persons/person-photos.service';
 import { DailyAttendancePersonService } from '../daily-attendance/daily-attendance-person.service';
 import { MembershipType } from '../school-memberships/school-membership.entity';
-import { UserRole } from '../users/enums/user-role.enum';
+import { INTERNAL_USER } from './internal-user';
 import { ParentNotifyService, tashkentParts } from './parent-notify.service';
 import { isParentLanguage } from './parent-texts';
 import type { ParentLink } from './telegram-init-data.guard';
 import { str } from './str';
 
 type Row = Record<string, unknown>;
-
-/** Ichki chaqiruv uchun: ota-onaning farzandga egaligi allaqachon tekshirilgan. */
-const INTERNAL_USER = {
-  id: 0,
-  login: 'parent-app',
-  firstName: null,
-  lastName: null,
-  middleName: null,
-  role: UserRole.SUPER_ADMIN,
-  regionId: null,
-  districtId: null,
-  schoolId: null,
-  photoUrl: null,
-};
 
 function daysInMonth(month: string): { from: string; to: string } {
   const [year, mon] = month.split('-').map(Number) as [number, number];
@@ -45,6 +32,7 @@ export class ParentApiService {
     private readonly dataSource: DataSource,
     private readonly parents: ParentNotifyService,
     private readonly attendance: DailyAttendancePersonService,
+    private readonly photos: PersonPhotosService,
   ) {}
 
   async me(link: ParentLink) {
@@ -106,6 +94,12 @@ export class ParentApiService {
       [link.id],
     );
     return this.me(fresh ?? link);
+  }
+
+  /** Farzand profil rasmi (JPEG). Egalik tekshiriladi; rasm bo‘lmasa 404. */
+  async photo(link: ParentLink, personId: number): Promise<Buffer> {
+    await this.ownChild(link, personId);
+    return this.photos.read(personId, INTERNAL_USER);
   }
 
   private async ownChild(link: ParentLink, personId: number) {

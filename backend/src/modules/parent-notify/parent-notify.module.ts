@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 
 import { RedisModule } from '../../redis/redis.module';
 import { AttendanceCalendarModule } from '../attendance-calendar/attendance-calendar.module';
+import { PersonsModule } from '../persons/persons.module';
 import { DailyAttendanceModule } from '../daily-attendance/daily-attendance.module';
 import { ParentAbsentJob } from './parent-absent.service';
 import { ParentAdminController } from './parent-admin.controller';
@@ -21,7 +22,12 @@ import { TelegramWebhookController } from './telegram-webhook.controller';
 /** Ota-onalarga Telegram orqali xabar va Mini App. Global: ariza xizmati to‘g‘ridan-to‘g‘ri ishlata oladi. */
 @Global()
 @Module({
-  imports: [RedisModule, DailyAttendanceModule, AttendanceCalendarModule],
+  imports: [
+    RedisModule,
+    DailyAttendanceModule,
+    AttendanceCalendarModule,
+    PersonsModule,
+  ],
   controllers: [
     ParentApiController,
     ParentAdminController,

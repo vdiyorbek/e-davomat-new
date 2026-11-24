@@ -5,6 +5,7 @@ export interface ParentChild {
     schoolId: number;
     schoolName: string;
     className: string | null;
+    hasPhoto: boolean;
 }
 
 export interface ParentMe {

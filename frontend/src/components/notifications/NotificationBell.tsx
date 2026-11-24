@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useInterval } from '@/hooks/useInterval';
 import { authorizedPost } from '@/lib/auth-session';
@@ -134,7 +133,7 @@ export function NotificationBell() {
                 {(data?.items ?? []).length === 0 ? (
                     <p className="px-4 py-10 text-center text-sm text-muted-foreground">{t('notifications.empty')}</p>
                 ) : (
-                    <ScrollArea className="max-h-96">
+                    <div className="max-h-96 overflow-y-auto overscroll-contain">
                         <ul className="divide-y">
                             {(data?.items ?? []).map((item) => (
                                 <li key={item.id}>
@@ -200,7 +199,7 @@ export function NotificationBell() {
                                 </li>
                             ))}
                         </ul>
-                    </ScrollArea>
+                    </div>
                 )}
             </PopoverContent>
         </Popover>

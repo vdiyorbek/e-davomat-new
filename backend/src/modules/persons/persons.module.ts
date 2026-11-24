@@ -17,6 +17,6 @@ import { FacePhotoQualityService } from './face-photo-quality.service';
     PersonGuardiansService,
     FacePhotoQualityService,
   ],
-  exports: [PersonsService],
+  exports: [PersonsService, PersonPhotosService],
 })
 export class PersonsModule {}

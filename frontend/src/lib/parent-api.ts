@@ -41,6 +41,16 @@ export function loadTelegram(): Promise<TelegramWebApp | null> {
     });
 }
 
+/** Rasm kabi ikkilik javoblar uchun (sarlavha kerak, shuning uchun <img src> ishlamaydi). */
+export async function parentBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/parent${path}`, {
+        headers: { 'X-Telegram-Init-Data': telegramApp()?.initData ?? '' },
+        signal,
+    });
+    if (!response.ok) throw new ParentApiError(`HTTP ${response.status}`, response.status);
+    return await response.blob();
+}
+
 export async function parentRequest<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
     const response = await fetch(`${API_BASE_URL}/parent${path}`, {
         method: init.method ?? 'GET',

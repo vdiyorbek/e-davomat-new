@@ -50,5 +50,7 @@
     "leave": "Left school",
     "absent": "Absent",
     "excuse": "Excuse result"
-  }
+  },
+  "monthPercent": "Monthly attendance",
+  "selectDay": "Pick a day to see the details."
 }

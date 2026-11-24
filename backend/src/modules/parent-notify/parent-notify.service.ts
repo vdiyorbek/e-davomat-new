@@ -13,6 +13,7 @@ export interface ParentChild {
   schoolId: number;
   schoolName: string;
   className: string | null;
+  hasPhoto: boolean;
 }
 
 const PREF_COLUMN: Record<ParentMessageKind, string> = {
@@ -81,7 +82,8 @@ export class ParentNotifyService {
   async childrenOf(phoneKey: string): Promise<ParentChild[]> {
     const rows: Row[] = await this.dataSource.query(
       `SELECT DISTINCT p.id AS personId, p.firstName, p.lastName,
-              s.id AS schoolId, s.name AS schoolName, c.name AS className
+              s.id AS schoolId, s.name AS schoolName, c.name AS className,
+              (p.photoUrl IS NOT NULL) AS hasPhoto
          FROM person_guardians g
          JOIN persons p ON p.id = g.personId AND p.deletedAt IS NULL
          JOIN school_memberships m ON m.personId = p.id AND m.type = 'STUDENT'
@@ -100,6 +102,7 @@ export class ParentNotifyService {
       schoolId: Number(row.schoolId),
       schoolName: str(row.schoolName ?? ''),
       className: row.className === null ? null : str(row.className),
+      hasPhoto: Number(row.hasPhoto) === 1,
     }));
   }
 

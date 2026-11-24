@@ -49,7 +49,7 @@ export class TelegramApiService {
 
   async call<T = unknown>(
     method: string,
-    body: Record<string, unknown> = {},
+    body: Record<string, unknown> | FormData = {},
   ): Promise<T> {
     const { token, apiBase } = telegramConfig();
     if (!token)
@@ -94,8 +94,23 @@ export class TelegramApiService {
     return this.call('sendMessage', {
       chat_id: chatId,
       text,
+      parse_mode: 'HTML',
       disable_web_page_preview: true,
       ...extra,
     });
+  }
+
+  /** Rasm + izoh (JPEG baytlari to‘g‘ridan-to‘g‘ri yuklanadi). */
+  sendPhoto(chatId: number | string, photo: Buffer, caption: string) {
+    const form = new FormData();
+    form.append('chat_id', String(chatId));
+    form.append('caption', caption);
+    form.append('parse_mode', 'HTML');
+    form.append(
+      'photo',
+      new Blob([new Uint8Array(photo)], { type: 'image/jpeg' }),
+      'photo.jpg',
+    );
+    return this.call('sendPhoto', form);
   }
 }
