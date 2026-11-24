@@ -1,0 +1,18 @@
+{
+  "time": "Тошкент вақти",
+  "timezone": "Тошкент вақти",
+  "feelsLike": "Сезилиши {{value}}°",
+  "humidity": "Намлик {{value}}%",
+  "wind": "Шамол {{value}} м/с",
+  "conditions": {
+    "clear": "Очиқ",
+    "partly": "Қисман булутли",
+    "cloudy": "Булутли",
+    "fog": "Туман",
+    "drizzle": "Майда ёмғир",
+    "rain": "Ёмғир",
+    "snow": "Қор",
+    "showers": "Жала",
+    "thunder": "Момақалдироқ"
+  }
+}

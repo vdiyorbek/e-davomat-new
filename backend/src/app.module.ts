@@ -35,6 +35,8 @@ import { InspectorsModule } from './modules/inspectors/inspectors.module';
 import { HomeroomModule } from './modules/homeroom/homeroom.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
+import { WeatherModule } from './modules/weather/weather.module';
+import { EventCompactionModule } from './modules/event-compaction/event-compaction.module';
 import { SystemMonitorModule } from './modules/system-monitor/system-monitor.module';
 import { LiveModule } from './modules/live/live.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -71,6 +73,8 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
     InspectorsModule,
     NotificationsModule,
     AnnouncementsModule,
+    WeatherModule,
+    EventCompactionModule,
     SystemMonitorModule,
     HomeroomModule,
     AttendanceCalendarModule,

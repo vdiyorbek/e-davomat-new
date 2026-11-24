@@ -40,6 +40,10 @@
     "calendar": {
       "title": "Default school week",
       "description": "Used when a school or class has no weekly schedule. Holiday and vacation rules and any entered weekly schedule take priority. If you enter a quarter break as “students only”, teachers stay on working days."
+    },
+    "events": {
+      "title": "Cleaning up old events",
+      "description": "For past days only each person’s first entry and last exit are kept; the other events are deleted."
     }
   },
   "items": {
@@ -106,6 +110,14 @@
     "calendarGeneralWeekDays": {
       "label": "Other grades and teachers: school days per week",
       "hint": "This many days starting Monday: 5 = Mon–Fri, 6 = Mon–Sat."
+    },
+    "eventCompactEnabled": {
+      "label": "Enable cleanup",
+      "hint": "When off, nothing is deleted (only the dry run works). Runs once a week, on Sunday night."
+    },
+    "eventCompactKeepDays": {
+      "label": "Full retention period",
+      "hint": "Days older than this are cleaned. Recent days are never touched."
     }
   },
   "history": {
@@ -118,5 +130,40 @@
     "change": "Change",
     "who": "By",
     "standard": "default"
+  },
+  "compaction": {
+    "title": "Cleaning up old events",
+    "description": "attendance_events only: for past days each person keeps their very first entry and very last exit. The daily attendance table (daily_attendance) is not touched. Photo files of deleted events are removed too.",
+    "preview": "Dry run",
+    "runNow": "Run now",
+    "state": "Status",
+    "on": "Enabled",
+    "off": "Off (dry run only)",
+    "schedule": "Schedule",
+    "weekly": "Once a week (Sunday, 03:50)",
+    "cutoff": "Cleanup boundary",
+    "cutoffValue": "Days before {{date}} ({{days}} days kept)",
+    "cursor": "Cleaned up to",
+    "previewResult": "On {{date}}, {{schools}} random schools: of {{events}} events, {{removable}} ({{percent}}%) would be deleted. Nothing was deleted.",
+    "previewEmpty": "No events found in the sampled schools on {{date}}.",
+    "confirmTitle": "Start the cleanup now?",
+    "confirmText": "For days older than {{days}} days each person keeps only the first entry and last exit; the other events and their photos are deleted. This cannot be undone.",
+    "failed": "Could not complete.",
+    "historyTitle": "Run history",
+    "historyEmpty": "Not run yet.",
+    "colStarted": "Started",
+    "colStatus": "Status",
+    "colRows": "Rows deleted",
+    "colFiles": "Photos deleted",
+    "colThrough": "Up to day",
+    "colBy": "Started by",
+    "byAuto": "Automatic (weekly)",
+    "byManual": "Manual",
+    "statuses": {
+      "RUNNING": "Running",
+      "DONE": "Done",
+      "PARTIAL": "Partial (continues next time)",
+      "FAILED": "Failed"
+    }
   }
 }

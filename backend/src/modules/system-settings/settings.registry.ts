@@ -5,7 +5,8 @@
  *
  * Parollar, kalitlar va manzillar bu yerga KIRMAYDI — ular faqat .env'da turadi.
  */
-export type SettingGroup = 'photos' | 'push' | 'lag' | 'live' | 'calendar';
+export type SettingGroup =
+  'photos' | 'push' | 'lag' | 'live' | 'calendar' | 'events';
 export type SettingValue = number | boolean;
 
 export interface SettingDefinition {
@@ -167,6 +168,22 @@ export const SETTINGS: SettingDefinition[] = [
     max: 7,
     unit: 'days',
     getDefault: () => 6,
+  },
+  // — Eski eventlarni tozalash —
+  {
+    key: 'eventCompactEnabled',
+    group: 'events',
+    type: 'bool',
+    getDefault: () => false,
+  },
+  {
+    key: 'eventCompactKeepDays',
+    group: 'events',
+    type: 'int',
+    min: 7,
+    max: 3650,
+    unit: 'days',
+    getDefault: () => 30,
   },
 ];
 

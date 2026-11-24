@@ -55,5 +55,71 @@
       "name": "Server jarayoni",
       "text": "Ishlayapti: {{uptime}} · Xotira: {{rssMb}} MB"
     }
+  },
+  "details": {
+    "button": "Batafsil",
+    "close": "Yopish",
+    "open": "Ochish",
+    "never": "hech qachon",
+    "yes": "Ha",
+    "no": "Yo‘q",
+    "ago": {
+      "minutes": "{{n}} daq oldin",
+      "hours": "{{n}} soat oldin",
+      "days": "{{n}} kun oldin"
+    },
+    "empty": {
+      "terminals": "Hammasi joyida: ko‘rinmayotgan terminal yo‘q.",
+      "photos": "Yuklanmagan rasm yo‘q.",
+      "queues": "Xatoli vazifa yo‘q.",
+      "push": "Push terminal topilmadi.",
+      "stats": "Eskirgan statistikali maktab yo‘q."
+    },
+    "desc": {
+      "terminals": "15 daqiqadan beri ko‘rinmayotgan faol terminallar (eng uzoq jim turganlari tepada).",
+      "photos": "Oxirgi 24 soatda yuklanmagan rasmlar: terminal bo‘yicha va eng ko‘p uchragan xato sabablari.",
+      "queues": "Har navbatdagi oxirgi xatoli vazifalar (hech narsa o‘zgartirilmaydi).",
+      "disk": "Diskdagi bo‘sh joy va yuklangan fayllar papkalari hajmi.",
+      "push": "Push terminallar oxirgi so‘rov vaqti bo‘yicha (eng jimlari tepada).",
+      "stats": "Dashboard statistikasi 60 daqiqadan beri yangilanmagan maktablar."
+    },
+    "cols": {
+      "terminal": "Terminal",
+      "school": "Maktab",
+      "lastSeen": "Oxirgi ko‘rilgan",
+      "error": "Oxirgi xato",
+      "pending": "Kutilmoqda",
+      "failed": "Xato",
+      "attempts": "Urinishlar",
+      "reason": "Sabab",
+      "count": "Soni",
+      "queue": "Navbat",
+      "job": "Vazifa",
+      "finished": "Vaqti",
+      "folder": "Papka",
+      "size": "Hajm",
+      "pushOn": "Push yoqilgan",
+      "lastRequest": "Oxirgi so‘rov",
+      "lastEvent": "Oxirgi event",
+      "computed": "Oxirgi hisoblash"
+    },
+    "sections": {
+      "byTerminal": "Terminal bo‘yicha",
+      "reasons": "Xato sabablari"
+    },
+    "queues": {
+      "events": "Eventlarni sinxronlash",
+      "persons": "Shaxslarni sinxronlash",
+      "photos": "Rasm yuklash"
+    },
+    "disk": {
+      "free": "Bo‘sh joy: {{free}} / {{total}}",
+      "partial": "Hajm to‘liq hisoblanmadi (papka juda katta): raqamlar taxminiy."
+    },
+    "unitsBytes": {
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    }
   }
 }

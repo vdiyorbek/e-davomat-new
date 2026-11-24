@@ -91,8 +91,10 @@ export function TerminalsPage() {
     const [eventSource, setEventSource] = useState<TerminalEventSource | ''>('');
     const [archiveStatus, setArchiveStatus] = useState<ArchiveStatus>('ACTIVE');
     const [statusFilter, setStatusFilter] = useState<TerminalStatusFilter>('');
-    const [searchInput, setSearchInput] = useState('');
-    const [search, setSearch] = useState('');
+    // Boshqa sahifadan havola orqali: /terminals?search=…
+    const initialSearch = new URLSearchParams(window.location.search).get('search')?.slice(0, 100) ?? '';
+    const [searchInput, setSearchInput] = useState(initialSearch);
+    const [search, setSearch] = useState(initialSearch);
 
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [bulkOpen, setBulkOpen] = useState(false);

@@ -1,0 +1,18 @@
+{
+  "time": "Toshkent vaqti",
+  "timezone": "Toshkent vaqti",
+  "feelsLike": "Sezilishi {{value}}°",
+  "humidity": "Namlik {{value}}%",
+  "wind": "Shamol {{value}} m/s",
+  "conditions": {
+    "clear": "Ochiq",
+    "partly": "Qisman bulutli",
+    "cloudy": "Bulutli",
+    "fog": "Tuman",
+    "drizzle": "Mayda yomg‘ir",
+    "rain": "Yomg‘ir",
+    "snow": "Qor",
+    "showers": "Jala",
+    "thunder": "Momaqaldiroq"
+  }
+}

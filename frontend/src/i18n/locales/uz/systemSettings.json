@@ -40,6 +40,10 @@
     "calendar": {
       "title": "Standart o‘quv haftasi",
       "description": "Maktab yoki sinf haftalik jadval kiritmagan bo‘lsa qo‘llanadi. Bayram va ta’til qoidalari hamda kiritilgan haftalik jadval bundan ustun. Choraklik ta’tilni «faqat o‘quvchilar» deb kiritsangiz, o‘qituvchilar ish kunida qoladi."
+    },
+    "events": {
+      "title": "Eski eventlarni tozalash",
+      "description": "Eski kunlarda har bir shaxsning faqat birinchi kirishi va oxirgi chiqishi qoladi, qolgan eventlar o‘chadi."
     }
   },
   "items": {
@@ -106,6 +110,14 @@
     "calendarGeneralWeekDays": {
       "label": "Qolgan sinflar va o‘qituvchilar: haftada o‘quv kunlari",
       "hint": "Dushanbadan boshlab shuncha kun: 5 = Dushanba–Juma, 6 = Dushanba–Shanba."
+    },
+    "eventCompactEnabled": {
+      "label": "Tozalashni yoqish",
+      "hint": "O‘chiq bo‘lsa, hech narsa o‘chirilmaydi (faqat quruq sinov ishlaydi). Haftada bir marta, yakshanba tunida bajariladi."
+    },
+    "eventCompactKeepDays": {
+      "label": "To‘liq saqlanadigan muddat",
+      "hint": "Shu kunlardan eski kunlar tozalanadi. Oxirgi kunlarga tegilmaydi."
     }
   },
   "history": {
@@ -118,5 +130,40 @@
     "change": "O‘zgarish",
     "who": "Kim",
     "standard": "standart"
+  },
+  "compaction": {
+    "title": "Eski eventlarni tozalash",
+    "description": "Faqat attendance_events: eski kunlarda har bir shaxs uchun eng birinchi kirish va eng oxirgi chiqish qoladi. Kunlik davomat (daily_attendance) jadvaliga tegilmaydi. O‘chirilgan eventlarning rasm fayllari ham o‘chadi.",
+    "preview": "Quruq sinov",
+    "runNow": "Hozir ishga tushirish",
+    "state": "Holat",
+    "on": "Yoqilgan",
+    "off": "O‘chiq (faqat sinov)",
+    "schedule": "Jadval",
+    "weekly": "Haftada bir marta (yakshanba, 03:50)",
+    "cutoff": "Tozalanadigan chegara",
+    "cutoffValue": "{{date}} dan oldingi kunlar ({{days}} kun saqlanadi)",
+    "cursor": "Qayergacha tozalangan",
+    "previewResult": "{{date}} kuni, {{schools}} ta tasodifiy maktab: {{events}} ta eventdan {{removable}} tasi ({{percent}}%) o‘chirilgan bo‘lardi. Hech narsa o‘chirilmadi.",
+    "previewEmpty": "{{date}} kuni namunadagi maktablarda event topilmadi.",
+    "confirmTitle": "Tozalashni hozir boshlaysizmi?",
+    "confirmText": "{{days}} kundan eski kunlarda har bir shaxsning faqat birinchi kirishi va oxirgi chiqishi qoladi, qolgan eventlar va ularning rasmlari o‘chadi. Bu amalni qaytarib bo‘lmaydi.",
+    "failed": "Bajarib bo‘lmadi.",
+    "historyTitle": "Ishga tushirishlar tarixi",
+    "historyEmpty": "Hali ishga tushirilmagan.",
+    "colStarted": "Boshlangan",
+    "colStatus": "Holat",
+    "colRows": "O‘chirilgan qator",
+    "colFiles": "O‘chirilgan rasm",
+    "colThrough": "Qaysi kungacha",
+    "colBy": "Kim ishga tushirgan",
+    "byAuto": "Avtomatik (haftalik)",
+    "byManual": "Qo‘lda",
+    "statuses": {
+      "RUNNING": "Ketmoqda",
+      "DONE": "Tugadi",
+      "PARTIAL": "Qisman (keyingi safar davom etadi)",
+      "FAILED": "Xato"
+    }
   }
 }

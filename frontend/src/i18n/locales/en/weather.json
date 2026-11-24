@@ -1,0 +1,18 @@
+{
+  "time": "Tashkent time",
+  "timezone": "Tashkent time",
+  "feelsLike": "Feels like {{value}}°",
+  "humidity": "Humidity {{value}}%",
+  "wind": "Wind {{value}} m/s",
+  "conditions": {
+    "clear": "Clear",
+    "partly": "Partly cloudy",
+    "cloudy": "Cloudy",
+    "fog": "Fog",
+    "drizzle": "Drizzle",
+    "rain": "Rain",
+    "snow": "Snow",
+    "showers": "Showers",
+    "thunder": "Thunderstorm"
+  }
+}

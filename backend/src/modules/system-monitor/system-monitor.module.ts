@@ -6,6 +6,7 @@ import { ATTENDANCE_PHOTO_QUEUE } from '../attendance-photo-sync/attendance-phot
 import { PERSON_SYNC_QUEUE } from '../terminals/person-sync.constants';
 import { TERMINAL_SYNC_QUEUE } from '../terminal-sync/terminal-sync.constants';
 import { SystemMonitorController } from './system-monitor.controller';
+import { SystemMonitorDetailsService } from './system-monitor-details.service';
 import { SystemMonitorScheduler } from './system-monitor.scheduler';
 import { SystemMonitorService } from './system-monitor.service';
 
@@ -19,6 +20,10 @@ import { SystemMonitorService } from './system-monitor.service';
     ),
   ],
   controllers: [SystemMonitorController],
-  providers: [SystemMonitorService, SystemMonitorScheduler],
+  providers: [
+    SystemMonitorService,
+    SystemMonitorDetailsService,
+    SystemMonitorScheduler,
+  ],
 })
 export class SystemMonitorModule {}

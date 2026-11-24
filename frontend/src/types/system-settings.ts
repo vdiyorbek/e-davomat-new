@@ -1,4 +1,4 @@
-export type SettingGroup = "photos" | "push" | "lag" | "live" | "calendar";
+export type SettingGroup = "photos" | "push" | "lag" | "live" | "calendar" | "events";
 
 export interface SystemSetting {
   key: string;

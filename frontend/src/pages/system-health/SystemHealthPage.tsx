@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { CircleAlert, CircleCheck, CircleX, Cpu, Database, HardDrive, Image, Layers, Radio, RefreshCw, ScanFace, ChartNoAxesColumn } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { DETAIL_KEYS } from '@/components/system-health/detail-keys';
+import type { DetailKey } from '@/components/system-health/detail-keys';
+import { HealthDetailsDialog } from '@/components/system-health/HealthDetailsDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -43,7 +47,7 @@ function useValues(check: HealthCheck) {
     return values;
 }
 
-function CheckCard({ check }: { check: HealthCheck }) {
+function CheckCard({ check, onDetails }: { check: HealthCheck; onDetails: (key: DetailKey) => void }) {
     const { t } = useTranslation();
     const values = useValues(check);
     const Icon = ICONS[check.key];
@@ -80,7 +84,14 @@ function CheckCard({ check }: { check: HealthCheck }) {
                         ? t('systemHealth.noData')
                         : t(`systemHealth.checks.${check.key}.text`, values)}
             </p>
-            <p className="text-xs text-muted-foreground tabular-nums">{t('systemHealth.since', { time: formatDateTime(check.since) })}</p>
+            <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground tabular-nums">{t('systemHealth.since', { time: formatDateTime(check.since) })}</p>
+                {(DETAIL_KEYS as readonly string[]).includes(check.key) && (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onDetails(check.key as DetailKey)}>
+                        {t('systemHealth.details.button')}
+                    </Button>
+                )}
+            </div>
         </Card>
     );
 }
@@ -89,6 +100,7 @@ function CheckCard({ check }: { check: HealthCheck }) {
 export function SystemHealthPage() {
     const { t } = useTranslation();
     const { data, loading, error, retry } = useApiQuery<HealthSnapshot>('/system/health');
+    const [opened, setOpened] = useState<DetailKey | null>(null);
 
     useInterval(retry, 30_000);
 
@@ -138,12 +150,13 @@ export function SystemHealthPage() {
                     <ul className="grid list-none gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {data.checks.map((check) => (
                             <li key={check.key}>
-                                <CheckCard check={check} />
+                                <CheckCard check={check} onDetails={setOpened} />
                             </li>
                         ))}
                     </ul>
                 </>
             ) : null}
+            <HealthDetailsDialog checkKey={opened} onClose={() => setOpened(null)} />
         </div>
     );
 }

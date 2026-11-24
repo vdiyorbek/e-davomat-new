@@ -55,5 +55,71 @@
       "name": "Server process",
       "text": "Uptime: {{uptime}} · Memory: {{rssMb}} MB"
     }
+  },
+  "details": {
+    "button": "Details",
+    "close": "Close",
+    "open": "Open",
+    "never": "never",
+    "yes": "Yes",
+    "no": "No",
+    "ago": {
+      "minutes": "{{n}} min ago",
+      "hours": "{{n}} h ago",
+      "days": "{{n}} d ago"
+    },
+    "empty": {
+      "terminals": "All good: no unseen terminals.",
+      "photos": "No photos waiting.",
+      "queues": "No failed jobs.",
+      "push": "No push terminals found.",
+      "stats": "No schools with stale statistics."
+    },
+    "desc": {
+      "terminals": "Active terminals unseen for more than 15 minutes (the longest silent first).",
+      "photos": "Photos not downloaded in the last 24 hours: per terminal and the most common error reasons.",
+      "queues": "The latest failed jobs in each queue (nothing is changed).",
+      "disk": "Free disk space and the size of the uploaded-files folders.",
+      "push": "Push terminals by last request time (the quietest first).",
+      "stats": "Schools whose dashboard statistics have not been updated for over 60 minutes."
+    },
+    "cols": {
+      "terminal": "Terminal",
+      "school": "School",
+      "lastSeen": "Last seen",
+      "error": "Last error",
+      "pending": "Pending",
+      "failed": "Failed",
+      "attempts": "Attempts",
+      "reason": "Reason",
+      "count": "Count",
+      "queue": "Queue",
+      "job": "Job",
+      "finished": "Time",
+      "folder": "Folder",
+      "size": "Size",
+      "pushOn": "Push enabled",
+      "lastRequest": "Last request",
+      "lastEvent": "Last event",
+      "computed": "Last computed"
+    },
+    "sections": {
+      "byTerminal": "By terminal",
+      "reasons": "Error reasons"
+    },
+    "queues": {
+      "events": "Event sync",
+      "persons": "Person sync",
+      "photos": "Photo download"
+    },
+    "disk": {
+      "free": "Free: {{free}} of {{total}}",
+      "partial": "Size not fully calculated (folder too large): numbers are approximate."
+    },
+    "unitsBytes": {
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    }
   }
 }

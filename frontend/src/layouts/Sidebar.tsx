@@ -71,7 +71,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                         >
                             <Icon aria-hidden="true" className="size-4" />
                         </span>
-                        {!rail && <span className="min-w-0 flex-1 truncate">{label}</span>}
+                        {!rail && <span className="min-w-0 flex-1 text-balance leading-snug [overflow-wrap:anywhere]" title={label}>{label}</span>}
                     </>
                 )}
             </NavLink>

@@ -13,6 +13,7 @@ import { TrendChart } from '@/components/dashboard/TrendChart';
 import { UzbekistanMap } from '@/components/dashboard/UzbekistanMap';
 import { binFill, binInk, formatCount, formatRate, rateBin } from '@/components/dashboard/viz';
 import { PageHeader } from '@/components/common/PageHeader';
+import { ClockWeather } from '@/components/dashboard/ClockWeather';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -90,6 +91,15 @@ export function DashboardPage() {
     const scopeQuery = `${scope.toString()}${scope.size ? '&' : ''}date=${date}`;
 
     const overview = useApiQuery<DashboardOverview>(`/dashboard/overview?${scopeQuery}`);
+    // Ob-havo: sarlavhada ko‘rinayotgan (tanlangan yoki foydalanuvchiga biriktirilgan) hudud uchun;
+    // hech narsa tanlanmagan bo‘lsa — Toshkent (server tomonida).
+    const weatherScope = overview.data?.scope.school
+        ? `schoolId=${overview.data.scope.school.id}`
+        : overview.data?.scope.district
+          ? `districtId=${overview.data.scope.district.id}`
+          : overview.data?.scope.region
+            ? `regionId=${overview.data.scope.region.id}`
+            : scope.toString();
     const trend = useApiQuery<DashboardTrend>(`/dashboard/trend?${scope.toString()}${scope.size ? '&' : ''}from=${addDays(date, -29)}&to=${date}`);
     const arrivals = useApiQuery<DashboardArrivals>(`/dashboard/arrivals?${scopeQuery}`);
     const isToday = date === today;
@@ -139,6 +149,7 @@ export function DashboardPage() {
                 eyebrow={t('dashboard.eyebrow')}
                 title={data ? (data.scope.school?.name ?? data.scope.district?.name ?? data.scope.region?.name ?? t('dashboard.scope.country')) : t('dashboard.title')}
                 description={`${formatDateLong(date)}${data?.computedAt ? ` · ${t('dashboard.updatedAt', { time: formatTime(data.computedAt) })}` : ''}`}
+                actions={<ClockWeather scope={weatherScope} />}
             />
 
             {/* Filtrlar — bitta qator, hamma bloklarga ta’sir qiladi */}

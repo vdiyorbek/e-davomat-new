@@ -11,11 +11,12 @@ import { Switch } from '@/components/ui/switch';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { authorizedDelete, authorizedPut } from '@/lib/auth-session';
 import { formatDateTime } from '@/lib/date';
+import { EventCompactionCard } from '@/components/system-settings/EventCompactionCard';
 import type { SettingGroup, SystemSetting, SystemSettingHistory } from '@/types/system-settings';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 
-const GROUPS: SettingGroup[] = ['calendar', 'photos', 'push', 'lag', 'live'];
+const GROUPS: SettingGroup[] = ['calendar', 'photos', 'push', 'lag', 'live', 'events'];
 
 function displayValue(value: number | boolean, yes: string, no: string): string {
     return typeof value === 'boolean' ? (value ? yes : no) : String(value);
@@ -221,6 +222,8 @@ export function SystemSettingsPage() {
                         </section>
                     );
                 })}
+
+            <EventCompactionCard />
 
             <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">{t('systemSettings.secretsNote')}</p>
 
