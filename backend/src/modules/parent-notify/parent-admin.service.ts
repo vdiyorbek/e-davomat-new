@@ -113,7 +113,7 @@ export class ParentAdminService {
   async schools() {
     const rows: Row[] = await this.dataSource.query(
       `SELECT ps.schoolId, ps.enabled, TIME_FORMAT(ps.defaultAbsentTime, '%H:%i') AS absentTime,
-              ps.graceMinutes, s.name, d.name AS district,
+              ps.graceMinutes, ps.showEventPhotos, s.name, d.name AS district,
               (SELECT COUNT(*) FROM school_memberships m
                 WHERE m.schoolId = ps.schoolId AND m.type = 'STUDENT'
                   AND m.startDate <= CURDATE() AND (m.endDate IS NULL OR m.endDate > CURDATE())) AS students,
@@ -133,6 +133,7 @@ export class ParentAdminService {
       enabled: Number(row.enabled) === 1,
       absentTime: row.absentTime,
       graceMinutes: Number(row.graceMinutes),
+      showEventPhotos: Number(row.showEventPhotos) === 1,
       students: Number(row.students),
       linked: Number(row.linked),
     }));
@@ -140,7 +141,12 @@ export class ParentAdminService {
 
   async saveSchool(
     schoolId: number,
-    body: { enabled?: unknown; absentTime?: unknown; graceMinutes?: unknown },
+    body: {
+      enabled?: unknown;
+      absentTime?: unknown;
+      graceMinutes?: unknown;
+      showEventPhotos?: unknown;
+    },
   ) {
     const [school]: Row[] = await this.dataSource.query(
       'SELECT id FROM schools WHERE id = ?',
@@ -153,18 +159,45 @@ export class ParentAdminService {
       /^([01]\d|2[0-3]):[0-5]\d$/.test(body.absentTime)
         ? body.absentTime
         : '09:30';
+    // Berilmasa — mavjud qiymat saqlanadi (null).
+    const showPhotos =
+      typeof body.showEventPhotos === 'boolean'
+        ? body.showEventPhotos
+          ? 1
+          : 0
+        : null;
     const grace = Number.isInteger(body.graceMinutes)
       ? Math.min(Math.max(Number(body.graceMinutes), 0), 180)
       : 30;
     await this.dataSource.query(
-      `INSERT INTO parent_notification_schools (schoolId, enabled, defaultAbsentTime, graceMinutes)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO parent_notification_schools (schoolId, enabled, defaultAbsentTime, graceMinutes, showEventPhotos)
+       VALUES (?, ?, ?, ?, COALESCE(?, 0))
        ON DUPLICATE KEY UPDATE enabled = VALUES(enabled), defaultAbsentTime = VALUES(defaultAbsentTime),
-                               graceMinutes = VALUES(graceMinutes)`,
-      [schoolId, enabled ? 1 : 0, `${time}:00`, grace],
+                               graceMinutes = VALUES(graceMinutes),
+                               showEventPhotos = COALESCE(?, showEventPhotos)`,
+      [schoolId, enabled ? 1 : 0, `${time}:00`, grace, showPhotos, showPhotos],
     );
     this.parents.invalidateSchools();
     return (await this.schools()).find((item) => item.schoolId === schoolId);
+  }
+
+  /**
+   * Barcha maktablar uchun yoqish. Allaqachon sozlangan maktablarning vaqti va
+   * «terminal rasmi» tanlovi o‘zgarmaydi; yangilari standart qiymatlar bilan
+   * qo‘shiladi (terminal rasmi — o‘chiq).
+   */
+  async enableAllSchools() {
+    await this.dataSource.query(
+      `INSERT INTO parent_notification_schools (schoolId, enabled, defaultAbsentTime, graceMinutes, showEventPhotos)
+       SELECT id, 1, '09:30:00', 30, 0 FROM schools
+       ON DUPLICATE KEY UPDATE enabled = 1`,
+    );
+    this.parents.invalidateSchools();
+    const list = await this.schools();
+    return {
+      enabled: list.filter((item) => item.enabled).length,
+      total: list.length,
+    };
   }
 
   /** Oxirgi xabarlar (telefon yoki chat identifikatorlarisiz). */

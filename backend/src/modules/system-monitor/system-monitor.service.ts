@@ -7,6 +7,10 @@ import { DataSource } from 'typeorm';
 
 import { RedisService } from '../../redis/redis.service';
 import { ATTENDANCE_PHOTO_QUEUE } from '../attendance-photo-sync/attendance-photo-sync.constants';
+import {
+  telegramConfig,
+  TelegramApiService,
+} from '../parent-notify/telegram-api.service';
 import { PERSON_SYNC_QUEUE } from '../terminals/person-sync.constants';
 import { TERMINAL_SYNC_QUEUE } from '../terminal-sync/terminal-sync.constants';
 import {
@@ -51,7 +55,11 @@ export class SystemMonitorService {
     @InjectQueue(TERMINAL_SYNC_QUEUE) private readonly terminalQueue: Queue,
     @InjectQueue(PERSON_SYNC_QUEUE) private readonly personQueue: Queue,
     @InjectQueue(ATTENDANCE_PHOTO_QUEUE) private readonly photoQueue: Queue,
+    private readonly telegram: TelegramApiService,
   ) {}
+
+  /** Telegram so‘rovlari tez-tez ketmasligi uchun natija 60 soniya saqlanadi. */
+  private telegramCache: { at: number; result: CheckResult } | null = null;
 
   /** Oxirgi hisoblangan holat; 45 soniyadan eski bo‘lsa yangidan hisoblanadi. */
   async current(): Promise<HealthSnapshot> {
@@ -72,6 +80,7 @@ export class SystemMonitorService {
       this.guard('stats', () => this.stats(now)),
       this.guard('photos', () => this.photos()),
       this.guard('terminals', () => this.terminals(now)),
+      this.guard('telegram', () => this.telegramCheck()),
       this.guard('process', () => Promise.resolve(this.processCheck())),
     ]);
 
@@ -244,6 +253,97 @@ export class SystemMonitorService {
       status: byHigh(pending + failed, 500, 5000),
       metrics: { pending, failed },
     };
+  }
+
+  /**
+   * Ota-onalarga xabar boti: token, Telegram bilan aloqa, webhook va xabarlar navbati.
+   * Sinov maktabi yoqilmagan va token yo‘q bo‘lsa — «sozlanmagan» (xavfsiz holat).
+   */
+  private async telegramCheck(): Promise<CheckResult> {
+    if (this.telegramCache && Date.now() - this.telegramCache.at < 60_000)
+      return this.telegramCache.result;
+    const result = await this.telegramEvaluate();
+    this.telegramCache = { at: Date.now(), result };
+    return result;
+  }
+
+  private async telegramEvaluate(): Promise<CheckResult> {
+    const config = telegramConfig();
+    const [row]: {
+      schools: string;
+      links: string;
+      stuck: string;
+      failed: string;
+    }[] = await this.dataSource.query(
+      `SELECT (SELECT COUNT(*) FROM parent_notification_schools WHERE enabled = 1) AS schools,
+              (SELECT COUNT(*) FROM parent_telegram_links WHERE blockedAt IS NULL) AS links,
+              (SELECT COUNT(*) FROM parent_messages
+                WHERE status = 'PENDING' AND sendAfter <= DATE_SUB(NOW(3), INTERVAL 10 MINUTE)) AS stuck,
+              (SELECT COUNT(*) FROM parent_messages
+                WHERE status = 'FAILED' AND createdAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS failed`,
+    );
+    const schools = Number(row?.schools ?? 0);
+    const links = Number(row?.links ?? 0);
+    const stuck = Number(row?.stuck ?? 0);
+    const failed = Number(row?.failed ?? 0);
+    const base = { schools, links, stuck, failed };
+    const make = (
+      state: string,
+      status: CheckStatus,
+      extra: Record<string, number | string | null> = {},
+    ): CheckResult => ({
+      key: 'telegram',
+      status,
+      metrics: { state, ...base, ...extra },
+    });
+
+    if (!config.token)
+      return schools > 0 ? make('noToken', 'crit') : make('off', 'ok');
+    if (config.secret.length < 16) return make('noSecret', 'crit');
+
+    let username = '';
+    try {
+      const me = await this.telegram.call<{ username?: string }>('getMe');
+      username = me.username ?? '';
+    } catch (error) {
+      return make('unreachable', 'crit', {
+        lastError: (error instanceof Error ? error.message : 'Xato').slice(
+          0,
+          120,
+        ),
+      });
+    }
+    const info = await this.telegram.call<{
+      url?: string;
+      pending_update_count?: number;
+      last_error_date?: number;
+      last_error_message?: string;
+    }>('getWebhookInfo');
+
+    const expected = config.publicUrl
+      ? `${config.publicUrl}/api/telegram/webhook`
+      : '';
+    const extra = {
+      username,
+      updates: info.pending_update_count ?? 0,
+    };
+    if (!info.url)
+      return make('noWebhook', schools > 0 ? 'crit' : 'warn', extra);
+    if (expected && info.url !== expected)
+      return make('webhookMismatch', 'warn', extra);
+    const errorAgeMinutes = info.last_error_date
+      ? (Date.now() - info.last_error_date * 1000) / 60_000
+      : null;
+    if (errorAgeMinutes !== null && errorAgeMinutes < 30)
+      return make('webhookError', 'warn', {
+        ...extra,
+        lastError: (info.last_error_message ?? '').slice(0, 120),
+      });
+    if (stuck > 0) return make('stuck', 'warn', extra);
+    if (failed > 0) return make('failed', 'warn', extra);
+    if ((info.pending_update_count ?? 0) > 100)
+      return make('backlog', 'warn', extra);
+    return make('ok', 'ok', extra);
   }
 
   /** Faol terminallardan nechtasi 15 daqiqadan beri ko‘rinmayapti. */

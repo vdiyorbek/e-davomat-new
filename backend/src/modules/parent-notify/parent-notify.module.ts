@@ -10,6 +10,7 @@ import { ParentAdminService } from './parent-admin.service';
 import { ParentApiController } from './parent-api.controller';
 import { ParentApiService } from './parent-api.service';
 import { ParentBotService } from './parent-bot.service';
+import { ParentBroadcastService } from './parent-broadcast.service';
 import { ParentEventWatcher } from './parent-event-watcher.service';
 import { ParentNotifyService } from './parent-notify.service';
 import { ParentSenderService } from './parent-sender.service';
@@ -45,7 +46,8 @@ import { TelegramWebhookController } from './telegram-webhook.controller';
     ParentAbsentJob,
     ParentApiService,
     ParentAdminService,
+    ParentBroadcastService,
   ],
-  exports: [ParentNotifyService],
+  exports: [ParentNotifyService, TelegramApiService],
 })
 export class ParentNotifyModule {}

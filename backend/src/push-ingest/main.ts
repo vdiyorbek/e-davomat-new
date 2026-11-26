@@ -153,6 +153,13 @@ async function startWorker(): Promise<void> {
       'log',
       `qabul=${stats.accepted} e’tiborsiz=${stats.ignored} rad=${stats.rejected} band=${stats.overloaded} uzilgan=${stats.aborted}`,
     );
+    const reasons = Object.entries(stats.reasons)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([key, count]) => `${key}=${count}`)
+      .join(' ');
+    if (reasons) log('log', `sabablar: ${reasons}`);
+    stats.reasons = {};
     stats.accepted =
       stats.ignored =
       stats.rejected =

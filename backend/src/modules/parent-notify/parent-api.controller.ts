@@ -75,6 +75,28 @@ export class ParentApiController {
     });
   }
 
+  @Get('children/:personId/photos/:date/:direction')
+  @Header('Cache-Control', 'private, max-age=300')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async eventPhoto(
+    @Req() request: ParentRequest,
+    @Param('personId', ParseIntPipe) personId: number,
+    @Param('date') date: string,
+    @Param('direction') direction: string,
+  ): Promise<StreamableFile> {
+    const buffer = await this.service.eventPhoto(
+      linkOf(request),
+      personId,
+      date,
+      direction,
+    );
+    return new StreamableFile(buffer, {
+      type: 'image/jpeg',
+      disposition: 'inline',
+      length: buffer.length,
+    });
+  }
+
   @Get('children/:personId/excuses')
   @Header('Cache-Control', 'private, no-store')
   excuses(

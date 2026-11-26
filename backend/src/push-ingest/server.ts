@@ -51,6 +51,8 @@ export interface IngestStats {
   withoutPicture: number;
   /** Terminal tanani to‘liq yubormay ulanishni uzgan so‘rovlar (aborted/ECONNRESET). */
   aborted: number;
+  /** Rad etilgan / e’tiborsiz qoldirilgan so‘rovlarning sabablari (har daqiqada nolga tushadi). */
+  reasons: Record<string, number>;
 }
 
 /** Uzilgan so‘rovmi: klient tanani yuborib bo‘lmasdan ulanishni yopgan. */
@@ -132,6 +134,10 @@ export function createPushServer(deps: IngestDeps): {
     withPictureUrl: 0,
     withoutPicture: 0,
     aborted: 0,
+    reasons: {},
+  };
+  const why = (key: string) => {
+    stats.reasons[key] = (stats.reasons[key] ?? 0) + 1;
   };
   const abortedByTerminal = new Map<number, number>();
   // Rasm yubormayotgan terminal haqida 10 daqiqada bir marta ogohlantiriladi.
@@ -181,6 +187,7 @@ export function createPushServer(deps: IngestDeps): {
     const match = PATH.exec(url.split('?')[0]);
     if (req.method !== 'POST' || !match) {
       stats.rejected++;
+      why(req.method === 'POST' ? 'rad:yo‘l-noto‘g‘ri(404)' : `rad:${req.method}-so‘rov(404)`);
       req.resume();
       reply(res, 404, '{"message":"Not found"}');
       return;
@@ -192,6 +199,7 @@ export function createPushServer(deps: IngestDeps): {
     const terminal = registry.find(tokenHash);
     if (!terminal) {
       stats.rejected++;
+      why('rad:token-noma’lum(401)');
       req.resume();
       reply(res, 401, '{"message":"Webhook autentifikatsiyasi rad etildi"}');
       return;
@@ -207,6 +215,7 @@ export function createPushServer(deps: IngestDeps): {
     const contentType = String(req.headers['content-type'] || '').slice(0, 200);
     if (!CONTENT_TYPE.test(contentType)) {
       stats.rejected++;
+      why('rad:Content-Type(415)');
       req.resume();
       reply(res, 415, '{"message":"Content-Type qo‘llab-quvvatlanmaydi"}');
       return;
@@ -229,6 +238,7 @@ export function createPushServer(deps: IngestDeps): {
     }
     if (!body || body.length === 0) {
       stats.rejected++;
+      why('rad:tana-bo‘sh(413)');
       reply(res, 413, '{"message":"HTTP body bo‘sh yoki hajmi oshgan"}');
       return;
     }
@@ -240,6 +250,7 @@ export function createPushServer(deps: IngestDeps): {
       // Heartbeat, eshik holati va boshqa eventlar: terminal qayta
       // yubormasligi uchun 200, lekin navbatga yozilmaydi.
       stats.ignored++;
+      why(`e’tiborsiz:${normalized.reason}`);
       reply(res, 200, OK);
       return;
     }

@@ -2,10 +2,12 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 import { PersonPhotosService } from '../persons/person-photos.service';
+import { DailyAttendanceReadService } from '../daily-attendance/daily-attendance-read.service';
 import { DailyAttendancePersonService } from '../daily-attendance/daily-attendance-person.service';
 import { MembershipType } from '../school-memberships/school-membership.entity';
 import { INTERNAL_USER } from './internal-user';
@@ -33,6 +35,7 @@ export class ParentApiService {
     private readonly parents: ParentNotifyService,
     private readonly attendance: DailyAttendancePersonService,
     private readonly photos: PersonPhotosService,
+    private readonly dailyRead: DailyAttendanceReadService,
   ) {}
 
   async me(link: ParentLink) {
@@ -45,6 +48,7 @@ export class ParentApiService {
         leave: link.notifyLeave === 1,
         absent: link.notifyAbsent === 1,
         excuse: link.notifyExcuse === 1,
+        news: link.notifyNews !== 0,
       },
       children,
     };
@@ -58,6 +62,7 @@ export class ParentApiService {
       leave?: unknown;
       absent?: unknown;
       excuse?: unknown;
+      news?: unknown;
     },
   ) {
     const sets: string[] = [];
@@ -73,6 +78,7 @@ export class ParentApiService {
       ['leave', 'notifyLeave'],
       ['absent', 'notifyAbsent'],
       ['excuse', 'notifyExcuse'],
+      ['news', 'notifyNews'],
     ];
     for (const [key, column] of flags) {
       if (body[key] === undefined) continue;
@@ -100,6 +106,45 @@ export class ParentApiService {
   async photo(link: ParentLink, personId: number): Promise<Buffer> {
     await this.ownChild(link, personId);
     return this.photos.read(personId, INTERNAL_USER);
+  }
+
+  /**
+   * Terminal rasmi (kirish/chiqish). Faqat maktab ruxsat bergan bo‘lsa va farzand
+   * shu ota-onaga tegishli bo‘lsa beriladi; rasm bo‘lmasa 404.
+   */
+  async eventPhoto(
+    link: ParentLink,
+    personId: number,
+    date: string,
+    direction: string,
+  ): Promise<Buffer> {
+    const child = await this.ownChild(link, personId);
+    if (!child.showEventPhotos)
+      throw new ForbiddenException('Terminal rasmi ko‘rsatilmaydi');
+    if (direction !== 'in' && direction !== 'out')
+      throw new BadRequestException('Yo‘nalish in yoki out bo‘lishi kerak');
+    const today = tashkentParts(new Date()).date;
+    if (
+      !/^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date) ||
+      date > today
+    )
+      throw new BadRequestException('Sana noto‘g‘ri');
+    const [person]: Row[] = await this.dataSource.query(
+      'SELECT pnfl FROM persons WHERE id = ?',
+      [personId],
+    );
+    const history = await this.attendance.history(
+      {
+        pnfl: str(person?.pnfl),
+        membershipType: MembershipType.STUDENT,
+        from: date,
+        to: date,
+      },
+      INTERNAL_USER,
+    );
+    const day = history.days.find((item) => item.date === date);
+    if (!day?.dailyId) throw new NotFoundException('Rasm topilmadi');
+    return this.dailyRead.readPhoto(str(day.dailyId), direction, INTERNAL_USER);
   }
 
   private async ownChild(link: ParentLink, personId: number) {
@@ -154,6 +199,8 @@ export class ParentApiService {
         lastOutTime: day.lastOutTime
           ? new Date(day.lastOutTime).toISOString()
           : null,
+        hasInPhoto: child.showEventPhotos && day.firstInUrl !== null,
+        hasOutPhoto: child.showEventPhotos && day.lastOutUrl !== null,
         excuse: day.excuse ? { reason: day.excuse.reason } : null,
       })),
     };

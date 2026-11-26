@@ -9,6 +9,7 @@ export type CheckKey =
   | 'stats'
   | 'photos'
   | 'terminals'
+  | 'telegram'
   | 'process';
 
 export interface CheckResult {

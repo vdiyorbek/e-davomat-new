@@ -51,6 +51,22 @@
       "name": "Terminallar",
       "text": "{{offline}} / {{total}} ta terminal 15 daqiqadan beri ko‘rinmayapti ({{percent}}%)"
     },
+    "telegram": {
+      "name": "Telegram bot (ota-onalarga xabar)",
+      "states": {
+        "off": "Sozlanmagan (ixtiyoriy). Tizim sozlamalarida token kiritilsa yoqiladi.",
+        "noToken": "Bot tokeni kiritilmagan, lekin sinov maktablari yoqilgan: xabarlar ketmayapti.",
+        "noSecret": "Webhook maxfiy so‘zi sozlanmagan.",
+        "unreachable": "Telegramga ulanib bo‘lmadi: {{lastError}}",
+        "noWebhook": "Webhook o‘rnatilmagan: «Webhook o‘rnatish» tugmasini bosing.",
+        "webhookMismatch": "Webhook manzili joriy manzildan farq qiladi: «Webhook o‘rnatish» ni qayta bosing.",
+        "webhookError": "Telegram webhook xatosi: {{lastError}}",
+        "stuck": "{{stuck}} ta xabar 10 daqiqadan ortiq yuborilmay turibdi.",
+        "failed": "Oxirgi 24 soatda {{failed}} ta xabar yuborilmadi.",
+        "backlog": "Telegramda {{updates}} ta ishlanmagan yangilanish to‘planib qolgan.",
+        "ok": "@{{username}} ishlayapti · Ulangan ota-onalar: {{links}}"
+      }
+    },
     "process": {
       "name": "Server jarayoni",
       "text": "Ishlayapti: {{uptime}} · Xotira: {{rssMb}} MB"

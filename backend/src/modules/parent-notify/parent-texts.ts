@@ -38,6 +38,7 @@ export interface BotTexts {
   leave: string;
   absent: string;
   excuse: string;
+  news: string;
   langChanged: string;
   help: string;
   needLink: string;
@@ -67,6 +68,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Maktabdan chiqdi',
     absent: '⚠️ Kelmadi',
     excuse: '📄 Ariza natijasi',
+    news: '📢 E’lonlar',
     langChanged: '✅ Til o‘zgartirildi.',
     help: 'ℹ️ <b>Buyruqlar</b>\n/settings — xabarnomalar\n/lang — til\n/app — davomat ilovasi',
     needLink: '🔗 Avval telefon raqamingizni ulang: /start',
@@ -96,6 +98,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Мактабдан чиқди',
     absent: '⚠️ Келмади',
     excuse: '📄 Ариза натижаси',
+    news: '📢 Эълонлар',
     langChanged: '✅ Тил ўзгартирилди.',
     help: 'ℹ️ <b>Буйруқлар</b>\n/settings — хабарномалар\n/lang — тил\n/app — давомат иловаси',
     needLink: '🔗 Аввал телефон рақамингизни уланг: /start',
@@ -126,6 +129,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Ушёл из школы',
     absent: '⚠️ Не пришёл',
     excuse: '📄 Результат заявки',
+    news: '📢 Объявления',
     langChanged: '✅ Язык изменён.',
     help: 'ℹ️ <b>Команды</b>\n/settings — уведомления\n/lang — язык\n/app — приложение посещаемости',
     needLink: '🔗 Сначала подключите номер телефона: /start',
@@ -154,6 +158,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Left school',
     absent: '⚠️ Absent',
     excuse: '📄 Excuse result',
+    news: '📢 Announcements',
     langChanged: '✅ Language changed.',
     help: 'ℹ️ <b>Commands</b>\n/settings — notifications\n/lang — language\n/app — attendance app',
     needLink: '🔗 Please link your phone number first: /start',
@@ -183,6 +188,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Мектептен шықты',
     absent: '⚠️ Келмеді',
     excuse: '📄 Өтініш нәтижесі',
+    news: '📢 Хабарландырулар',
     langChanged: '✅ Тіл өзгертілді.',
     help: 'ℹ️ <b>Командалар</b>\n/settings — хабарландырулар\n/lang — тіл\n/app — қатысу қосымшасы',
     needLink: '🔗 Алдымен телефон нөміріңізді байланыстырыңыз: /start',
@@ -212,6 +218,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Мектептен чыкты',
     absent: '⚠️ Келген жок',
     excuse: '📄 Арыз жыйынтыгы',
+    news: '📢 Жарыялар',
     langChanged: '✅ Тил өзгөртүлдү.',
     help: 'ℹ️ <b>Буйруктар</b>\n/settings — билдирмелер\n/lang — тил\n/app — катышуу колдонмосу',
     needLink: '🔗 Адегенде телефон номериңизди байланыштырыңыз: /start',
@@ -241,6 +248,7 @@ export const TEXTS: Record<ParentLanguage, BotTexts> = {
     leave: '🏠 Аз мактаб баромад',
     absent: '⚠️ Наомад',
     excuse: '📄 Натиҷаи ариза',
+    news: '📢 Эълонҳо',
     langChanged: '✅ Забон иваз шуд.',
     help: 'ℹ️ <b>Фармонҳо</b>\n/settings — огоҳиҳо\n/lang — забон\n/app — барномаи ҳозиршавӣ',
     needLink: '🔗 Аввал рақами телефони худро пайваст кунед: /start',

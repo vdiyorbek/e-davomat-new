@@ -22,6 +22,7 @@ export interface ParentLink {
   notifyLeave: number;
   notifyAbsent: number;
   notifyExcuse: number;
+  notifyNews: number;
 }
 
 export interface ParentRequest extends Request {

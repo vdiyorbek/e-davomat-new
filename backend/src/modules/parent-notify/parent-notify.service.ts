@@ -14,6 +14,8 @@ export interface ParentChild {
   schoolName: string;
   className: string | null;
   hasPhoto: boolean;
+  /** Maktab ota-onaga terminal rasmini ko‘rsatishga ruxsat bergan. */
+  showEventPhotos: boolean;
 }
 
 const PREF_COLUMN: Record<ParentMessageKind, string> = {
@@ -83,7 +85,7 @@ export class ParentNotifyService {
     const rows: Row[] = await this.dataSource.query(
       `SELECT DISTINCT p.id AS personId, p.firstName, p.lastName,
               s.id AS schoolId, s.name AS schoolName, c.name AS className,
-              (p.photoUrl IS NOT NULL) AS hasPhoto
+              (p.photoUrl IS NOT NULL) AS hasPhoto, ps.showEventPhotos
          FROM person_guardians g
          JOIN persons p ON p.id = g.personId AND p.deletedAt IS NULL
          JOIN school_memberships m ON m.personId = p.id AND m.type = 'STUDENT'
@@ -103,11 +105,12 @@ export class ParentNotifyService {
       schoolName: str(row.schoolName ?? ''),
       className: row.className === null ? null : str(row.className),
       hasPhoto: Number(row.hasPhoto) === 1,
+      showEventPhotos: Number(row.showEventPhotos) === 1,
     }));
   }
 
   /** Quiet hours: 21:00–07:00 (Toshkent) — ertalab 07:00 gacha kutadi. */
-  private sendAfter(now = new Date()): Date {
+  sendAfter(now = new Date()): Date {
     const t = tashkentParts(now);
     if (t.hour >= 7 && t.hour < 21) return now;
     const day = t.hour >= 21 ? new Date(now.getTime() + 24 * 3600_000) : now;

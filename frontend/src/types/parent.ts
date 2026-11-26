@@ -6,12 +6,13 @@ export interface ParentChild {
     schoolName: string;
     className: string | null;
     hasPhoto: boolean;
+    showEventPhotos: boolean;
 }
 
 export interface ParentMe {
     language: string;
     today: string;
-    preferences: { arrival: boolean; leave: boolean; absent: boolean; excuse: boolean };
+    preferences: { arrival: boolean; leave: boolean; absent: boolean; excuse: boolean; news: boolean };
     children: ParentChild[];
 }
 
@@ -22,6 +23,8 @@ export interface ParentDay {
     status: DayStatus;
     firstInTime: string | null;
     lastOutTime: string | null;
+    hasInPhoto: boolean;
+    hasOutPhoto: boolean;
     excuse: { reason: string } | null;
 }
 

@@ -48,6 +48,7 @@ const PREFS = [
   { key: 'leave', column: 'notifyLeave' },
   { key: 'absent', column: 'notifyAbsent' },
   { key: 'excuse', column: 'notifyExcuse' },
+  { key: 'news', column: 'notifyNews' },
 ] as const;
 
 /** Telegram bot: tilni tanlash, telefon raqamini ulash, sozlamalar. Barcha xatolar ichkarida ushlanadi. */
@@ -210,7 +211,7 @@ export class ParentBotService {
       });
     } else if (command === '/stop') {
       await this.dataSource.query(
-        'UPDATE parent_telegram_links SET notifyArrival = 0, notifyLeave = 0, notifyAbsent = 0, notifyExcuse = 0 WHERE id = ?',
+        'UPDATE parent_telegram_links SET notifyArrival = 0, notifyLeave = 0, notifyAbsent = 0, notifyExcuse = 0, notifyNews = 0 WHERE id = ?',
         [Number(link.id)],
       );
       await this.telegram.sendMessage(chatId, t.help);

@@ -21,8 +21,8 @@
     "today": "Bugun: yuborildi {{sent}}, navbatda {{pending}}, xato/o‘tkazib yuborilgan {{failed}}"
   },
   "schools": {
-    "title": "Sinov maktablari",
-    "description": "Xabarlar faqat shu maktablarning o‘quvchilari ota-onalariga yuboriladi. «Kelmadi» xabari smena boshlanishi + kutish vaqtidan keyin (smena yo‘q sinflar uchun — standart vaqtda) bir marta yuboriladi.",
+    "title": "Ulangan maktablar",
+    "description": "Ota-onalar botga faqat shu maktablar o‘quvchilari bo‘yicha ulanadi va avtomatik xabarlar (keldi, chiqdi, kelmadi) oladi. Barcha maktabni bir tugma bilan yoqishingiz mumkin. «Kelmadi» xabari smena boshlanishi + kutish vaqtidan keyin (smena yo‘q sinflar uchun — standart vaqtda) bir marta yuboriladi.",
     "pick": "Maktab tanlang",
     "add": "Qo‘shish",
     "empty": "Hali maktab qo‘shilmagan.",
@@ -31,7 +31,13 @@
     "linked": "Ulangan ota-onalar",
     "absentTime": "Kelmadi vaqti",
     "grace": "Kutish (daq)",
-    "enabled": "Yoqilgan"
+    "enabled": "Yoqilgan",
+    "eventPhotos": "Terminal rasmi",
+    "photosConfirmTitle": "Terminal rasmini ko‘rsatamizmi?",
+    "photosConfirmText": "«{{name}}» o‘quvchilarining kirish/chiqish paytida terminal olgan rasmlari ota-onalarga Mini App’da ko‘rsatiladi. Rasmlar bolaning maktab eshigidagi surati, shuning uchun bunga maktab rahbariyati va ota-onalar roziligi bo‘lishi kerak. Davom etamizmi?",
+    "enableAll": "Barcha maktablar uchun yoqish",
+    "enableAllTitle": "Barcha maktablarda yoqamizmi?",
+    "enableAllText": "Ota-onalarga «kelmadi» va kirish/chiqish xabarlari tizimdagi barcha maktablar uchun yoqiladi. Mavjud maktablarning sozlamalari o‘zgarmaydi, terminal rasmi o‘chiq qoladi. Davom etamizmi?"
   },
   "messages": {
     "title": "Oxirgi xabarlar",
@@ -52,5 +58,53 @@
       "FAILED": "Xato",
       "SKIPPED": "O‘tkazib yuborildi"
     }
+  },
+  "broadcast": {
+    "title": "Ota-onalarga xabar yuborish",
+    "description": "E’lon va boshqa xabarlar Telegram orqali ota-onalarga yuboriladi. Faqat botga ulangan va e’lonlarni o‘chirmagan ota-onalar oladi.",
+    "type": "Xabar turi",
+    "types": {
+      "ANNOUNCEMENT": "E’lon",
+      "URGENT": "Muhim xabar",
+      "REMINDER": "Eslatma",
+      "CONGRATS": "Tabrik",
+      "INFO": "Ma’lumot"
+    },
+    "audience": "Kimga",
+    "scopes": {
+      "ALL": "Barcha ota-onalar",
+      "REGION": "Viloyat",
+      "DISTRICT": "Tuman / shahar",
+      "SCHOOL": "Maktab",
+      "CLASS": "Sinf"
+    },
+    "pick": "Tanlang",
+    "pickAudience": "Qabul qiluvchilarni tanlang.",
+    "language": "Til",
+    "languageHint": "O‘zbekcha matn majburiy. Boshqa tilda matn yozilmasa, ota-onaga o‘zbekcha yuboriladi.",
+    "subject": "Sarlavha (ixtiyoriy)",
+    "body": "Matn",
+    "chars": "{{count}} / {{max}} belgi",
+    "reach": "{{count}} ta ota-ona xabar oladi ({{children}} farzand, {{schools}} maktab)",
+    "reachHint": "Telegram’ga ulanmagan yoki e’lonlarni o‘chirgan ota-onalarga yuborilmaydi.",
+    "urgentNote": "Muhim xabar darhol yuboriladi (tungi tinchlik vaqti hisobga olinmaydi).",
+    "quietNote": "Oddiy xabarlar 21:00–07:00 oralig‘ida ertalabgacha kutadi.",
+    "send": "Yuborish",
+    "confirmTitle": "Xabar yuborilsinmi?",
+    "confirmText": "«{{type}}» xabari {{count}} ta ota-onaga yuboriladi. Yuborilgach, faqat hali yuborilmaganlarini bekor qilish mumkin. Davom etamizmi?",
+    "queued": "Xabar navbatga qo‘yildi: {{count}} ta ota-ona.",
+    "history": "Oxirgi xabarlar",
+    "historyEmpty": "Hali xabar yuborilmagan.",
+    "progress": "Yuborildi",
+    "statusLabel": "Holat",
+    "status": {
+      "SENDING": "Yuborilmoqda",
+      "DONE": "Yuborildi",
+      "CANCELED": "Bekor qilindi"
+    },
+    "failedCount": "{{count}} ta xato",
+    "cancel": "Bekor qilish",
+    "cancelTitle": "Yuborish to‘xtatilsinmi?",
+    "cancelText": "Hali yuborilmagan {{count}} ta xabar bekor qilinadi. Allaqachon yuborilganlar qaytarilmaydi."
   }
 }

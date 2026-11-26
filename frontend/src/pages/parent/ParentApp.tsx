@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import type { StatusTone } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { monthName, weekdayIndex, weekdayName, formatDate, formatDateLong, formatTime } from '@/lib/date';
 import { loadTelegram, parentBlob, parentRequest, ParentApiError, telegramApp } from '@/lib/parent-api';
@@ -126,6 +127,67 @@ function useMonth(personId: number, month: string) {
     };
 }
 
+/** Terminal olgan rasm (faqat maktab ruxsat bergan bo‘lsa serverdan keladi). Bosilsa kattalashadi. */
+function EventPhoto({
+    personId,
+    date,
+    direction,
+    label,
+    className,
+}: {
+    personId: number;
+    date: string;
+    direction: 'in' | 'out';
+    label: string;
+    className?: string;
+}) {
+    const key = `${personId}:${date}:${direction}`;
+    const [loaded, setLoaded] = useState<{ key: string; url: string } | null>(null);
+    const [failed, setFailed] = useState<string | null>(null);
+    const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        let objectUrl = '';
+        parentBlob(`/children/${personId}/photos/${date}/${direction}`, controller.signal)
+            .then((blob) => {
+                if (controller.signal.aborted) return;
+                objectUrl = URL.createObjectURL(blob);
+                setLoaded({ key, url: objectUrl });
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) setFailed(key);
+            });
+        return () => {
+            controller.abort();
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [personId, date, direction, key]);
+
+    if (failed === key) return null;
+    const url = loaded?.key === key ? loaded.url : '';
+
+    return (
+        <>
+            <button
+                type="button"
+                disabled={!url}
+                onClick={() => setOpen(true)}
+                aria-label={label}
+                className={cn('relative overflow-hidden rounded-xl border bg-muted', className ?? 'aspect-[3/4] w-full')}
+            >
+                {url ? <img src={url} alt="" className="size-full object-cover" /> : <span className="absolute inset-0 animate-pulse bg-muted" aria-hidden="true" />}
+            </button>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-sm gap-3 p-3">
+                    <DialogTitle className="text-sm">{label}</DialogTitle>
+                    {url && <img src={url} alt="" className="max-h-[70svh] w-full rounded-lg object-contain" />}
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+}
+
 function TimesLine({ day, className }: { day: ParentDay; className?: string }) {
     const { t } = useTranslation();
     if (!day.firstInTime && !day.lastOutTime) return null;
@@ -172,6 +234,15 @@ function Hero({ child, today }: { child: ParentChild; today: string }) {
                             </p>
                         </div>
                         {todayRow && <TimesLine day={todayRow} className="mt-2 text-white/85" />}
+                        {todayRow?.hasInPhoto && (
+                            <EventPhoto
+                                personId={child.personId}
+                                date={today}
+                                direction="in"
+                                label={t('parent.arrived', { time: formatTime(todayRow.firstInTime ?? '') })}
+                                className="absolute top-4 right-4 size-16 border-white/40 ring-2 ring-white/40"
+                            />
+                        )}
                     </>
                 ) : (
                     <div className="mt-2 h-8 w-40 animate-pulse rounded-lg bg-white/20" aria-busy="true" />
@@ -396,6 +467,36 @@ function AttendanceTab({ child, today }: { child: ParentChild; today: string }) 
                                     {t(`parent.status.${statusKey(selectedDay.status)}`)}
                                 </StatusBadge>
                                 <TimesLine day={selectedDay} className="text-muted-foreground" />
+                                {(selectedDay.hasInPhoto || selectedDay.hasOutPhoto) && (
+                                    <div className="grid grid-cols-2 gap-3 pt-1">
+                                        {selectedDay.hasInPhoto && (
+                                            <figure className="space-y-1">
+                                                <EventPhoto
+                                                    personId={child.personId}
+                                                    date={selectedDay.date}
+                                                    direction="in"
+                                                    label={t('parent.arrived', { time: formatTime(selectedDay.firstInTime ?? '') })}
+                                                />
+                                                <figcaption className="text-center text-xs text-muted-foreground tabular-nums">
+                                                    {t('parent.arrived', { time: formatTime(selectedDay.firstInTime ?? '') })}
+                                                </figcaption>
+                                            </figure>
+                                        )}
+                                        {selectedDay.hasOutPhoto && (
+                                            <figure className="space-y-1">
+                                                <EventPhoto
+                                                    personId={child.personId}
+                                                    date={selectedDay.date}
+                                                    direction="out"
+                                                    label={t('parent.left', { time: formatTime(selectedDay.lastOutTime ?? '') })}
+                                                />
+                                                <figcaption className="text-center text-xs text-muted-foreground tabular-nums">
+                                                    {t('parent.left', { time: formatTime(selectedDay.lastOutTime ?? '') })}
+                                                </figcaption>
+                                            </figure>
+                                        )}
+                                    </div>
+                                )}
                                 {selectedDay.excuse && (
                                     <p className="text-sm text-muted-foreground">
                                         {t(`parent.reasons.${selectedDay.excuse.reason}`, { defaultValue: selectedDay.excuse.reason })}
@@ -480,7 +581,7 @@ function SettingsTab({ me, onChange }: { me: ParentMe; onChange: (next: ParentMe
         }
     }
 
-    const prefs = ['arrival', 'leave', 'absent', 'excuse'] as const;
+    const prefs = ['arrival', 'leave', 'absent', 'excuse', 'news'] as const;
     return (
         <div className="space-y-4">
             <Card className="gap-3 p-4">

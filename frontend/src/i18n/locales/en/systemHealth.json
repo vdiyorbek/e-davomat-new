@@ -51,6 +51,22 @@
       "name": "Terminals",
       "text": "{{offline}} of {{total}} terminals unseen for 15+ minutes ({{percent}}%)"
     },
+    "telegram": {
+      "name": "Telegram bot (parent notifications)",
+      "states": {
+        "off": "Not set up (optional). Turns on once a token is entered in the system settings.",
+        "noToken": "The bot token is missing but pilot schools are enabled: no messages are being sent.",
+        "noSecret": "The webhook secret is not set.",
+        "unreachable": "Could not reach Telegram: {{lastError}}",
+        "noWebhook": "The webhook is not set: press “Set webhook”.",
+        "webhookMismatch": "The webhook address differs from the current one: press “Set webhook” again.",
+        "webhookError": "Telegram webhook error: {{lastError}}",
+        "stuck": "{{stuck}} messages have been waiting to be sent for over 10 minutes.",
+        "failed": "{{failed}} messages could not be sent in the last 24 hours.",
+        "backlog": "{{updates}} unprocessed updates have piled up in Telegram.",
+        "ok": "@{{username}} is running · Linked parents: {{links}}"
+      }
+    },
     "process": {
       "name": "Server process",
       "text": "Uptime: {{uptime}} · Memory: {{rssMb}} MB"

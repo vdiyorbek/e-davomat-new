@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CircleAlert, CircleCheck, CircleX, Cpu, Database, HardDrive, Image, Layers, Radio, RefreshCw, ScanFace, ChartNoAxesColumn } from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleX, Cpu, Database, HardDrive, Image, Layers, Radio, RefreshCw, ScanFace, ChartNoAxesColumn, Send } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +27,7 @@ const ICONS: Record<CheckKey, LucideIcon> = {
     stats: ChartNoAxesColumn,
     photos: Image,
     terminals: ScanFace,
+    telegram: Send,
     process: Cpu,
 };
 
@@ -82,7 +83,9 @@ function CheckCard({ check, onDetails }: { check: HealthCheck; onDetails: (key: 
                       ? t('systemHealth.idle')
                       : noData
                         ? t('systemHealth.noData')
-                        : t(`systemHealth.checks.${check.key}.text`, values)}
+                        : typeof check.metrics.state === 'string'
+                          ? t(`systemHealth.checks.${check.key}.states.${check.metrics.state}`, values)
+                          : t(`systemHealth.checks.${check.key}.text`, values)}
             </p>
             <div className="flex items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground tabular-nums">{t('systemHealth.since', { time: formatDateTime(check.since) })}</p>

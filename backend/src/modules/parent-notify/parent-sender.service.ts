@@ -7,6 +7,8 @@ import { PersonPhotosService } from '../persons/person-photos.service';
 import { TelegramApiService, TelegramError } from './telegram-api.service';
 import { INTERNAL_USER } from './internal-user';
 import { fill, isParentLanguage, niceName, TEXTS } from './parent-texts';
+import { composeBroadcast } from './parent-broadcast-texts';
+import type { BroadcastTexts } from './parent-broadcast-texts';
 import type { ParentLanguage } from './parent-texts';
 import { str } from './str';
 
@@ -78,17 +80,61 @@ export class ParentSenderService {
     }
   }
 
+  /** Shu partiyadagi ommaviy xabarlarning matni (bir marta o‘qiladi). */
+  private async loadBroadcasts(
+    rows: Row[],
+  ): Promise<
+    Map<number, { type: string; texts: BroadcastTexts; canceled: boolean }>
+  > {
+    const ids = new Set<number>();
+    for (const row of rows) {
+      if (str(row.kind) !== 'BROADCAST') continue;
+      const payload =
+        typeof row.payload === 'string'
+          ? (JSON.parse(row.payload) as Record<string, unknown>)
+          : ((row.payload as Record<string, unknown> | null) ?? {});
+      ids.add(Number(payload.broadcastId));
+    }
+    const result = new Map<
+      number,
+      { type: string; texts: BroadcastTexts; canceled: boolean }
+    >();
+    if (ids.size === 0) return result;
+    const found: Row[] = await this.dataSource.query(
+      'SELECT id, type, texts, canceledAt FROM parent_broadcasts WHERE id IN (?)',
+      [[...ids]],
+    );
+    for (const item of found) {
+      result.set(Number(item.id), {
+        type: str(item.type),
+        texts: (typeof item.texts === 'string'
+          ? JSON.parse(item.texts)
+          : item.texts) as BroadcastTexts,
+        canceled: item.canceledAt !== null,
+      });
+    }
+    return result;
+  }
+
   @Cron('*/5 * * * * *', { timeZone: 'Asia/Tashkent' })
   async tick(): Promise<void> {
     if (this.running || !this.telegram.configured) return;
     this.running = true;
     try {
-      const rows: Row[] = await this.dataSource.query(
-        `SELECT m.id, m.kind, m.personId, m.payload, m.attempts, l.id AS linkId, l.chatId, l.language
+      const select = `SELECT m.id, m.kind, m.personId, m.payload, m.attempts, l.id AS linkId, l.chatId, l.language
            FROM parent_messages m JOIN parent_telegram_links l ON l.id = m.linkId
-          WHERE m.status = 'PENDING' AND m.sendAfter <= NOW(3)
-          ORDER BY m.id ASC LIMIT ${BATCH}`,
+          WHERE m.status = 'PENDING' AND m.sendAfter <= NOW(3)`;
+      // Davomat xabarlari (keldi/ketdi/kelmadi) hamisha birinchi: ommaviy e‘lon ularni kutdirmaydi.
+      const rows: Row[] = await this.dataSource.query(
+        `${select} AND m.kind <> 'BROADCAST' ORDER BY m.id ASC LIMIT ${BATCH}`,
       );
+      if (rows.length < BATCH) {
+        const broadcastRows: Row[] = await this.dataSource.query(
+          `${select} AND m.kind = 'BROADCAST' ORDER BY m.id ASC LIMIT ${BATCH - rows.length}`,
+        );
+        rows.push(...broadcastRows);
+      }
+      const broadcasts = await this.loadBroadcasts(rows);
       for (const row of rows) {
         const id = Number(row.id);
         const payload =
@@ -97,8 +143,28 @@ export class ParentSenderService {
             : ((row.payload as Record<string, unknown> | null) ?? {});
         const language = isParentLanguage(row.language) ? row.language : 'uz';
         try {
-          const text = this.compose(str(row.kind), language, payload);
           const kind = str(row.kind);
+          if (kind === 'BROADCAST') {
+            const broadcast = broadcasts.get(Number(payload.broadcastId));
+            if (!broadcast || broadcast.canceled) {
+              await this.dataSource.query(
+                "UPDATE parent_messages SET status = 'SKIPPED', error = 'bekor qilindi' WHERE id = ?",
+                [id],
+              );
+              continue;
+            }
+            await this.telegram.sendMessage(
+              str(row.chatId),
+              composeBroadcast(language, broadcast.type, broadcast.texts),
+            );
+            await this.dataSource.query(
+              "UPDATE parent_messages SET status = 'SENT', sentAt = NOW(3), attempts = attempts + 1, error = NULL WHERE id = ?",
+              [id],
+            );
+            await new Promise<void>((resolve) => setTimeout(resolve, PAUSE_MS));
+            continue;
+          }
+          const text = this.compose(kind, language, payload);
           const photo =
             kind === 'ARRIVED' || kind === 'LEFT' || kind === 'ABSENT'
               ? await this.photoOf(Number(row.personId))

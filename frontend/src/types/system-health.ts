@@ -1,6 +1,6 @@
 export type CheckStatus = 'ok' | 'warn' | 'crit';
 
-export type CheckKey = 'database' | 'redis' | 'queues' | 'disk' | 'push' | 'stats' | 'photos' | 'terminals' | 'process';
+export type CheckKey = 'database' | 'redis' | 'queues' | 'disk' | 'push' | 'stats' | 'photos' | 'terminals' | 'telegram' | 'process';
 
 export interface HealthCheck {
     key: CheckKey;

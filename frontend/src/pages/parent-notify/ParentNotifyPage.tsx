@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Plus, RefreshCw, Webhook } from 'lucide-react';
+import { Plus, RefreshCw, School as SchoolIcon, Webhook } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { useConfirm } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
+import { BroadcastCard } from '@/components/parent-notify/BroadcastCard';
 import { SelectField } from '@/components/common/SelectField';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -36,6 +38,7 @@ interface PilotSchool {
     enabled: boolean;
     absentTime: string;
     graceMinutes: number;
+    showEventPhotos: boolean;
     students: number;
     linked: number;
 }
@@ -58,8 +61,9 @@ function SchoolRow({ school, onSaved }: { school: PilotSchool; onSaved: () => vo
     const [grace, setGrace] = useState(String(school.graceMinutes));
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+    const { confirm, dialog } = useConfirm();
 
-    async function save(patch: { enabled?: boolean }) {
+    async function save(patch: { enabled?: boolean; showEventPhotos?: boolean }) {
         setBusy(true);
         setError('');
         try {
@@ -67,6 +71,7 @@ function SchoolRow({ school, onSaved }: { school: PilotSchool; onSaved: () => vo
                 enabled: patch.enabled ?? school.enabled,
                 absentTime: time,
                 graceMinutes: Number(grace) || 0,
+                showEventPhotos: patch.showEventPhotos ?? school.showEventPhotos,
             });
             onSaved();
         } catch (err: unknown) {
@@ -102,6 +107,24 @@ function SchoolRow({ school, onSaved }: { school: PilotSchool; onSaved: () => vo
             <TableCell>
                 <Switch checked={school.enabled} disabled={busy} onCheckedChange={(checked) => void save({ enabled: checked })} aria-label={t('parentAdmin.schools.enabled')} />
             </TableCell>
+            <TableCell>
+                <Switch
+                    checked={school.showEventPhotos}
+                    disabled={busy}
+                    aria-label={t('parentAdmin.schools.eventPhotos')}
+                    onCheckedChange={(checked) => {
+                        if (!checked) return void save({ showEventPhotos: false });
+                        void confirm({
+                            title: t('parentAdmin.schools.photosConfirmTitle'),
+                            description: t('parentAdmin.schools.photosConfirmText', { name: school.name }),
+                            confirmLabel: t('parentAdmin.schools.eventPhotos'),
+                        }).then((ok) => {
+                            if (ok) void save({ showEventPhotos: true });
+                        });
+                    }}
+                />
+                {dialog}
+            </TableCell>
             <TableCell className="pr-4">
                 <Button type="button" size="sm" variant="outline" disabled={busy || !dirty} onClick={() => void save({})}>
                     {t('parentAdmin.save')}
@@ -114,6 +137,7 @@ function SchoolRow({ school, onSaved }: { school: PilotSchool; onSaved: () => vo
 /** Ota-onalarga Telegram xabari: bot holati, sinov maktablari va oxirgi xabarlar (Bosh administrator). */
 export function ParentNotifyPage() {
     const { t } = useTranslation();
+    const { confirm, dialog: confirmDialog } = useConfirm();
     const status = useApiQuery<Status>('/parent-notify/status');
     const schools = useApiQuery<PilotSchool[]>('/parent-notify/schools');
     const messages = useApiQuery<MessageRow[]>('/parent-notify/messages');
@@ -148,6 +172,25 @@ export function ParentNotifyPage() {
         try {
             await authorizedPut(`/parent-notify/schools/${picked}`, { enabled: true, absentTime: '09:30', graceMinutes: 30 });
             setPicked('');
+            schools.retry();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('parentAdmin.failed'));
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function enableAll() {
+        const ok = await confirm({
+            title: t('parentAdmin.schools.enableAllTitle'),
+            description: t('parentAdmin.schools.enableAllText'),
+            confirmLabel: t('parentAdmin.schools.enableAll'),
+        });
+        if (!ok) return;
+        setBusy(true);
+        setError('');
+        try {
+            await authorizedPost('/parent-notify/schools/enable-all', {});
             schools.retry();
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('parentAdmin.failed'));
@@ -236,6 +279,8 @@ export function ParentNotifyPage() {
                 ) : null}
             </Card>
 
+            <BroadcastCard />
+
             <Card className="gap-4 p-4 sm:p-5">
                 <div>
                     <h2 className="font-heading text-base font-bold">{t('parentAdmin.schools.title')}</h2>
@@ -249,6 +294,11 @@ export function ParentNotifyPage() {
                         <Plus aria-hidden="true" />
                         {t('parentAdmin.schools.add')}
                     </Button>
+                    <Button type="button" variant="outline" disabled={busy} onClick={() => void enableAll()}>
+                        <SchoolIcon aria-hidden="true" />
+                        {t('parentAdmin.schools.enableAll')}
+                    </Button>
+                    {confirmDialog}
                 </div>
                 {schools.loading && !schools.data ? (
                     <LoadingState rows={2} />
@@ -265,12 +315,13 @@ export function ParentNotifyPage() {
                                     <TableHead>{t('parentAdmin.schools.absentTime')}</TableHead>
                                     <TableHead>{t('parentAdmin.schools.grace')}</TableHead>
                                     <TableHead>{t('parentAdmin.schools.enabled')}</TableHead>
+                                    <TableHead>{t('parentAdmin.schools.eventPhotos')}</TableHead>
                                     <TableHead className="pr-4" />
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {schools.data.map((school) => (
-                                    <SchoolRow key={`${school.schoolId}:${school.enabled}:${school.absentTime}:${school.graceMinutes}`} school={school} onSaved={() => schools.retry()} />
+                                    <SchoolRow key={`${school.schoolId}:${school.enabled}:${school.absentTime}:${school.graceMinutes}:${school.showEventPhotos}`} school={school} onSaved={() => schools.retry()} />
                                 ))}
                             </TableBody>
                         </Table>
